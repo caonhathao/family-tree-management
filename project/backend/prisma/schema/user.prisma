@@ -1,0 +1,51 @@
+enum USER_ROLE {
+    ADMIN
+    MEMBER
+}
+
+model User {
+    id            String        @id @default(uuid()) @db.Uuid
+    email         String        @unique
+    emailVerified Boolean       @default(false)
+    createdAt     DateTime      @default(now())
+    updated       DateTime      @updatedAt
+    accounts      Account[]
+    sessions      Session[]
+    userProfiles  UserProfile[]
+    families      Family[]
+    albums        Album[]
+    events        Event[]
+
+    @@index([email])
+    @@map("user")
+}
+
+//storing sign in infomation and token
+model Account {
+    id                    String    @id @default(uuid()) @db.Uuid
+    userId                String    @db.Uuid
+    user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    accessToken           String?
+    refreshToken          String?
+    idToken               String?
+    accessTokenExpiresAt  DateTime?
+    refreshTokenExpiresAt DateTime?
+    password              String?
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
+
+    @@index([userId])
+    @@map("account")
+}
+
+model UserProfile {
+    id        String   @id @default(uuid()) @db.Uuid
+    userId    String   @db.Uuid
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    avatar    String?
+    biography Json?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("user_profile")
+}

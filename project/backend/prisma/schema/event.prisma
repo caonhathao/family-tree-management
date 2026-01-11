@@ -1,0 +1,25 @@
+enum EVENT_TYPE {
+    DEATH_ANNIVERSARY
+    BIRTHDAY
+    WEDDING
+    OTHER
+}
+
+model Event {
+    id          String     @id @default(uuid()) @db.Uuid
+    familyId    String@db.Uuid
+    family      Family     @relation(fields: [familyId], references: [id], onDelete: Cascade)
+    title       String
+    description String
+    eventDate   DateTime   @db.Date
+    isRecurring Boolean    @default(true)
+    type        EVENT_TYPE
+    createBy    String     @db.Uuid
+    creator     User       @relation(fields: [createBy], references: [id], onDelete: Cascade)
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @updatedAt
+
+    @@index([familyId])
+    @@index([eventDate])
+    @@map("eent")
+}
