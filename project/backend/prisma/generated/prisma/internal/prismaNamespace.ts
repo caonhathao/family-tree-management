@@ -384,6 +384,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
+  ActivityLog: 'ActivityLog',
   Album: 'Album',
   Photo: 'Photo',
   Session: 'Session',
@@ -392,6 +393,7 @@ export const ModelName = {
   Family: 'Family',
   FamilyMember: 'FamilyMember',
   Relationship: 'Relationship',
+  Notification: 'Notification',
   User: 'User',
   Account: 'Account',
   UserProfile: 'UserProfile'
@@ -410,10 +412,84 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "album" | "photo" | "session" | "verification" | "event" | "family" | "familyMember" | "relationship" | "user" | "account" | "userProfile"
+    modelProps: "activityLog" | "album" | "photo" | "session" | "verification" | "event" | "family" | "familyMember" | "relationship" | "notification" | "user" | "account" | "userProfile"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
+    ActivityLog: {
+      payload: Prisma.$ActivityLogPayload<ExtArgs>
+      fields: Prisma.ActivityLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ActivityLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ActivityLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLogPayload>
+        }
+        findFirst: {
+          args: Prisma.ActivityLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ActivityLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLogPayload>
+        }
+        findMany: {
+          args: Prisma.ActivityLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLogPayload>[]
+        }
+        create: {
+          args: Prisma.ActivityLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLogPayload>
+        }
+        createMany: {
+          args: Prisma.ActivityLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ActivityLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLogPayload>[]
+        }
+        delete: {
+          args: Prisma.ActivityLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLogPayload>
+        }
+        update: {
+          args: Prisma.ActivityLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.ActivityLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ActivityLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ActivityLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.ActivityLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLogPayload>
+        }
+        aggregate: {
+          args: Prisma.ActivityLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateActivityLog>
+        }
+        groupBy: {
+          args: Prisma.ActivityLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ActivityLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ActivityLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ActivityLogCountAggregateOutputType> | number
+        }
+      }
+    }
     Album: {
       payload: Prisma.$AlbumPayload<ExtArgs>
       fields: Prisma.AlbumFieldRefs
@@ -1006,6 +1082,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Notification: {
+      payload: Prisma.$NotificationPayload<ExtArgs>
+      fields: Prisma.NotificationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotificationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotificationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        findFirst: {
+          args: Prisma.NotificationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotificationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        findMany: {
+          args: Prisma.NotificationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>[]
+        }
+        create: {
+          args: Prisma.NotificationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        createMany: {
+          args: Prisma.NotificationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotificationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>[]
+        }
+        delete: {
+          args: Prisma.NotificationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        update: {
+          args: Prisma.NotificationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        deleteMany: {
+          args: Prisma.NotificationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotificationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotificationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>[]
+        }
+        upsert: {
+          args: Prisma.NotificationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        aggregate: {
+          args: Prisma.NotificationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotification>
+        }
+        groupBy: {
+          args: Prisma.NotificationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotificationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationCountAggregateOutputType> | number
+        }
+      }
+    }
     User: {
       payload: Prisma.$UserPayload<ExtArgs>
       fields: Prisma.UserFieldRefs
@@ -1267,6 +1417,20 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const ActivityLogScalarFieldEnum = {
+  id: 'id',
+  familyId: 'familyId',
+  userId: 'userId',
+  action: 'action',
+  targetId: 'targetId',
+  target: 'target',
+  content: 'content',
+  createdAt: 'createdAt'
+} as const
+
+export type ActivityLogScalarFieldEnum = (typeof ActivityLogScalarFieldEnum)[keyof typeof ActivityLogScalarFieldEnum]
+
+
 export const AlbumScalarFieldEnum = {
   id: 'id',
   familyId: 'familyId',
@@ -1379,10 +1543,25 @@ export const RelationshipScalarFieldEnum = {
 export type RelationshipScalarFieldEnum = (typeof RelationshipScalarFieldEnum)[keyof typeof RelationshipScalarFieldEnum]
 
 
+export const NotificationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  content: 'content',
+  type: 'type',
+  isRead: 'isRead',
+  link: 'link',
+  createdAt: 'createdAt'
+} as const
+
+export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
   emailVerified: 'emailVerified',
+  role: 'role',
   createdAt: 'createdAt',
   updated: 'updated'
 } as const
@@ -1409,6 +1588,8 @@ export type AccountScalarFieldEnum = (typeof AccountScalarFieldEnum)[keyof typeo
 export const UserProfileScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  fullName: 'fullName',
+  dateOfBirth: 'dateOfBirth',
   avatar: 'avatar',
   biography: 'biography',
   createdAt: 'createdAt',
@@ -1476,6 +1657,34 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
  * Reference to a field of type 'String[]'
  */
 export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ACTION_TYPE'
+ */
+export type EnumACTION_TYPEFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ACTION_TYPE'>
+    
+
+
+/**
+ * Reference to a field of type 'ACTION_TYPE[]'
+ */
+export type ListEnumACTION_TYPEFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ACTION_TYPE[]'>
+    
+
+
+/**
+ * Reference to a field of type 'TARGET_TYPE'
+ */
+export type EnumTARGET_TYPEFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TARGET_TYPE'>
+    
+
+
+/**
+ * Reference to a field of type 'TARGET_TYPE[]'
+ */
+export type ListEnumTARGET_TYPEFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TARGET_TYPE[]'>
     
 
 
@@ -1567,6 +1776,34 @@ export type EnumTYPE_RELATIONSHIPFieldRefInput<$PrismaModel> = FieldRefInputType
  * Reference to a field of type 'TYPE_RELATIONSHIP[]'
  */
 export type ListEnumTYPE_RELATIONSHIPFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TYPE_RELATIONSHIP[]'>
+    
+
+
+/**
+ * Reference to a field of type 'NOTIFICATION_TYPE'
+ */
+export type EnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NOTIFICATION_TYPE'>
+    
+
+
+/**
+ * Reference to a field of type 'NOTIFICATION_TYPE[]'
+ */
+export type ListEnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NOTIFICATION_TYPE[]'>
+    
+
+
+/**
+ * Reference to a field of type 'USER_ROLE'
+ */
+export type EnumUSER_ROLEFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'USER_ROLE'>
+    
+
+
+/**
+ * Reference to a field of type 'USER_ROLE[]'
+ */
+export type ListEnumUSER_ROLEFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'USER_ROLE[]'>
     
 
 
@@ -1678,6 +1915,7 @@ export type PrismaClientOptions = ({
   comments?: runtime.SqlCommenterPlugin[]
 }
 export type GlobalOmitConfig = {
+  activityLog?: Prisma.ActivityLogOmit
   album?: Prisma.AlbumOmit
   photo?: Prisma.PhotoOmit
   session?: Prisma.SessionOmit
@@ -1686,6 +1924,7 @@ export type GlobalOmitConfig = {
   family?: Prisma.FamilyOmit
   familyMember?: Prisma.FamilyMemberOmit
   relationship?: Prisma.RelationshipOmit
+  notification?: Prisma.NotificationOmit
   user?: Prisma.UserOmit
   account?: Prisma.AccountOmit
   userProfile?: Prisma.UserProfileOmit

@@ -1,12 +1,20 @@
+//explain about role:
+//owner: the user who the owner of family
+//editor: the user who can edit the family tree
+//viewer: the user who only view the get notification about any change from family tree
+// all roles can get notification but only 2 roles (owner and editor) can edit graph
+
 enum USER_ROLE {
-    ADMIN
-    MEMBER
+    OWNER
+    EDITOR
+    VIEWER
 }
 
 model User {
     id            String        @id @default(uuid()) @db.Uuid
     email         String        @unique
     emailVerified Boolean       @default(false)
+    role          USER_ROLE     @default(EDITOR)
     createdAt     DateTime      @default(now())
     updated       DateTime      @updatedAt
     accounts      Account[]
@@ -15,6 +23,8 @@ model User {
     families      Family[]
     albums        Album[]
     events        Event[]
+    activityLogs  ActivityLog[]
+    notifications Notification[]
 
     @@index([email])
     @@map("user")
@@ -39,13 +49,15 @@ model Account {
 }
 
 model UserProfile {
-    id        String   @id @default(uuid()) @db.Uuid
-    userId    String   @db.Uuid
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    avatar    String?
-    biography Json?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    id          String    @id @default(uuid()) @db.Uuid
+    userId      String    @db.Uuid
+    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    fullName    String
+    dateOfBirth DateTime?
+    avatar      String?
+    biography   Json?
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
 
     @@map("user_profile")
 }

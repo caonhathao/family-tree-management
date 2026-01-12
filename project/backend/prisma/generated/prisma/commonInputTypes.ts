@@ -26,6 +26,20 @@ export type UuidFilter<$PrismaModel = never> = {
   not?: Prisma.NestedUuidFilter<$PrismaModel> | string
 }
 
+export type EnumACTION_TYPEFilter<$PrismaModel = never> = {
+  equals?: $Enums.ACTION_TYPE | Prisma.EnumACTION_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.ACTION_TYPE[] | Prisma.ListEnumACTION_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ACTION_TYPE[] | Prisma.ListEnumACTION_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumACTION_TYPEFilter<$PrismaModel> | $Enums.ACTION_TYPE
+}
+
+export type EnumTARGET_TYPEFilter<$PrismaModel = never> = {
+  equals?: $Enums.TARGET_TYPE | Prisma.EnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.TARGET_TYPE[] | Prisma.ListEnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TARGET_TYPE[] | Prisma.ListEnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTARGET_TYPEFilter<$PrismaModel> | $Enums.TARGET_TYPE
+}
+
 export type StringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -65,6 +79,26 @@ export type UuidWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedStringFilter<$PrismaModel>
   _max?: Prisma.NestedStringFilter<$PrismaModel>
+}
+
+export type EnumACTION_TYPEWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ACTION_TYPE | Prisma.EnumACTION_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.ACTION_TYPE[] | Prisma.ListEnumACTION_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ACTION_TYPE[] | Prisma.ListEnumACTION_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumACTION_TYPEWithAggregatesFilter<$PrismaModel> | $Enums.ACTION_TYPE
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumACTION_TYPEFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumACTION_TYPEFilter<$PrismaModel>
+}
+
+export type EnumTARGET_TYPEWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TARGET_TYPE | Prisma.EnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.TARGET_TYPE[] | Prisma.ListEnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TARGET_TYPE[] | Prisma.ListEnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTARGET_TYPEWithAggregatesFilter<$PrismaModel> | $Enums.TARGET_TYPE
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTARGET_TYPEFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTARGET_TYPEFilter<$PrismaModel>
 }
 
 export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -304,6 +338,40 @@ export type EnumTYPE_RELATIONSHIPWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumTYPE_RELATIONSHIPFilter<$PrismaModel>
 }
 
+export type EnumNOTIFICATION_TYPEFilter<$PrismaModel = never> = {
+  equals?: $Enums.NOTIFICATION_TYPE | Prisma.EnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.NOTIFICATION_TYPE[] | Prisma.ListEnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.NOTIFICATION_TYPE[] | Prisma.ListEnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumNOTIFICATION_TYPEFilter<$PrismaModel> | $Enums.NOTIFICATION_TYPE
+}
+
+export type EnumNOTIFICATION_TYPEWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.NOTIFICATION_TYPE | Prisma.EnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.NOTIFICATION_TYPE[] | Prisma.ListEnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.NOTIFICATION_TYPE[] | Prisma.ListEnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumNOTIFICATION_TYPEWithAggregatesFilter<$PrismaModel> | $Enums.NOTIFICATION_TYPE
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumNOTIFICATION_TYPEFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumNOTIFICATION_TYPEFilter<$PrismaModel>
+}
+
+export type EnumUSER_ROLEFilter<$PrismaModel = never> = {
+  equals?: $Enums.USER_ROLE | Prisma.EnumUSER_ROLEFieldRefInput<$PrismaModel>
+  in?: $Enums.USER_ROLE[] | Prisma.ListEnumUSER_ROLEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.USER_ROLE[] | Prisma.ListEnumUSER_ROLEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumUSER_ROLEFilter<$PrismaModel> | $Enums.USER_ROLE
+}
+
+export type EnumUSER_ROLEWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.USER_ROLE | Prisma.EnumUSER_ROLEFieldRefInput<$PrismaModel>
+  in?: $Enums.USER_ROLE[] | Prisma.ListEnumUSER_ROLEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.USER_ROLE[] | Prisma.ListEnumUSER_ROLEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumUSER_ROLEWithAggregatesFilter<$PrismaModel> | $Enums.USER_ROLE
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumUSER_ROLEFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumUSER_ROLEFilter<$PrismaModel>
+}
+
 export type NestedUuidFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -313,6 +381,20 @@ export type NestedUuidFilter<$PrismaModel = never> = {
   gt?: string | Prisma.StringFieldRefInput<$PrismaModel>
   gte?: string | Prisma.StringFieldRefInput<$PrismaModel>
   not?: Prisma.NestedUuidFilter<$PrismaModel> | string
+}
+
+export type NestedEnumACTION_TYPEFilter<$PrismaModel = never> = {
+  equals?: $Enums.ACTION_TYPE | Prisma.EnumACTION_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.ACTION_TYPE[] | Prisma.ListEnumACTION_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ACTION_TYPE[] | Prisma.ListEnumACTION_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumACTION_TYPEFilter<$PrismaModel> | $Enums.ACTION_TYPE
+}
+
+export type NestedEnumTARGET_TYPEFilter<$PrismaModel = never> = {
+  equals?: $Enums.TARGET_TYPE | Prisma.EnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.TARGET_TYPE[] | Prisma.ListEnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TARGET_TYPE[] | Prisma.ListEnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTARGET_TYPEFilter<$PrismaModel> | $Enums.TARGET_TYPE
 }
 
 export type NestedStringFilter<$PrismaModel = never> = {
@@ -363,6 +445,26 @@ export type NestedIntFilter<$PrismaModel = never> = {
   gt?: number | Prisma.IntFieldRefInput<$PrismaModel>
   gte?: number | Prisma.IntFieldRefInput<$PrismaModel>
   not?: Prisma.NestedIntFilter<$PrismaModel> | number
+}
+
+export type NestedEnumACTION_TYPEWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ACTION_TYPE | Prisma.EnumACTION_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.ACTION_TYPE[] | Prisma.ListEnumACTION_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ACTION_TYPE[] | Prisma.ListEnumACTION_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumACTION_TYPEWithAggregatesFilter<$PrismaModel> | $Enums.ACTION_TYPE
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumACTION_TYPEFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumACTION_TYPEFilter<$PrismaModel>
+}
+
+export type NestedEnumTARGET_TYPEWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TARGET_TYPE | Prisma.EnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.TARGET_TYPE[] | Prisma.ListEnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TARGET_TYPE[] | Prisma.ListEnumTARGET_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTARGET_TYPEWithAggregatesFilter<$PrismaModel> | $Enums.TARGET_TYPE
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTARGET_TYPEFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTARGET_TYPEFilter<$PrismaModel>
 }
 
 export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
@@ -576,6 +678,40 @@ export type NestedEnumTYPE_RELATIONSHIPWithAggregatesFilter<$PrismaModel = never
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumTYPE_RELATIONSHIPFilter<$PrismaModel>
   _max?: Prisma.NestedEnumTYPE_RELATIONSHIPFilter<$PrismaModel>
+}
+
+export type NestedEnumNOTIFICATION_TYPEFilter<$PrismaModel = never> = {
+  equals?: $Enums.NOTIFICATION_TYPE | Prisma.EnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.NOTIFICATION_TYPE[] | Prisma.ListEnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.NOTIFICATION_TYPE[] | Prisma.ListEnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumNOTIFICATION_TYPEFilter<$PrismaModel> | $Enums.NOTIFICATION_TYPE
+}
+
+export type NestedEnumNOTIFICATION_TYPEWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.NOTIFICATION_TYPE | Prisma.EnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  in?: $Enums.NOTIFICATION_TYPE[] | Prisma.ListEnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.NOTIFICATION_TYPE[] | Prisma.ListEnumNOTIFICATION_TYPEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumNOTIFICATION_TYPEWithAggregatesFilter<$PrismaModel> | $Enums.NOTIFICATION_TYPE
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumNOTIFICATION_TYPEFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumNOTIFICATION_TYPEFilter<$PrismaModel>
+}
+
+export type NestedEnumUSER_ROLEFilter<$PrismaModel = never> = {
+  equals?: $Enums.USER_ROLE | Prisma.EnumUSER_ROLEFieldRefInput<$PrismaModel>
+  in?: $Enums.USER_ROLE[] | Prisma.ListEnumUSER_ROLEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.USER_ROLE[] | Prisma.ListEnumUSER_ROLEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumUSER_ROLEFilter<$PrismaModel> | $Enums.USER_ROLE
+}
+
+export type NestedEnumUSER_ROLEWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.USER_ROLE | Prisma.EnumUSER_ROLEFieldRefInput<$PrismaModel>
+  in?: $Enums.USER_ROLE[] | Prisma.ListEnumUSER_ROLEFieldRefInput<$PrismaModel>
+  notIn?: $Enums.USER_ROLE[] | Prisma.ListEnumUSER_ROLEFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumUSER_ROLEWithAggregatesFilter<$PrismaModel> | $Enums.USER_ROLE
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumUSER_ROLEFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumUSER_ROLEFilter<$PrismaModel>
 }
 
 

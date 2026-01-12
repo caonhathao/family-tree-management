@@ -51,6 +51,7 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
+  ActivityLog: 'ActivityLog',
   Album: 'Album',
   Photo: 'Photo',
   Session: 'Session',
@@ -59,6 +60,7 @@ export const ModelName = {
   Family: 'Family',
   FamilyMember: 'FamilyMember',
   Relationship: 'Relationship',
+  Notification: 'Notification',
   User: 'User',
   Account: 'Account',
   UserProfile: 'UserProfile'
@@ -78,6 +80,20 @@ export const TransactionIsolationLevel = {
 } as const
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+export const ActivityLogScalarFieldEnum = {
+  id: 'id',
+  familyId: 'familyId',
+  userId: 'userId',
+  action: 'action',
+  targetId: 'targetId',
+  target: 'target',
+  content: 'content',
+  createdAt: 'createdAt'
+} as const
+
+export type ActivityLogScalarFieldEnum = (typeof ActivityLogScalarFieldEnum)[keyof typeof ActivityLogScalarFieldEnum]
 
 
 export const AlbumScalarFieldEnum = {
@@ -192,10 +208,25 @@ export const RelationshipScalarFieldEnum = {
 export type RelationshipScalarFieldEnum = (typeof RelationshipScalarFieldEnum)[keyof typeof RelationshipScalarFieldEnum]
 
 
+export const NotificationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  content: 'content',
+  type: 'type',
+  isRead: 'isRead',
+  link: 'link',
+  createdAt: 'createdAt'
+} as const
+
+export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
   emailVerified: 'emailVerified',
+  role: 'role',
   createdAt: 'createdAt',
   updated: 'updated'
 } as const
@@ -222,6 +253,8 @@ export type AccountScalarFieldEnum = (typeof AccountScalarFieldEnum)[keyof typeo
 export const UserProfileScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  fullName: 'fullName',
+  dateOfBirth: 'dateOfBirth',
   avatar: 'avatar',
   biography: 'biography',
   createdAt: 'createdAt',
