@@ -195,6 +195,7 @@ export type FamilyWhereInput = {
   relationships?: Prisma.RelationshipListRelationFilter
   albums?: Prisma.AlbumListRelationFilter
   events?: Prisma.EventListRelationFilter
+  activityLogs?: Prisma.ActivityLogListRelationFilter
 }
 
 export type FamilyOrderByWithRelationInput = {
@@ -209,6 +210,7 @@ export type FamilyOrderByWithRelationInput = {
   relationships?: Prisma.RelationshipOrderByRelationAggregateInput
   albums?: Prisma.AlbumOrderByRelationAggregateInput
   events?: Prisma.EventOrderByRelationAggregateInput
+  activityLogs?: Prisma.ActivityLogOrderByRelationAggregateInput
 }
 
 export type FamilyWhereUniqueInput = Prisma.AtLeast<{
@@ -226,6 +228,7 @@ export type FamilyWhereUniqueInput = Prisma.AtLeast<{
   relationships?: Prisma.RelationshipListRelationFilter
   albums?: Prisma.AlbumListRelationFilter
   events?: Prisma.EventListRelationFilter
+  activityLogs?: Prisma.ActivityLogListRelationFilter
 }, "id">
 
 export type FamilyOrderByWithAggregationInput = {
@@ -263,6 +266,7 @@ export type FamilyCreateInput = {
   relationships?: Prisma.RelationshipCreateNestedManyWithoutFamilyInput
   albums?: Prisma.AlbumCreateNestedManyWithoutFamilyInput
   events?: Prisma.EventCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyUncheckedCreateInput = {
@@ -276,6 +280,7 @@ export type FamilyUncheckedCreateInput = {
   relationships?: Prisma.RelationshipUncheckedCreateNestedManyWithoutFamilyInput
   albums?: Prisma.AlbumUncheckedCreateNestedManyWithoutFamilyInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyUpdateInput = {
@@ -289,6 +294,7 @@ export type FamilyUpdateInput = {
   relationships?: Prisma.RelationshipUpdateManyWithoutFamilyNestedInput
   albums?: Prisma.AlbumUpdateManyWithoutFamilyNestedInput
   events?: Prisma.EventUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyUncheckedUpdateInput = {
@@ -302,6 +308,7 @@ export type FamilyUncheckedUpdateInput = {
   relationships?: Prisma.RelationshipUncheckedUpdateManyWithoutFamilyNestedInput
   albums?: Prisma.AlbumUncheckedUpdateManyWithoutFamilyNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUncheckedUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyCreateManyInput = {
@@ -370,6 +377,20 @@ export type FamilyListRelationFilter = {
 
 export type FamilyOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type FamilyCreateNestedOneWithoutActivityLogsInput = {
+  create?: Prisma.XOR<Prisma.FamilyCreateWithoutActivityLogsInput, Prisma.FamilyUncheckedCreateWithoutActivityLogsInput>
+  connectOrCreate?: Prisma.FamilyCreateOrConnectWithoutActivityLogsInput
+  connect?: Prisma.FamilyWhereUniqueInput
+}
+
+export type FamilyUpdateOneRequiredWithoutActivityLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.FamilyCreateWithoutActivityLogsInput, Prisma.FamilyUncheckedCreateWithoutActivityLogsInput>
+  connectOrCreate?: Prisma.FamilyCreateOrConnectWithoutActivityLogsInput
+  upsert?: Prisma.FamilyUpsertWithoutActivityLogsInput
+  connect?: Prisma.FamilyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FamilyUpdateToOneWithWhereWithoutActivityLogsInput, Prisma.FamilyUpdateWithoutActivityLogsInput>, Prisma.FamilyUncheckedUpdateWithoutActivityLogsInput>
 }
 
 export type FamilyCreateNestedOneWithoutAlbumsInput = {
@@ -470,6 +491,74 @@ export type FamilyUncheckedUpdateManyWithoutOwnerNestedInput = {
   deleteMany?: Prisma.FamilyScalarWhereInput | Prisma.FamilyScalarWhereInput[]
 }
 
+export type FamilyCreateWithoutActivityLogsInput = {
+  id?: string
+  name: string
+  description: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  owner: Prisma.UserCreateNestedOneWithoutFamiliesInput
+  familyMembers?: Prisma.FamilyMemberCreateNestedManyWithoutFamilyInput
+  relationships?: Prisma.RelationshipCreateNestedManyWithoutFamilyInput
+  albums?: Prisma.AlbumCreateNestedManyWithoutFamilyInput
+  events?: Prisma.EventCreateNestedManyWithoutFamilyInput
+}
+
+export type FamilyUncheckedCreateWithoutActivityLogsInput = {
+  id?: string
+  name: string
+  description: string
+  ownerId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedCreateNestedManyWithoutFamilyInput
+  relationships?: Prisma.RelationshipUncheckedCreateNestedManyWithoutFamilyInput
+  albums?: Prisma.AlbumUncheckedCreateNestedManyWithoutFamilyInput
+  events?: Prisma.EventUncheckedCreateNestedManyWithoutFamilyInput
+}
+
+export type FamilyCreateOrConnectWithoutActivityLogsInput = {
+  where: Prisma.FamilyWhereUniqueInput
+  create: Prisma.XOR<Prisma.FamilyCreateWithoutActivityLogsInput, Prisma.FamilyUncheckedCreateWithoutActivityLogsInput>
+}
+
+export type FamilyUpsertWithoutActivityLogsInput = {
+  update: Prisma.XOR<Prisma.FamilyUpdateWithoutActivityLogsInput, Prisma.FamilyUncheckedUpdateWithoutActivityLogsInput>
+  create: Prisma.XOR<Prisma.FamilyCreateWithoutActivityLogsInput, Prisma.FamilyUncheckedCreateWithoutActivityLogsInput>
+  where?: Prisma.FamilyWhereInput
+}
+
+export type FamilyUpdateToOneWithWhereWithoutActivityLogsInput = {
+  where?: Prisma.FamilyWhereInput
+  data: Prisma.XOR<Prisma.FamilyUpdateWithoutActivityLogsInput, Prisma.FamilyUncheckedUpdateWithoutActivityLogsInput>
+}
+
+export type FamilyUpdateWithoutActivityLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  owner?: Prisma.UserUpdateOneRequiredWithoutFamiliesNestedInput
+  familyMembers?: Prisma.FamilyMemberUpdateManyWithoutFamilyNestedInput
+  relationships?: Prisma.RelationshipUpdateManyWithoutFamilyNestedInput
+  albums?: Prisma.AlbumUpdateManyWithoutFamilyNestedInput
+  events?: Prisma.EventUpdateManyWithoutFamilyNestedInput
+}
+
+export type FamilyUncheckedUpdateWithoutActivityLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedUpdateManyWithoutFamilyNestedInput
+  relationships?: Prisma.RelationshipUncheckedUpdateManyWithoutFamilyNestedInput
+  albums?: Prisma.AlbumUncheckedUpdateManyWithoutFamilyNestedInput
+  events?: Prisma.EventUncheckedUpdateManyWithoutFamilyNestedInput
+}
+
 export type FamilyCreateWithoutAlbumsInput = {
   id?: string
   name: string
@@ -480,6 +569,7 @@ export type FamilyCreateWithoutAlbumsInput = {
   familyMembers?: Prisma.FamilyMemberCreateNestedManyWithoutFamilyInput
   relationships?: Prisma.RelationshipCreateNestedManyWithoutFamilyInput
   events?: Prisma.EventCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyUncheckedCreateWithoutAlbumsInput = {
@@ -492,6 +582,7 @@ export type FamilyUncheckedCreateWithoutAlbumsInput = {
   familyMembers?: Prisma.FamilyMemberUncheckedCreateNestedManyWithoutFamilyInput
   relationships?: Prisma.RelationshipUncheckedCreateNestedManyWithoutFamilyInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyCreateOrConnectWithoutAlbumsInput = {
@@ -520,6 +611,7 @@ export type FamilyUpdateWithoutAlbumsInput = {
   familyMembers?: Prisma.FamilyMemberUpdateManyWithoutFamilyNestedInput
   relationships?: Prisma.RelationshipUpdateManyWithoutFamilyNestedInput
   events?: Prisma.EventUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyUncheckedUpdateWithoutAlbumsInput = {
@@ -532,6 +624,7 @@ export type FamilyUncheckedUpdateWithoutAlbumsInput = {
   familyMembers?: Prisma.FamilyMemberUncheckedUpdateManyWithoutFamilyNestedInput
   relationships?: Prisma.RelationshipUncheckedUpdateManyWithoutFamilyNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUncheckedUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyCreateWithoutEventsInput = {
@@ -544,6 +637,7 @@ export type FamilyCreateWithoutEventsInput = {
   familyMembers?: Prisma.FamilyMemberCreateNestedManyWithoutFamilyInput
   relationships?: Prisma.RelationshipCreateNestedManyWithoutFamilyInput
   albums?: Prisma.AlbumCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyUncheckedCreateWithoutEventsInput = {
@@ -556,6 +650,7 @@ export type FamilyUncheckedCreateWithoutEventsInput = {
   familyMembers?: Prisma.FamilyMemberUncheckedCreateNestedManyWithoutFamilyInput
   relationships?: Prisma.RelationshipUncheckedCreateNestedManyWithoutFamilyInput
   albums?: Prisma.AlbumUncheckedCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyCreateOrConnectWithoutEventsInput = {
@@ -584,6 +679,7 @@ export type FamilyUpdateWithoutEventsInput = {
   familyMembers?: Prisma.FamilyMemberUpdateManyWithoutFamilyNestedInput
   relationships?: Prisma.RelationshipUpdateManyWithoutFamilyNestedInput
   albums?: Prisma.AlbumUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyUncheckedUpdateWithoutEventsInput = {
@@ -596,6 +692,7 @@ export type FamilyUncheckedUpdateWithoutEventsInput = {
   familyMembers?: Prisma.FamilyMemberUncheckedUpdateManyWithoutFamilyNestedInput
   relationships?: Prisma.RelationshipUncheckedUpdateManyWithoutFamilyNestedInput
   albums?: Prisma.AlbumUncheckedUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUncheckedUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyCreateWithoutFamilyMembersInput = {
@@ -608,6 +705,7 @@ export type FamilyCreateWithoutFamilyMembersInput = {
   relationships?: Prisma.RelationshipCreateNestedManyWithoutFamilyInput
   albums?: Prisma.AlbumCreateNestedManyWithoutFamilyInput
   events?: Prisma.EventCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyUncheckedCreateWithoutFamilyMembersInput = {
@@ -620,6 +718,7 @@ export type FamilyUncheckedCreateWithoutFamilyMembersInput = {
   relationships?: Prisma.RelationshipUncheckedCreateNestedManyWithoutFamilyInput
   albums?: Prisma.AlbumUncheckedCreateNestedManyWithoutFamilyInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyCreateOrConnectWithoutFamilyMembersInput = {
@@ -648,6 +747,7 @@ export type FamilyUpdateWithoutFamilyMembersInput = {
   relationships?: Prisma.RelationshipUpdateManyWithoutFamilyNestedInput
   albums?: Prisma.AlbumUpdateManyWithoutFamilyNestedInput
   events?: Prisma.EventUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyUncheckedUpdateWithoutFamilyMembersInput = {
@@ -660,6 +760,7 @@ export type FamilyUncheckedUpdateWithoutFamilyMembersInput = {
   relationships?: Prisma.RelationshipUncheckedUpdateManyWithoutFamilyNestedInput
   albums?: Prisma.AlbumUncheckedUpdateManyWithoutFamilyNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUncheckedUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyCreateWithoutRelationshipsInput = {
@@ -672,6 +773,7 @@ export type FamilyCreateWithoutRelationshipsInput = {
   familyMembers?: Prisma.FamilyMemberCreateNestedManyWithoutFamilyInput
   albums?: Prisma.AlbumCreateNestedManyWithoutFamilyInput
   events?: Prisma.EventCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyUncheckedCreateWithoutRelationshipsInput = {
@@ -684,6 +786,7 @@ export type FamilyUncheckedCreateWithoutRelationshipsInput = {
   familyMembers?: Prisma.FamilyMemberUncheckedCreateNestedManyWithoutFamilyInput
   albums?: Prisma.AlbumUncheckedCreateNestedManyWithoutFamilyInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyCreateOrConnectWithoutRelationshipsInput = {
@@ -712,6 +815,7 @@ export type FamilyUpdateWithoutRelationshipsInput = {
   familyMembers?: Prisma.FamilyMemberUpdateManyWithoutFamilyNestedInput
   albums?: Prisma.AlbumUpdateManyWithoutFamilyNestedInput
   events?: Prisma.EventUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyUncheckedUpdateWithoutRelationshipsInput = {
@@ -724,6 +828,7 @@ export type FamilyUncheckedUpdateWithoutRelationshipsInput = {
   familyMembers?: Prisma.FamilyMemberUncheckedUpdateManyWithoutFamilyNestedInput
   albums?: Prisma.AlbumUncheckedUpdateManyWithoutFamilyNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUncheckedUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyCreateWithoutOwnerInput = {
@@ -736,6 +841,7 @@ export type FamilyCreateWithoutOwnerInput = {
   relationships?: Prisma.RelationshipCreateNestedManyWithoutFamilyInput
   albums?: Prisma.AlbumCreateNestedManyWithoutFamilyInput
   events?: Prisma.EventCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyUncheckedCreateWithoutOwnerInput = {
@@ -748,6 +854,7 @@ export type FamilyUncheckedCreateWithoutOwnerInput = {
   relationships?: Prisma.RelationshipUncheckedCreateNestedManyWithoutFamilyInput
   albums?: Prisma.AlbumUncheckedCreateNestedManyWithoutFamilyInput
   events?: Prisma.EventUncheckedCreateNestedManyWithoutFamilyInput
+  activityLogs?: Prisma.ActivityLogUncheckedCreateNestedManyWithoutFamilyInput
 }
 
 export type FamilyCreateOrConnectWithoutOwnerInput = {
@@ -806,6 +913,7 @@ export type FamilyUpdateWithoutOwnerInput = {
   relationships?: Prisma.RelationshipUpdateManyWithoutFamilyNestedInput
   albums?: Prisma.AlbumUpdateManyWithoutFamilyNestedInput
   events?: Prisma.EventUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyUncheckedUpdateWithoutOwnerInput = {
@@ -818,6 +926,7 @@ export type FamilyUncheckedUpdateWithoutOwnerInput = {
   relationships?: Prisma.RelationshipUncheckedUpdateManyWithoutFamilyNestedInput
   albums?: Prisma.AlbumUncheckedUpdateManyWithoutFamilyNestedInput
   events?: Prisma.EventUncheckedUpdateManyWithoutFamilyNestedInput
+  activityLogs?: Prisma.ActivityLogUncheckedUpdateManyWithoutFamilyNestedInput
 }
 
 export type FamilyUncheckedUpdateManyWithoutOwnerInput = {
@@ -838,6 +947,7 @@ export type FamilyCountOutputType = {
   relationships: number
   albums: number
   events: number
+  activityLogs: number
 }
 
 export type FamilyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -845,6 +955,7 @@ export type FamilyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions
   relationships?: boolean | FamilyCountOutputTypeCountRelationshipsArgs
   albums?: boolean | FamilyCountOutputTypeCountAlbumsArgs
   events?: boolean | FamilyCountOutputTypeCountEventsArgs
+  activityLogs?: boolean | FamilyCountOutputTypeCountActivityLogsArgs
 }
 
 /**
@@ -885,6 +996,13 @@ export type FamilyCountOutputTypeCountEventsArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.EventWhereInput
 }
 
+/**
+ * FamilyCountOutputType without action
+ */
+export type FamilyCountOutputTypeCountActivityLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ActivityLogWhereInput
+}
+
 
 export type FamilySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -898,6 +1016,7 @@ export type FamilySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   relationships?: boolean | Prisma.Family$relationshipsArgs<ExtArgs>
   albums?: boolean | Prisma.Family$albumsArgs<ExtArgs>
   events?: boolean | Prisma.Family$eventsArgs<ExtArgs>
+  activityLogs?: boolean | Prisma.Family$activityLogsArgs<ExtArgs>
   _count?: boolean | Prisma.FamilyCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["family"]>
 
@@ -937,6 +1056,7 @@ export type FamilyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   relationships?: boolean | Prisma.Family$relationshipsArgs<ExtArgs>
   albums?: boolean | Prisma.Family$albumsArgs<ExtArgs>
   events?: boolean | Prisma.Family$eventsArgs<ExtArgs>
+  activityLogs?: boolean | Prisma.Family$activityLogsArgs<ExtArgs>
   _count?: boolean | Prisma.FamilyCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type FamilyIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -954,6 +1074,7 @@ export type $FamilyPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     relationships: Prisma.$RelationshipPayload<ExtArgs>[]
     albums: Prisma.$AlbumPayload<ExtArgs>[]
     events: Prisma.$EventPayload<ExtArgs>[]
+    activityLogs: Prisma.$ActivityLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1361,6 +1482,7 @@ export interface Prisma__FamilyClient<T, Null = never, ExtArgs extends runtime.T
   relationships<T extends Prisma.Family$relationshipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Family$relationshipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RelationshipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   albums<T extends Prisma.Family$albumsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Family$albumsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AlbumPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   events<T extends Prisma.Family$eventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Family$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  activityLogs<T extends Prisma.Family$activityLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Family$activityLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActivityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1885,6 +2007,30 @@ export type Family$eventsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.EventScalarFieldEnum | Prisma.EventScalarFieldEnum[]
+}
+
+/**
+ * Family.activityLogs
+ */
+export type Family$activityLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ActivityLog
+   */
+  select?: Prisma.ActivityLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ActivityLog
+   */
+  omit?: Prisma.ActivityLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ActivityLogInclude<ExtArgs> | null
+  where?: Prisma.ActivityLogWhereInput
+  orderBy?: Prisma.ActivityLogOrderByWithRelationInput | Prisma.ActivityLogOrderByWithRelationInput[]
+  cursor?: Prisma.ActivityLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ActivityLogScalarFieldEnum | Prisma.ActivityLogScalarFieldEnum[]
 }
 
 /**

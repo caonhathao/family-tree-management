@@ -1,4 +1,10 @@
 -- CreateEnum
+CREATE TYPE "TARGET_TYPE" AS ENUM ('ALBUM', 'FAMILY', 'EVENT_FAMILY', 'EVENT_SELF', 'USER');
+
+-- CreateEnum
+CREATE TYPE "ACTION_TYPE" AS ENUM ('UPDATE', 'DELETE', 'NEW');
+
+-- CreateEnum
 CREATE TYPE "EVENT_TYPE" AS ENUM ('DEATH_ANNIVERSARY', 'BIRTHDAY', 'WEDDING', 'OTHER');
 
 -- CreateEnum
@@ -8,7 +14,24 @@ CREATE TYPE "GENDER" AS ENUM ('MALE', 'FEMALE', 'OTHER');
 CREATE TYPE "TYPE_RELATIONSHIP" AS ENUM ('PARENT', 'SPOUSE', 'CHILD');
 
 -- CreateEnum
-CREATE TYPE "USER_ROLE" AS ENUM ('ADMIN', 'MEMBER');
+CREATE TYPE "NOTIFICATION_TYPE" AS ENUM ('NEW', 'UPDATE', 'DELETE', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "USER_ROLE" AS ENUM ('OWNER', 'EDITOR', 'VIEWER');
+
+-- CreateTable
+CREATE TABLE "activity_log" (
+    "id" UUID NOT NULL,
+    "familyId" UUID NOT NULL,
+    "userId" UUID NOT NULL,
+    "action" "ACTION_TYPE" NOT NULL,
+    "targetId" UUID NOT NULL,
+    "target" "TARGET_TYPE" NOT NULL,
+    "content" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "activity_log_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "album" (
@@ -64,7 +87,7 @@ CREATE TABLE "verification" (
 );
 
 -- CreateTable
-CREATE TABLE "eent" (
+CREATE TABLE "event" (
     "id" UUID NOT NULL,
     "familyId" UUID NOT NULL,
     "title" TEXT NOT NULL,
@@ -76,7 +99,7 @@ CREATE TABLE "eent" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "eent_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "event_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -123,10 +146,25 @@ CREATE TABLE "relationship" (
 );
 
 -- CreateTable
+CREATE TABLE "notification" (
+    "id" UUID NOT NULL,
+    "userId" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "type" "NOTIFICATION_TYPE" NOT NULL,
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "link" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "notification_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "user" (
     "id" UUID NOT NULL,
     "email" TEXT NOT NULL,
     "emailVerified" BOOLEAN NOT NULL DEFAULT false,
+    "role" "USER_ROLE" NOT NULL DEFAULT 'EDITOR',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated" TIMESTAMP(3) NOT NULL,
 
@@ -153,6 +191,8 @@ CREATE TABLE "account" (
 CREATE TABLE "user_profile" (
     "id" UUID NOT NULL,
     "userId" UUID NOT NULL,
+    "fullName" TEXT NOT NULL,
+    "dateOfBirth" TIMESTAMP(3),
     "avatar" TEXT,
     "biography" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -160,6 +200,12 @@ CREATE TABLE "user_profile" (
 
     CONSTRAINT "user_profile_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE INDEX "activity_log_familyId_idx" ON "activity_log"("familyId");
+
+-- CreateIndex
+CREATE INDEX "activity_log_userId_idx" ON "activity_log"("userId");
 
 -- CreateIndex
 CREATE INDEX "album_familyId_idx" ON "album"("familyId");
@@ -177,10 +223,10 @@ CREATE INDEX "session_userId_idx" ON "session"("userId");
 CREATE INDEX "verification_identifier_idx" ON "verification"("identifier");
 
 -- CreateIndex
-CREATE INDEX "eent_familyId_idx" ON "eent"("familyId");
+CREATE INDEX "event_familyId_idx" ON "event"("familyId");
 
 -- CreateIndex
-CREATE INDEX "eent_eventDate_idx" ON "eent"("eventDate");
+CREATE INDEX "event_eventDate_idx" ON "event"("eventDate");
 
 -- CreateIndex
 CREATE INDEX "family_ownerId_idx" ON "family"("ownerId");
@@ -207,6 +253,9 @@ CREATE INDEX "relationship_fromMemberId_toMemberId_idx" ON "relationship"("fromM
 CREATE INDEX "relationship_fromMemberId_toMemberId_type_idx" ON "relationship"("fromMemberId", "toMemberId", "type");
 
 -- CreateIndex
+CREATE INDEX "notification_userId_idx" ON "notification"("userId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
 
 -- CreateIndex
@@ -214,6 +263,12 @@ CREATE INDEX "user_email_idx" ON "user"("email");
 
 -- CreateIndex
 CREATE INDEX "account_userId_idx" ON "account"("userId");
+
+-- AddForeignKey
+ALTER TABLE "activity_log" ADD CONSTRAINT "activity_log_familyId_fkey" FOREIGN KEY ("familyId") REFERENCES "family"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "activity_log" ADD CONSTRAINT "activity_log_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "album" ADD CONSTRAINT "album_familyId_fkey" FOREIGN KEY ("familyId") REFERENCES "family"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -228,10 +283,10 @@ ALTER TABLE "photo" ADD CONSTRAINT "photo_albumId_fkey" FOREIGN KEY ("albumId") 
 ALTER TABLE "session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "eent" ADD CONSTRAINT "eent_familyId_fkey" FOREIGN KEY ("familyId") REFERENCES "family"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "event" ADD CONSTRAINT "event_familyId_fkey" FOREIGN KEY ("familyId") REFERENCES "family"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "eent" ADD CONSTRAINT "eent_createBy_fkey" FOREIGN KEY ("createBy") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "event" ADD CONSTRAINT "event_createBy_fkey" FOREIGN KEY ("createBy") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "family" ADD CONSTRAINT "family_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -247,6 +302,9 @@ ALTER TABLE "relationship" ADD CONSTRAINT "relationship_fromMemberId_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "relationship" ADD CONSTRAINT "relationship_toMemberId_fkey" FOREIGN KEY ("toMemberId") REFERENCES "family_member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "notification" ADD CONSTRAINT "notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "account" ADD CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;

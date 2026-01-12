@@ -9,6 +9,26 @@
 * 🟢 You can import this file directly.
 */
 
+export const TARGET_TYPE = {
+  ALBUM: 'ALBUM',
+  FAMILY: 'FAMILY',
+  EVENT_FAMILY: 'EVENT_FAMILY',
+  EVENT_SELF: 'EVENT_SELF',
+  USER: 'USER'
+} as const
+
+export type TARGET_TYPE = (typeof TARGET_TYPE)[keyof typeof TARGET_TYPE]
+
+
+export const ACTION_TYPE = {
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE',
+  NEW: 'NEW'
+} as const
+
+export type ACTION_TYPE = (typeof ACTION_TYPE)[keyof typeof ACTION_TYPE]
+
+
 export const EVENT_TYPE = {
   DEATH_ANNIVERSARY: 'DEATH_ANNIVERSARY',
   BIRTHDAY: 'BIRTHDAY',
@@ -37,9 +57,20 @@ export const TYPE_RELATIONSHIP = {
 export type TYPE_RELATIONSHIP = (typeof TYPE_RELATIONSHIP)[keyof typeof TYPE_RELATIONSHIP]
 
 
+export const NOTIFICATION_TYPE = {
+  NEW: 'NEW',
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE',
+  OTHER: 'OTHER'
+} as const
+
+export type NOTIFICATION_TYPE = (typeof NOTIFICATION_TYPE)[keyof typeof NOTIFICATION_TYPE]
+
+
 export const USER_ROLE = {
-  ADMIN: 'ADMIN',
-  MEMBER: 'MEMBER'
+  OWNER: 'OWNER',
+  EDITOR: 'EDITOR',
+  VIEWER: 'VIEWER'
 } as const
 
 export type USER_ROLE = (typeof USER_ROLE)[keyof typeof USER_ROLE]

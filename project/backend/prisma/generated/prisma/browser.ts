@@ -18,6 +18,11 @@ export { Prisma }
 export * as $Enums from './enums.js'
 export * from './enums.js';
 /**
+ * Model ActivityLog
+ * 
+ */
+export type ActivityLog = Prisma.ActivityLogModel
+/**
  * Model Album
  * 
  */
@@ -57,6 +62,11 @@ export type FamilyMember = Prisma.FamilyMemberModel
  * 
  */
 export type Relationship = Prisma.RelationshipModel
+/**
+ * Model Notification
+ * 
+ */
+export type Notification = Prisma.NotificationModel
 /**
  * Model User
  * 
