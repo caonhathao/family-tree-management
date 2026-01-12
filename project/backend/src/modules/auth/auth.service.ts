@@ -4,16 +4,16 @@ import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { UserProfileDto } from '../users/dto/user.dto';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { LoginBaseDto } from './dto/login.dto';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
+import { EnvConfigService } from 'src/common/config/env-config.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private configService: ConfigService,
+    private envCofig: EnvConfigService,
   ) {}
 
   async register(
@@ -29,6 +29,7 @@ export class AuthService {
             password: hashedPW,
           },
         },
+        role: data.role,
         userProfile: {
           create: {
             fullName: data.fullName,
@@ -53,33 +54,13 @@ export class AuthService {
     } else {
       const profile: UserProfileDto[] = newUser.userProfile as UserProfileDto[];
 
-      const payload = { sub: newUser.id, email: newUser.email };
-      const accessToken = await this.jwtService.signAsync(payload, {
-        secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET_KEY'),
-        expiresIn: this.configService.getOrThrow<number>(
-          'ACCESS_TOKEN_EXPIRES_IN',
-        ),
-      });
-
-      const refreshToken = await this.jwtService.signAsync(payload, {
-        secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET_KEY'),
-        expiresIn: this.configService.getOrThrow<number>(
-          'REFRESH_TOKEN_EXPIRES_IN',
-        ),
-      });
+      const tokens = await this.getTokens(newUser.id, newUser.email);
 
       await this.prisma.session.create({
         data: {
           userId: newUser.id,
-          token: refreshToken,
-          expiresAt: new Date(
-            Date.now() +
-              Number(
-                this.configService.getOrThrow<number>(
-                  'REFRESH_TOKEN_EXPIRES_IN',
-                ),
-              ),
-          ),
+          token: tokens.refreshToken,
+          expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
           userAgent: userAgent,
           ipAddress: ipAddress,
         },
@@ -92,10 +73,7 @@ export class AuthService {
           role: newUser.role,
           userProfile: profile[0],
         },
-        token: {
-          accessToken,
-          refreshToken,
-        },
+        tokens,
       };
     }
   }
@@ -136,12 +114,7 @@ export class AuthService {
       data: {
         userId: user.id,
         token: tokens.refreshToken,
-        expiresAt: new Date(
-          Date.now() +
-            Number(
-              this.configService.getOrThrow<number>('REFRESH_TOKEN_EXPIRES_IN'),
-            ),
-        ),
+        expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
         userAgent: userAgent,
         ipAddress: ipAddress,
       },
@@ -162,15 +135,15 @@ export class AuthService {
       this.jwtService.signAsync(
         { sub: userId, email },
         {
-          secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-          expiresIn: '15m',
+          secret: this.envCofig.jwtAccessKey,
+          expiresIn: this.envCofig.accessExpires,
         },
       ),
       this.jwtService.signAsync(
         { sub: userId, email },
         {
-          secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
-          expiresIn: '7d',
+          secret: this.envCofig.jwtRefreshKey,
+          expiresIn: this.envCofig.refreshExpires,
         },
       ),
     ]);

@@ -4,6 +4,7 @@ export const InvalidMessageResponse = {
   NAME_EMPTY: 't_name_empty',
   PASSWORD_MIN: 't_password_min_invalid',
   PASSWORD_INCORRECT: 't_password_incorrect',
+  ROLE_EMPTY: 't_role_empty',
   OTP_MIN: 't_otp_code_min_invalid',
   GOOGLE_TOKEN: 't_google_empty',
   CREATED: 't_created_failed',
