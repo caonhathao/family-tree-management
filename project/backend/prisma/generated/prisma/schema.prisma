@@ -1,0 +1,287 @@
+enum TARGET_TYPE {
+  ALBUM
+  FAMILY
+  EVENT_FAMILY
+  EVENT_SELF
+  USER
+}
+
+enum ACTION_TYPE {
+  UPDATE
+  DELETE
+  NEW
+}
+
+model ActivityLog {
+  id        String      @id @default(uuid()) @db.Uuid
+  familyId  String      @db.Uuid
+  family    Family      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  userId    String      @db.Uuid
+  user      User        @relation(fields: [userId], references: [id], onDelete: NoAction)
+  action    ACTION_TYPE
+  targetId  String      @db.Uuid
+  target    TARGET_TYPE
+  content   String
+  createdAt DateTime    @default(now())
+
+  @@index([familyId])
+  @@index([userId])
+  @@map("activity_log")
+}
+
+model Album {
+  id          String   @id @default(uuid()) @db.Uuid
+  familyId    String   @db.Uuid
+  family      Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  createdBy   String   @db.Uuid
+  creator     User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  photos      Photo[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([familyId])
+  @@map("album")
+}
+
+model Photo {
+  id           String  @id @default(uuid()) @db.Uuid
+  albumId      String  @db.Uuid
+  album        Album   @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  imageUrl     String
+  takenAt      String
+  locationName String
+  description  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([albumId])
+  @@map("photo")
+}
+
+model Session {
+  id             String   @id @default(uuid()) @db.Uuid
+  expiresAt      DateTime
+  token          String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ipAddress      String?
+  userAgent      String?
+  userId         String   @db.Uuid
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy String?
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Verification {
+  id         String   @id @default(uuid()) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+enum EVENT_TYPE {
+  DEATH_ANNIVERSARY
+  BIRTHDAY
+  WEDDING
+  OTHER
+}
+
+model Event {
+  id          String     @id @default(uuid()) @db.Uuid
+  familyId    String     @db.Uuid
+  family      Family     @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  eventDate   DateTime   @db.Date
+  isRecurring Boolean    @default(true)
+  type        EVENT_TYPE
+  createBy    String     @db.Uuid
+  creator     User       @relation(fields: [createBy], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([familyId])
+  @@index([eventDate])
+  @@map("event")
+}
+
+model Family {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String
+  description   String
+  ownerId       String         @db.Uuid
+  owner         User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  familyMembers FamilyMember[]
+  relationships Relationship[]
+  albums        Album[]
+  events        Event[]
+  activityLogs  ActivityLog[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([ownerId])
+  @@map("family")
+}
+
+enum GENDER {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model FamilyMember {
+  id String @id @default(uuid()) @db.Uuid()
+
+  familyId          String         @db.Uuid
+  family            Family         @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  fullName          String
+  gender            GENDER
+  dateOfBirth       DateTime
+  dateOfDeath       DateTime?
+  isAlive           Boolean        @default(false)
+  avatarUrl         String?
+  biography         Json?
+  generation        Int
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  relationshipsFrom Relationship[] @relation("FromMemberRelation")
+  relationshipsTo   Relationship[] @relation("ToMemberRelation")
+
+  @@index([familyId])
+  @@index([fullName])
+  @@map("family_member")
+}
+
+enum TYPE_RELATIONSHIP {
+  PARENT
+  SPOUSE
+  CHILD
+}
+
+model Relationship {
+  id           String            @id @default(uuid()) @db.Uuid()
+  familyId     String            @db.Uuid
+  family       Family            @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  fromMemberId String            @unique @db.Uuid
+  fromMember   FamilyMember      @relation("FromMemberRelation", fields: [fromMemberId], references: [id])
+  toMemberId   String            @unique @db.Uuid
+  toMember     FamilyMember      @relation("ToMemberRelation", fields: [toMemberId], references: [id])
+  type         TYPE_RELATIONSHIP
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([familyId])
+  @@index([fromMemberId, toMemberId])
+  @@index([fromMemberId, toMemberId, type])
+  @@map("relationship")
+}
+
+enum NOTIFICATION_TYPE {
+  NEW
+  UPDATE
+  DELETE
+  OTHER
+}
+
+model Notification {
+  id        String            @id @default(uuid()) @db.Uuid
+  userId    String            @db.Uuid
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  type      NOTIFICATION_TYPE
+  isRead    Boolean           @default(false)
+  link      String?
+  createdAt DateTime          @default(now())
+
+  @@index([userId])
+  @@map("notification")
+}
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//explain about role:
+//owner: the user who the owner of family
+//editor: the user who can edit the family tree
+//viewer: the user who only view the get notification about any change from family tree
+// all roles can get notification but only 2 roles (owner and editor) can edit graph
+
+enum USER_ROLE {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model User {
+  id            String         @id @default(uuid()) @db.Uuid
+  email         String         @unique
+  emailVerified Boolean        @default(false)
+  role          USER_ROLE      @default(OWNER)
+  createdAt     DateTime       @default(now())
+  updated       DateTime       @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  userProfile   UserProfile[]
+  families      Family[]
+  albums        Album[]
+  events        Event[]
+  activityLogs  ActivityLog[]
+  notifications Notification[]
+
+  @@index([email])
+  @@map("user")
+}
+
+//storing sign in infomation and token
+model Account {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @db.Uuid
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model UserProfile {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName    String
+  dateOfBirth DateTime?
+  avatar      String?
+  biography   Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("user_profile")
+}
