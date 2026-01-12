@@ -1,6 +1,9 @@
 node_modules/
 **/node_modules/
 
+prisma/generated/
+/prisma/generated
+
 dist/
 .next/
 out/
