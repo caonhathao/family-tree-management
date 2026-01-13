@@ -17,7 +17,7 @@ export class FamilyController {
 
   @Post()
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
-  async craeteFamily(
+  async createFamily(
     @GetCurrentUserId() userId: string,
     @Body() familyDto: FamilyDto,
   ) {

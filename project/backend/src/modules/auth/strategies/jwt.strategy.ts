@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload } from '../types/jwt-payload.type';
-import { EnvConfigService } from 'src/common/config/env-config.service';
+import { EnvConfigService } from 'src/common/config/env/env-config.service';
 import { Request } from 'express';
 
 @Injectable()

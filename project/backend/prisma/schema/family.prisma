@@ -23,15 +23,14 @@ enum GENDER {
 }
 
 model FamilyMember {
-    id String @id @default(uuid()) @db.Uuid()
-
+    id                String         @id @default(uuid()) @db.Uuid()
     familyId          String         @db.Uuid
     family            Family         @relation(fields: [familyId], references: [id], onDelete: Cascade)
     fullName          String
     gender            GENDER
     dateOfBirth       DateTime
     dateOfDeath       DateTime?
-    isAlive           Boolean        @default(false)
+    isAlive           Boolean        @default(true)
     avatarUrl         String?
     biography         Json?
     generation        Int

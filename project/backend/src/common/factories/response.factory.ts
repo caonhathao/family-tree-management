@@ -1,5 +1,5 @@
 import { ZodError } from 'zod';
-import { ApiResponse, HttpStatus } from '../constants/api';
+import { ApiResponse, HttpStatus, StatusCode } from '../constants/api';
 import { ServiceError } from '../errors/service-error';
 import {
   toTypedPrismaError,
@@ -13,6 +13,7 @@ import {
   PaginatedOptions,
   ErrorOptions,
 } from 'src/common/interfaces/response.interface';
+import { HttpException } from '@nestjs/common';
 
 export class ResponseFactory {
   static success<T = null>({
@@ -78,6 +79,24 @@ export class ResponseFactory {
         message: error.message,
         code: error.statusCode,
         errors: error.errors,
+      });
+    }
+
+    if (error instanceof HttpException) {
+      const status = error.getStatus();
+
+      const isKnownStatus = Object.values(HttpStatus).includes(
+        status as StatusCode,
+      );
+      const finalStatus: StatusCode = isKnownStatus
+        ? (status as StatusCode)
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+
+      const response = error.getResponse();
+      return ResponseFactory.error({
+        message: error.message,
+        code: finalStatus,
+        errors: typeof response === 'object' ? response : undefined,
       });
     }
 

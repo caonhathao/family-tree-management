@@ -4,16 +4,18 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from 'prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { envValidationSchema } from './common/env/env';
-import config from './common/config/config';
-import { EnvConfigService } from './common/config/env-config.service';
-import { EnvConfigModule } from './common/config/env-config.module';
+import { envValidationSchema } from './common/config/env/env';
+import config from './common/config/env/config';
+import { EnvConfigService } from './common/config/env/env-config.service';
 import { FamilyModule } from './modules/family/family.module';
+import { EnvConfigModule } from './common/config/env/env-config.module';
+import { MemberModule } from './modules/members/members.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      expandVariables: true,
       envFilePath: '.env',
       load: [config],
       validationSchema: envValidationSchema,
@@ -22,6 +24,7 @@ import { FamilyModule } from './modules/family/family.module';
     PrismaModule,
     AuthModule,
     FamilyModule,
+    MemberModule,
   ],
   controllers: [AppController],
   providers: [AppService, EnvConfigService],

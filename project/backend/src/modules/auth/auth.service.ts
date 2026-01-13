@@ -10,7 +10,7 @@ import { UserProfileDto } from '../users/dto/user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { LoginBaseDto } from './dto/login.dto';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
-import { EnvConfigService } from 'src/common/config/env-config.service';
+import { EnvConfigService } from 'src/common/config/env/env-config.service';
 
 @Injectable()
 export class AuthService {
