@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
@@ -53,8 +57,12 @@ export class AuthService {
       throw new Error('can not create new user profile');
     } else {
       const profile: UserProfileDto[] = newUser.userProfile as UserProfileDto[];
-
-      const tokens = await this.getTokens(newUser.id, newUser.email);
+      const payload = {
+        sub: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
+      };
+      const tokens = await this.getTokens(payload);
 
       await this.prisma.session.create({
         data: {
@@ -108,8 +116,8 @@ export class AuthService {
         );
       }
     }
-
-    const tokens = await this.getTokens(user.id, user.email);
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    const tokens = await this.getTokens(payload);
     await this.prisma.session.create({
       data: {
         userId: user.id,
@@ -130,17 +138,81 @@ export class AuthService {
     };
   }
 
-  private async getTokens(userId: string, email: string) {
+  async refresh(userId: string, token: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+        email: true,
+        userProfile: {
+          select: {
+            fullName: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new ForbiddenException(InvalidMessageResponse.USER_NOT_FOUND);
+    }
+    const session = await this.prisma.session.findFirst({
+      where: {
+        userId: user?.id,
+      },
+      select: {
+        id: true,
+        token: true,
+        expiresAt: true,
+      },
+    });
+
+    if (!session || session.expiresAt < new Date()) {
+      if (session)
+        await this.prisma.session.delete({ where: { id: session.id } });
+      throw new ForbiddenException(InvalidMessageResponse.SESSION_BAD_ACCESS);
+    }
+
+    if (session?.token === token) {
+      const payload = {
+        sub: user.id,
+        email: user.id,
+        role: user.role,
+      };
+
+      const tokens = await this.getTokens(payload);
+
+      await this.prisma.session.update({
+        where: { id: session.id },
+        data: {
+          token: tokens.refreshToken,
+          expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+        },
+      });
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          userProfile: user.userProfile[0],
+        },
+        tokens,
+      };
+    }
+  }
+
+  private async getTokens(payload: Record<string, string>) {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(
-        { sub: userId, email },
+        { payload },
         {
           secret: this.envCofig.jwtAccessKey,
           expiresIn: this.envCofig.accessExpires,
         },
       ),
       this.jwtService.signAsync(
-        { sub: userId, email },
+        { payload },
         {
           secret: this.envCofig.jwtRefreshKey,
           expiresIn: this.envCofig.refreshExpires,

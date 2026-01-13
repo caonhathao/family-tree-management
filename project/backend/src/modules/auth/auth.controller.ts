@@ -1,11 +1,23 @@
 // Contains important business logic:
 
-import { Body, Controller, Ip, Post, Headers } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Ip,
+  Post,
+  Headers,
+  HttpCode,
+  UseGuards,
+} from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { AuthService } from './auth.service';
 import { LoginBaseDto } from './dto/login.dto';
+import { HttpStatus } from 'src/common/constants/api';
+import { RtGuard } from './guards/auth.guard';
+import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
+import { GetCurrentUser } from 'src/common/decorators/get-user.decorator';
 
 // Verifies the username and password.
 
@@ -16,6 +28,16 @@ import { LoginBaseDto } from './dto/login.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('refresh')
+  @UseGuards(RtGuard)
+  @HttpCode(HttpStatus.OK)
+  async refresh(
+    @GetCurrentUserId() userId: string,
+    @GetCurrentUser('refreshToken') refreshToken: string,
+  ) {
+    return this.authService.refresh(userId, refreshToken);
+  }
 
   @Post('register')
   async register(
