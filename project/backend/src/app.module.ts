@@ -8,6 +8,7 @@ import { envValidationSchema } from './common/env/env';
 import config from './common/config/config';
 import { EnvConfigService } from './common/config/env-config.service';
 import { EnvConfigModule } from './common/config/env-config.module';
+import { FamilyModule } from './modules/family/family.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { EnvConfigModule } from './common/config/env-config.module';
     EnvConfigModule,
     PrismaModule,
     AuthModule,
+    FamilyModule,
   ],
   controllers: [AppController],
   providers: [AppService, EnvConfigService],
