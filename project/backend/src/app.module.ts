@@ -10,6 +10,7 @@ import { EnvConfigService } from './common/config/env/env-config.service';
 import { FamilyModule } from './modules/family/family.module';
 import { EnvConfigModule } from './common/config/env/env-config.module';
 import { MemberModule } from './modules/members/members.module';
+import { CloudinaryModule } from './common/config/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MemberModule } from './modules/members/members.module';
     AuthModule,
     FamilyModule,
     MemberModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService, EnvConfigService],
