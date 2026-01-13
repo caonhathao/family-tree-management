@@ -31,4 +31,9 @@ export type ValidMessage =
 
 export const Exception = {
   PEMRISSION: 't_need_role_permission',
+  FILE_MISSING: 't_file_missing',
+  FILE_BUFFER_MISSING: 't_file_buffer_missing',
+  UPLOAD_FAILED: 't_upload_failed',
+  URL_MISSING: 't_url_asset_missing',
+  ID_MISSING: 't_id_missing',
 } as const;
