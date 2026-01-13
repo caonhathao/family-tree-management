@@ -9,4 +9,14 @@ export default () => ({
     accessExpires: Number(process.env.ACCESS_TOKEN_EXPIRES_IN),
     refreshExpires: Number(process.env.REFRESH_TOKEN_EXPIRES_IN),
   },
+  maxFileSize: Number(process.env.MAX_FILE_SIZE),
+  cloudinary: {
+    folderAlbum: process.env.FOLDER_ALBUM,
+    folderUser: process.env.FOLDER_USER,
+    folderFamily: process.env.FOLDER_FAMILY,
+    cloudName: process.env.CLOUDINARY_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
+    url: process.env.CLOUDINARY_URL,
+  },
 });

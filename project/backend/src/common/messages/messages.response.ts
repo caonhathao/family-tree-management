@@ -7,6 +7,7 @@ export const InvalidMessageResponse = {
   ROLE_EMPTY: 't_role_empty',
   DESC_EMPTY: 't_description_empty',
   ID_EMPTY: 't_id_empty',
+  GENDER_EMPTY: 't_gender_empty',
   OTP_MIN: 't_otp_code_min_invalid',
   GOOGLE_TOKEN: 't_google_empty',
   CREATED: 't_created_failed',

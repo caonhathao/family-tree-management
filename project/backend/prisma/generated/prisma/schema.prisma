@@ -147,7 +147,7 @@ model FamilyMember {
   gender            GENDER
   dateOfBirth       DateTime
   dateOfDeath       DateTime?
-  isAlive           Boolean        @default(false)
+  isAlive           Boolean        @default(true)
   avatarUrl         String?
   biography         Json?
   generation        Int
