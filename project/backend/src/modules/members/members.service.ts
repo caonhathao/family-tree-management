@@ -147,4 +147,15 @@ export class MemberService {
       },
     });
   }
+  async remove(memberId: string) {
+    const member = await this.prisma.familyMember.count({
+      where: { id: memberId },
+    });
+    if (member === 0) {
+      throw new ForbiddenException(Exception.NOT_EXIST);
+    }
+    return await this.prisma.familyMember.delete({
+      where: { id: memberId },
+    });
+  }
 }

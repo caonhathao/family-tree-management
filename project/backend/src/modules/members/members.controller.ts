@@ -11,6 +11,7 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  Delete,
 } from '@nestjs/common';
 import { AtGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -76,11 +77,28 @@ export class MemberController {
 
   @Get(':id')
   async getOne(@Param('id') memberId: string) {
-    return await this.memberService.getOne(memberId);
+    const data = await this.memberService.getOne(memberId);
+    return ResponseFactory.success({
+      data: data,
+      message: ValidMessageResponse.GETTED,
+    });
   }
 
   @Get(':familyId')
   async getAll(@Param('familyId') familyId: string) {
-    return await this.memberService.getAll(familyId);
+    const data = await this.memberService.getAll(familyId);
+    return ResponseFactory.success({
+      data: data,
+      message: ValidMessageResponse.GETTED,
+    });
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') memberId: string) {
+    const data = await this.memberService.remove(memberId);
+    return ResponseFactory.success({
+      data: data,
+      message: ValidMessageResponse.DELETED,
+    });
   }
 }
