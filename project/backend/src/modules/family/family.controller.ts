@@ -18,6 +18,7 @@ import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AtGuard } from '../auth/guards/auth.guard';
 import { FamilyUpdateDto } from './dto/update-family.dto';
+import { GetFamilyDto } from './dto/get-family.dto';
 
 @Controller('family')
 @UseGuards(AtGuard, RolesGuard)
@@ -55,7 +56,10 @@ export class FamilyController {
     @GetCurrentUserId() userId: string,
     @Param('id') familyId: string,
   ) {
-    const family = await this.familyService.get(familyId, userId);
+    const family: GetFamilyDto | null = await this.familyService.get(
+      familyId,
+      userId,
+    );
     return ResponseFactory.success({
       data: family,
       message: ValidMessageResponse.GETTED,
