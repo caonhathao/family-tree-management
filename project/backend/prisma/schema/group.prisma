@@ -1,0 +1,14 @@
+model GroupFamily {
+    id          String   @id @default(uuid()) @db.Uuid()
+    name        String
+    description String?
+    memberId    String   @db.Uuid()
+    member      User     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+    familyId    String?  @db.Uuid()
+    family      Family?  @relation(fields: [familyId], references: [id], onDelete: SetNull)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    @@index([memberId])
+    @@map("group_family")
+}

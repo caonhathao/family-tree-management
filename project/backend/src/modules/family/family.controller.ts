@@ -1,4 +1,13 @@
-import { Body, Controller, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Patch,
+  Post,
+  Get,
+  UseGuards,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { FamilyService } from './family.service';
 import { FamilyDto } from './dto/create-family.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -30,11 +39,37 @@ export class FamilyController {
 
   @Patch()
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
-  async updateFamily(@Body() familyUpdate: FamilyUpdateDto) {
-    const family = await this.familyService.update(familyUpdate);
+  async updateFamily(
+    @GetCurrentUserId() userId: string,
+    @Body() familyUpdate: FamilyUpdateDto,
+  ) {
+    const family = await this.familyService.update(familyUpdate, userId);
     return ResponseFactory.success({
       data: family,
       message: ValidMessageResponse.UPDATED,
+    });
+  }
+
+  @Get(':id')
+  async getFamily(
+    @GetCurrentUserId() userId: string,
+    @Param('id') familyId: string,
+  ) {
+    const family = await this.familyService.get(familyId, userId);
+    return ResponseFactory.success({
+      data: family,
+      message: ValidMessageResponse.GETTED,
+    });
+  }
+
+  @Delete(':id')
+  async deleteFamily(
+    @GetCurrentUserId() userId: string,
+    @Param('id') familyId: string,
+  ) {
+    await this.familyService.delete(familyId, userId);
+    return ResponseFactory.success({
+      message: ValidMessageResponse.DELETED,
     });
   }
 }

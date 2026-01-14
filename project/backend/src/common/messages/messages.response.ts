@@ -25,6 +25,7 @@ export const ValidMessageResponse = {
   CREATED: 't_created_success',
   UPDATED: 't_updated_success',
   GETTED: 't_getted_success',
+  DELETED: ' t_deleted_success',
 } as const;
 
 export type ValidMessage =
