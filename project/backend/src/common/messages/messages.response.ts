@@ -24,6 +24,7 @@ export const ValidMessageResponse = {
   LOGIN: 't_login_success',
   CREATED: 't_created_success',
   UPDATED: 't_updated_success',
+  GETTED: 't_getted_success',
 } as const;
 
 export type ValidMessage =
@@ -36,4 +37,5 @@ export const Exception = {
   UPLOAD_FAILED: 't_upload_failed',
   URL_MISSING: 't_url_asset_missing',
   ID_MISSING: 't_id_missing',
+  NOT_EXIST: 't_data_not_exist',
 } as const;
