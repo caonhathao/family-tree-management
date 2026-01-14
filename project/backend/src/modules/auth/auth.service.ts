@@ -6,7 +6,7 @@ import {
 import { PrismaService } from 'prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
-import { UserProfileDto } from '../users/dto/user.dto';
+import { UserProfileDto } from '../users/dto/create-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { LoginBaseDto } from './dto/login.dto';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
@@ -28,12 +28,11 @@ export class AuthService {
     const newUser = await this.prisma.user.create({
       data: {
         email: data.email,
-        accounts: {
+        account: {
           create: {
             password: hashedPW,
           },
         },
-        role: data.role,
         userProfile: {
           create: {
             fullName: data.fullName,
@@ -43,7 +42,6 @@ export class AuthService {
       select: {
         id: true,
         email: true,
-        role: true,
         userProfile: {
           select: {
             fullName: true,
@@ -56,11 +54,10 @@ export class AuthService {
     if (!newUser.userProfile) {
       throw new Error('can not create new user profile');
     } else {
-      const profile: UserProfileDto[] = newUser.userProfile as UserProfileDto[];
+      const profile: UserProfileDto = newUser.userProfile as UserProfileDto;
       const payload = {
         sub: newUser.id,
         email: newUser.email,
-        role: newUser.role,
       };
       const tokens = await this.getTokens(payload);
 
@@ -78,8 +75,7 @@ export class AuthService {
         user: {
           id: newUser.id,
           email: newUser.email,
-          role: newUser.role,
-          userProfile: profile[0],
+          userProfile: profile,
         },
         tokens,
       };
@@ -94,8 +90,12 @@ export class AuthService {
       where: {
         email: data.email,
       },
-      include: {
-        accounts: true,
+      select: {
+        id: true,
+        email: true,
+        account: {
+          select: { password: true },
+        },
         userProfile: {
           select: {
             fullName: true,
@@ -104,19 +104,26 @@ export class AuthService {
         },
       },
     });
-
-    const account = user?.accounts[0];
-    if (!user || !account?.password) {
-      throw new UnauthorizedException(InvalidMessageResponse.EMAIL_INCORRECT);
-    } else {
-      const isPWValid = await bcrypt.compare(data.password, account?.password);
-      if (!isPWValid) {
-        throw new UnauthorizedException(
-          InvalidMessageResponse.PASSWORD_INCORRECT,
+    if (!user)
+      throw new UnauthorizedException(InvalidMessageResponse.USER_NOT_FOUND);
+    if (user?.account) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (!user.account?.password) {
+        throw new UnauthorizedException(InvalidMessageResponse.EMAIL_INCORRECT);
+      } else {
+        const isPWValid = await bcrypt.compare(
+          data.password,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          user.account?.password as string,
         );
+        if (!isPWValid) {
+          throw new UnauthorizedException(
+            InvalidMessageResponse.PASSWORD_INCORRECT,
+          );
+        }
       }
     }
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { sub: user.id, email: user.email };
     const tokens = await this.getTokens(payload);
     await this.prisma.session.create({
       data: {
@@ -131,8 +138,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
-        userProfile: user.userProfile[0],
+        userProfile: user.userProfile as UserProfileDto,
       },
       tokens,
     };
@@ -143,7 +149,6 @@ export class AuthService {
       where: { id: userId },
       select: {
         id: true,
-        role: true,
         email: true,
         userProfile: {
           select: {
@@ -178,7 +183,6 @@ export class AuthService {
       const payload = {
         sub: user.id,
         email: user.id,
-        role: user.role,
       };
 
       const tokens = await this.getTokens(payload);
@@ -194,8 +198,7 @@ export class AuthService {
         user: {
           id: user.id,
           email: user.email,
-          role: user.role,
-          userProfile: user.userProfile[0],
+          userProfile: user.userProfile,
         },
         tokens,
       };
