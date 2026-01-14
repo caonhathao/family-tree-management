@@ -25,6 +25,7 @@ model User {
     events        Event[]
     activityLogs  ActivityLog[]
     notifications Notification[]
+    groups        GroupFamily[]
 
     @@index([email])
     @@map("user")

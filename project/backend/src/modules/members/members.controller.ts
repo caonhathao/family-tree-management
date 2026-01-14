@@ -94,10 +94,11 @@ export class MemberController {
   }
 
   @Delete(':id')
+  @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   async remove(@Param('id') memberId: string) {
-    const data = await this.memberService.remove(memberId);
+    await this.memberService.remove(memberId);
     return ResponseFactory.success({
-      data: data,
+      data: null,
       message: ValidMessageResponse.DELETED,
     });
   }
