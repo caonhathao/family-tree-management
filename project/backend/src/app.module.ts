@@ -11,6 +11,7 @@ import { FamilyModule } from './modules/family/family.module';
 import { EnvConfigModule } from './common/config/env/env-config.module';
 import { MemberModule } from './modules/members/members.module';
 import { CloudinaryModule } from './common/config/cloudinary/cloudinary.module';
+import { RelationshipsModule } from './modules/relationships/relationships.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CloudinaryModule } from './common/config/cloudinary/cloudinary.module';
     FamilyModule,
     MemberModule,
     CloudinaryModule,
+    RelationshipsModule,
   ],
   controllers: [AppController],
   providers: [AppService, EnvConfigService],
