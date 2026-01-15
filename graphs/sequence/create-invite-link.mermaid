@@ -1,0 +1,93 @@
+sequenceDiagram
+    autonumber
+    participant Leader as Group Leader
+    participant LeaderFrontend as Leader Frontend
+    participant InviteController
+    participant InviteService
+    participant GroupFamilyController
+    participant GroupFamilyService
+    participant Database
+    participant JWT
+    participant NewMember as New Member
+    participant MemberFrontend as Member Frontend
+    Note over Leader,JWT: 1. Leader Authentication
+    Leader->>LeaderFrontend: Login with credentials
+    LeaderFrontend->>JWT: POST /auth/login-base
+    JWT-->>LeaderFrontend: access_token, refresh_token
+    LeaderFrontend-->>Leader: Authenticated as leader
+    Note over Leader,Database: 2. Create Invite Link (IMPLEMENTED)
+    Leader->>LeaderFrontend: Request invite for group
+    LeaderFrontend->>InviteController: POST /invite<br/>Authorization: Bearer {access_token}<br/>Body: {groupId, expiresAt}
+    InviteController->>JWT: validate token
+    JWT-->>InviteController: userId from payload
+    InviteController->>InviteService: createInvite(userId, CreateInviteDto)
+    
+    InviteService->>Database: find user by id
+    Database-->>InviteService: user exists
+    
+    InviteService->>Database: find group by groupId
+    Database-->>InviteService: group exists
+    
+    InviteService->>Database: check existing non-expired invite
+    alt Existing invite found
+        Database-->>InviteService: {token}
+        InviteService->>InviteService: create invite link: {domain}?token={token}
+        InviteService-->>InviteController: {inviteLink}
+    else No existing invite
+        InviteService->>InviteService: generate token: base64(userId + groupId + timestamp)
+        InviteService->>InviteService: set expiration: now + 24 hours
+        InviteService->>Database: create Invite<br/>{token, groupId, senderId, expiresAt}
+        Database-->>InviteService: invite created
+        InviteService->>InviteService: create invite link: {domain}?token={token}
+        InviteService-->>InviteController: {inviteLink}
+    end
+    
+    InviteController-->>LeaderFrontend: {inviteLink}
+    LeaderFrontend-->>Leader: Share invite link
+    Note over NewMember,JWT: 3. New Member Authentication
+    NewMember->>MemberFrontend: Login with credentials
+    MemberFrontend->>JWT: POST /auth/login-base
+    JWT-->>MemberFrontend: access_token, refresh_token
+    MemberFrontend-->>NewMember: Authenticated
+    Note over NewMember,Database: 4. Join Group from Invite Link (IMPLEMENTED)
+    NewMember->>MemberFrontend: Click invite link {domain}?token={token}
+    MemberFrontend->>MemberFrontend: Extract token from URL
+    MemberFrontend->>GroupFamilyController: POST /group-family/join/{token}<br/>Authorization: Bearer {access_token}
+    GroupFamilyController->>JWT: validate token
+    JWT-->>GroupFamilyController: userId from payload
+    GroupFamilyController->>GroupFamilyService: joinGroup(token, userId)
+    
+    GroupFamilyService->>Database: find invite by token
+    alt Invite not found
+        Database-->>GroupFamilyService: null
+        GroupFamilyService-->>GroupFamilyController: NotFoundException
+        GroupFamilyController-->>MemberFrontend: 404 error
+        MemberFrontend-->>NewMember: "Invite not found"
+    else Invite found
+        Database-->>GroupFamilyService: {groupId, expiresAt}
+        
+        alt Invite expired
+            GroupFamilyService->>GroupFamilyService: check new Date() > expiresAt
+            GroupFamilyService-->>GroupFamilyController: ForbiddenException
+            GroupFamilyController-->>MemberFrontend: 403 error
+            MemberFrontend-->>NewMember: "Invite expired"
+        else Valid invite
+            GroupFamilyService->>Database: find user by userId
+            Database-->>GroupFamilyService: user exists
+            
+            GroupFamilyService->>Database: check if user already member
+            alt User already member
+                Database-->>GroupFamilyService: member exists
+                GroupFamilyService-->>GroupFamilyController: ForbiddenException
+                GroupFamilyController-->>MemberFrontend: 409 conflict
+                MemberFrontend-->>NewMember: "Already a member"
+            else New user
+                GroupFamilyService->>Database: create GroupMember<br/>{groupId, memberId, role: VIEWER, isLeader: false}
+                Database-->>GroupFamilyService: new member created
+                
+                GroupFamilyService-->>GroupFamilyController: success response
+                GroupFamilyController-->>MemberFrontend: {group: details}
+                MemberFrontend-->>NewMember: "Successfully joined!"
+            end
+        end
+    end
