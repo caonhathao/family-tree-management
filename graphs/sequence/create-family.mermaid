@@ -1,0 +1,51 @@
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant AuthController
+    participant AuthService
+    participant FamilyController
+    participant FamilyService
+    participant Database
+    participant JWT
+    participant RolesGuard
+    Note over User,JWT: 1. Authentication Phase
+    User->>Frontend: Login with credentials
+    Frontend->>AuthController: POST /auth/login-base
+    AuthController->>AuthService: validateUser(credentials)
+    AuthService->>Database: find user by email
+    Database-->>AuthService: user data
+    AuthService-->>AuthController: validated user
+    AuthController->>AuthService: generate tokens(user)
+    AuthService-->>AuthController: access_token, refresh_token
+    AuthController-->>Frontend: JWT tokens
+    Frontend-->>User: Authentication successful
+    Note over User,RolesGuard: 2. Family Creation Phase
+    User->>Frontend: Create family (name, description)
+    Frontend->>FamilyController: POST /family<br/>Authorization: Bearer {access_token}
+    FamilyController->>JWT: validate token
+    JWT-->>FamilyController: userId from payload
+    FamilyController->>RolesGuard: check user role
+    RolesGuard->>Database: verify user role (EDITOR/OWNER)
+    Database-->>RolesGuard: user role confirmed
+    RolesGuard-->>FamilyController: role validation passed
+    FamilyController->>FamilyService: create(userId, familyData)
+    
+    FamilyService->>Database: create Family<br/>{name, description, ownerId: userId}
+    Database-->>FamilyService: newFamily (id, name, description, owner)
+    
+    FamilyService-->>FamilyController: family created
+    FamilyController-->>Frontend: success response with family data
+    Frontend-->>User: Family created successfully
+    Note over User,Database: 3. Ownership Result
+    Database-->>FamilyService: User is now:<br/>- Family Owner<br/>- Can manage family data
+    FamilyService-->>FamilyController: ownership confirmed
+    FamilyController-->>Frontend: ownership status
+    Frontend-->>User: You are now the owner of the family
+    Note over User,Database: 4. Optional: Create Associated Group
+    User->>Frontend: Create group for family collaboration
+    Frontend->>GroupFamilyController: POST /group-family<br/>(optional, separate flow)
+    GroupFamilyController->>Database: create GroupFamily
+    GroupFamilyController->>Database: create GroupMember<br/>{role: OWNER, isLeader: true}
+    Database-->>GroupFamilyController: group created
+    GroupFamilyController-->>Frontend: group created
+    Frontend-->>User: Group created for family

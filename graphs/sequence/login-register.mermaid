@@ -1,0 +1,70 @@
+sequenceDiagram
+    participant Client
+    participant AuthController
+    participant AuthService
+    participant PrismaService
+    participant Database
+    participant Bcrypt
+    participant JwtService
+    Note over Client,Database: User Registration Flow
+    
+    Client->>AuthController: POST /auth/register<br/>{email, password, fullName}
+    AuthController->>AuthService: register(data, {ipAddress, userAgent})
+    
+    AuthService->>Bcrypt: hash(password, 10)
+    Bcrypt-->>AuthService: hashedPassword
+    
+    AuthService->>PrismaService: user.create({<br/>  email,<br/>  account: {create: {password: hashedPassword}},<br/>  userProfile: {create: {fullName}}<br/>})
+    PrismaService->>Database: INSERT INTO user<br/>INSERT INTO account<br/>INSERT INTO user_profile
+    Database-->>PrismaService: newUser
+    PrismaService-->>AuthService: user with profile
+    
+    AuthService->>AuthService: create payload {sub: userId, email}
+    AuthService->>JwtService: signAsync(payload, {secret: accessKey})
+    JwtService-->>AuthService: accessToken
+    AuthService->>JwtService: signAsync(payload, {secret: refreshKey})
+    JwtService-->>AuthService: refreshToken
+    
+    AuthService->>PrismaService: session.create({<br/>  userId,<br/>  token: refreshToken,<br/>  expiresAt,<br/>  userAgent,<br/>  ipAddress<br/>})
+    PrismaService->>Database: INSERT INTO session
+    Database-->>PrismaService: session
+    PrismaService-->>AuthService: session
+    
+    AuthService-->>AuthController: {user, tokens}
+    AuthController-->>Client: 201 Created<br/>{user: {id, email, userProfile}, tokens}
+    Note over Client,Database: User Login Flow
+    
+    Client->>AuthController: POST /auth/login-base<br/>{email, password}
+    AuthController->>AuthService: loginBase(data, {ipAddress, userAgent})
+    
+    AuthService->>PrismaService: user.findUnique({<br/>  where: {email},<br/>  select: {id, email, account: {select: {password}}, userProfile}<br/>})
+    PrismaService->>Database: SELECT user, account, user_profile<br/>WHERE email = ?
+    Database-->>PrismaService: user with account
+    PrismaService-->>AuthService: user
+    
+    alt User not found
+        AuthService-->>AuthController: 401 Unauthorized
+        AuthController-->>Client: 401 Unauthorized
+    else User found
+        AuthService->>Bcrypt: compare(inputPassword, hashedPassword)
+        Bcrypt-->>AuthService: isValid
+        
+        alt Invalid password
+            AuthService-->>AuthController: 401 Unauthorized
+            AuthController-->>Client: 401 Unauthorized
+        else Valid password
+            AuthService->>AuthService: create payload {sub: userId, email}
+            AuthService->>JwtService: signAsync(payload, {secret: accessKey})
+            JwtService-->>AuthService: accessToken
+            AuthService->>JwtService: signAsync(payload, {secret: refreshKey})
+            JwtService-->>AuthService: refreshToken
+            
+            AuthService->>PrismaService: session.create({<br/>  userId,<br/>  token: refreshToken,<br/>  expiresAt,<br/>  userAgent,<br/>  ipAddress<br/>})
+            PrismaService->>Database: INSERT INTO session
+            Database-->>PrismaService: session
+            PrismaService-->>AuthService: session
+            
+            AuthService-->>AuthController: {user, tokens}
+            AuthController-->>Client: 200 OK<br/>{user: {id, email, userProfile}, tokens}
+        end
+    end

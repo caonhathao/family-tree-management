@@ -1,0 +1,44 @@
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant AuthController
+    participant AuthService
+    participant GroupFamilyController
+    participant GroupFamilyService
+    participant Database
+    participant JWT
+    Note over User,JWT: 1. Authentication Phase
+    User->>Frontend: Login with credentials
+    Frontend->>AuthController: POST /auth/login-base
+    AuthController->>AuthService: validateUser(credentials)
+    AuthService->>Database: find user by email
+    Database-->>AuthService: user data
+    AuthService-->>AuthController: validated user
+    AuthController->>AuthService: generate tokens(user)
+    AuthService-->>AuthController: access_token, refresh_token
+    AuthController-->>Frontend: JWT tokens
+    Frontend-->>User: Authentication successful
+    Note over User,Database: 2. Group Creation Phase
+    User->>Frontend: Create group (name, description, role)
+    Frontend->>GroupFamilyController: POST /group-family<br/>Authorization: Bearer {access_token}
+    GroupFamilyController->>JWT: validate token
+    JWT-->>GroupFamilyController: userId from payload
+    GroupFamilyController->>GroupFamilyService: create(userId, groupData)
+    
+    GroupFamilyService->>Database: find user by id
+    Database-->>GroupFamilyService: user exists
+    
+    GroupFamilyService->>Database: create GroupFamily
+    Database-->>GroupFamilyService: newGroup (id, name, description)
+    
+    GroupFamilyService->>Database: create GroupMember<br/>{groupId, memberId: userId, role: OWNER, isLeader: true}
+    Database-->>GroupFamilyService: groupMember created
+    
+    GroupFamilyService-->>GroupFamilyController: groupFamily created
+    GroupFamilyController-->>Frontend: success response with group data
+    Frontend-->>User: Group created successfully
+    Note over User,Database: 3. Automatic Membership Result
+    Database-->>GroupFamilyService: User is now:<br/>- Group Member<br/>- Role: OWNER<br/>- Leader: true
+    GroupFamilyService-->>GroupFamilyController: membership confirmed
+    GroupFamilyController-->>Frontend: membership status
+    Frontend-->>User: You are now the owner and leader of the group
