@@ -59,4 +59,16 @@ export class GroupFamilyController {
       message: ValidMessageResponse.GETTED,
     });
   }
+
+  @Post('join/:code')
+  async joinGroupFamily(
+    @GetCurrentUserId() userId: string,
+    @Param('code') code: string,
+  ) {
+    const groupFamily = await this.groupFamilyService.joinGroup(code, userId);
+    return ResponseFactory.success({
+      data: groupFamily,
+      message: ValidMessageResponse.UPDATED,
+    });
+  }
 }

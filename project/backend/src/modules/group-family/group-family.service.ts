@@ -16,7 +16,7 @@ export class GroupFamilyService {
   async create(userId: string, data: CreateGroupFamilyDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORISEZD);
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
     }
 
     const newGroup = await this.prisma.groupFamily.create({
@@ -40,7 +40,7 @@ export class GroupFamilyService {
   async update(userId: string, groupId: string, data: UpdateGroupFamilyDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORISEZD);
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
     }
 
     const groupMember = await this.prisma.groupMember.findFirst({
@@ -70,11 +70,10 @@ export class GroupFamilyService {
 
     return updatedGroup;
   }
-
   async getOne(userId: string, groupId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORISEZD);
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
     }
 
     const group = await this.prisma.groupFamily.findFirst({
@@ -106,11 +105,10 @@ export class GroupFamilyService {
     });
     return group;
   }
-
   async getAll(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORISEZD);
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
     }
 
     const groups = await this.prisma.groupFamily.findMany({
@@ -125,11 +123,10 @@ export class GroupFamilyService {
     });
     return groups;
   }
-
   async delete(userId: string, groupId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORISEZD);
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
     }
 
     const groupMember = await this.prisma.groupMember.findFirst({
@@ -152,6 +149,56 @@ export class GroupFamilyService {
 
     return await this.prisma.groupFamily.delete({
       where: { id: groupId },
+    });
+  }
+  async joinGroup(token: string, getterId: string) {
+    //check token valid
+    const invite = await this.prisma.invite.findUnique({
+      where: { token },
+      select: {
+        groupId: true,
+        expiresAt: true,
+      },
+    });
+    if (!invite) {
+      throw new NotFoundException(Exception.NOT_EXIST);
+    }
+
+    if (new Date() > invite.expiresAt) {
+      throw new ForbiddenException(Exception.EXPIRED);
+    }
+
+    const getter = await this.prisma.user.findFirst({
+      where: { id: getterId },
+      select: {
+        id: true,
+      },
+    });
+    if (!getter) {
+      throw new NotFoundException(Exception.UNAUTHORIZED);
+    }
+    //check if getter is already in the group
+    const existedGetter = await this.prisma.groupMember.findFirst({
+      where: {
+        memberId: getterId,
+        groupId: invite.groupId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (existedGetter) {
+      throw new ForbiddenException(Exception.EXISTED);
+    }
+
+    return await this.prisma.groupMember.create({
+      data: {
+        groupId: invite.groupId,
+        memberId: getterId,
+        role: USER_ROLE.VIEWER,
+        isLeader: false,
+      },
     });
   }
 }

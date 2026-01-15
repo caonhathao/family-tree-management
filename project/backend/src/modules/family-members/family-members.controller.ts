@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { AtGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
-import { MemberService } from './members.service';
+import { MemberService } from './family-members.service';
 import { USER_ROLE } from '@prisma/client';
 import { MemberDto } from './dto/create-members.dto';
 import { ResponseFactory } from 'src/common/factories/response.factory';
