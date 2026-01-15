@@ -24,7 +24,7 @@ import { FamilyUpdateDto } from './dto/update-family.dto';
 export class FamilyController {
   constructor(private readonly familyService: FamilyService) {}
 
-  @Post()
+  @Post(':groupId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   async createFamily(
     @GetCurrentUserId() userId: string,
@@ -37,7 +37,7 @@ export class FamilyController {
     });
   }
 
-  @Patch()
+  @Patch(':groupId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   async updateFamily(
     @GetCurrentUserId() userId: string,
@@ -62,7 +62,8 @@ export class FamilyController {
     });
   }
 
-  @Delete(':id')
+  @Delete(':id/:groupId')
+  @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   async deleteFamily(
     @GetCurrentUserId() userId: string,
     @Param('id') familyId: string,

@@ -30,7 +30,7 @@ const maxFileSize = Number(process.env.MAX_FILE_SIZE) || 2;
 export class MemberController {
   constructor(private readonly memberService: MemberService) {}
 
-  @Post()
+  @Post(':groupId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @UseInterceptors(FileInterceptor('avatar'))
   async createMember(
@@ -52,7 +52,7 @@ export class MemberController {
       message: ValidMessageResponse.CREATED,
     });
   }
-  @Patch()
+  @Patch(':groupId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @UseInterceptors(FileInterceptor('avatar'))
   async updateMember(
@@ -93,7 +93,7 @@ export class MemberController {
     });
   }
 
-  @Delete(':id')
+  @Delete(':id/:groupid')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   async remove(@Param('id') memberId: string) {
     await this.memberService.remove(memberId);

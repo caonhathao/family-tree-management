@@ -107,14 +107,13 @@ export class AuthService {
     if (!user)
       throw new UnauthorizedException(InvalidMessageResponse.USER_NOT_FOUND);
     if (user?.account) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (!user.account?.password) {
         throw new UnauthorizedException(InvalidMessageResponse.EMAIL_INCORRECT);
       } else {
         const isPWValid = await bcrypt.compare(
           data.password,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          user.account?.password as string,
+
+          user.account?.password,
         );
         if (!isPWValid) {
           throw new UnauthorizedException(

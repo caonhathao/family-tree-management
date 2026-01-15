@@ -30,6 +30,7 @@ model GroupMember {
     createdAt DateTime    @default(now())
     updatedAt DateTime    @updatedAt
 
+    @@unique([memberId, groupId])
     @@index([memberId, groupId])
     @@map("group_member")
 }
