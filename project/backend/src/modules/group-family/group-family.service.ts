@@ -22,7 +22,6 @@ export class GroupFamilyService {
     const newGroup = await this.prisma.groupFamily.create({
       data: {
         ...data,
-        userId: userId,
       },
       select: { id: true, name: true, description: true },
     });
@@ -71,13 +70,19 @@ export class GroupFamilyService {
     return updatedGroup;
   }
   async getOne(userId: string, groupId: string) {
+    //check user authorization
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new UnauthorizedException(Exception.UNAUTHORIZED);
     }
 
     const group = await this.prisma.groupFamily.findFirst({
-      where: { id: groupId, userId: userId },
+      where: {
+        id: groupId,
+        groupMembers: {
+          some: { memberId: userId },
+        },
+      },
       select: {
         id: true,
         name: true,
@@ -112,7 +117,7 @@ export class GroupFamilyService {
     }
 
     const groups = await this.prisma.groupFamily.findMany({
-      where: { userId: userId },
+      where: { groupMembers: { some: { memberId: userId } } },
       select: {
         id: true,
         name: true,

@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Patch } from '@nestjs/common';
 import { GroupMemberService } from './group-member.service';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { UpdateGroupMemberDto } from './dto/update-group-member.dto';

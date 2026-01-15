@@ -9,11 +9,31 @@ export class RelationshipService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, data: RelationshipCreateDto) {
+    //cehck user authorization
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new ForbiddenException(Exception.UNAUTHORIZED);
+    }
+
     const groupFamily = await this.prisma.groupFamily.findFirst({
-      where: { familyId: data.familyId, memberId: userId },
+      where: {
+        familyId: data.familyId,
+        groupMembers: { some: { memberId: userId } },
+      },
+      select: {
+        id: true,
+        groupMembers: {
+          where: { memberId: userId },
+          select: { isLeader: true },
+        },
+      },
     });
 
     if (!groupFamily) {
+      throw new ForbiddenException(Exception.PEMRISSION);
+    }
+
+    if (!groupFamily.groupMembers[0]?.isLeader) {
       throw new ForbiddenException(Exception.PEMRISSION);
     }
 
@@ -38,11 +58,34 @@ export class RelationshipService {
     relationshipId: string,
     data: RelationshipUpdateDto,
   ) {
+    //check user authorization
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new ForbiddenException(Exception.UNAUTHORIZED);
+    }
+
+    //check if user is leader of the group
     const groupFamily = await this.prisma.groupFamily.findFirst({
-      where: { familyId: data.familyId, memberId: userId },
+      where: {
+        familyId: data.familyId,
+        groupMembers: { some: { memberId: userId } },
+      },
+      select: {
+        id: true,
+        groupMembers: {
+          where: { memberId: userId },
+          select: { isLeader: true },
+        },
+      },
     });
 
     if (!groupFamily) {
+      throw new ForbiddenException(Exception.PEMRISSION);
+    }
+
+    if (!groupFamily.groupMembers[0]?.isLeader) {
       throw new ForbiddenException(Exception.PEMRISSION);
     }
 
@@ -58,11 +101,31 @@ export class RelationshipService {
   }
 
   async delete(userId: string, relationshipId: string, familyId: string) {
+    //check user authorization
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new ForbiddenException(Exception.UNAUTHORIZED);
+    }
+
+    //check if user is leader of the group
     const groupFamily = await this.prisma.groupFamily.findFirst({
-      where: { familyId: familyId, memberId: userId },
+      where: {
+        familyId: familyId,
+        groupMembers: { some: { memberId: userId } },
+      },
+      select: {
+        id: true,
+        groupMembers: {
+          where: { memberId: userId },
+        },
+      },
     });
 
     if (!groupFamily) {
+      throw new ForbiddenException(Exception.PEMRISSION);
+    }
+
+    if (!groupFamily.groupMembers[0]?.isLeader) {
       throw new ForbiddenException(Exception.PEMRISSION);
     }
 

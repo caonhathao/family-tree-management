@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { FamilyDto } from './dto/create-family.dto';
 import { FamilyUpdateDto } from './dto/update-family.dto';
@@ -39,7 +43,7 @@ export class FamilyService {
       },
       owner: {
         id: newFamily.owner.id,
-        name: newFamily.owner.userProfile[0].fullName,
+        name: newFamily.owner.userProfile?.fullName,
       },
     };
   }
@@ -55,8 +59,22 @@ export class FamilyService {
     });
   }
   async get(familyId: string, userId: string) {
+    //check user authorization
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new ForbiddenException(Exception.PEMRISSION);
+    }
+
     const groupFamily = await this.prisma.groupFamily.findFirst({
-      where: { familyId: familyId, memberId: userId },
+      where: {
+        familyId: familyId,
+        groupMembers: {
+          some: { memberId: userId },
+        },
+      },
     });
 
     if (!groupFamily) {
@@ -92,11 +110,37 @@ export class FamilyService {
     });
   }
   async delete(familyId: string, userId: string) {
+    //check user authorization
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
+    }
+
     const groupFamily = await this.prisma.groupFamily.findFirst({
-      where: { familyId: familyId, memberId: userId },
+      where: {
+        familyId: familyId,
+        groupMembers: {
+          some: { memberId: userId },
+        },
+      },
+      select: {
+        id: true,
+        groupMembers: {
+          where: { memberId: userId },
+          select: {
+            isLeader: true,
+          },
+        },
+      },
     });
 
     if (!groupFamily) {
+      throw new ForbiddenException(Exception.PEMRISSION);
+    }
+
+    if (groupFamily.groupMembers[0].isLeader === false) {
       throw new ForbiddenException(Exception.PEMRISSION);
     }
     return await this.prisma.family.delete({
