@@ -9,10 +9,12 @@ import config from './common/config/env/config';
 import { EnvConfigService } from './common/config/env/env-config.service';
 import { FamilyModule } from './modules/family/family.module';
 import { EnvConfigModule } from './common/config/env/env-config.module';
-import { MemberModule } from './modules/members/members.module';
+import { MemberModule } from './modules/family-members/family-members.module';
 import { CloudinaryModule } from './common/config/cloudinary/cloudinary.module';
 import { RelationshipsModule } from './modules/relationships/relationships.module';
-import { GroupFamilyModule } from './modules/group/group-family.module';
+import { GroupFamilyModule } from './modules/group-family/group-family.module';
+import { UserModule } from './modules/users/user.module';
+import { GroupMemberModule } from './modules/group-member/group-member.module';
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { GroupFamilyModule } from './modules/group/group-family.module';
     CloudinaryModule,
     RelationshipsModule,
     GroupFamilyModule,
+    UserModule,
+    GroupMemberModule,
   ],
   controllers: [AppController],
   providers: [AppService, EnvConfigService],

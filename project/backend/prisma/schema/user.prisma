@@ -23,6 +23,7 @@ model User {
 
     @@index([email])
     @@map("user")
+    invites Invite[]
 }
 
 //storing sign in infomation and token

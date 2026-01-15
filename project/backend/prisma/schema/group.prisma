@@ -18,6 +18,7 @@ model GroupFamily {
 
     @@index([userId, familyId])
     @@map("group_family")
+    invites Invite[]
 }
 
 model GroupMember {
