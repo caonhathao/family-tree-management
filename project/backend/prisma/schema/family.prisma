@@ -9,9 +9,9 @@ model Family {
     albums        Album[]
     events        Event[]
     activityLogs  ActivityLog[]
-    groups        GroupFamily[]
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
+    groupFamilies GroupFamily?
 
     @@index([ownerId])
     @@map("family")
