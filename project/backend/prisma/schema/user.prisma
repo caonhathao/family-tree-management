@@ -18,12 +18,11 @@ model User {
     events        Event[]
     activityLogs  ActivityLog[]
     notifications Notification[]
-    groupFamilies GroupFamily[]
     groupMembers  GroupMember[]
+    invites       Invite[]
 
     @@index([email])
     @@map("user")
-    invites Invite[]
 }
 
 //storing sign in infomation and token

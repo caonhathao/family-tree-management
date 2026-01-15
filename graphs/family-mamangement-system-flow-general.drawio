@@ -22,6 +22,9 @@
         <mxCell id="-M-CFAGshKCqs93LtxdL-6" edge="1" parent="1" source="2wwstAzyXHokMuk_cRWo-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="2wwstAzyXHokMuk_cRWo-21">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
+        <mxCell id="-M-CFAGshKCqs93LtxdL-8" edge="1" parent="1" source="2wwstAzyXHokMuk_cRWo-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="2wwstAzyXHokMuk_cRWo-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <mxCell id="2wwstAzyXHokMuk_cRWo-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="User" vertex="1">
           <mxGeometry height="60" width="120" x="40" y="500" as="geometry" />
         </mxCell>
@@ -67,14 +70,11 @@
         <mxCell id="2wwstAzyXHokMuk_cRWo-19" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" value="Create family" vertex="1">
           <mxGeometry height="60" width="120" x="280" y="400" as="geometry" />
         </mxCell>
-        <mxCell id="-M-CFAGshKCqs93LtxdL-7" edge="1" parent="1" source="2wwstAzyXHokMuk_cRWo-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="2wwstAzyXHokMuk_cRWo-19">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
         <mxCell id="2wwstAzyXHokMuk_cRWo-21" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" value="Create group" vertex="1">
           <mxGeometry height="60" width="120" x="280" y="500" as="geometry" />
         </mxCell>
         <mxCell id="2wwstAzyXHokMuk_cRWo-23" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Family" vertex="1">
-          <mxGeometry height="80" width="60" x="530" y="330" as="geometry" />
+          <mxGeometry height="80" width="60" x="520" y="330" as="geometry" />
         </mxCell>
         <mxCell id="2wwstAzyXHokMuk_cRWo-24" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Group" vertex="1">
           <mxGeometry height="80" width="60" x="640" y="330" as="geometry" />
