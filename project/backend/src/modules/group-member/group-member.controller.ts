@@ -42,4 +42,21 @@ export class GroupMemberController {
       message: ValidMessageResponse.UPDATED,
     });
   }
+
+  @Delete(':groupId/:memberId')
+  async removeMember(
+    @GetCurrentUserId() userId: string,
+    @Param('groupId') groupId: string,
+    @Param('memberId') memberId: string,
+  ) {
+    const result = await this.groupMemberService.removeMember(
+      userId,
+      groupId,
+      memberId,
+    );
+    return ResponseFactory.success({
+      data: result,
+      message: ValidMessageResponse.DELETED,
+    });
+  }
 }
