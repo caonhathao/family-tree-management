@@ -1,6 +1,6 @@
-import { Controller, Param, Put, UseGuards, Body } from '@nestjs/common';
+import { Controller, Param, Put, UseGuards, Body, Get } from '@nestjs/common';
 import { AtGuard } from '../auth/guards/auth.guard';
-import { UserServices } from './user.services';
+import { UserServices } from './user.service';
 import { UserUpdateDto } from './dto/update-user.dto';
 import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
@@ -16,6 +16,15 @@ export class UserController {
     return ResponseFactory.success({
       data: user,
       message: ValidMessageResponse.CREATED,
+    });
+  }
+
+  @Get(':id')
+  async getUser(@Param('id') id: string) {
+    const user = await this.userServices.get(id);
+    return ResponseFactory.success({
+      data: user,
+      message: ValidMessageResponse.GETTED,
     });
   }
 }

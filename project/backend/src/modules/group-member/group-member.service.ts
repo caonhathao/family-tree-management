@@ -32,7 +32,6 @@ export class GroupMemberService {
       },
     });
   }
-
   async changeLeader(
     userId: string,
     groupId: string,
@@ -96,5 +95,51 @@ export class GroupMemberService {
       });
     }
     throw new UnauthorizedException(Exception.PEMRISSION);
+  }
+  async removeMember(userId: string, groupId: string, memberId: string) {
+    //check authorization
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
+    }
+
+    //check if requester is leader
+    const groupMember = await this.prisma.groupMember.findFirst({
+      where: {
+        groupId: groupId,
+        memberId: userId,
+      },
+      select: {
+        memberId: true,
+        role: true,
+        isLeader: true,
+      },
+    });
+
+    if (!groupMember) {
+      throw new ConflictException(Exception.NOT_EXIST);
+    }
+
+    if (!groupMember.isLeader) {
+      throw new UnauthorizedException(Exception.PEMRISSION);
+    }
+
+    //check if member to remove is not exist in group
+    const member = await this.prisma.groupMember.findFirst({
+      where: {
+        groupId: groupId,
+        memberId: memberId,
+      },
+    });
+    if (!member) {
+      throw new ConflictException(Exception.NOT_EXIST);
+    }
+
+    return await this.prisma.groupMember.deleteMany({
+      where: {
+        groupId: groupId,
+        memberId: memberId,
+      },
+    });
   }
 }
