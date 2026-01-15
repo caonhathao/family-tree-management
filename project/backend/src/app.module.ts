@@ -15,6 +15,9 @@ import { RelationshipsModule } from './modules/relationships/relationships.modul
 import { GroupFamilyModule } from './modules/group-family/group-family.module';
 import { UserModule } from './modules/users/user.module';
 import { GroupMemberModule } from './modules/group-member/group-member.module';
+import { InviteModule } from './modules/invite/invite.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TaskModule } from './schedule/task-schedule.module';
 
 @Module({
   imports: [
@@ -25,6 +28,7 @@ import { GroupMemberModule } from './modules/group-member/group-member.module';
       load: [config],
       validationSchema: envValidationSchema,
     }),
+    ScheduleModule.forRoot(),
     EnvConfigModule,
     PrismaModule,
     AuthModule,
@@ -35,6 +39,8 @@ import { GroupMemberModule } from './modules/group-member/group-member.module';
     GroupFamilyModule,
     UserModule,
     GroupMemberModule,
+    InviteModule,
+    TaskModule,
   ],
   controllers: [AppController],
   providers: [AppService, EnvConfigService],
