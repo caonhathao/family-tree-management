@@ -46,4 +46,7 @@ export class EnvConfigService {
   get cloudinaryName(): string {
     return this.configService.getOrThrow<string>('cloudinary.cloudName');
   }
+  get domain(): string {
+    return this.configService.getOrThrow<string>('DOMAIN');
+  }
 }

@@ -173,6 +173,7 @@ export class GroupFamilyService {
       throw new ForbiddenException(Exception.EXPIRED);
     }
 
+    //check user (getter) authorization
     const getter = await this.prisma.user.findFirst({
       where: { id: getterId },
       select: {
@@ -195,6 +196,20 @@ export class GroupFamilyService {
 
     if (existedGetter) {
       throw new ForbiddenException(Exception.EXISTED);
+    }
+
+    //check group exist
+    const group = await this.prisma.groupFamily.findUnique({
+      where: {
+        id: invite.groupId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!group) {
+      throw new NotFoundException(Exception.NOT_EXIST);
     }
 
     return await this.prisma.groupMember.create({

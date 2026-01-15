@@ -14,6 +14,7 @@ export const InvalidMessageResponse = {
   UDPATED: 't_updated_failed',
   USER_NOT_FOUND: 't_user_not_found',
   SESSION_BAD_ACCESS: 't_session_bad_access',
+  FIELD_EMPTY: 't_field_empty',
 } as const;
 
 export type InvalidMessage =

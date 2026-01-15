@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { GroupFamilyService } from './group-family.service';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { ResponseFactory } from 'src/common/factories/response.factory';
@@ -60,10 +68,10 @@ export class GroupFamilyController {
     });
   }
 
-  @Post('join/:code')
+  @Post('join')
   async joinGroupFamily(
     @GetCurrentUserId() userId: string,
-    @Param('code') code: string,
+    @Query('token') code: string,
   ) {
     const groupFamily = await this.groupFamilyService.joinGroup(code, userId);
     return ResponseFactory.success({
