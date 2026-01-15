@@ -3,18 +3,27 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { USER_ROLE } from '@prisma/client';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { Exception } from '../messages/messages.response';
 import { JwtRequest } from 'src/modules/auth/types/jwt-payload.type';
+import { PrismaService } from 'prisma/prisma.service';
+import { Request } from 'express';
+interface AuthenticatedRequest extends Request {
+  user?: JwtRequest;
+}
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+    private prisma: PrismaService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     // 1. Lấy danh sách Role yêu cầu từ Decorator @Roles()
     const requiredRoles = this.reflector.getAllAndOverride<USER_ROLE[]>(
       ROLES_KEY,
@@ -25,20 +34,42 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles) return true;
 
     // 2. Lấy User từ Request (do JwtAuthGuard nạp vào trước đó)
-    const { user }: { user: JwtRequest } = context.switchToHttp().getRequest();
+    const req: AuthenticatedRequest = context.switchToHttp().getRequest();
+    const { user }: AuthenticatedRequest = req;
     // console.log(user.payload);
 
-    if (!user || !user.payload.role) {
-      throw new ForbiddenException(Exception.PEMRISSION);
+    if (!user) {
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
     }
 
-    // 3. Kiểm tra xem Role của User có nằm trong danh sách yêu cầu không
-    const hasPermission = requiredRoles.some(
-      (role) => user.payload.role === role,
-    );
+    const groupId = req.params.groupId || req.query.groupId;
 
-    if (!hasPermission) {
-      throw new ForbiddenException(Exception.PEMRISSION);
+    if (!groupId) return false;
+    else {
+      const member = await this.prisma.groupMember.findUnique({
+        where: {
+          memberId_groupId: {
+            memberId: user.payload.sub,
+            groupId: groupId as string,
+          },
+        },
+        select: {
+          role: true,
+          isLeader: true,
+        },
+      });
+
+      if (!member) {
+        throw new ForbiddenException(Exception.NOT_EXIST);
+      }
+
+      if (member.isLeader) return true;
+
+      const hasPermission = requiredRoles.includes(member.role);
+
+      if (!hasPermission) {
+        throw new ForbiddenException(Exception.PEMRISSION);
+      }
     }
 
     return true;

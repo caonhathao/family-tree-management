@@ -23,7 +23,7 @@ import { RelationshipUpdateDto } from './dto/update-relationship.dto';
 export class RelationshipsController {
   constructor(private readonly relationshipsService: RelationshipService) {}
 
-  @Post()
+  @Post(':groupId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   async createRelationship(
     @GetCurrentUserId() userId: string,
@@ -39,7 +39,7 @@ export class RelationshipsController {
     });
   }
 
-  @Put(':id')
+  @Put(':id/:groupId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   async updateRelationship(
     @GetCurrentUserId() userId: string,
@@ -57,7 +57,7 @@ export class RelationshipsController {
     });
   }
 
-  @Delete(':id/:familyId')
+  @Delete(':id/:familyId/:groupId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   async deleteRelationship(
     @GetCurrentUserId() userId: string,
