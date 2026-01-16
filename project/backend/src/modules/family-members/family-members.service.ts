@@ -147,15 +147,15 @@ export class MemberService {
       },
     });
   }
-  async remove(memberId: string) {
-    const member = await this.prisma.familyMember.count({
-      where: { id: memberId },
+  async remove(memberId: string, familyId: string) {
+    const member = await this.prisma.familyMember.findFirst({
+      where: { id: memberId, familyId: familyId },
     });
-    if (member === 0) {
+    if (!member) {
       throw new ForbiddenException(Exception.NOT_EXIST);
     }
     return await this.prisma.familyMember.delete({
-      where: { id: memberId },
+      where: { id: memberId, familyId: familyId },
     });
   }
 }
