@@ -8,6 +8,13 @@ import {
   Delete,
   Param,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { FamilyService } from './family.service';
 import { FamilyDto } from './dto/create-family.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -19,6 +26,8 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AtGuard } from '../auth/guards/auth.guard';
 import { FamilyUpdateDto } from './dto/update-family.dto';
 
+@ApiTags('family')
+@ApiBearerAuth()
 @Controller('family')
 @UseGuards(AtGuard, RolesGuard)
 export class FamilyController {
@@ -26,6 +35,11 @@ export class FamilyController {
 
   @Post(':groupId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
+  @ApiOperation({ summary: 'Create a new family' })
+  @ApiParam({ name: 'groupId', description: 'Group ID' })
+  @ApiResponse({ status: 201, description: 'Family created successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createFamily(
     @GetCurrentUserId() userId: string,
     @Body() familyDto: FamilyDto,
@@ -39,6 +53,11 @@ export class FamilyController {
 
   @Patch(':groupId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
+  @ApiOperation({ summary: 'Update a family' })
+  @ApiParam({ name: 'groupId', description: 'Group ID' })
+  @ApiResponse({ status: 200, description: 'Family updated successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateFamily(
     @GetCurrentUserId() userId: string,
     @Body() familyUpdate: FamilyUpdateDto,
@@ -51,6 +70,11 @@ export class FamilyController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get a family by ID' })
+  @ApiParam({ name: 'id', description: 'Family ID' })
+  @ApiResponse({ status: 200, description: 'Family retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Family not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getFamily(
     @GetCurrentUserId() userId: string,
     @Param('id') familyId: string,
@@ -64,6 +88,13 @@ export class FamilyController {
 
   @Delete(':id/:groupId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
+  @ApiOperation({ summary: 'Delete a family' })
+  @ApiParam({ name: 'id', description: 'Family ID' })
+  @ApiParam({ name: 'groupId', description: 'Group ID' })
+  @ApiResponse({ status: 200, description: 'Family deleted successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Family not found' })
   async deleteFamily(
     @GetCurrentUserId() userId: string,
     @Param('id') familyId: string,
