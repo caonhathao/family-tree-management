@@ -1,15 +1,36 @@
 import { Body, Controller, Delete, Param, Patch } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { GroupMemberService } from './group-member.service';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { UpdateGroupMemberDto } from './dto/update-group-member.dto';
 import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
 
+@ApiTags('group-member')
+@ApiBearerAuth()
 @Controller('group-member')
 export class GroupMemberController {
   constructor(private readonly groupMemberService: GroupMemberService) {}
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update group member role' })
+  @ApiParam({ name: 'id', description: 'Group ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Group member role updated successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
+  @ApiResponse({ status: 404, description: 'Group or member not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateGroupMemberRole(
     @GetCurrentUserId() userId: string,
     @Param('id') groupId: string,
@@ -27,6 +48,18 @@ export class GroupMemberController {
   }
 
   @Patch('leader/:id')
+  @ApiOperation({ summary: 'Change group leader' })
+  @ApiParam({ name: 'id', description: 'Group ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Group leader changed successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Only current leader can change leader',
+  })
+  @ApiResponse({ status: 404, description: 'Group or member not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async changeGroupMemberLeader(
     @GetCurrentUserId() userId: string,
     @Param('id') groupId: string,
@@ -44,6 +77,16 @@ export class GroupMemberController {
   }
 
   @Delete(':groupId/:memberId')
+  @ApiOperation({ summary: 'Remove member from group' })
+  @ApiParam({ name: 'groupId', description: 'Group ID' })
+  @ApiParam({ name: 'memberId', description: 'Member ID to remove' })
+  @ApiResponse({ status: 200, description: 'Member removed successfully' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
+  @ApiResponse({ status: 404, description: 'Group or member not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeMember(
     @GetCurrentUserId() userId: string,
     @Param('groupId') groupId: string,
