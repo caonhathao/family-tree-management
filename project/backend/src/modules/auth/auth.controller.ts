@@ -18,6 +18,7 @@ import { HttpStatus } from 'src/common/constants/api';
 import { RtGuard } from './guards/auth.guard';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { GetCurrentUser } from 'src/common/decorators/get-user.decorator';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 // Verifies the username and password.
 
@@ -30,16 +31,24 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('refresh')
+  @ApiOperation({ summary: 'Refresh token authorization' })
+  @ApiResponse({ status: 200, description: 'data with tokens' })
   @UseGuards(RtGuard)
   @HttpCode(HttpStatus.OK)
   async refresh(
     @GetCurrentUserId() userId: string,
     @GetCurrentUser('refreshToken') refreshToken: string,
   ) {
-    return this.authService.refresh(userId, refreshToken);
+    const auth = await this.authService.refresh(userId, refreshToken);
+    return ResponseFactory.success({
+      data: auth,
+      message: ValidMessageResponse.GETTED,
+    });
   }
 
   @Post('register')
+  @ApiOperation({ summary: 'Register new account' })
+  @ApiResponse({ status: 200, description: 'data with tokens' })
   async register(
     @Body() registerDto: RegisterDto,
     @Ip() ip: string, // NestJS tự động lấy IP (xử lý luôn cả proxy)
@@ -57,6 +66,8 @@ export class AuthController {
   }
 
   @Post('login-base')
+  @ApiOperation({ summary: 'Login' })
+  @ApiResponse({ status: 200, description: 'data with tokens' })
   async loginBase(
     @Body() loginBase: LoginBaseDto,
     @Ip() ip: string,
