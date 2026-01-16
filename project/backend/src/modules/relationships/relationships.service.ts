@@ -3,6 +3,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { RelationshipCreateDto } from './dto/create-relationships.dto';
 import { Exception } from 'src/common/messages/messages.response';
 import { RelationshipUpdateDto } from './dto/update-relationship.dto';
+import { USER_ROLE } from '@prisma/client';
 
 @Injectable()
 export class RelationshipService {
@@ -24,7 +25,7 @@ export class RelationshipService {
         id: true,
         groupMembers: {
           where: { memberId: userId },
-          select: { isLeader: true },
+          select: { isLeader: true, role: true },
         },
       },
     });
@@ -33,7 +34,9 @@ export class RelationshipService {
       throw new ForbiddenException(Exception.PEMRISSION);
     }
 
-    if (!groupFamily.groupMembers[0]?.isLeader) {
+    const member = groupFamily.groupMembers[0];
+    const allowedRoles: USER_ROLE[] = [USER_ROLE.OWNER, USER_ROLE.EDITOR];
+    if (!member?.isLeader && !allowedRoles.includes(member?.role)) {
       throw new ForbiddenException(Exception.PEMRISSION);
     }
 

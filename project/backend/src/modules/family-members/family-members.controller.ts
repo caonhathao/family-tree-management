@@ -193,17 +193,20 @@ export class MemberController {
     });
   }
 
-  @Delete(':id/:groupid')
+  @Delete(':memberId/:familyId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Delete a family member' })
-  @ApiParam({ name: 'id', description: 'Member ID' })
-  @ApiParam({ name: 'groupid', description: 'Group ID' })
+  @ApiParam({ name: 'memberId', description: 'Member ID' })
+  @ApiParam({ name: 'familyId', description: 'Family ID' })
   @ApiResponse({ status: 200, description: 'Member deleted successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Member not found' })
-  async remove(@Param('id') memberId: string) {
-    await this.memberService.remove(memberId);
+  async remove(
+    @Param('memberId') memberId: string,
+    @Param('familyId') familyId: string,
+  ) {
+    await this.memberService.remove(memberId, familyId);
     return ResponseFactory.success({
       data: null,
       message: ValidMessageResponse.DELETED,

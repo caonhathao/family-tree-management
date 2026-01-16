@@ -32,10 +32,9 @@ import { RelationshipUpdateDto } from './dto/update-relationship.dto';
 export class RelationshipsController {
   constructor(private readonly relationshipsService: RelationshipService) {}
 
-  @Post(':groupId')
+  @Post()
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Create a new relationship' })
-  @ApiParam({ name: 'groupId', description: 'Group ID' })
   @ApiResponse({
     status: 201,
     description: 'Relationship created successfully',
@@ -59,11 +58,10 @@ export class RelationshipsController {
     });
   }
 
-  @Put(':id/:groupId')
+  @Put(':relationshipId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Update a relationship' })
-  @ApiParam({ name: 'id', description: 'Relationship ID' })
-  @ApiParam({ name: 'groupId', description: 'Group ID' })
+  @ApiParam({ name: 'relationshipId', description: 'Relationship ID' })
   @ApiResponse({
     status: 200,
     description: 'Relationship updated successfully',
@@ -76,7 +74,7 @@ export class RelationshipsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateRelationship(
     @GetCurrentUserId() userId: string,
-    @Param('id') relationshipId: string,
+    @Param('relationshipId') relationshipId: string,
     @Body() relationshipUpdateDto: RelationshipUpdateDto,
   ) {
     const relationship = await this.relationshipsService.update(
@@ -90,12 +88,11 @@ export class RelationshipsController {
     });
   }
 
-  @Delete(':id/:familyId/:groupId')
+  @Delete(':relationshipId/:familyId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Delete a relationship' })
-  @ApiParam({ name: 'id', description: 'Relationship ID' })
+  @ApiParam({ name: 'relationshipId', description: 'Relationship ID' })
   @ApiParam({ name: 'familyId', description: 'Family ID' })
-  @ApiParam({ name: 'groupId', description: 'Group ID' })
   @ApiResponse({
     status: 200,
     description: 'Relationship deleted successfully',
@@ -108,7 +105,7 @@ export class RelationshipsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteRelationship(
     @GetCurrentUserId() userId: string,
-    @Param('id') relationshipId: string,
+    @Param('relationshipId') relationshipId: string,
     @Param('familyId') familyId: string,
   ) {
     const relationship = await this.relationshipsService.delete(
