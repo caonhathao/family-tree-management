@@ -1,0 +1,68 @@
+import { apiClient } from "@/lib/api/api-path.lib";
+import { CreateGroupFamilyDto, UpdateGroupFamilyDto } from "./group-family.dto";
+import { cookies } from "next/headers";
+
+export const GroupFamilyService = {
+  createGroup: async (data: CreateGroupFamilyDto) => {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
+    const result = await fetch(apiClient.groupFamily.createGroup, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return result.json();
+  },
+  getAll: async () => {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
+    const result = await fetch(apiClient.groupFamily.getAll, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return result.json();
+  },
+  updateGroup: async (groupId: string, data: UpdateGroupFamilyDto) => {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
+    const result = await fetch(apiClient.groupFamily.updateGroup(groupId), {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return result.json();
+  },
+  getDetail: async (groupId: string) => {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
+    const result = await fetch(apiClient.groupFamily.getDetail(groupId), {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return result.json();
+  },
+  joinGroup: async (tokenCode: string) => {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
+    const result = await fetch(apiClient.groupFamily.updateGroup(tokenCode), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return result.json();
+  },
+};
