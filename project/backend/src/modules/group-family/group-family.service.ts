@@ -65,6 +65,11 @@ export class GroupFamilyService {
       data: {
         ...data,
       },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+      },
     });
 
     return updatedGroup;
@@ -212,13 +217,21 @@ export class GroupFamilyService {
       throw new NotFoundException(Exception.NOT_EXIST);
     }
 
-    return await this.prisma.groupMember.create({
+    const newMember = await this.prisma.groupMember.create({
       data: {
         groupId: invite.groupId,
         memberId: getterId,
         role: USER_ROLE.VIEWER,
         isLeader: false,
       },
+      select: {
+        id: true,
+        groupId: true,
+        memberId: true,
+        role: true,
+        isLeader: true,
+      },
     });
+    return newMember;
   }
 }

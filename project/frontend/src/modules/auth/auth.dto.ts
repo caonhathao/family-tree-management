@@ -1,8 +1,3 @@
-export interface ResponseDataBase<T> {
-  data: T;
-  message: string;
-}
-
 export interface ResponseLoginDataDto {
   user: {
     id: string;
