@@ -5,7 +5,6 @@ import {
   updateFamilyMemberDto,
 } from "./family-member.dto";
 import { FamilyMemberService } from "./family-member.service";
-import { redirect } from "next/navigation";
 import { ResponseDataBase } from "@/types/base.types";
 import { revalidatePath } from "next/cache";
 

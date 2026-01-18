@@ -1,6 +1,8 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
@@ -17,18 +19,42 @@ export class GroupMemberService {
     groupId: string,
     data: UpdateGroupMemberDto,
   ) {
+    //check user authorization
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new UnauthorizedException(Exception.UNAUTHORIZED);
     }
 
-    return await this.prisma.groupMember.updateMany({
+    //check if member is in the same groupconst [requester, targetMember] = await Promise.all([
+    const [requester, targetMember] = await Promise.all([
+      this.prisma.groupMember.findFirst({
+        where: { groupId, memberId: userId },
+      }),
+      this.prisma.groupMember.findFirst({
+        where: { groupId, memberId: data.id },
+      }),
+    ]);
+
+    if (!targetMember) throw new NotFoundException(Exception.NOT_EXIST);
+
+    if (!requester) throw new ForbiddenException(Exception.PEMRISSION);
+
+    return await this.prisma.groupMember.update({
       where: {
-        groupId: groupId,
-        memberId: userId,
+        memberId_groupId: {
+          groupId: groupId,
+          memberId: data.id,
+        },
       },
       data: {
         role: data.role,
+      },
+      select: {
+        id: true,
+        memberId: true,
+        groupId: true,
+        role: true,
+        isLeader: true,
       },
     });
   }
@@ -81,14 +107,23 @@ export class GroupMemberService {
             role: USER_ROLE.VIEWER,
           },
         });
-        const newLeader = await tx.groupMember.updateMany({
+        const newLeader = await tx.groupMember.update({
           where: {
-            groupId: groupId,
-            memberId: data.id,
+            memberId_groupId: {
+              groupId: groupId,
+              memberId: data.id,
+            },
           },
           data: {
             isLeader: true,
             role: USER_ROLE.OWNER,
+          },
+          select: {
+            id: true,
+            memberId: true,
+            groupId: true,
+            role: true,
+            isLeader: true,
           },
         });
         return newLeader;
