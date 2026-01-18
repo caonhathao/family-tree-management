@@ -14,10 +14,11 @@ export const apiClient = {
   familyMember: {
     createMember: (groupId: string) => `/api/member/${groupId}`,
     updateMember: (groupId: string) => `/api/member/${groupId}`,
-    getOneMember: (memberId: string) => `/api/member/${memberId}`,
+    getOneMember: (memberId: string, familyId: string) =>
+      `/api/member/${familyId}/${memberId}`,
     getAllMembers: (familyId: string) => `/api/member/${familyId}`,
     deleteMember: (memberId: string, familyId: string) =>
-      `/api/member/${memberId}/${familyId}`,
+      `/api/member/${familyId}/${memberId}`,
   },
   relationship: {
     createRelationship: `/api/relationship`,

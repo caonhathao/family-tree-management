@@ -32,6 +32,7 @@ import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MemberUpdateDto } from './dto/update-members.dto';
+import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 
 const maxFileSize = Number(process.env.MAX_FILE_SIZE) || 2;
 @ApiTags('member')
@@ -42,7 +43,7 @@ export class MemberController {
   constructor(private readonly memberService: MemberService) {}
 
   @Post(':groupId')
-  @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
+  @Roles(USER_ROLE.EDITOR, USER_ROLE.VIEWER)
   @UseInterceptors(FileInterceptor('avatar'))
   @ApiOperation({ summary: 'Create a new family member' })
   @ApiParam({ name: 'groupId', description: 'Group ID' })
@@ -87,6 +88,8 @@ export class MemberController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createMember(
     @Body() data: MemberDto,
+    @GetCurrentUserId() userId: string,
+    @Param('groupId') groupId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -98,7 +101,7 @@ export class MemberController {
     )
     file?: Express.Multer.File,
   ) {
-    const member = await this.memberService.create(data, file);
+    const member = await this.memberService.create(userId, groupId, data, file);
     return ResponseFactory.success({
       data: member,
       message: ValidMessageResponse.CREATED,
@@ -147,6 +150,8 @@ export class MemberController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateMember(
     @Body() data: MemberUpdateDto,
+    @GetCurrentUserId() userId: string,
+    @Param('groupId') groupId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -158,21 +163,26 @@ export class MemberController {
     )
     file?: Express.Multer.File,
   ) {
-    const member = await this.memberService.update(data, file);
+    const member = await this.memberService.update(userId, groupId, data, file);
     return ResponseFactory.success({
       data: member,
       message: ValidMessageResponse.UPDATED,
     });
   }
 
-  @Get(':id')
+  @Get(':familyId/:memberId')
   @ApiOperation({ summary: 'Get a family member by ID' })
-  @ApiParam({ name: 'id', description: 'Member ID' })
+  @ApiParam({ name: 'familyId', description: 'family ID' })
+  @ApiParam({ name: 'memberId', description: 'Member ID' })
   @ApiResponse({ status: 200, description: 'Member retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Member not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getOne(@Param('id') memberId: string) {
-    const data = await this.memberService.getOne(memberId);
+  async getOne(
+    @GetCurrentUserId() userId: string,
+    @Param('memberId') memberId: string,
+    @Param('familyId') familyId: string,
+  ) {
+    const data = await this.memberService.getOne(userId, memberId, familyId);
     return ResponseFactory.success({
       data: data,
       message: ValidMessageResponse.GETTED,
@@ -185,28 +195,32 @@ export class MemberController {
   @ApiResponse({ status: 200, description: 'Members retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Family not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getAll(@Param('familyId') familyId: string) {
-    const data = await this.memberService.getAll(familyId);
+  async getAll(
+    @Param('familyId') familyId: string,
+    @GetCurrentUserId() userId: string,
+  ) {
+    const data = await this.memberService.getAll(userId, familyId);
     return ResponseFactory.success({
       data: data,
       message: ValidMessageResponse.GETTED,
     });
   }
 
-  @Delete(':memberId/:familyId')
+  @Delete(':familyId/memberId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Delete a family member' })
-  @ApiParam({ name: 'memberId', description: 'Member ID' })
   @ApiParam({ name: 'familyId', description: 'Family ID' })
+  @ApiParam({ name: 'memberId', description: 'Member ID' })
   @ApiResponse({ status: 200, description: 'Member deleted successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Member not found' })
   async remove(
+    @GetCurrentUserId() userId: string,
     @Param('memberId') memberId: string,
     @Param('familyId') familyId: string,
   ) {
-    await this.memberService.remove(memberId, familyId);
+    await this.memberService.remove(userId, memberId, familyId);
     return ResponseFactory.success({
       data: null,
       message: ValidMessageResponse.DELETED,

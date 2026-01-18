@@ -1,4 +1,10 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { MemberDto } from './dto/create-members.dto';
 import { CloudinaryService } from 'src/common/config/cloudinary/cloudinary.service';
@@ -14,7 +20,32 @@ export class MemberService {
     private coudinarySerive: CloudinaryService,
     private envConfig: EnvConfigService,
   ) {}
-  async create(data: MemberDto, file?: Express.Multer.File) {
+  async create(
+    userId: string,
+    groupId: string,
+    data: MemberDto,
+    file?: Express.Multer.File,
+  ) {
+    //check user authorization
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
+    }
+
+    //check group exist
+    const group = await this.prisma.groupFamily.findFirst({
+      where: {
+        id: groupId,
+      },
+    });
+
+    if (!group) throw new NotFoundException(Exception.NOT_EXIST);
+
     let avatarUrl: string = '';
     if (file) {
       const upload: UploadApiResponse | UploadApiErrorResponse =
@@ -24,7 +55,10 @@ export class MemberService {
         );
 
       if (upload.secure_url) avatarUrl = upload.secure_url as string;
-    }
+    } else throw new NotFoundException(Exception.FILE_BUFFER_MISSING);
+
+    if (avatarUrl === '')
+      throw new BadRequestException(Exception.UPLOAD_FAILED);
 
     const newMember = await this.prisma.familyMember.create({
       data: {
@@ -42,7 +76,32 @@ export class MemberService {
 
     return newMember;
   }
-  async update(data: MemberUpdateDto, file?: Express.Multer.File) {
+  async update(
+    userId: string,
+    groupId: string,
+    data: MemberUpdateDto,
+    file?: Express.Multer.File,
+  ) {
+    //check user authorization
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
+    }
+
+    //check group exist
+    const group = await this.prisma.groupFamily.findFirst({
+      where: {
+        id: groupId,
+      },
+    });
+
+    if (!group) throw new NotFoundException(Exception.NOT_EXIST);
+
     let avatarUrl: string = '';
     //check if form has file (image), destroy old image and upload new
     const member = await this.prisma.familyMember.findFirst({
@@ -76,7 +135,10 @@ export class MemberService {
           if (upload.secure_url) avatarUrl = upload.secure_url as string;
         }
       }
-    }
+    } else throw new NotFoundException(Exception.FILE_BUFFER_MISSING);
+
+    if (avatarUrl === '')
+      throw new BadRequestException(Exception.UPLOAD_FAILED);
     const updateData = Object.fromEntries(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       Object.entries(data).filter(([_, v]) => v !== undefined && v !== null),
@@ -85,10 +147,39 @@ export class MemberService {
     return await this.prisma.familyMember.update({
       where: { id: data.id },
       data: { ...updateData, avatarUrl: avatarUrl },
+      select: {
+        id: true,
+        fullName: true,
+        generation: true,
+        isAlive: true,
+        avatarUrl: true,
+      },
     });
   }
 
-  async getOne(memberId: string) {
+  async getOne(userId: string, familyId: string, memberId: string) {
+    //check user authorization
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
+    }
+
+    //check if user is in group that have family member or not
+    const group = await this.prisma.groupFamily.findFirst({
+      where: {
+        familyId: familyId,
+      },
+    });
+
+    if (!group) {
+      throw new ForbiddenException(Exception.PEMRISSION);
+    }
+
     const data = await this.prisma.familyMember.findFirst({
       where: {
         id: memberId,
@@ -134,7 +225,29 @@ export class MemberService {
     });
     return data;
   }
-  async getAll(familyId: string) {
+  async getAll(userId: string, familyId: string) {
+    //check user authorization
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
+    }
+
+    //check if user is in group that have family member or not
+    const group = await this.prisma.groupFamily.findFirst({
+      where: {
+        familyId: familyId,
+      },
+    });
+
+    if (!group) {
+      throw new ForbiddenException(Exception.PEMRISSION);
+    }
+
     return await this.prisma.familyMember.findMany({
       where: {
         familyId: familyId,
@@ -147,7 +260,28 @@ export class MemberService {
       },
     });
   }
-  async remove(memberId: string, familyId: string) {
+  async remove(userId: string, memberId: string, familyId: string) {
+    //check user authorization
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(Exception.UNAUTHORIZED);
+    }
+
+    //check if user is in group that have family member or not
+    const group = await this.prisma.groupFamily.findFirst({
+      where: {
+        familyId: familyId,
+      },
+    });
+
+    if (!group) {
+      throw new ForbiddenException(Exception.PEMRISSION);
+    }
     const member = await this.prisma.familyMember.findFirst({
       where: { id: memberId, familyId: familyId },
     });
