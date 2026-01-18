@@ -1,12 +1,13 @@
 import { apiClient } from "@/lib/api/api-path.lib";
 import { CreateGroupFamilyDto, UpdateGroupFamilyDto } from "./group-family.dto";
 import { cookies } from "next/headers";
+import { fetchWithAuth } from "@/lib/api/fetch-with-auth";
 
 export const GroupFamilyService = {
   createGroup: async (data: CreateGroupFamilyDto) => {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
-    const result = await fetch(apiClient.groupFamily.createGroup, {
+    const result = await fetchWithAuth(apiClient.groupFamily.createGroup, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -31,7 +32,7 @@ export const GroupFamilyService = {
   updateGroup: async (groupId: string, data: UpdateGroupFamilyDto) => {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
-    const result = await fetch(apiClient.groupFamily.updateGroup(groupId), {
+    const result = await fetchWithAuth(apiClient.groupFamily.updateGroup(groupId), {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -44,7 +45,7 @@ export const GroupFamilyService = {
   getDetail: async (groupId: string) => {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
-    const result = await fetch(apiClient.groupFamily.getDetail(groupId), {
+    const result = await fetchWithAuth(apiClient.groupFamily.getDetail(groupId), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -56,7 +57,7 @@ export const GroupFamilyService = {
   joinGroup: async (tokenCode: string) => {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
-    const result = await fetch(apiClient.groupFamily.updateGroup(tokenCode), {
+    const result = await fetchWithAuth(apiClient.groupFamily.updateGroup(tokenCode), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

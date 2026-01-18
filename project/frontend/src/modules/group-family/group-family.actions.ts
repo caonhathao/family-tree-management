@@ -32,7 +32,7 @@ export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
   }
 }
 
-export async function updateGroupFamily(
+export async function updateGroupFamilyAction(
   groupId: string,
   data: UpdateGroupFamilyDto,
 ) {
@@ -52,7 +52,7 @@ export async function updateGroupFamily(
   }
 }
 
-export async function joinGroup(token: string) {
+export async function joinGroupAcion(token: string) {
   let groupId: string;
   try {
     const res: ResponseDataBase<ResponseJoinGroupDto> =
