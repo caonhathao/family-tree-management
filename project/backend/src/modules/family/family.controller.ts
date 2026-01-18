@@ -42,9 +42,10 @@ export class FamilyController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createFamily(
     @GetCurrentUserId() userId: string,
+    @Param('groupId') groupId: string,
     @Body() familyDto: FamilyDto,
   ) {
-    const family = await this.familyService.create(userId, familyDto);
+    const family = await this.familyService.create(userId, groupId, familyDto);
     return ResponseFactory.success({
       data: family,
       message: ValidMessageResponse.CREATED,
@@ -60,9 +61,14 @@ export class FamilyController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateFamily(
     @GetCurrentUserId() userId: string,
+    @Param('groupId') groupId: string,
     @Body() familyUpdate: FamilyUpdateDto,
   ) {
-    const family = await this.familyService.update(familyUpdate, userId);
+    const family = await this.familyService.update(
+      familyUpdate,
+      userId,
+      groupId,
+    );
     return ResponseFactory.success({
       data: family,
       message: ValidMessageResponse.UPDATED,
@@ -86,20 +92,21 @@ export class FamilyController {
     });
   }
 
-  @Delete(':id/:groupId')
+  @Delete(':groupId/:familyId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Delete a family' })
-  @ApiParam({ name: 'id', description: 'Family ID' })
   @ApiParam({ name: 'groupId', description: 'Group ID' })
+  @ApiParam({ name: 'familyId', description: 'Family ID' })
   @ApiResponse({ status: 200, description: 'Family deleted successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Family not found' })
   async deleteFamily(
     @GetCurrentUserId() userId: string,
-    @Param('id') familyId: string,
+    @Param('familyId') familyId: string,
+    @Param('groupId') groupId: string,
   ) {
-    await this.familyService.delete(familyId, userId);
+    await this.familyService.delete(groupId, familyId, userId);
     return ResponseFactory.success({
       message: ValidMessageResponse.DELETED,
     });

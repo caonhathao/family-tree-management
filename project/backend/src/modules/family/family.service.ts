@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
@@ -11,7 +12,25 @@ import { Exception } from 'src/common/messages/messages.response';
 @Injectable()
 export class FamilyService {
   constructor(private prisma: PrismaService) {}
-  async create(userId: string, data: FamilyDto) {
+  async create(userId: string, groupId: string, data: FamilyDto) {
+    //check user authorization
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new ForbiddenException(Exception.PEMRISSION);
+    }
+
+    //check group exist
+    const group = await this.prisma.groupFamily.findFirst({
+      where: {
+        id: groupId,
+      },
+    });
+
+    if (!group) throw new NotFoundException(Exception.NOT_EXIST);
+
     const newFamily = await this.prisma.family.create({
       data: {
         name: data.name,
@@ -28,10 +47,21 @@ export class FamilyService {
             userProfile: {
               select: {
                 fullName: true,
+                avatar: true,
               },
             },
           },
         },
+      },
+    });
+
+    //update group with new family
+    await this.prisma.groupFamily.update({
+      where: {
+        id: groupId,
+      },
+      data: {
+        familyId: newFamily.id,
       },
     });
 
@@ -44,10 +74,37 @@ export class FamilyService {
       owner: {
         id: newFamily.owner.id,
         name: newFamily.owner.userProfile?.fullName,
+        avatar: newFamily.owner.userProfile?.avatar,
       },
     };
   }
-  async update(data: FamilyUpdateDto, userId: string) {
+  async update(data: FamilyUpdateDto, userId: string, groupId: string) {
+    //check user authorization
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new ForbiddenException(Exception.PEMRISSION);
+    }
+
+    //check family exist
+    const family = await this.prisma.family.findFirst({
+      where: {
+        id: data.id,
+      },
+    });
+    if (!family) throw new NotFoundException(Exception.NOT_EXIST);
+
+    //check group exist
+    const group = await this.prisma.groupFamily.findFirst({
+      where: {
+        id: groupId,
+      },
+    });
+
+    if (!group) throw new NotFoundException(Exception.NOT_EXIST);
+
     const updateData = Object.fromEntries(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       Object.entries(data).filter(([_, v]) => v !== undefined && v !== null),
@@ -56,6 +113,22 @@ export class FamilyService {
     return await this.prisma.family.update({
       where: { id: data.id, ownerId: userId },
       data: updateData,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        owner: {
+          select: {
+            id: true,
+            userProfile: {
+              select: {
+                fullName: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
   async get(familyId: string, userId: string) {
@@ -109,7 +182,7 @@ export class FamilyService {
       },
     });
   }
-  async delete(familyId: string, userId: string) {
+  async delete(groupId: string, familyId: string, userId: string) {
     //check user authorization
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -120,6 +193,7 @@ export class FamilyService {
 
     const groupFamily = await this.prisma.groupFamily.findFirst({
       where: {
+        id: groupId,
         familyId: familyId,
         groupMembers: {
           some: { memberId: userId },

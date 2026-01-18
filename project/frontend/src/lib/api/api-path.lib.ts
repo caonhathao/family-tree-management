@@ -9,7 +9,7 @@ export const apiClient = {
     updateFamily: (groupId: string) => `/api/family/${groupId}`,
     getFamily: (familyId: string) => `/api/family/${familyId}`,
     deleteFamily: (familyId: string, groupId: string) =>
-      `/api/family/${familyId}/${groupId}`,
+      `/api/family/${groupId}/${familyId}`,
   },
   familyMember: {
     createMember: (groupId: string) => `/api/member/${groupId}`,
