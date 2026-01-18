@@ -54,7 +54,6 @@ export const FamilyMemberService = {
       {
         method: "PATCH",
         headers: {
-          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
         body: formData,

@@ -14,14 +14,12 @@ export async function CreateFamilyMemberAction(
   data: CreateFamilyMemberDto,
 ) {
   let isSuccess = false;
-  let id = "";
 
   try {
     const res: ResponseDataBase<ResponseCreateFamilyMemberDto> =
       await FamilyMemberService.createMember(groupId, data);
     if (res.success) {
       isSuccess = true;
-      id = res.data.id;
     } else
       return {
         error: res.message || "error",
