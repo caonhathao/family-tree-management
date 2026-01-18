@@ -1,4 +1,11 @@
-import { Body, Controller, Delete, Param, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Param,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -11,9 +18,13 @@ import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { UpdateGroupMemberDto } from './dto/update-group-member.dto';
 import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
+import { AtGuard } from '../auth/guards/auth.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { IsLeader } from 'src/common/decorators/leader.decorator';
 
 @ApiTags('group-member')
 @ApiBearerAuth()
+@UseGuards(AtGuard, RolesGuard)
 @Controller('group-member')
 export class GroupMemberController {
   constructor(private readonly groupMemberService: GroupMemberService) {}
@@ -31,6 +42,7 @@ export class GroupMemberController {
   })
   @ApiResponse({ status: 404, description: 'Group or member not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @IsLeader()
   async updateGroupMemberRole(
     @GetCurrentUserId() userId: string,
     @Param('id') groupId: string,
@@ -60,6 +72,7 @@ export class GroupMemberController {
   })
   @ApiResponse({ status: 404, description: 'Group or member not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @IsLeader()
   async changeGroupMemberLeader(
     @GetCurrentUserId() userId: string,
     @Param('id') groupId: string,
@@ -87,6 +100,7 @@ export class GroupMemberController {
   })
   @ApiResponse({ status: 404, description: 'Group or member not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @IsLeader()
   async removeMember(
     @GetCurrentUserId() userId: string,
     @Param('groupId') groupId: string,
