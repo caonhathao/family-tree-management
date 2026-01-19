@@ -10,7 +10,7 @@ import { USER_ROLE } from '@prisma/client';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { Exception } from '../messages/messages.response';
 import { JwtRequest } from 'src/modules/auth/types/jwt-payload.type';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { Request } from 'express';
 interface AuthenticatedRequest extends Request {
   user?: JwtRequest;

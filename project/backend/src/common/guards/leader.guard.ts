@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { IS_LEADER_KEY } from '../decorators/leader.decorator';
 import { JwtRequest } from 'src/modules/auth/types/jwt-payload.type';
 import { Exception } from '../messages/messages.response';

@@ -5,7 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateGroupMemberDto } from './dto/update-group-member.dto';
 import { Exception } from 'src/common/messages/messages.response';
 import { USER_ROLE } from '@prisma/client';

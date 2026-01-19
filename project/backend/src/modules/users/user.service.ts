@@ -3,7 +3,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Exception } from 'src/common/messages/messages.response';
 import * as bcrypt from 'bcrypt';
@@ -14,7 +14,7 @@ import { Prisma } from '@prisma/client';
 import { JsonValue } from '@prisma/client/runtime/client';
 
 @Injectable()
-export class UserServices {
+export class UserService {
   constructor(
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
@@ -22,11 +22,13 @@ export class UserServices {
   ) {}
 
   async update(
+    targetId: string,
     userId: string,
     data: UpdateUserDto,
     file?: Express.Multer.File,
   ) {
-    if (!userId) throw new ForbiddenException(Exception.ID_MISSING);
+    if (!targetId) throw new ForbiddenException(Exception.ID_MISSING);
+    if (targetId !== userId) throw new ForbiddenException(Exception.PEMRISSION);
 
     const profileUpdate: Prisma.UserProfileUpdateInput = {};
     const userUpdate: Prisma.UserUpdateInput = {};
@@ -68,7 +70,7 @@ export class UserServices {
 
     return await this.prisma.$transaction(async (tx) => {
       const userProfileResult = await tx.userProfile.update({
-        where: { userId },
+        where: { userId: targetId },
         data: profileUpdate,
         select: {
           fullName: true,
@@ -78,10 +80,13 @@ export class UserServices {
         },
       });
       if (Object.keys(userUpdate).length > 0) {
-        await tx.user.update({ where: { id: userId }, data: userUpdate });
+        await tx.user.update({ where: { id: targetId }, data: userUpdate });
       }
       if (Object.keys(accountUpdate).length > 0) {
-        await tx.account.update({ where: { userId }, data: accountUpdate });
+        await tx.account.update({
+          where: { userId: targetId },
+          data: accountUpdate,
+        });
       }
       return userProfileResult;
     });

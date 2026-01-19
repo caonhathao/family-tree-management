@@ -81,11 +81,8 @@ export class FamilyController {
   @ApiResponse({ status: 200, description: 'Family retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Family not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getFamily(
-    @GetCurrentUserId() userId: string,
-    @Param('id') familyId: string,
-  ) {
-    const family = await this.familyService.get(familyId, userId);
+  async getFamily(@Param('id') familyId: string) {
+    const family = await this.familyService.get(familyId);
     return ResponseFactory.success({
       data: family,
       message: ValidMessageResponse.GETTED,

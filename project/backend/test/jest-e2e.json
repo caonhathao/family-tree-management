@@ -5,5 +5,9 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "moduleNameMapping": {
+    "^prisma/(.*)$": "<rootDir>/../prisma/$1"
+  },
+  "setupFilesAfterEnv": ["<rootDir>/test-setup.ts"]
 }
