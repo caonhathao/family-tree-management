@@ -19,12 +19,6 @@ export class GroupMemberService {
     groupId: string,
     data: UpdateGroupMemberDto,
   ) {
-    //check user authorization
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
-    }
-
     //check if member is in the same groupconst [requester, targetMember] = await Promise.all([
     const [requester, targetMember] = await Promise.all([
       this.prisma.groupMember.findFirst({
@@ -63,33 +57,29 @@ export class GroupMemberService {
     groupId: string,
     data: UpdateGroupMemberDto,
   ) {
-    //check authorization
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
-    }
-    //check if new leader is exist in group
-    const newLeader = await this.prisma.groupMember.findFirst({
-      where: {
-        groupId: groupId,
-        memberId: data.id,
-      },
-    });
+    const [newLeader, groupMember] = await Promise.all([
+      //check if new leader is exist in group
+      this.prisma.groupMember.findFirst({
+        where: {
+          groupId: groupId,
+          memberId: data.id,
+        },
+      }),
+      //check if requester is leader
+      this.prisma.groupMember.findFirst({
+        where: {
+          groupId: groupId,
+          memberId: userId,
+        },
+        select: {
+          memberId: true,
+          isLeader: true,
+        },
+      }),
+    ]);
     if (!newLeader) {
       throw new ConflictException(Exception.NOT_EXIST);
     }
-    //check if requester is leader
-    const groupMember = await this.prisma.groupMember.findFirst({
-      where: {
-        groupId: groupId,
-        memberId: userId,
-      },
-      select: {
-        memberId: true,
-        isLeader: true,
-      },
-    });
-
     if (!groupMember) {
       throw new ConflictException(Exception.NOT_EXIST);
     }
@@ -132,40 +122,35 @@ export class GroupMemberService {
     throw new UnauthorizedException(Exception.PEMRISSION);
   }
   async removeMember(userId: string, groupId: string, memberId: string) {
-    //check authorization
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
-    }
+    const [requester, member] = await Promise.all([
+      //check if requester is leader
+      this.prisma.groupMember.findFirst({
+        where: {
+          groupId: groupId,
+          memberId: userId,
+        },
+        select: {
+          memberId: true,
+          role: true,
+          isLeader: true,
+        },
+      }),
 
-    //check if requester is leader
-    const groupMember = await this.prisma.groupMember.findFirst({
-      where: {
-        groupId: groupId,
-        memberId: userId,
-      },
-      select: {
-        memberId: true,
-        role: true,
-        isLeader: true,
-      },
-    });
+      //check if member to remove is not exist in group
+      this.prisma.groupMember.findFirst({
+        where: {
+          groupId: groupId,
+          memberId: memberId,
+        },
+      }),
+    ]);
 
-    if (!groupMember) {
+    if (!requester) {
       throw new ConflictException(Exception.NOT_EXIST);
     }
-
-    if (!groupMember.isLeader) {
+    if (!requester.isLeader) {
       throw new UnauthorizedException(Exception.PEMRISSION);
     }
-
-    //check if member to remove is not exist in group
-    const member = await this.prisma.groupMember.findFirst({
-      where: {
-        groupId: groupId,
-        memberId: memberId,
-      },
-    });
     if (!member) {
       throw new ConflictException(Exception.NOT_EXIST);
     }

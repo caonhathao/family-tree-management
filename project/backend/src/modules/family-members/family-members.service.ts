@@ -17,7 +17,7 @@ import { Exception } from 'src/common/messages/messages.response';
 export class MemberService {
   constructor(
     private prisma: PrismaService,
-    private coudinarySerive: CloudinaryService,
+    private cloudinaryService: CloudinaryService,
     private envConfig: EnvConfigService,
   ) {}
   async create(
@@ -26,17 +26,6 @@ export class MemberService {
     data: MemberDto,
     file?: Express.Multer.File,
   ) {
-    //check user authorization
-    const user = await this.prisma.user.findFirst({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
-    }
-
     //check group exist
     const group = await this.prisma.groupFamily.findFirst({
       where: {
@@ -49,7 +38,7 @@ export class MemberService {
     let avatarUrl: string = '';
     if (file) {
       const upload: UploadApiResponse | UploadApiErrorResponse =
-        await this.coudinarySerive.uploadFile(
+        await this.cloudinaryService.uploadFile(
           file,
           this.envConfig.folderFamilyName,
         );
@@ -120,14 +109,14 @@ export class MemberService {
     if (file) {
       if (member.avatarUrl !== null) {
         const resultDestroy: { result: string } =
-          await this.coudinarySerive.destroyFile(
+          await this.cloudinaryService.destroyFile(
             member.avatarUrl,
             this.envConfig.folderFamilyName,
           );
 
         if (resultDestroy.result === 'ok') {
           const upload: UploadApiResponse | UploadApiErrorResponse =
-            await this.coudinarySerive.uploadFile(
+            await this.cloudinaryService.uploadFile(
               file,
               this.envConfig.folderFamilyName,
             );

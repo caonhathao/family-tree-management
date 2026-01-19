@@ -19,7 +19,6 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 import { RelationshipService } from './relationships.service';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { USER_ROLE } from '@prisma/client';
-import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { RelationshipCreateDto } from './dto/create-relationships.dto';
@@ -44,14 +43,9 @@ export class RelationshipsController {
     description: 'Forbidden - Insufficient permissions',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async createRelationship(
-    @GetCurrentUserId() userId: string,
-    @Body() relationshipDto: RelationshipCreateDto,
-  ) {
-    const relationship = await this.relationshipsService.create(
-      userId,
-      relationshipDto,
-    );
+  async createRelationship(@Body() relationshipDto: RelationshipCreateDto) {
+    const relationship =
+      await this.relationshipsService.create(relationshipDto);
     return ResponseFactory.success({
       data: relationship,
       message: ValidMessageResponse.CREATED,
@@ -73,12 +67,10 @@ export class RelationshipsController {
   @ApiResponse({ status: 404, description: 'Relationship not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateRelationship(
-    @GetCurrentUserId() userId: string,
     @Param('relationshipId') relationshipId: string,
     @Body() relationshipUpdateDto: RelationshipUpdateDto,
   ) {
     const relationship = await this.relationshipsService.update(
-      userId,
       relationshipId,
       relationshipUpdateDto,
     );
@@ -88,11 +80,11 @@ export class RelationshipsController {
     });
   }
 
-  @Delete(':relationshipId/:familyId')
+  @Delete(':familyId/:relationshipId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Delete a relationship' })
-  @ApiParam({ name: 'relationshipId', description: 'Relationship ID' })
   @ApiParam({ name: 'familyId', description: 'Family ID' })
+  @ApiParam({ name: 'relationshipId', description: 'Relationship ID' })
   @ApiResponse({
     status: 200,
     description: 'Relationship deleted successfully',
@@ -104,12 +96,10 @@ export class RelationshipsController {
   @ApiResponse({ status: 404, description: 'Relationship not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteRelationship(
-    @GetCurrentUserId() userId: string,
     @Param('relationshipId') relationshipId: string,
     @Param('familyId') familyId: string,
   ) {
     const relationship = await this.relationshipsService.delete(
-      userId,
       relationshipId,
       familyId,
     );

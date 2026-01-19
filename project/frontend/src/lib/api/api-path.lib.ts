@@ -25,7 +25,7 @@ export const apiClient = {
     updateRelatioship: (relatioshipId: string) =>
       `/api/relationship/${relatioshipId}`,
     deleteRelationship: (relationshipId: string, familyId: string) =>
-      `/api/relationship/${relationshipId}/${familyId}`,
+      `/api/relationship/${familyId}/${relationshipId}`,
   },
   groupFamily: {
     createGroup: "/api/group-family",
