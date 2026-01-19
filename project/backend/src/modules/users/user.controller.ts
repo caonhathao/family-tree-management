@@ -1,4 +1,16 @@
-import { Controller, Param, Put, UseGuards, Body, Get } from '@nestjs/common';
+import {
+  Controller,
+  Param,
+  UseGuards,
+  Body,
+  Get,
+  UseInterceptors,
+  FileTypeValidator,
+  MaxFileSizeValidator,
+  ParseFilePipe,
+  UploadedFile,
+  Patch,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -8,9 +20,11 @@ import {
 } from '@nestjs/swagger';
 import { AtGuard } from '../auth/guards/auth.guard';
 import { UserServices } from './user.service';
-import { UserUpdateDto } from './dto/update-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
+import { FileInterceptor } from '@nestjs/platform-express';
+const maxFileSize = Number(process.env.MAX_FILE_SIZE) || 2;
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -19,17 +33,31 @@ import { ValidMessageResponse } from 'src/common/messages/messages.response';
 export class UserController {
   constructor(private readonly userServices: UserServices) {}
 
-  @Put(':id')
+  @Patch(':id')
+  @UseInterceptors(FileInterceptor('avatar'))
   @ApiOperation({ summary: 'Update user information' })
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User updated successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async updateUser(@Param('id') id: string, @Body() data: UserUpdateDto) {
-    const user = await this.userServices.update(id, data);
+  async updateUser(
+    @Param('id') id: string,
+    @Body() data: UpdateUserDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * maxFileSize }),
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg' }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    file?: Express.Multer.File,
+  ) {
+    const user = await this.userServices.update(id, data, file);
     return ResponseFactory.success({
       data: user,
-      message: ValidMessageResponse.CREATED,
+      message: ValidMessageResponse.UPDATED,
     });
   }
 

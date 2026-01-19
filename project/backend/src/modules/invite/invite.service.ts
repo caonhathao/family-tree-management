@@ -16,21 +16,24 @@ export class InviteService {
   ) {}
 
   async createInvite(userId: string, data: CreateInviteDto) {
-    //check user authorization
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-    if (!user) {
-      throw new ForbiddenException(Exception.UNAUTHORIZED);
-    }
+    const [user, group] = await Promise.all([
+      //check if user is a member of group
+      this.prisma.groupMember.findFirst({
+        where: {
+          memberId: userId,
+          groupId: data.groupId,
+        },
+      }),
 
-    //check group is existed
-    const group = await this.prisma.groupFamily.findFirst({
-      where: {
-        id: data.groupId,
-      },
-    });
+      //check group is existed
+      this.prisma.groupFamily.findFirst({
+        where: {
+          id: data.groupId,
+        },
+      }),
+    ]);
 
+    if (!user) throw new ForbiddenException(Exception.PEMRISSION);
     if (!group) {
       throw new NotFoundException(Exception.NOT_EXIST);
     }

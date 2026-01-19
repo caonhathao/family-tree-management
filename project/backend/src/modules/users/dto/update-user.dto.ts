@@ -1,8 +1,8 @@
-import { IsDate, IsEmail, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 
-export class UserUpdateDto {
+export class UpdateUserDto {
   @ApiProperty({
     description: 'User email',
     example: 'user@example.com',
@@ -10,6 +10,7 @@ export class UserUpdateDto {
   })
   @IsString()
   @IsEmail({}, { message: InvalidMessageResponse.EMAIL_INCORRECT })
+  @IsOptional()
   email?: string;
 
   @ApiProperty({
@@ -18,6 +19,7 @@ export class UserUpdateDto {
     required: false,
   })
   @IsString()
+  @IsOptional()
   password?: string;
 
   @ApiProperty({
@@ -26,6 +28,7 @@ export class UserUpdateDto {
     required: false,
   })
   @IsString()
+  @IsOptional()
   fullName?: string;
 
   @ApiProperty({
@@ -33,14 +36,15 @@ export class UserUpdateDto {
     example: '1990-01-01',
     required: false,
   })
-  @IsDate()
-  dateOfBirth?: Date;
+  @IsString()
+  @IsOptional()
+  dateOfBirth?: string;
 
   @ApiProperty({
     description: 'User biography',
     example: 'A brief description about the user',
     required: false,
   })
-  @IsString()
+  @IsOptional()
   biography?: string;
 }
