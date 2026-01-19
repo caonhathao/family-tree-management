@@ -1,10 +1,11 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { FamilyDto } from './dto/create-family.dto';
 import { FamilyUpdateDto } from './dto/update-family.dto';
 import { Exception } from 'src/common/messages/messages.response';
@@ -13,29 +14,25 @@ import { Exception } from 'src/common/messages/messages.response';
 export class FamilyService {
   constructor(private prisma: PrismaService) {}
   async create(userId: string, groupId: string, data: FamilyDto) {
-    //check user authorization
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new ForbiddenException(Exception.PEMRISSION);
-    }
-
     //check group exist
     const group = await this.prisma.groupFamily.findFirst({
       where: {
         id: groupId,
       },
+      select: {
+        family: true,
+      },
     });
 
     if (!group) throw new NotFoundException(Exception.NOT_EXIST);
+    if (!group.family) throw new BadRequestException(Exception.EXISTED);
 
     const newFamily = await this.prisma.family.create({
       data: {
         name: data.name,
         description: data.description,
         ownerId: userId,
+        groupFamilyId: groupId,
       },
       select: {
         id: true,
@@ -55,16 +52,6 @@ export class FamilyService {
       },
     });
 
-    //update group with new family
-    await this.prisma.groupFamily.update({
-      where: {
-        id: groupId,
-      },
-      data: {
-        familyId: newFamily.id,
-      },
-    });
-
     return {
       family: {
         id: newFamily.id,
@@ -72,22 +59,16 @@ export class FamilyService {
         description: newFamily.description,
       },
       owner: {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         id: newFamily.owner.id,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         name: newFamily.owner.userProfile?.fullName,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         avatar: newFamily.owner.userProfile?.avatar,
       },
     };
   }
   async update(data: FamilyUpdateDto, userId: string, groupId: string) {
-    //check user authorization
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new ForbiddenException(Exception.PEMRISSION);
-    }
-
     //check family exist
     const family = await this.prisma.family.findFirst({
       where: {
@@ -131,29 +112,7 @@ export class FamilyService {
       },
     });
   }
-  async get(familyId: string, userId: string) {
-    //check user authorization
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new ForbiddenException(Exception.PEMRISSION);
-    }
-
-    const groupFamily = await this.prisma.groupFamily.findFirst({
-      where: {
-        familyId: familyId,
-        groupMembers: {
-          some: { memberId: userId },
-        },
-      },
-    });
-
-    if (!groupFamily) {
-      throw new ForbiddenException(Exception.PEMRISSION);
-    }
-
+  async get(familyId: string) {
     return await this.prisma.family.findUnique({
       where: { id: familyId },
       select: {
@@ -194,7 +153,6 @@ export class FamilyService {
     const groupFamily = await this.prisma.groupFamily.findFirst({
       where: {
         id: groupId,
-        familyId: familyId,
         groupMembers: {
           some: { memberId: userId },
         },
@@ -204,6 +162,7 @@ export class FamilyService {
         groupMembers: {
           where: { memberId: userId },
           select: {
+            memberId: true,
             isLeader: true,
           },
         },
@@ -218,7 +177,7 @@ export class FamilyService {
       throw new ForbiddenException(Exception.PEMRISSION);
     }
     return await this.prisma.family.delete({
-      where: { id: familyId, ownerId: userId },
+      where: { id: familyId, ownerId: groupFamily.groupMembers[0].memberId },
     });
   }
 }

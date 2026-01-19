@@ -5,7 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { MemberDto } from './dto/create-members.dto';
 import { CloudinaryService } from 'src/common/config/cloudinary/cloudinary.service';
 import { EnvConfigService } from 'src/common/config/env/env-config.service';
@@ -82,10 +82,12 @@ export class MemberService {
       throw new UnauthorizedException(Exception.UNAUTHORIZED);
     }
 
-    //check group exist
+    //check if user is in group that have family member or not
     const group = await this.prisma.groupFamily.findFirst({
       where: {
-        id: groupId,
+        family: {
+          groupFamilyId: groupId,
+        },
       },
     });
 
@@ -161,7 +163,9 @@ export class MemberService {
     //check if user is in group that have family member or not
     const group = await this.prisma.groupFamily.findFirst({
       where: {
-        familyId: familyId,
+        family: {
+          id: familyId,
+        },
       },
     });
 
@@ -229,7 +233,9 @@ export class MemberService {
     //check if user is in group that have family member or not
     const group = await this.prisma.groupFamily.findFirst({
       where: {
-        familyId: familyId,
+        family: {
+          id: familyId,
+        },
       },
     });
 
@@ -264,7 +270,9 @@ export class MemberService {
     //check if user is in group that have family member or not
     const group = await this.prisma.groupFamily.findFirst({
       where: {
-        familyId: familyId,
+        family: {
+          id: familyId,
+        },
       },
     });
 

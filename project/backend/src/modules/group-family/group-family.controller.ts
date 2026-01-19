@@ -6,6 +6,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,6 +22,7 @@ import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { UpdateGroupFamilyDto } from './dto/update-group-family.dto';
 import { CreateGroupFamilyDto } from './dto/create-group-family.dto';
+import { AtGuard } from '../auth/guards/auth.guard';
 
 @ApiTags('group-family')
 @ApiBearerAuth()
@@ -29,6 +31,7 @@ export class GroupFamilyController {
   constructor(private readonly groupFamilyService: GroupFamilyService) {}
 
   @Post()
+  @UseGuards(AtGuard)
   @ApiOperation({ summary: 'Create a new group family' })
   @ApiResponse({
     status: 201,
@@ -40,6 +43,8 @@ export class GroupFamilyController {
     @GetCurrentUserId() userId: string,
     @Body() data: CreateGroupFamilyDto,
   ) {
+    console.log('userId:', userId);
+    console.log('data:', data);
     const groupFamily = await this.groupFamilyService.create(userId, data);
     return ResponseFactory.success({
       data: groupFamily,
@@ -48,6 +53,7 @@ export class GroupFamilyController {
   }
 
   @Patch(':id')
+  @UseGuards(AtGuard)
   @ApiOperation({ summary: 'Update a group family' })
   @ApiParam({ name: 'id', description: 'Group family ID' })
   @ApiResponse({
@@ -74,6 +80,7 @@ export class GroupFamilyController {
   }
 
   @Get(':id')
+  @UseGuards(AtGuard)
   @ApiOperation({ summary: 'Get a group family by ID' })
   @ApiParam({ name: 'id', description: 'Group family ID' })
   @ApiResponse({
@@ -94,6 +101,7 @@ export class GroupFamilyController {
   }
 
   @Get()
+  @UseGuards(AtGuard)
   @ApiOperation({ summary: 'Get all group families for current user' })
   @ApiResponse({
     status: 200,
@@ -109,6 +117,7 @@ export class GroupFamilyController {
   }
 
   @Post('join')
+  @UseGuards(AtGuard)
   @ApiOperation({ summary: 'Join a group family using invitation token' })
   @ApiQuery({
     name: 'token',

@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Exception } from 'src/common/messages/messages.response';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateGroupFamilyDto } from './dto/update-group-family.dto';
 import { CreateGroupFamilyDto } from './dto/create-group-family.dto';
 import { USER_ROLE } from '@prisma/client';
@@ -92,7 +92,13 @@ export class GroupFamilyService {
         id: true,
         name: true,
         description: true,
-        familyId: true,
+        family: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
         groupMembers: {
           select: {
             member: {

@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { Exception } from 'src/common/messages/messages.response';
 import { EnvConfigService } from 'src/common/config/env/env-config.service';

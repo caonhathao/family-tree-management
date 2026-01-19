@@ -3,7 +3,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { UserProfileDto } from '../users/dto/create-user.dto';
@@ -164,6 +164,7 @@ export class AuthService {
     const session = await this.prisma.session.findFirst({
       where: {
         userId: user?.id,
+        token: token,
       },
       select: {
         id: true,
@@ -172,36 +173,37 @@ export class AuthService {
       },
     });
 
+    // console.log('session', session);
+    // console.log('token', token);
+
     if (!session || session.expiresAt < new Date()) {
       if (session)
         await this.prisma.session.delete({ where: { id: session.id } });
       throw new ForbiddenException(InvalidMessageResponse.SESSION_BAD_ACCESS);
     }
 
-    if (session?.token === token) {
-      const payload = {
-        sub: user.id,
-        email: user.id,
-      };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+    };
 
-      const tokens = await this.getTokens(payload);
+    const tokens = await this.getTokens(payload);
 
-      await this.prisma.session.update({
-        where: { id: session.id },
-        data: {
-          token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
-        },
-      });
-      return {
-        user: {
-          id: user.id,
-          email: user.email,
-          userProfile: user.userProfile,
-        },
-        tokens,
-      };
-    }
+    await this.prisma.session.update({
+      where: { id: session.id },
+      data: {
+        token: tokens.refreshToken,
+        expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+      },
+    });
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        userProfile: user.userProfile,
+      },
+      tokens,
+    };
   }
 
   private async getTokens(payload: Record<string, string>) {
