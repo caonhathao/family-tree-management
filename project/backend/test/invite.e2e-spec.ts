@@ -26,9 +26,9 @@ import { PrismaService } from '../prisma/prisma.service';
 describe('Invitation E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let testUsers: any[] = [];
-  let testGroups: any[] = [];
-  let testInvites: any[] = [];
+  const testUsers: any[] = [];
+  const testGroups: any[] = [];
+  const testInvites: any[] = [];
 
   // Helper functions
   const createTestUser = async (userData: any) => {

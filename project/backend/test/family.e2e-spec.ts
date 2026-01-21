@@ -44,9 +44,9 @@ interface TestResponse<T = any> {
 describe('Family Management E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let testUsers: any[] = [];
-  let testGroups: any[] = [];
-  let testFamilies: any[] = [];
+  const testUsers: any[] = [];
+  const testGroups: any[] = [];
+  const testFamilies: any[] = [];
 
   // Helper functions
   const createTestUser = async (userData: any) => {

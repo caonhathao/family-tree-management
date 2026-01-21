@@ -24,7 +24,7 @@ import { PrismaService } from '../prisma/prisma.service';
 describe('Authentication E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let testUsers: any[] = [];
+  const testUsers: any[] = [];
 
   // Test data templates
   const validUser = {

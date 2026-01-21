@@ -17,11 +17,6 @@ import { isUUID } from 'class-validator';
 export class GroupFamilyService {
   constructor(private prisma: PrismaService) {}
   async create(userId: string, data: CreateGroupFamilyDto) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
-    }
-
     const newGroup = await this.prisma.groupFamily.create({
       data: {
         ...data,
@@ -29,7 +24,7 @@ export class GroupFamilyService {
       select: { id: true, name: true, description: true },
     });
     // Add creator as owner and leader of the new group
-    await this.prisma.groupMember.create({
+    const newMember = await this.prisma.groupMember.create({
       data: {
         groupId: newGroup.id,
         memberId: userId,
@@ -37,6 +32,7 @@ export class GroupFamilyService {
         isLeader: true,
       },
     });
+    console.log('new member at create group family service: ', newMember);
     return newGroup;
   }
   async update(userId: string, groupId: string, data: UpdateGroupFamilyDto) {
