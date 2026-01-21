@@ -1,6 +1,13 @@
 import { USER_ROLE } from '@prisma/client';
-import { IsOptional, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 
 export class CreateGroupFamilyDto {
   @ApiProperty({
@@ -8,6 +15,9 @@ export class CreateGroupFamilyDto {
     example: 'Johnson Family Group',
   })
   @IsString()
+  @IsNotEmpty({ message: InvalidMessageResponse.NAME_EMPTY })
+  @MinLength(6, { message: InvalidMessageResponse.NAME_MIN })
+  @MaxLength(30, { message: InvalidMessageResponse.NAME_MAX })
   name: string;
 
   @ApiProperty({

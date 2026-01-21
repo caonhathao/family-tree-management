@@ -18,6 +18,7 @@ import { GroupMemberModule } from './modules/group-member/group-member.module';
 import { InviteModule } from './modules/invite/invite.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TaskModule } from './schedule/task-schedule.module';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
@@ -41,6 +42,8 @@ import { TaskModule } from './schedule/task-schedule.module';
     GroupMemberModule,
     InviteModule,
     TaskModule,
+    AuthModule,
+    PassportModule,
   ],
   controllers: [AppController],
   providers: [AppService, EnvConfigService],

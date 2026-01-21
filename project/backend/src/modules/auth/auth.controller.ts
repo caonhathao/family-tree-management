@@ -71,6 +71,7 @@ export class AuthController {
   }
 
   @Post('login-base')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })

@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEmail, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 
@@ -36,7 +36,7 @@ export class UpdateUserDto {
     example: '1990-01-01',
     required: false,
   })
-  @IsString()
+  @IsDateString()
   @IsOptional()
   dateOfBirth?: string;
 

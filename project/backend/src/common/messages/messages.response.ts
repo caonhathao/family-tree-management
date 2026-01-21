@@ -2,11 +2,14 @@ export const InvalidMessageResponse = {
   EMAIL: 't_email_invalid',
   EMAIL_INCORRECT: 't_email_incorrect',
   NAME_EMPTY: 't_name_empty',
+  NAME_MIN: 't_name_min',
+  NAME_MAX: 't_name_max',
   PASSWORD_MIN: 't_password_min_invalid',
   PASSWORD_INCORRECT: 't_password_incorrect',
   ROLE_EMPTY: 't_role_empty',
   DESC_EMPTY: 't_description_empty',
   ID_EMPTY: 't_id_empty',
+  ID_INVAILD: 't_id_invalid',
   GENDER_EMPTY: 't_gender_empty',
   OTP_MIN: 't_otp_code_min_invalid',
   GOOGLE_TOKEN: 't_google_empty',
@@ -33,6 +36,9 @@ export type ValidMessage =
   (typeof ValidMessageResponse)[keyof typeof ValidMessageResponse];
 
 export const Exception = {
+  BAD_REQUEST: 't_bad_request',
+  CONFLICT: 't_conflict',
+  CREATED: 't_created_failed',
   PEMRISSION: 't_need_role_permission',
   UNAUTHORIZED: 't_unauthorized',
   FILE_MISSING: 't_file_missing',

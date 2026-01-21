@@ -1,6 +1,8 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -9,8 +11,11 @@ import * as bcrypt from 'bcrypt';
 import { UserProfileDto } from '../users/dto/create-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { LoginBaseDto } from './dto/login.dto';
-import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 import { EnvConfigService } from 'src/common/config/env/env-config.service';
+import {
+  Exception,
+  InvalidMessageResponse,
+} from 'src/common/messages/messages.response';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +29,14 @@ export class AuthService {
     data: RegisterDto,
     { ipAddress, userAgent }: { ipAddress: string; userAgent: string },
   ) {
+    const email = await this.prisma.user.findFirst({
+      where: {
+        email: data.email,
+      },
+    });
+
+    if (email) throw new ConflictException(Exception.CONFLICT);
+
     const hashedPW = await bcrypt.hash(data.password, 10);
     const newUser = await this.prisma.user.create({
       data: {
@@ -86,61 +99,80 @@ export class AuthService {
     data: LoginBaseDto,
     { userAgent, ipAddress }: { userAgent: string; ipAddress: string },
   ) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email: data.email,
-      },
-      select: {
-        id: true,
-        email: true,
-        account: {
-          select: { password: true },
+    try {
+      console.log('login data:', data);
+      const user = await this.prisma.user.findUnique({
+        where: {
+          email: data.email,
         },
-        userProfile: {
-          select: {
-            fullName: true,
-            avatar: true,
+        select: {
+          id: true,
+          email: true,
+          account: {
+            select: { password: true },
+          },
+          userProfile: {
+            select: {
+              fullName: true,
+              avatar: true,
+            },
           },
         },
-      },
-    });
-    if (!user)
-      throw new UnauthorizedException(InvalidMessageResponse.USER_NOT_FOUND);
-    if (user?.account) {
-      if (!user.account?.password) {
-        throw new UnauthorizedException(InvalidMessageResponse.EMAIL_INCORRECT);
-      } else {
-        const isPWValid = await bcrypt.compare(
-          data.password,
-
-          user.account?.password,
-        );
-        if (!isPWValid) {
+      });
+      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+      if (user?.account) {
+        if (!user.account?.password) {
           throw new UnauthorizedException(
-            InvalidMessageResponse.PASSWORD_INCORRECT,
+            InvalidMessageResponse.EMAIL_INCORRECT,
           );
+        } else {
+          const isPWValid = await bcrypt.compare(
+            data.password,
+            user.account?.password,
+          );
+          if (!isPWValid) {
+            throw new UnauthorizedException(
+              InvalidMessageResponse.PASSWORD_INCORRECT,
+            );
+          }
         }
       }
+      const payload = { sub: user.id, email: user.email };
+      const tokens = await this.getTokens(payload);
+      //udpate session if login again in same device
+      //in testing, userAgent is undefined, so we will set a variable before update session
+      const safeUserAgent = userAgent || 'unknow';
+      await this.prisma.session.upsert({
+        where: {
+          userId_userAgent: {
+            userId: user.id,
+            userAgent: safeUserAgent,
+          },
+        },
+        update: {
+          token: tokens.refreshToken,
+          expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+        },
+        create: {
+          userId: user.id,
+          token: tokens.refreshToken,
+          expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+          userAgent: userAgent,
+          ipAddress: ipAddress,
+        },
+      });
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          userProfile: user.userProfile as UserProfileDto,
+        },
+        tokens,
+      };
+    } catch (err) {
+      console.log('login falied: ', err);
+      throw err;
     }
-    const payload = { sub: user.id, email: user.email };
-    const tokens = await this.getTokens(payload);
-    await this.prisma.session.create({
-      data: {
-        userId: user.id,
-        token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
-        userAgent: userAgent,
-        ipAddress: ipAddress,
-      },
-    });
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        userProfile: user.userProfile as UserProfileDto,
-      },
-      tokens,
-    };
   }
 
   async refresh(userId: string, token: string) {

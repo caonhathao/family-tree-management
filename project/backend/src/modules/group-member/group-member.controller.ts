@@ -21,17 +21,18 @@ import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { AtGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { IsLeader } from 'src/common/decorators/leader.decorator';
+import { GroupLeaderGuard } from 'src/common/guards/leader.guard';
 
 @ApiTags('group-member')
 @ApiBearerAuth()
-@UseGuards(AtGuard, RolesGuard)
+@UseGuards(AtGuard, RolesGuard, GroupLeaderGuard)
 @Controller('group-member')
 export class GroupMemberController {
   constructor(private readonly groupMemberService: GroupMemberService) {}
 
-  @Patch(':id')
+  @Patch(':groupId')
   @ApiOperation({ summary: 'Update group member role' })
-  @ApiParam({ name: 'id', description: 'Group ID' })
+  @ApiParam({ name: 'groupId', description: 'Group ID' })
   @ApiResponse({
     status: 200,
     description: 'Group member role updated successfully',

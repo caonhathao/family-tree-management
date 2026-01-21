@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -23,6 +24,7 @@ import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { UpdateGroupFamilyDto } from './dto/update-group-family.dto';
 import { CreateGroupFamilyDto } from './dto/create-group-family.dto';
 import { AtGuard } from '../auth/guards/auth.guard';
+import { HttpStatus } from 'src/common/constants/api';
 
 @ApiTags('group-family')
 @ApiBearerAuth()
@@ -117,6 +119,7 @@ export class GroupFamilyController {
   }
 
   @Post('join')
+  @HttpCode(200)
   @UseGuards(AtGuard)
   @ApiOperation({ summary: 'Join a group family using invitation token' })
   @ApiQuery({
@@ -134,6 +137,7 @@ export class GroupFamilyController {
   ) {
     const groupFamily = await this.groupFamilyService.joinGroup(code, userId);
     return ResponseFactory.success({
+      code: HttpStatus.OK,
       data: groupFamily,
       message: ValidMessageResponse.UPDATED,
     });

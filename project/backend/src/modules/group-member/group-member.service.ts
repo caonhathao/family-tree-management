@@ -9,6 +9,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateGroupMemberDto } from './dto/update-group-member.dto';
 import { Exception } from 'src/common/messages/messages.response';
 import { USER_ROLE } from '@prisma/client';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class GroupMemberService {
@@ -57,6 +58,8 @@ export class GroupMemberService {
     groupId: string,
     data: UpdateGroupMemberDto,
   ) {
+    if (!isUUID(groupId)) throw new ForbiddenException(Exception.ID_MISSING);
+    if (!isUUID(data.id)) throw new ForbiddenException(Exception.ID_MISSING);
     const [newLeader, groupMember] = await Promise.all([
       //check if new leader is exist in group
       this.prisma.groupMember.findFirst({
@@ -122,38 +125,26 @@ export class GroupMemberService {
     throw new UnauthorizedException(Exception.PEMRISSION);
   }
   async removeMember(userId: string, groupId: string, memberId: string) {
-    const [requester, member] = await Promise.all([
-      //check if requester is leader
-      this.prisma.groupMember.findFirst({
-        where: {
-          groupId: groupId,
-          memberId: userId,
-        },
-        select: {
-          memberId: true,
-          role: true,
-          isLeader: true,
-        },
-      }),
+    if (!isUUID(groupId, 'all'))
+      throw new NotFoundException(Exception.NOT_EXIST);
+    if (!isUUID(memberId, 'all'))
+      throw new NotFoundException(Exception.NOT_EXIST);
 
-      //check if member to remove is not exist in group
-      this.prisma.groupMember.findFirst({
-        where: {
-          groupId: groupId,
-          memberId: memberId,
+    //check validation: requester (defined by userId) and target (defined by memberId) is in the same group
+    const group = await this.prisma.groupFamily.findMany({
+      where: {
+        id: groupId,
+        groupMembers: {
+          some: {
+            memberId: {
+              in: [userId, memberId],
+            },
+          },
         },
-      }),
-    ]);
+      },
+    });
 
-    if (!requester) {
-      throw new ConflictException(Exception.NOT_EXIST);
-    }
-    if (!requester.isLeader) {
-      throw new UnauthorizedException(Exception.PEMRISSION);
-    }
-    if (!member) {
-      throw new ConflictException(Exception.NOT_EXIST);
-    }
+    if (!group) throw new NotFoundException(Exception.NOT_EXIST);
 
     return await this.prisma.groupMember.deleteMany({
       where: {

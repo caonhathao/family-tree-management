@@ -3,12 +3,12 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { FamilyDto } from './dto/create-family.dto';
 import { FamilyUpdateDto } from './dto/update-family.dto';
 import { Exception } from 'src/common/messages/messages.response';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class FamilyService {
@@ -25,7 +25,13 @@ export class FamilyService {
     });
 
     if (!group) throw new NotFoundException(Exception.NOT_EXIST);
-    if (!group.family) throw new BadRequestException(Exception.EXISTED);
+    if (group.family) throw new BadRequestException(Exception.EXISTED);
+
+    //check validation of data
+    if (data.name === '' || !data.name)
+      throw new BadRequestException(Exception.CREATED);
+    if (data.description === '' || !data.description)
+      throw new BadRequestException(Exception.CREATED);
 
     const newFamily = await this.prisma.family.create({
       data: {
@@ -69,22 +75,30 @@ export class FamilyService {
     };
   }
   async update(data: FamilyUpdateDto, userId: string, groupId: string) {
-    //check family exist
-    const family = await this.prisma.family.findFirst({
-      where: {
-        id: data.id,
-      },
-    });
-    if (!family) throw new NotFoundException(Exception.NOT_EXIST);
-
-    //check group exist
-    const group = await this.prisma.groupFamily.findFirst({
+    if (!groupId || !isUUID(groupId))
+      throw new NotFoundException(Exception.NOT_EXIST);
+    if (!data.id || !isUUID(data.id))
+      throw new BadRequestException(Exception.ID_MISSING);
+    //check if user is a member of group that have family udpated
+    const member = await this.prisma.groupFamily.findFirst({
       where: {
         id: groupId,
+        family: {
+          id: data.id,
+        },
+        groupMembers: {
+          some: {
+            memberId: userId,
+          },
+        },
+      },
+      select: {
+        id: true,
+        family: true,
       },
     });
 
-    if (!group) throw new NotFoundException(Exception.NOT_EXIST);
+    if (!member) throw new NotFoundException(Exception.NOT_EXIST);
 
     const updateData = Object.fromEntries(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -92,7 +106,7 @@ export class FamilyService {
     );
 
     return await this.prisma.family.update({
-      where: { id: data.id, ownerId: userId },
+      where: { id: data.id },
       data: updateData,
       select: {
         id: true,
@@ -112,8 +126,13 @@ export class FamilyService {
       },
     });
   }
-  async get(familyId: string) {
-    return await this.prisma.family.findUnique({
+  async get(familyId: string, userId: string) {
+    if (!isUUID(familyId, 'all'))
+      throw new NotFoundException(Exception.NOT_EXIST);
+    if (!isUUID(userId, 'all'))
+      throw new NotFoundException(Exception.NOT_EXIST);
+
+    const family = await this.prisma.family.findUnique({
       where: { id: familyId },
       select: {
         id: true,
@@ -140,44 +159,40 @@ export class FamilyService {
         },
       },
     });
+    if (!family) throw new ForbiddenException(Exception.NOT_EXIST);
+    return family;
   }
   async delete(groupId: string, familyId: string, userId: string) {
-    //check user authorization
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
-    }
-
-    const groupFamily = await this.prisma.groupFamily.findFirst({
-      where: {
-        id: groupId,
-        groupMembers: {
-          some: { memberId: userId },
-        },
-      },
-      select: {
-        id: true,
-        groupMembers: {
-          where: { memberId: userId },
-          select: {
-            memberId: true,
-            isLeader: true,
+    try {
+      //check user
+      const groupFamily = await this.prisma.groupFamily.findFirst({
+        where: {
+          id: groupId,
+          groupMembers: {
+            some: { memberId: userId },
           },
         },
-      },
-    });
+        select: {
+          id: true,
+          groupMembers: {
+            where: { memberId: userId },
+            select: {
+              memberId: true,
+            },
+          },
+        },
+      });
 
-    if (!groupFamily) {
-      throw new ForbiddenException(Exception.PEMRISSION);
-    }
+      if (!groupFamily) {
+        throw new ForbiddenException(Exception.PEMRISSION);
+      }
 
-    if (groupFamily.groupMembers[0].isLeader === false) {
-      throw new ForbiddenException(Exception.PEMRISSION);
+      return await this.prisma.family.delete({
+        where: { id: familyId, ownerId: groupFamily.groupMembers[0].memberId },
+      });
+    } catch (err) {
+      console.log('family service delete:', err);
+      throw err;
     }
-    return await this.prisma.family.delete({
-      where: { id: familyId, ownerId: groupFamily.groupMembers[0].memberId },
-    });
   }
 }
