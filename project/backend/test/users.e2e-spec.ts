@@ -28,7 +28,7 @@ import { join } from 'node:path';
 describe('User Management E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let testUsers: any[] = [];
+  const testUsers: any[] = [];
 
   // Helper functions for authentication
   const createTestUser = async (userData: any) => {

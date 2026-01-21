@@ -46,7 +46,7 @@ export class GroupMemberController {
   @IsLeader()
   async updateGroupMemberRole(
     @GetCurrentUserId() userId: string,
-    @Param('id') groupId: string,
+    @Param('groupId') groupId: string,
     @Body() data: UpdateGroupMemberDto,
   ) {
     const result = await this.groupMemberService.updaterRole(
@@ -60,9 +60,9 @@ export class GroupMemberController {
     });
   }
 
-  @Patch('leader/:id')
+  @Patch('leader/:groupId')
   @ApiOperation({ summary: 'Change group leader' })
-  @ApiParam({ name: 'id', description: 'Group ID' })
+  @ApiParam({ name: 'groupId', description: 'Group ID' })
   @ApiResponse({
     status: 200,
     description: 'Group leader changed successfully',
@@ -76,7 +76,7 @@ export class GroupMemberController {
   @IsLeader()
   async changeGroupMemberLeader(
     @GetCurrentUserId() userId: string,
-    @Param('id') groupId: string,
+    @Param('groupId') groupId: string,
     @Body() data: UpdateGroupMemberDto,
   ) {
     const result = await this.groupMemberService.changeLeader(

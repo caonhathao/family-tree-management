@@ -26,10 +26,10 @@ import { PrismaService } from '../prisma/prisma.service';
 describe('Family Members E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let testUsers: any[] = [];
-  let testGroups: any[] = [];
-  let testFamilies: any[] = [];
-  let testMembers: any[] = [];
+  const testUsers: any[] = [];
+  const testGroups: any[] = [];
+  const testFamilies: any[] = [];
+  const testMembers: any[] = [];
 
   // Helper functions
   const createTestUser = async (userData: any) => {

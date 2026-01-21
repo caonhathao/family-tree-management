@@ -20,44 +20,51 @@ export class GroupMemberService {
     groupId: string,
     data: UpdateGroupMemberDto,
   ) {
+    console.log('updaterRole called with:', { userId, groupId, data });
     //check if member is in the same groupconst [requester, targetMember] = await Promise.all([
-    const [requester, targetMember] = await Promise.all([
-      this.prisma.groupMember.findFirst({
-        where: { groupId, memberId: userId },
-      }),
-      this.prisma.groupMember.findFirst({
-        where: { groupId, memberId: data.id },
-      }),
-    ]);
+    try {
+      const [requester, targetMember] = await Promise.all([
+        this.prisma.groupMember.findFirst({
+          where: { groupId, memberId: userId },
+        }),
+        this.prisma.groupMember.findFirst({
+          where: { groupId, memberId: data.id },
+        }),
+      ]);
 
-    if (!targetMember) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!targetMember) throw new NotFoundException(Exception.NOT_EXIST);
 
-    if (!requester) throw new ForbiddenException(Exception.PEMRISSION);
+      if (!requester) throw new ForbiddenException(Exception.PEMRISSION);
 
-    return await this.prisma.groupMember.update({
-      where: {
-        memberId_groupId: {
-          groupId: groupId,
-          memberId: data.id,
+      return await this.prisma.groupMember.update({
+        where: {
+          memberId_groupId: {
+            groupId: groupId,
+            memberId: data.id,
+          },
         },
-      },
-      data: {
-        role: data.role,
-      },
-      select: {
-        id: true,
-        memberId: true,
-        groupId: true,
-        role: true,
-        isLeader: true,
-      },
-    });
+        data: {
+          role: data.role,
+        },
+        select: {
+          id: true,
+          memberId: true,
+          groupId: true,
+          role: true,
+          isLeader: true,
+        },
+      });
+    } catch (err) {
+      console.log('group member service failed: ', err);
+      throw err;
+    }
   }
   async changeLeader(
     userId: string,
     groupId: string,
     data: UpdateGroupMemberDto,
   ) {
+    console.log('changeLeader called with:', { userId, groupId, data });
     if (!isUUID(groupId)) throw new ForbiddenException(Exception.ID_MISSING);
     if (!isUUID(data.id)) throw new ForbiddenException(Exception.ID_MISSING);
     const [newLeader, groupMember] = await Promise.all([
@@ -125,32 +132,33 @@ export class GroupMemberService {
     throw new UnauthorizedException(Exception.PEMRISSION);
   }
   async removeMember(userId: string, groupId: string, memberId: string) {
-    if (!isUUID(groupId, 'all'))
-      throw new NotFoundException(Exception.NOT_EXIST);
-    if (!isUUID(memberId, 'all'))
-      throw new NotFoundException(Exception.NOT_EXIST);
+    console.log('groupId:', groupId);
+    console.log('memberId:', memberId);
+    try {
+      if (!isUUID(groupId, 'all'))
+        throw new NotFoundException(Exception.NOT_EXIST);
+      if (!isUUID(memberId, 'all'))
+        throw new NotFoundException(Exception.NOT_EXIST);
 
-    //check validation: requester (defined by userId) and target (defined by memberId) is in the same group
-    const group = await this.prisma.groupFamily.findMany({
-      where: {
-        id: groupId,
-        groupMembers: {
-          some: {
-            memberId: {
-              in: [userId, memberId],
-            },
-          },
+      //check validation: requester (defined by userId) and target (defined by memberId) is in the same group
+      const members = await this.prisma.groupMember.findMany({
+        where: {
+          groupId: groupId,
+          memberId: { in: [userId, memberId] },
         },
-      },
-    });
+      });
 
-    if (!group) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!members) throw new NotFoundException(Exception.NOT_EXIST);
 
-    return await this.prisma.groupMember.deleteMany({
-      where: {
-        groupId: groupId,
-        memberId: memberId,
-      },
-    });
+      return await this.prisma.groupMember.deleteMany({
+        where: {
+          groupId: groupId,
+          memberId: memberId,
+        },
+      });
+    } catch (err) {
+      console.log('remove member service', err);
+      throw err;
+    }
   }
 }

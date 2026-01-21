@@ -65,11 +65,10 @@ export class FamilyService {
         description: newFamily.description,
       },
       owner: {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         id: newFamily.owner.id,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+
         name: newFamily.owner.userProfile?.fullName,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+
         avatar: newFamily.owner.userProfile?.avatar,
       },
     };
