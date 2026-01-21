@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -12,6 +13,7 @@ import { CloudinaryService } from 'src/common/config/cloudinary/cloudinary.servi
 import { EnvConfigService } from 'src/common/config/env/env-config.service';
 import { Prisma } from '@prisma/client';
 import { JsonValue } from '@prisma/client/runtime/client';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class UserService {
@@ -27,7 +29,9 @@ export class UserService {
     data: UpdateUserDto,
     file?: Express.Multer.File,
   ) {
-    if (!targetId) throw new ForbiddenException(Exception.ID_MISSING);
+    console.log('data in update user service:', data);
+    console.log('file in user update serivce:', file);
+    if (!isUUID(targetId)) throw new NotFoundException(Exception.NOT_EXIST);
     if (targetId !== userId) throw new ForbiddenException(Exception.PEMRISSION);
 
     const profileUpdate: Prisma.UserProfileUpdateInput = {};
@@ -46,12 +50,28 @@ export class UserService {
       } catch (e) {
         throw new BadRequestException('Biography format is invalid JSON');
       }
-    if (data.dateOfBirth)
-      profileUpdate.dateOfBirth = new Date(data.dateOfBirth);
+    if (data.dateOfBirth) {
+      const date = new Date(data.dateOfBirth);
+      if (isNaN(date.getTime())) {
+        throw new BadRequestException('Định dạng ngày tháng không hợp lệ');
+      } else {
+        profileUpdate.dateOfBirth = date;
+      }
+    }
 
-    if (data.email) userUpdate.email = data.email;
+    if (data.email && data.email.trim() !== '') {
+      const isEmailTaken = await this.prisma.user.findUnique({
+        where: {
+          email: data.email,
+        },
+      });
+      if (!isEmailTaken) {
+        // throw new ConflictException(Exception.EXISTED);
+        userUpdate.email = data.email;
+      }
+    }
 
-    if (data.password) {
+    if (data.password && data.password.trim() !== '') {
       accountUpdate.password = await bcrypt.hash(data.password, 10);
     }
 
@@ -59,7 +79,7 @@ export class UserService {
       const upload: UploadApiResponse | UploadApiErrorResponse =
         await this.cloudinaryService.uploadFile(
           file,
-          this.envConfig.folderFamilyName,
+          this.envConfig.folderUserName,
         );
       if ('secure_url' in upload && upload.secure_url) {
         profileUpdate.avatar = upload.secure_url as string;
@@ -67,32 +87,61 @@ export class UserService {
         throw new BadRequestException(Exception.UPLOAD_FAILED);
       }
     }
-
-    return await this.prisma.$transaction(async (tx) => {
-      const userProfileResult = await tx.userProfile.update({
-        where: { userId: targetId },
-        data: profileUpdate,
-        select: {
-          fullName: true,
-          avatar: true,
-          biography: true,
-          dateOfBirth: true,
-        },
-      });
-      if (Object.keys(userUpdate).length > 0) {
-        await tx.user.update({ where: { id: targetId }, data: userUpdate });
-      }
-      if (Object.keys(accountUpdate).length > 0) {
-        await tx.account.update({
+    try {
+      const result = await this.prisma.$transaction(async (tx) => {
+        const userProfileResult = await tx.userProfile.update({
           where: { userId: targetId },
-          data: accountUpdate,
+          data: profileUpdate,
+          select: {
+            fullName: true,
+            avatar: true,
+            biography: true,
+            dateOfBirth: true,
+          },
         });
-      }
-      return userProfileResult;
-    });
+
+        let userResult: { email: string } | null;
+        if (Object.keys(userUpdate).length > 0) {
+          userResult = await tx.user.update({
+            where: { id: targetId },
+            data: userUpdate,
+            select: { email: true },
+          });
+        } else {
+          userResult = await tx.user.findUnique({
+            where: { id: targetId },
+            select: { email: true },
+          });
+        }
+
+        if (Object.keys(accountUpdate).length > 0) {
+          await tx.account.update({
+            where: { userId: targetId },
+            data: accountUpdate,
+          });
+        }
+
+        return {
+          id: targetId,
+          email: userResult?.email,
+          userProfile: userProfileResult,
+        };
+      });
+
+      return result;
+    } catch (err) {
+      console.log('transaction failed at update user: ', err);
+      throw err;
+    }
   }
 
-  async get(userId: string) {
+  async get(targetId: string, userId: string) {
+    if (!isUUID(targetId, 'all'))
+      throw new NotFoundException(Exception.NOT_EXIST);
+
+    if (targetId !== userId) {
+      throw new NotFoundException(Exception.NOT_EXIST);
+    }
     return await this.prisma.user.findUnique({
       where: { id: userId },
       select: {

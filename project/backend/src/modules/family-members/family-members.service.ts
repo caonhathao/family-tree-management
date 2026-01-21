@@ -12,6 +12,7 @@ import { EnvConfigService } from 'src/common/config/env/env-config.service';
 import { UploadApiErrorResponse, UploadApiResponse } from 'cloudinary';
 import { MemberUpdateDto } from './dto/update-members.dto';
 import { Exception } from 'src/common/messages/messages.response';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class MemberService {
@@ -26,44 +27,56 @@ export class MemberService {
     data: MemberDto,
     file?: Express.Multer.File,
   ) {
-    //check group exist
-    const group = await this.prisma.groupFamily.findFirst({
-      where: {
-        id: groupId,
-      },
-    });
+    try {
+      if (!isUUID(groupId, 'all'))
+        throw new NotFoundException(Exception.NOT_EXIST);
+      if (!isUUID(data.familyId, 'all'))
+        throw new NotFoundException(Exception.NOT_EXIST);
+      //check group exist
+      const group = await this.prisma.groupFamily.findFirst({
+        where: {
+          id: groupId,
+          family: {
+            id: data.familyId,
+          },
+        },
+      });
 
-    if (!group) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!group) throw new NotFoundException(Exception.NOT_EXIST);
 
-    let avatarUrl: string = '';
-    if (file) {
-      const upload: UploadApiResponse | UploadApiErrorResponse =
-        await this.cloudinaryService.uploadFile(
-          file,
-          this.envConfig.folderFamilyName,
-        );
+      let avatarUrl: string = '';
+      if (file) {
+        const upload: UploadApiResponse | UploadApiErrorResponse =
+          await this.cloudinaryService.uploadFile(
+            file,
+            this.envConfig.folderFamilyName,
+          );
 
-      if (upload.secure_url) avatarUrl = upload.secure_url as string;
-    } else throw new NotFoundException(Exception.FILE_BUFFER_MISSING);
+        if (upload.secure_url) avatarUrl = upload.secure_url as string;
+      } else throw new NotFoundException(Exception.FILE_BUFFER_MISSING);
 
-    if (avatarUrl === '')
-      throw new BadRequestException(Exception.UPLOAD_FAILED);
+      if (avatarUrl === '')
+        throw new BadRequestException(Exception.UPLOAD_FAILED);
 
-    const newMember = await this.prisma.familyMember.create({
-      data: {
-        ...data,
-        avatarUrl: avatarUrl,
-      },
-      select: {
-        id: true,
-        fullName: true,
-        generation: true,
-        isAlive: true,
-        avatarUrl: true,
-      },
-    });
+      const newMember = await this.prisma.familyMember.create({
+        data: {
+          ...data,
+          avatarUrl: avatarUrl,
+        },
+        select: {
+          id: true,
+          fullName: true,
+          generation: true,
+          isAlive: true,
+          avatarUrl: true,
+        },
+      });
 
-    return newMember;
+      return newMember;
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
   }
   async update(
     userId: string,
@@ -71,16 +84,10 @@ export class MemberService {
     data: MemberUpdateDto,
     file?: Express.Multer.File,
   ) {
-    //check user authorization
-    const user = await this.prisma.user.findFirst({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
-    }
+    if (!isUUID(groupId, 'all'))
+      throw new NotFoundException(Exception.NOT_EXIST);
+    if (!isUUID(data.id, 'all'))
+      throw new NotFoundException(Exception.NOT_EXIST);
 
     //check if user is in group that have family member or not
     const group = await this.prisma.groupFamily.findFirst({
@@ -149,29 +156,34 @@ export class MemberService {
   }
 
   async getOne(userId: string, familyId: string, memberId: string) {
-    //check user authorization
-    const user = await this.prisma.user.findFirst({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
-    }
-
+    if (!isUUID(familyId)) throw new NotFoundException(Exception.NOT_EXIST);
+    if (!isUUID(memberId)) throw new NotFoundException(Exception.NOT_EXIST);
     //check if user is in group that have family member or not
-    const group = await this.prisma.groupFamily.findFirst({
-      where: {
-        family: {
-          id: familyId,
+    const [group, member] = await Promise.all([
+      this.prisma.groupFamily.findFirst({
+        where: {
+          family: {
+            id: familyId,
+          },
+          groupMembers: {
+            some: {
+              memberId: userId,
+            },
+          },
         },
-      },
-    });
+      }),
 
+      this.prisma.familyMember.findFirst({
+        where: {
+          id: memberId,
+        },
+      }),
+    ]);
     if (!group) {
       throw new ForbiddenException(Exception.PEMRISSION);
     }
+
+    if (!member) throw new NotFoundException(Exception.NOT_EXIST);
 
     const data = await this.prisma.familyMember.findFirst({
       where: {
@@ -216,20 +228,10 @@ export class MemberService {
         },
       },
     });
+    if (!data) throw new ForbiddenException(Exception.NOT_EXIST);
     return data;
   }
   async getAll(userId: string, familyId: string) {
-    //check user authorization
-    const user = await this.prisma.user.findFirst({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
-    }
-
     //check if user is in group that have family member or not
     const group = await this.prisma.groupFamily.findFirst({
       where: {
@@ -240,7 +242,7 @@ export class MemberService {
     });
 
     if (!group) {
-      throw new ForbiddenException(Exception.PEMRISSION);
+      throw new NotFoundException(Exception.NOT_EXIST);
     }
 
     return await this.prisma.familyMember.findMany({

@@ -94,7 +94,6 @@ export class MemberController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * maxFileSize }),
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
         ],
         fileIsRequired: false,
       }),
@@ -156,7 +155,6 @@ export class MemberController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * maxFileSize }),
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg' }),
         ],
         fileIsRequired: false,
       }),
@@ -173,7 +171,10 @@ export class MemberController {
   @Get(':familyId/:memberId')
   @ApiOperation({ summary: 'Get a family member by ID' })
   @ApiParam({ name: 'familyId', description: 'family ID' })
-  @ApiParam({ name: 'memberId', description: 'Member ID' })
+  @ApiParam({
+    name: 'memberId',
+    description: 'Member ID in family (not group member)',
+  })
   @ApiResponse({ status: 200, description: 'Member retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Member not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -206,7 +207,7 @@ export class MemberController {
     });
   }
 
-  @Delete(':familyId/memberId')
+  @Delete(':familyId/:memberId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Delete a family member' })
   @ApiParam({ name: 'familyId', description: 'Family ID' })

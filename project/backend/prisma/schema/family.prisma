@@ -12,7 +12,7 @@ model Family {
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
     groupFamilyId String         @unique @db.Uuid()
-    groupFamily   GroupFamily    @relation(fields: [groupFamilyId], references: [id])
+    groupFamily   GroupFamily    @relation(fields: [groupFamilyId], references: [id], onDelete: Cascade)
 
     @@index([ownerId])
     @@map("family")

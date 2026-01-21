@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 
@@ -7,7 +7,7 @@ export class FamilyUpdateDto {
     description: 'Family ID',
     example: 'family123',
   })
-  @IsString()
+  @IsUUID('all', { message: InvalidMessageResponse.ID_INVAILD })
   @IsNotEmpty({ message: InvalidMessageResponse.ID_EMPTY })
   id: string;
 

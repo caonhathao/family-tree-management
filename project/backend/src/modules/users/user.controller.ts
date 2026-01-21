@@ -25,6 +25,7 @@ import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
+import { CustomFileExtensionValidator } from 'src/common/validators/file-type.validator';
 const maxFileSize = Number(process.env.MAX_FILE_SIZE) || 2;
 
 @ApiTags('users')
@@ -49,7 +50,9 @@ export class UserController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * maxFileSize }),
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg' }),
+          new CustomFileExtensionValidator({
+            allowedExtensions: ['.jpg', '.jpeg', '.png'],
+          }),
         ],
         fileIsRequired: false,
       }),
@@ -63,14 +66,17 @@ export class UserController {
     });
   }
 
-  @Get(':id')
+  @Get(':targetId')
   @ApiOperation({ summary: 'Get user by ID' })
-  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiParam({ name: 'targetId', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User retrieved successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getUser(@Param('id') id: string) {
-    const user = await this.userService.get(id);
+  async getUser(
+    @Param('targetId') id: string,
+    @GetCurrentUserId() userId: string,
+  ) {
+    const user = await this.userService.get(id, userId);
     return ResponseFactory.success({
       data: user,
       message: ValidMessageResponse.GETTED,

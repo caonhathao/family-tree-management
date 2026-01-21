@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, Min } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 
 export class RegisterDto {
@@ -9,11 +15,13 @@ export class RegisterDto {
 
   @ApiProperty({ example: 'password' })
   @IsString()
-  @Min(6, { message: InvalidMessageResponse.PASSWORD_MIN })
+  @MinLength(6, { message: InvalidMessageResponse.PASSWORD_MIN })
   password: string;
 
   @ApiProperty({ example: 'John Deep' })
   @IsString()
   @IsNotEmpty({ message: InvalidMessageResponse.NAME_EMPTY })
+  @MinLength(2, { message: InvalidMessageResponse.NAME_MIN })
+  @MaxLength(100, { message: InvalidMessageResponse.NAME_MAX })
   fullName: string;
 }

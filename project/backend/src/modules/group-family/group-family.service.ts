@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -9,6 +11,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateGroupFamilyDto } from './dto/update-group-family.dto';
 import { CreateGroupFamilyDto } from './dto/create-group-family.dto';
 import { USER_ROLE } from '@prisma/client';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class GroupFamilyService {
@@ -37,11 +40,9 @@ export class GroupFamilyService {
     return newGroup;
   }
   async update(userId: string, groupId: string, data: UpdateGroupFamilyDto) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
+    if (!isUUID(groupId, 'all')) {
+      throw new NotFoundException(Exception.NOT_EXIST);
     }
-
     const groupMember = await this.prisma.groupMember.findFirst({
       where: {
         memberId: userId,
@@ -52,13 +53,11 @@ export class GroupFamilyService {
       },
     });
 
-    if (!groupMember) {
+    if (!groupMember || !groupMember.isLeader) {
       throw new NotFoundException(Exception.NOT_EXIST);
     }
 
-    if (!groupMember.isLeader) {
-      throw new ForbiddenException(Exception.PEMRISSION);
-    }
+    if (data.name === '') throw new BadRequestException(Exception.BAD_REQUEST);
 
     const updatedGroup = await this.prisma.groupFamily.update({
       where: { id: groupId },
@@ -75,12 +74,10 @@ export class GroupFamilyService {
     return updatedGroup;
   }
   async getOne(userId: string, groupId: string) {
-    //check user authorization
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
+    if (!isUUID(groupId, 'all')) {
+      throw new NotFoundException(Exception.NOT_EXIST);
     }
-
+    //check group exist
     const group = await this.prisma.groupFamily.findFirst({
       where: {
         id: groupId,
@@ -119,6 +116,8 @@ export class GroupFamilyService {
         updatedAt: true,
       },
     });
+
+    if (!group) throw new NotFoundException(Exception.NOT_EXIST);
     return group;
   }
   async getAll(userId: string) {
@@ -140,11 +139,6 @@ export class GroupFamilyService {
     return groups;
   }
   async delete(userId: string, groupId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
-    }
-
     const groupMember = await this.prisma.groupMember.findFirst({
       where: {
         memberId: userId,
@@ -206,7 +200,7 @@ export class GroupFamilyService {
     });
 
     if (existedGetter) {
-      throw new ForbiddenException(Exception.EXISTED);
+      throw new ConflictException(Exception.EXISTED);
     }
 
     //check group exist
@@ -238,6 +232,7 @@ export class GroupFamilyService {
         isLeader: true,
       },
     });
+    if (!newMember) throw new ForbiddenException(Exception.CREATED);
     return newMember;
   }
 }

@@ -1,5 +1,5 @@
 import { USER_ROLE } from '@prisma/client';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 
@@ -8,7 +8,7 @@ export class UpdateGroupMemberDto {
     description: 'Member ID to update',
     example: 'member123',
   })
-  @IsString()
+  @IsUUID('all', { message: InvalidMessageResponse.ID_INVAILD })
   @IsNotEmpty({ message: InvalidMessageResponse.ID_EMPTY })
   id: string;
 
