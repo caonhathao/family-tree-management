@@ -11,6 +11,7 @@ import { CreateInviteDto } from './dto/create-invite.dto';
 import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { AtGuard } from '../auth/guards/auth.guard';
+import { HttpStatus } from 'src/common/constants/api';
 
 @ApiTags('invite')
 @ApiBearerAuth()
@@ -30,6 +31,7 @@ export class InviteController {
     const invite = await this.inviteService.createInvite(userId, data);
     return ResponseFactory.success({
       data: invite,
+      code: HttpStatus.CREATED,
       message: ValidMessageResponse.CREATED,
     });
   }

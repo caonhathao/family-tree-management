@@ -6,7 +6,7 @@ import { ResponseFactory } from '../factories/response.factory';
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
-    console.log('Filter đã bắt được lỗi:', exception);
+    //console.log('Filter đã bắt được lỗi:', exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 

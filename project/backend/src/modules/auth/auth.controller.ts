@@ -66,12 +66,12 @@ export class AuthController {
 
     return ResponseFactory.success({
       data: user,
+      code: HttpStatus.CREATED,
       message: ValidMessageResponse.REGISTER,
     });
   }
 
   @Post('login-base')
-  @HttpCode(200)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
@@ -88,6 +88,7 @@ export class AuthController {
 
     return ResponseFactory.success({
       data: user,
+      code: HttpStatus.OK,
       message: ValidMessageResponse.LOGIN,
     });
   }

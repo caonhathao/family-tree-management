@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 
@@ -16,6 +16,7 @@ export class FamilyUpdateDto {
     example: 'Johnson Family',
     required: false,
   })
+  @IsOptional()
   name: string | undefined;
 
   @ApiProperty({
@@ -23,6 +24,7 @@ export class FamilyUpdateDto {
     example: 'A loving family of four',
     required: false,
   })
+  @IsOptional()
   description: string | undefined;
 
   @ApiProperty({
@@ -31,6 +33,6 @@ export class FamilyUpdateDto {
     required: false,
   })
   @IsString()
-  @IsNotEmpty({ message: InvalidMessageResponse.ID_EMPTY })
+  @IsOptional()
   ownerId: string | undefined;
 }

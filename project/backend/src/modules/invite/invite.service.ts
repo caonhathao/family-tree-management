@@ -16,6 +16,8 @@ export class InviteService {
   ) {}
 
   async createInvite(userId: string, data: CreateInviteDto) {
+    console.log('body at invite controller: ', data);
+
     const [user, group] = await Promise.all([
       //check if user is a member of group
       this.prisma.groupMember.findFirst({
