@@ -20,6 +20,7 @@ import { HttpStatus } from 'src/common/constants/api';
 export class InviteController {
   constructor(private readonly inviteService: InviteService) {}
   @Post()
+  @UseGuards(AtGuard)
   @ApiOperation({ summary: 'Create a new invitation' })
   @ApiResponse({ status: 201, description: 'Invitation created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })

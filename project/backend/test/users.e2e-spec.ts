@@ -25,6 +25,8 @@ import { join } from 'node:path';
  * - Missing required fields
  */
 
+//passed
+
 describe('User Management E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;

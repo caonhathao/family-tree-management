@@ -29,6 +29,8 @@ import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter
  * - Database consistency after operations
  */
 
+//passed
+
 describe('Group Member Management E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
