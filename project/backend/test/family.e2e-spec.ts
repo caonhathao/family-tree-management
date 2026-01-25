@@ -1,104 +1,110 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { PrismaService } from '../prisma/prisma.service';
+import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
 
-// Type for supertest response
-interface TestResponse<T = any> {
-  body: {
-    data: T;
-    success: boolean;
+interface newFamily {
+  data: {
+    family: {
+      id: string;
+      name: string;
+      description: string;
+    };
+    owner: {
+      id: string;
+      name: string;
+      avatar: string;
+    };
   };
-  status: number;
+  code: number;
 }
 
-// Type for supertest response
-interface TestResponse<T = any> {
-  body: {
-    data: T;
-    success: boolean;
+interface userType {
+  data: {
+    user: {
+      id: string;
+      email: string;
+      userProfile: {
+        fullName: string;
+        avatar?: string;
+      };
+    };
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+    };
   };
-  status: number;
+  code: number;
 }
 
-/**
- * E2E Tests for Family Management Module
- *
- * Test Flow Description:
- * 1. User Authentication - Register and login users with different roles
- * 2. Group Membership Setup - Add users to groups with proper roles
- * 3. Family Creation - Create families within groups (one per group)
- * 4. Family Management - Update, get, delete families
- * 5. Permission Control - Test role-based access (OWNER/EDITOR/VIEWER)
- * 6. Business Logic - Test one-family-per-group rule
- *
- * Edge Cases Tested:
- * - Role-based access control for family operations
- * - Family creation validation
- * - Permission violations (wrong roles trying to access/modify)
- * - Database constraints (one family per group)
- * - Family ownership verification
- */
+interface newGroup {
+  data: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  code: number;
+}
 
-describe('Family Management E2E Tests', () => {
+interface updateFamilyType {
+  data: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  code: number;
+}
+
+interface getFamily {
+  data: {
+    id: string;
+    name: string;
+    description: string;
+    owner: {
+      id: string;
+      userProfile: {
+        fullName: string;
+        avatar: string;
+      };
+    };
+
+    _count: {
+      familyMembers: number;
+      albums: number;
+      events: number;
+      activityLogs: number;
+    };
+  };
+  code: number;
+}
+
+interface deleteFamily {
+  data: { id: string };
+  code: number;
+}
+
+interface inviteType {
+  data: {
+    inviteLink: string;
+  };
+  code: number;
+}
+
+interface joinUserType {
+  data: {
+    id: string;
+    groupId: string;
+    memberId: string;
+    role: string;
+    isLeader: string;
+  };
+  code: number;
+}
+
+describe('Family E2E Tests', () => {
   let app: INestApplication;
-  let prisma: PrismaService;
-  const testUsers: any[] = [];
-  const testGroups: any[] = [];
-  const testFamilies: any[] = [];
-
-  // Helper functions
-  const createTestUser = async (userData: any) => {
-    const response = await request(app.getHttpServer())
-      .post('/auth/register')
-      .send(userData)
-      .expect(201);
-
-    const user = {
-      id: response.body.data.user.id,
-      email: userData.email,
-      accessToken: response.body.data.tokens.accessToken,
-      fullName: userData.fullName,
-    };
-
-    testUsers.push(user);
-    return user;
-  };
-
-  const createTestGroup = async (user: any, groupData: any) => {
-    const response = await request(app.getHttpServer())
-      .post('/group-family')
-      .set('Authorization', `Bearer ${user.accessToken}`)
-      .send(groupData)
-      .expect(201);
-
-    const group = {
-      id: response.body.data.id,
-      name: response.body.data.name,
-      description: response.body.data.description,
-      ownerId: user.id,
-    };
-
-    testGroups.push(group);
-    return group;
-  };
-
-  const addUserToGroup = async (
-    group: any,
-    user: any,
-    role: any,
-    isLeader: boolean = false,
-  ) => {
-    await prisma.groupMember.create({
-      data: {
-        groupId: group.id,
-        memberId: user.id,
-        role: role,
-        isLeader: isLeader,
-      },
-    });
-  };
+  let baseUrl: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -106,1014 +112,989 @@ describe('Family Management E2E Tests', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    prisma = moduleFixture.get<PrismaService>(PrismaService);
+    app.setGlobalPrefix('/api');
+    app.useGlobalFilters(new AllExceptionsFilter());
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true, // Tự động convert kiểu dữ liệu
+      }),
+    );
+
     await app.init();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    baseUrl = app.getHttpServer();
+
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterAll(async () => {
-    // Cleanup test data in correct order
-    await prisma.relationship.deleteMany({
-      where: {
-        familyId: {
-          in: testFamilies.map((family: any) => family.id),
-        },
-      },
-    });
-
-    await prisma.familyMember.deleteMany({
-      where: {
-        familyId: {
-          in: testFamilies.map((family: any) => family.id),
-        },
-      },
-    });
-
-    await prisma.family.deleteMany({
-      where: {
-        id: {
-          in: testFamilies.map((family: any) => family.id),
-        },
-      },
-    });
-
-    await prisma.groupMember.deleteMany({
-      where: {
-        groupId: {
-          in: testGroups.map((group: any) => group.id),
-        },
-      },
-    });
-
-    await prisma.groupFamily.deleteMany({
-      where: {
-        id: {
-          in: testGroups.map((group: any) => group.id),
-        },
-      },
-    });
-
-    await prisma.user.deleteMany({
-      where: {
-        email: {
-          in: testUsers.map((user: any) => user.email),
-        },
-      },
-    });
-
     await app.close();
   });
 
-  describe('1. SUCCESS CASES (200 / 201)', () => {
-    let groupOwner: any;
-    let editorUser: any;
-    let viewerUser: any;
-    let testGroup: any;
-    let createdFamily: any;
+  const generateSuffix = () =>
+    `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-    beforeAll(async () => {
-      groupOwner = await createTestUser({
-        email: 'family.owner@example.com',
-        password: 'password123',
-        fullName: 'Family Owner User',
-      });
-
-      editorUser = await createTestUser({
-        email: 'family.editor@example.com',
-        password: 'password123',
-        fullName: 'Family Editor User',
-      });
-
-      viewerUser = await createTestUser({
-        email: 'family.viewer@example.com',
-        password: 'password123',
-        fullName: 'Family Viewer User',
-      });
-
-      testGroup = await createTestGroup(groupOwner, {
-        name: 'Family Test Group',
-        description: 'Group for family testing',
-      });
-
-      // Add users to group with proper roles
-      await addUserToGroup(testGroup, editorUser, 'EDITOR');
-      await addUserToGroup(testGroup, viewerUser, 'VIEWER');
+  const registerUser = async (
+    email: string,
+    password: string,
+    fullName: string,
+  ) => {
+    const response = await request(baseUrl).post('/api/auth/register').send({
+      email,
+      password,
+      fullName,
     });
 
-    it('should create a new family successfully as OWNER', async () => {
-      const familyData = {
-        name: 'Johnson Family',
-        description: 'The Johnson family lineage',
-      };
+    if (response.status !== 201) {
+      console.error(`FAILED AT ${expect.getState().currentTestName}`);
+      //console.dir(response.body, { depth: null });
+    }
+    return response.body as userType;
+  };
 
-      const response = await request(app.getHttpServer())
-        .post(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(familyData)
-        .expect(201);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.family.name).toBe(familyData.name);
-      expect(response.body.data.family.description).toBe(
-        familyData.description,
-      );
-      expect(response.body.data.owner.name).toBe(groupOwner.fullName);
-
-      createdFamily = response.body.data.family;
-      testFamilies.push(createdFamily);
+  const loginUser = async (email: string, password: string) => {
+    const response = await request(baseUrl).post('/api/auth/login-base').send({
+      email,
+      password,
     });
+    if (response.status !== 200) {
+      console.error(`FAILED AT ${expect.getState().currentTestName}`);
+      //console.dir(response.body, { depth: null });
+    }
+    return response.body as userType;
+  };
 
-    it('should create a new family successfully as EDITOR', async () => {
-      const familyData = {
-        name: 'Editor Family',
-        description: 'Family created by editor',
-      };
-
-      const response = await request(app.getHttpServer())
-        .post(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${editorUser.accessToken}`)
-        .send(familyData)
-        .expect(201);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.family.name).toBe(familyData.name);
-      expect(response.body.data.family.description).toBe(
-        familyData.description,
-      );
-
-      testFamilies.push(response.body.data.family);
-    });
-
-    it('should get family by ID successfully', async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/family/${createdFamily.id}`)
-        .set('Authorization', `Bearer ${editorUser.accessToken}`)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.id).toBe(createdFamily.id);
-      expect(response.body.data.name).toBe(createdFamily.name);
-      expect(response.body.data.description).toBe(createdFamily.description);
-      expect(response.body.data.owner).toBeDefined();
-      expect(response.body.data._count).toBeDefined();
-      expect(response.body.data._count.familyMembers).toBeDefined();
-      expect(response.body.data._count.albums).toBeDefined();
-      expect(response.body.data._count.events).toBeDefined();
-    });
-
-    it('should update family successfully as OWNER', async () => {
-      const updateData = {
-        id: createdFamily.id,
-        name: 'Updated Johnson Family',
-        description: 'Updated family description',
-      };
-
-      const response = await request(app.getHttpServer())
-        .patch(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(updateData)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe(updateData.name);
-      expect(response.body.data.description).toBe(updateData.description);
-    });
-
-    it('should update family successfully as EDITOR', async () => {
-      // Create another family for update test
-      const familyData = {
-        name: 'Update Test Family',
-        description: 'Family for update testing',
-      };
-
-      const createResponse = await request(app.getHttpServer())
-        .post(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${editorUser.accessToken}`)
-        .send(familyData)
-        .expect(201);
-
-      const updateFamily = createResponse.body.data.family;
-      testFamilies.push(updateFamily);
-
-      const updateData = {
-        id: updateFamily.id,
-        name: 'Updated by Editor',
-        description: 'Updated by editor',
-      };
-
-      const response = await request(app.getHttpServer())
-        .patch(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${editorUser.accessToken}`)
-        .send(updateData)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe(updateData.name);
-      expect(response.body.data.description).toBe(updateData.description);
-    });
-
-    it('should delete family successfully as OWNER', async () => {
-      // Create a separate family for deletion test
-      const familyData = {
-        name: 'Family To Delete',
-        description: 'This family will be deleted',
-      };
-
-      const createResponse = await request(app.getHttpServer())
-        .post(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(familyData)
-        .expect(201);
-
-      const familyToDelete = createResponse.body.data.family;
-      testFamilies.push(familyToDelete);
-
-      // Delete the family
-      await request(app.getHttpServer())
-        .delete(`/family/${testGroup.id}/${familyToDelete.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-
-      // Verify family is deleted
-      await request(app.getHttpServer())
-        .get(`/family/${familyToDelete.id}`)
-        .expect(404);
-    });
-  });
-
-  describe('2. VALIDATION CASES (400)', () => {
-    let groupOwner: any;
-    let testGroup: any;
-
-    beforeAll(async () => {
-      groupOwner = await createTestUser({
-        email: 'family.validation@example.com',
-        password: 'password123',
-        fullName: 'Family Validation User',
+  const createGroup = async (token: string, name: string) => {
+    const response = await request(baseUrl)
+      .post('/api/group-family')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name,
+        description: 'Test group description',
       });
+    if (response.status !== 201) {
+      console.error(`FAILED AT ${expect.getState().currentTestName}`);
+      //console.dir(response.body, { depth: null });
+    }
+    return response.body as newGroup;
+  };
 
-      testGroup = await createTestGroup(groupOwner, {
-        name: 'Validation Test Group',
-        description: 'Group for validation testing',
+  const createFamily = async (
+    token: string,
+    groupId: string,
+    name: string,
+    description: string,
+  ) => {
+    const response = await request(baseUrl)
+      .post(`/api/family/${groupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name,
+        description,
       });
-    });
-
-    it('should reject family creation with missing name', async () => {
-      const familyData = {
-        description: 'Valid description',
-      };
-
-      await request(app.getHttpServer())
-        .post(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(familyData)
-        .expect(400);
-    });
-
-    it('should reject family creation with empty name', async () => {
-      const familyData = {
-        name: '',
-        description: 'Valid description',
-      };
-
-      await request(app.getHttpServer())
-        .post(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(familyData)
-        .expect(400);
-    });
-
-    it('should reject family creation with missing description', async () => {
-      const familyData = {
-        name: 'Valid Name',
-      };
-
-      await request(app.getHttpServer())
-        .post(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(familyData)
-        .expect(400);
-    });
-
-    it('should reject family creation with empty description', async () => {
-      const familyData = {
-        name: 'Valid Name',
-        description: '',
-      };
-
-      await request(app.getHttpServer())
-        .post(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(familyData)
-        .expect(400);
-    });
-
-    it('should reject family update with missing family ID', async () => {
-      const updateData = {
-        name: 'Updated Name',
-        description: 'Updated description',
-      };
-
-      await request(app.getHttpServer())
-        .patch(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(updateData)
-        .expect(400);
-    });
-
-    it('should reject family update with empty family ID', async () => {
-      const updateData = {
-        id: '',
-        name: 'Updated Name',
-        description: 'Updated description',
-      };
-
-      await request(app.getHttpServer())
-        .patch(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(updateData)
-        .expect(400);
-    });
-
-    it('should reject family creation with empty payload', async () => {
-      await request(app.getHttpServer())
-        .post(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send({})
-        .expect(400);
-    });
-  });
-
-  describe('3. AUTHORIZATION CASES', () => {
-    describe('3.1 Không đăng nhập (401)', () => {
-      let testGroup: any;
-
-      beforeAll(async () => {
-        testGroup = await createTestGroup(
-          await createTestUser({
-            email: 'no.auth.family@example.com',
-            password: 'password123',
-            fullName: 'No Auth Family User',
-          }),
-          {
-            name: 'No Auth Test Group',
-            description: 'Group for no auth testing',
-          },
-        );
-      });
-
-      it('should reject family creation without authentication', async () => {
-        const familyData = {
-          name: 'Unauthorized Family',
-          description: 'Should not be created',
-        };
-
-        await request(app.getHttpServer())
-          .post(`/family/${testGroup.id}`)
-          .send(familyData)
-          .expect(401);
-      });
-
-      it('should reject family update without authentication', async () => {
-        const updateData = {
-          id: 'some-family-id',
-          name: 'Hacked Family',
-        };
-
-        await request(app.getHttpServer())
-          .patch(`/family/${testGroup.id}`)
-          .send(updateData)
-          .expect(401);
-      });
-
-      it('should reject family deletion without authentication', async () => {
-        await request(app.getHttpServer())
-          .delete(`/family/${testGroup.id}/some-family-id`)
-          .expect(401);
-      });
-
-      it('should reject getting family without authentication', async () => {
-        await request(app.getHttpServer())
-          .get('/family/some-family-id')
-          .expect(401);
-      });
-    });
-
-    describe('3.2 Role-based Permission Tests', () => {
-      let groupOwner: any;
-      let editorUser: any;
-      let viewerUser: any;
-      let nonMember: any;
-      let testGroup: any;
-
-      beforeAll(async () => {
-        groupOwner = await createTestUser({
-          email: 'role.family.owner@example.com',
-          password: 'password123',
-          fullName: 'Role Family Owner',
-        });
-
-        editorUser = await createTestUser({
-          email: 'role.family.editor@example.com',
-          password: 'password123',
-          fullName: 'Role Family Editor',
-        });
-
-        viewerUser = await createTestUser({
-          email: 'role.family.viewer@example.com',
-          password: 'password123',
-          fullName: 'Role Family Viewer',
-        });
-
-        nonMember = await createTestUser({
-          email: 'role.family.nonmember@example.com',
-          password: 'password123',
-          fullName: 'Role Family Non Member',
-        });
-
-        // Create group
-        testGroup = await createTestGroup(groupOwner, {
-          name: 'Role Permission Test Group',
-          description: 'Group for role family testing',
-        });
-
-        // Add users to group with different roles
-        await addUserToGroup(testGroup, editorUser, 'EDITOR');
-        await addUserToGroup(testGroup, viewerUser, 'VIEWER');
-      });
-
-      it('should allow OWNER to create family', async () => {
-        const familyData = {
-          name: 'Owner Created Family',
-          description: 'Family created by owner',
-        };
-
-        const response = await request(app.getHttpServer())
-          .post(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-          .send(familyData)
-          .expect(201);
-
-        expect(response.body.success).toBe(true);
-        testFamilies.push(response.body.data.family);
-      });
-
-      it('should allow EDITOR to create family', async () => {
-        const familyData = {
-          name: 'Editor Created Family',
-          description: 'Family created by editor',
-        };
-
-        const response = await request(app.getHttpServer())
-          .post(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${editorUser.accessToken}`)
-          .send(familyData)
-          .expect(201);
-
-        expect(response.body.success).toBe(true);
-        testFamilies.push(response.body.data.family);
-      });
-
-      it('should reject VIEWER from creating family', async () => {
-        const familyData = {
-          name: 'Viewer Created Family',
-          description: 'Family created by viewer',
-        };
-
-        await request(app.getHttpServer())
-          .post(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${viewerUser.accessToken}`)
-          .send(familyData)
-          .expect(403); // Forbidden due to insufficient role
-      });
-
-      it('should reject non-member from creating family', async () => {
-        const familyData = {
-          name: 'Non Member Created Family',
-          description: 'Family created by non member',
-        };
-
-        await request(app.getHttpServer())
-          .post(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${nonMember.accessToken}`)
-          .send(familyData)
-          .expect(403); // Forbidden due to not being a member
-      });
-
-      it('should allow OWNER to update family', async () => {
-        // Create a family first
-        const familyData = {
-          name: 'Update Test Family',
-          description: 'Family for update testing',
-        };
-
-        const createResponse = await request(app.getHttpServer())
-          .post(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-          .send(familyData)
-          .expect(201);
-
-        const family = createResponse.body.data.family;
-        testFamilies.push(family);
-
-        // Update the family
-        const updateData = {
-          id: family.id,
-          name: 'Updated by Owner',
-          description: 'Updated by owner',
-        };
-
-        const response = await request(app.getHttpServer())
-          .patch(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-          .send(updateData)
-          .expect(200);
-
-        expect(response.body.success).toBe(true);
-        expect(response.body.data.name).toBe(updateData.name);
-        expect(response.body.data.description).toBe(updateData.description);
-      });
-
-      it('should allow EDITOR to update family', async () => {
-        // Create a family first
-        const familyData = {
-          name: 'Editor Update Test Family',
-          description: 'Family for editor update testing',
-        };
-
-        const createResponse = await request(app.getHttpServer())
-          .post(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${editorUser.accessToken}`)
-          .send(familyData)
-          .expect(201);
-
-        const family = createResponse.body.data.family;
-        testFamilies.push(family);
-
-        // Update the family
-        const updateData = {
-          id: family.id,
-          name: 'Updated by Editor',
-          description: 'Updated by editor',
-        };
-
-        const response = await request(app.getHttpServer())
-          .patch(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${editorUser.accessToken}`)
-          .send(updateData)
-          .expect(200);
-
-        expect(response.body.success).toBe(true);
-        expect(response.body.data.name).toBe(updateData.name);
-        expect(response.body.data.description).toBe(updateData.description);
-      });
-
-      it('should reject VIEWER from updating family', async () => {
-        // Create a family first
-        const familyData = {
-          name: 'Viewer Update Test Family',
-          description: 'Family for viewer update testing',
-        };
-
-        const createResponse = await request(app.getHttpServer())
-          .post(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${viewerUser.accessToken}`)
-          .send(familyData)
-          .expect(201);
-
-        const family = createResponse.body.data.family;
-        testFamilies.push(family);
-
-        // Try to update as viewer
-        const updateData = {
-          id: family.id,
-          name: 'Hacked by Viewer',
-          description: 'Hacked by viewer',
-        };
-
-        await request(app.getHttpServer())
-          .patch(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${viewerUser.accessToken}`)
-          .send(updateData)
-          .expect(403); // Forbidden due to insufficient role
-      });
-
-      it('should reject non-member from updating family', async () => {
-        const updateData = {
-          id: 'some-family-id',
-          name: 'Hacked by Non Member',
-          description: 'Hacked by non member',
-        };
-
-        await request(app.getHttpServer())
-          .patch(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${nonMember.accessToken}`)
-          .send(updateData)
-          .expect(403); // Forbidden due to not being a member
-      });
-
-      it('should allow OWNER to delete family', async () => {
-        // Create a family first
-        const familyData = {
-          name: 'Delete Test Family',
-          description: 'Family for deletion testing',
-        };
-
-        const createResponse = await request(app.getHttpServer())
-          .post(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-          .send(familyData)
-          .expect(201);
-
-        const family = createResponse.body.data.family;
-        testFamilies.push(family);
-
-        // Delete the family
-        const response = await request(app.getHttpServer())
-          .delete(`/family/${testGroup.id}/${family.id}`)
-          .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-          .expect(200);
-
-        expect(response.body.success).toBe(true);
-
-        // Verify family is deleted
-        await request(app.getHttpServer())
-          .get(`/family/${family.id}`)
-          .expect(404);
-      });
-
-      it('should reject VIEWER from deleting family', async () => {
-        // Create a family first
-        const familyData = {
-          name: 'Viewer Delete Test Family',
-          description: 'Family for viewer deletion testing',
-        };
-
-        const createResponse = await request(app.getHttpServer())
-          .post(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${editorUser.accessToken}`)
-          .send(familyData)
-          .expect(201);
-
-        const family = createResponse.body.data.family;
-        testFamilies.push(family);
-
-        // Try to delete as viewer
-        await request(app.getHttpServer())
-          .delete(`/family/${testGroup.id}/${family.id}`)
-          .set('Authorization', `Bearer ${viewerUser.accessToken}`)
-          .expect(403); // Forbidden due to insufficient role
-      });
-
-      it('should reject non-member from deleting family', async () => {
-        // Create a family first
-        const familyData = {
-          name: 'Non Member Delete Test Family',
-          description: 'Family for non member deletion testing',
-        };
-
-        const createResponse = await request(app.getHttpServer())
-          .post(`/family/${testGroup.id}`)
-          .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-          .send(familyData)
-          .expect(201);
-
-        const family = createResponse.body.data.family;
-        testFamilies.push(family);
-
-        // Try to delete as non member
-        await request(app.getHttpServer())
-          .delete(`/family/${testGroup.id}/${family.id}`)
-          .set('Authorization', `Bearer ${nonMember.accessToken}`)
-          .expect(403); // Forbidden due to not being a member
-      });
-    });
-  });
-
-  describe('4. DATABASE / BUSINESS LOGIC CASES', () => {
-    let groupOwner: any;
-    let testGroup: any;
-
-    beforeAll(async () => {
-      groupOwner = await createTestUser({
-        email: 'business.family@example.com',
-        password: 'password123',
-        fullName: 'Business Family User',
-      });
-
-      testGroup = await createTestGroup(groupOwner, {
-        name: 'Business Logic Test Group',
-        description: 'Group for business family testing',
-      });
-    });
-
-    it('should return 404 for non-existent family', async () => {
-      await request(app.getHttpServer())
-        .get('/family/non-existent-family-id')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .expect(404);
-    });
-
-    it('should return 404 when updating non-existent family', async () => {
-      const updateData = {
-        id: 'non-existent-family-id',
-        name: 'Updated Name',
-        description: 'Updated description',
-      };
-
-      await request(app.getHttpServer())
-        .patch(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(updateData)
-        .expect(404);
-    });
-
-    it('should return 404 when deleting non-existent family', async () => {
-      await request(app.getHttpServer())
-        .delete(`/family/${testGroup.id}/non-existent-family-id`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .expect(404);
-    });
-
-    it('should enforce business rule: one family per group', async () => {
-      // Create first family
-      const familyData1 = {
-        name: 'First Family',
-        description: 'First family in group',
-      };
-
-      const response1 = await request(app.getHttpServer())
-        .post(`/family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(familyData1)
-        .expect(201);
-
-      const family1 = response1.body.data.family;
-      testFamilies.push(family1);
-
-      // Try to create second family (should fail due to business rule - this is CORRECT behavior!)
-      const familyData2 = {
-        name: 'Second Family',
-        description:
-          'Second family in group - should correctly fail business rule',
-      };
-
-      await request(app.getHttpServer())
-        .post(`/family/${testGroup.id}`)
-        .send(familyData2)
-        .expect(400); // Should fail due to business rule (CORRECT!)
-    });
-
-    it('should update family owned by different user', async () => {
-      // Create second user and different group
-      const otherUser = await createTestUser({
-        email: 'other.family@example.com',
-        password: 'password123',
-        fullName: 'Other Family User',
-      });
-
-      const otherGroup = await createTestGroup(otherUser, {
-        name: 'Other Test Group',
-        description: 'Other group for testing',
-      });
-
-      // Create family in other group
-      const familyData = {
-        name: 'Other Family',
-        description: 'Family in other group',
-      };
-
-      const createResponse = await request(app.getHttpServer())
-        .post(`/family/${otherGroup.id}`)
-        .set('Authorization', `Bearer ${otherUser.accessToken}`)
-        .send(familyData)
-        .expect(201);
-
-      const otherFamily = createResponse.body.data.family;
-      testFamilies.push(otherFamily);
-
-      // Try to update family as original user
-      const updateData = {
-        id: otherFamily.id,
-        name: 'Hacked Other Family',
-        description: 'Hacked by other user',
-      };
-
-      await request(app.getHttpServer())
-        .patch(`/family/${otherGroup.id}`)
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(updateData)
-        .expect(404); // Should fail - user doesn't own this family
-    });
-  });
-
-  describe('5. INTEGRATION TESTS', () => {
-    it('should complete full family management flow: Create Group -> Add Members -> Create Family -> Update -> Delete', async () => {
-      // Step 1: Create group owner
-      const owner = await createTestUser({
-        email: 'integration.family@example.com',
-        password: 'password123',
-        fullName: 'Integration Family Owner',
-      });
-
-      // Step 2: Create group
-      const group = await createTestGroup(owner, {
-        name: 'Integration Family Test Group',
-        description: 'Group for family integration testing',
-      });
-
-      // Step 3: Create family
-      const familyData = {
-        name: 'Integration Test Family',
-        description: 'Family for integration testing',
-      };
-
-      const familyResponse = await request(app.getHttpServer())
-        .post(`/family/${group.id}`)
-        .set('Authorization', `Bearer ${owner.accessToken}`)
-        .send(familyData)
-        .expect(201);
-
-      expect(familyResponse.body.success).toBe(true);
-      expect(familyResponse.body.data.family.name).toBe(familyData.name);
-      expect(familyResponse.body.data.family.description).toBe(
-        familyData.description,
-      );
-      expect(familyResponse.body.data.family.owner.fullName).toBe(
-        owner.fullName,
-      );
-
-      const familyId = familyResponse.body.data.family.id;
-      testFamilies.push(familyResponse.body.data.family);
-
-      // Step 4: Get family and verify structure
-      const getResponse = await request(app.getHttpServer())
-        .get(`/family/${familyId}`)
-        .set('Authorization', `Bearer ${owner.accessToken}`)
-        .expect(200);
-
-      expect(getResponse.body.success).toBe(true);
-      expect(getResponse.body.data.id).toBe(familyId);
-      expect(getResponse.body.data.name).toBe(familyData.name);
-      expect(getResponse.body.data.description).toBe(familyData.description);
-      expect(getResponse.body.data.owner).toBeDefined();
-      expect(getResponse.body.data._count).toBeDefined();
-
-      // Step 5: Update family
-      const updateData = {
+    if (response.status !== 201) {
+      console.error(`FAILED AT ${expect.getState().currentTestName}`);
+      //console.dir(response.body, { depth: null });
+    }
+    return response.body as newFamily;
+  };
+
+  const getFamily = async (token: string, familyId: string) => {
+    const response = await request(baseUrl)
+      .get(`/api/family/${familyId}`)
+      .set('Authorization', `Bearer ${token}`);
+    if (response.status !== 200) {
+      console.error(`FAILED AT ${expect.getState().currentTestName}`);
+      // console.dir(getRes.body, { depth: null });
+    }
+    return response.body as getFamily;
+  };
+
+  const updateFamily = async (
+    token: string,
+    groupId: string,
+    familyId: string,
+    name: string,
+    description: string,
+  ) => {
+    const response = await request(baseUrl)
+      .patch(`/api/family/${groupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
         id: familyId,
-        name: 'Updated Integration Family',
-        description: 'Updated integration family description',
-      };
+        name: name,
+        description: description,
+      });
+    if (response.status !== 200) {
+      console.error(`FAILED AT ${expect.getState().currentTestName}`);
+      // console.dir(updateRes.body, { depth: null });
+    }
+    console.log(response.body);
+    return response.body as updateFamilyType;
+  };
 
-      const updateResponse = await request(app.getHttpServer())
-        .patch(`/family/${group.id}`)
-        .set('Authorization', `Bearer ${owner.accessToken}`)
-        .send(updateData)
-        .expect(200);
+  const deleteFamily = async (
+    token: string,
+    groupId: string,
+    familyId: string,
+  ) => {
+    const response = await request(baseUrl)
+      .delete(`/api/family/${groupId}/${familyId}`)
+      .set('Authorization', `Bearer ${token}`);
 
-      expect(updateResponse.body.success).toBe(true);
-      expect(updateResponse.body.data.name).toBe(updateData.name);
-      expect(updateResponse.body.data.description).toBe(updateData.description);
+    if (response.status !== 200) {
+      console.error(`FAILED AT ${expect.getState().currentTestName}`);
+      //   console.dir(deleteRes.body, { depth: null });
+    }
+    return response.body as deleteFamily;
+  };
 
-      // Step 6: Verify update persisted
-      const verifyResponse = await request(app.getHttpServer())
-        .get(`/family/${familyId}`)
-        .set('Authorization', `Bearer ${owner.accessToken}`)
-        .expect(200);
+  const generateInviteCode = async (token: string, groupId: string) => {
+    const response = await request(baseUrl)
+      .post('/api/invite')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        groupId: groupId,
+      });
 
-      expect(verifyResponse.body.data.name).toBe(updateData.name);
-      expect(verifyResponse.body.data.description).toBe(updateData.description);
+    // console.log('res: ', response);
+    if (response.status !== 201) {
+      console.error(`FAILED AT ${expect.getState().currentTestName}`);
+      //console.dir(response.body, { depth: null });
+    }
+    return response.body as inviteType;
+  };
 
-      // Step 7: Delete family
-      await request(app.getHttpServer())
-        .delete(`/family/${group.id}/${familyId}`)
-        .set('Authorization', `Bearer ${owner.accessToken}`)
-        .expect(200);
+  describe('FAMILY-01: Happy Path - Create Family', () => {
+    it('should create family successfully with fresh user and group', async () => {
+      const suffix = generateSuffix();
+      const email = `family01-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
 
-      // Step 8: Verify family is deleted
-      await request(app.getHttpServer())
-        .get(`/family/${familyId}`)
-        .set('Authorization', `Bearer ${owner.accessToken}`)
-        .expect(404);
+      const registerRes = await registerUser(email, password, fullName);
+      console.log('register at 183:', registerRes);
+      expect(registerRes.code).toBe(201);
 
-      // Add to cleanup
-      testGroups.push(group);
+      const loginRes = await loginUser(email, password);
+
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
+
+      const groupRes = await createGroup(token, groupName);
+
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
+
+      const familyRes = await createFamily(
+        token,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+
+      expect(familyRes.code).toBe(201);
+      expect(familyRes.data.family.name).toBe(familyName);
+      expect(familyRes.data.family.description).toBe(familyDescription);
     });
+  });
 
-    it('should complete role-based family access flow: Owner -> Editor -> Viewer -> Non-member', async () => {
-      // Step 1: Create group owner and add members
-      const owner = await createTestUser({
-        email: 'role.integration.owner@example.com',
-        password: 'password123',
-        fullName: 'Role Integration Owner',
-      });
+  describe('FAMILY-02: Happy Path - Update Family', () => {
+    it('should update family successfully', async () => {
+      const suffix = generateSuffix();
+      const email = `family02-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const updatedFamilyName = `Updated-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+      const updatedDescription = `Updated-${suffix}`;
 
-      const editor = await createTestUser({
-        email: 'role.integration.editor@example.com',
-        password: 'password123',
-        fullName: 'Role Integration Editor',
-      });
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
 
-      const viewer = await createTestUser({
-        email: 'role.integration.viewer@example.com',
-        password: 'password123',
-        fullName: 'Role Integration Viewer',
-      });
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
 
-      const nonMember = await createTestUser({
-        email: 'role.integration.nonmember@example.com',
-        password: 'password123',
-        fullName: 'Role Integration Non Member',
-      });
+      const groupRes = await createGroup(token, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
 
-      const group = await createTestGroup(owner, {
-        name: 'Role Integration Test Group',
-        description: 'Group for role integration testing',
-      });
+      const familyRes = await createFamily(
+        token,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+      expect(familyRes.code).toBe(201);
 
-      // Add users to group with proper roles
-      await addUserToGroup(group, editor, 'EDITOR');
-      await addUserToGroup(group, viewer, 'VIEWER');
+      console.log('token: ', token);
+      console.log('groupId: ', groupId);
+      const updateRes = await updateFamily(
+        token,
+        groupId,
+        familyRes.data.family.id,
+        updatedFamilyName,
+        updatedDescription,
+      );
 
-      // Step 2: Owner creates family
-      const familyData = {
-        name: 'Role Integration Family',
-        description: 'Family for role integration testing',
-      };
+      expect(updateRes.code).toBe(200);
+      expect(updateRes.data.name).toBe(updatedFamilyName);
+      expect(updateRes.data.description).toBe(updatedDescription);
+    });
+  });
 
-      const familyResponse = await request(app.getHttpServer())
-        .post(`/family/${group.id}`)
-        .set('Authorization', `Bearer ${owner.accessToken}`)
-        .send(familyData)
-        .expect(201);
+  describe('FAMILY-03: Happy Path - Get Family', () => {
+    it('should get family successfully', async () => {
+      const suffix = generateSuffix();
+      const email = `family03-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
 
-      const family = familyResponse.body.data.family;
-      testFamilies.push(family);
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
 
-      // Step 3: Editor can update family (successful)
-      const editorUpdateData = {
-        id: family.id,
-        name: 'Updated by Editor',
-        description: 'Updated by editor',
-      };
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
 
-      const editorUpdateResponse = await request(app.getHttpServer())
-        .patch(`/family/${group.id}`)
-        .set('Authorization', `Bearer ${editor.accessToken}`)
-        .send(editorUpdateData)
-        .expect(200);
+      const groupRes = await createGroup(token, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
 
-      expect(editorUpdateResponse.body.success).toBe(true);
-      expect(editorUpdateResponse.body.data.name).toBe(editorUpdateData.name);
+      const familyRes = await createFamily(
+        token,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+      expect(familyRes.code).toBe(201);
+      const familyId = familyRes.data.family.id;
 
-      // Step 4: Viewer cannot update family (forbidden)
-      const viewerUpdateData = {
-        id: family.id,
-        name: 'Hacked by Viewer',
-        description: 'Hacked by viewer',
-      };
+      const getRes = await getFamily(token, familyId);
 
-      await request(app.getHttpServer())
-        .patch(`/family/${group.id}`)
-        .set('Authorization', `Bearer ${viewer.accessToken}`)
-        .send(viewerUpdateData)
-        .expect(403); // Forbidden
+      expect(getRes.code).toBe(200);
+      expect(getRes.data.name).toBe(familyName);
+      expect(getRes.data.description).toBe(familyDescription);
+    });
+  });
 
-      // Step 5: Non-member cannot update family (forbidden)
-      const nonMemberUpdateData = {
-        id: family.id,
-        name: 'Hacked by Non-member',
-        description: 'Hacked by non-member',
-      };
+  describe('FAMILY-04: Happy Path - Delete Family', () => {
+    it('should delete family successfully', async () => {
+      const suffix = generateSuffix();
+      const email = `family04-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
 
-      await request(app.getHttpServer())
-        .patch(`/family/${group.id}`)
-        .set('Authorization', `Bearer ${nonMember.accessToken}`)
-        .send(nonMemberUpdateData)
-        .expect(403); // Forbidden
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
 
-      // Step 6: Owner can delete family (successful)
-      await request(app.getHttpServer())
-        .delete(`/family/${group.id}/${family.id}`)
-        .set('Authorization', `Bearer ${owner.accessToken}`)
-        .expect(200);
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
 
-      // Step 7: Editor cannot delete family (forbidden)
-      await request(app.getHttpServer())
-        .delete(`/family/${group.id}/${family.id}`)
-        .set('Authorization', `Bearer ${editor.accessToken}`)
-        .expect(403); // Forbidden
+      const groupRes = await createGroup(token, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
 
-      // Step 8: Non-member cannot delete family (forbidden)
-      await request(app.getHttpServer())
-        .delete(`/family/${group.id}/${family.id}`)
-        .set('Authorization', `Bearer ${nonMember.accessToken}`)
-        .expect(403); // Forbidden
+      const familyRes = await createFamily(
+        token,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+      expect(familyRes.code).toBe(201);
+      const familyId = familyRes.data.family.id;
 
-      // Add to cleanup
-      testGroups.push(group);
+      const deleteRes = await deleteFamily(token, groupId, familyId);
+
+      expect(deleteRes.code).toBe(200);
+    });
+  });
+
+  describe('FAMILY-05: Happy Path - Complete Family Lifecycle', () => {
+    it('should handle complete family lifecycle', async () => {
+      const suffix = generateSuffix();
+      const email = `family05-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+      const updatedName = `Updated-${suffix}`;
+
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
+
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
+
+      const groupRes = await createGroup(token, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
+
+      const createRes = await createFamily(
+        token,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+      expect(createRes.code).toBe(201);
+      const familyId = createRes.data.family.id;
+
+      const getRes = await getFamily(token, familyId);
+      expect(getRes.code).toBe(200);
+
+      const updateRes = await updateFamily(
+        token,
+        groupId,
+        getRes.data.id,
+        updatedName,
+        familyDescription,
+      );
+      expect(updateRes.code).toBe(200);
+
+      const deleteRes = await deleteFamily(token, groupId, familyId);
+
+      expect(deleteRes.code).toBe(200);
+    });
+  });
+
+  describe('FAMILY-06: Role Enforcement - Owner Create Family', () => {
+    it('should allow owner to create family', async () => {
+      const suffix = generateSuffix();
+      const email = `family06-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
+
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
+
+      const groupRes = await createGroup(token, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
+
+      const familyRes = await createFamily(
+        token,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+
+      expect(familyRes.code).toBe(201);
+    });
+  });
+
+  describe('FAMILY-07: Role Enforcement - Invite Joiner Cannot Create Family', () => {
+    it('should deny user who joined via invite from creating family', async () => {
+      const suffix = generateSuffix();
+      const ownerEmail = `owner07-${suffix}@example.com`;
+      const joinerEmail = `editor07-${suffix}@example.com`;
+      const password = 'Password123!';
+      const ownerName = `ownerName-${suffix}`;
+      const joinerName = `editorName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+
+      const ownerRegisterRes = await registerUser(
+        ownerEmail,
+        password,
+        ownerName,
+      );
+      expect(ownerRegisterRes.code).toBe(201);
+
+      const ownerLoginRes = await loginUser(ownerEmail, password);
+      expect(ownerLoginRes.code).toBe(200);
+      const ownerToken = ownerLoginRes.data.tokens.accessToken;
+
+      const groupRes = await createGroup(ownerToken, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
+
+      const joinerRegisterRes = await registerUser(
+        joinerEmail,
+        password,
+        joinerName,
+      );
+      expect(joinerRegisterRes.code).toBe(201);
+
+      const joinerLoginRes = await loginUser(joinerEmail, password);
+      expect(joinerLoginRes.code).toBe(200);
+      const joinerToken = joinerLoginRes.data.tokens.accessToken;
+
+      const inviteRes = await generateInviteCode(ownerToken, groupId);
+      expect(inviteRes.code).toBe(201);
+
+      const joinRes = await request(baseUrl)
+        .post('/api/group-family/join')
+        .set('Authorization', `Bearer ${joinerToken}`)
+        .query({ token: inviteRes.data.inviteLink.split('token=')[1] });
+
+      expect((joinRes.body as joinUserType).code).toBe(200);
+
+      const familyRes = await createFamily(
+        joinerToken,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+      console.log('at 556: ', familyRes);
+
+      expect(familyRes.code).toBe(403);
+    });
+  });
+
+  describe('FAMILY-08: Role Enforcement - Viewer Cannot Create Family', () => {
+    it('should deny viewer from creating family', async () => {
+      const suffix = generateSuffix();
+      const ownerEmail = `owner08-${suffix}@example.com`;
+      const viewerEmail = `viewer08-${suffix}@example.com`;
+      const password = 'Password123!';
+      const ownerName = `ownerName-${suffix}`;
+      const viewerName = `viewerName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+
+      const ownerRegisterRes = await registerUser(
+        ownerEmail,
+        password,
+        ownerName,
+      );
+      expect(ownerRegisterRes.code).toBe(201);
+
+      const ownerLoginRes = await loginUser(ownerEmail, password);
+      expect(ownerLoginRes.code).toBe(200);
+      const ownerToken = ownerLoginRes.data.tokens.accessToken;
+
+      const groupRes = await createGroup(ownerToken, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
+
+      const viewerRegisterRes = await registerUser(
+        viewerEmail,
+        password,
+        viewerName,
+      );
+      expect(viewerRegisterRes.code).toBe(201);
+
+      const viewerLoginRes = await loginUser(viewerEmail, password);
+      expect(viewerLoginRes.code).toBe(200);
+      const viewerToken = viewerLoginRes.data.tokens.accessToken;
+
+      const inviteRes = await generateInviteCode(ownerToken, groupId);
+      expect(inviteRes.code).toBe(201);
+
+      const joinRes = await request(baseUrl)
+        .post('/api/group-family/join')
+        .set('Authorization', `Bearer ${viewerToken}`)
+        .query({ token: inviteRes.data.inviteLink.split('token=')[1] });
+
+      expect((joinRes.body as joinUserType).code).toBe(200);
+
+      const familyRes = await createFamily(
+        viewerToken,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+      if (familyRes.code !== 403) {
+        console.error(`FAILED AT ${expect.getState().currentTestName}`);
+        console.dir(familyRes, { depth: null });
+      }
+      expect(familyRes.code).toBe(403);
+    });
+  });
+
+  describe('FAMILY-09: Role Enforcement - Member Cannot Create Family', () => {
+    it('should deny regular member from creating family', async () => {
+      const suffix = generateSuffix();
+      const ownerEmail = `owner09-${suffix}@example.com`;
+      const memberEmail = `member09-${suffix}@example.com`;
+      const password = 'Password123!';
+      const ownerName = `ownerName-${suffix}`;
+      const memberName = `memberName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+
+      const ownerRegisterRes = await registerUser(
+        ownerEmail,
+        password,
+        ownerName,
+      );
+      expect(ownerRegisterRes.code).toBe(201);
+
+      const ownerLoginRes = await loginUser(ownerEmail, password);
+      expect(ownerLoginRes.code).toBe(200);
+      const ownerToken = ownerLoginRes.data.tokens.accessToken;
+
+      const groupRes = await createGroup(ownerToken, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
+
+      const memberRegisterRes = await registerUser(
+        memberEmail,
+        password,
+        memberName,
+      );
+      expect(memberRegisterRes.code).toBe(201);
+
+      const memberLoginRes = await loginUser(memberEmail, password);
+      expect(memberLoginRes.code).toBe(200);
+      const memberToken = memberLoginRes.data.tokens.accessToken;
+
+      const inviteRes = await generateInviteCode(ownerToken, groupId);
+      expect(inviteRes.code).toBe(201);
+
+      const joinRes = await request(baseUrl)
+        .post('/api/group-family/join')
+        .set('Authorization', `Bearer ${memberToken}`)
+        .query({ token: inviteRes.data.inviteLink.split('token=')[1] });
+      expect((joinRes.body as joinUserType).code).toBe(200);
+
+      const familyRes = await createFamily(
+        memberToken,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+      if (familyRes.code !== 403) {
+        console.error(`FAILED AT ${expect.getState().currentTestName}`);
+        console.dir(familyRes, { depth: null });
+      }
+      expect(familyRes.code).toBe(403);
+    });
+  });
+
+  describe('FAMILY-10: Role Enforcement - Viewer Cannot Update Family', () => {
+    it('should deny viewer from updating family', async () => {
+      const suffix = generateSuffix();
+      const ownerEmail = `owner10-${suffix}@example.com`;
+      const viewerEmail = `viewer10-${suffix}@example.com`;
+      const password = 'Password123!';
+      const ownerName = `ownerName-${suffix}`;
+      const viewerName = `viewerName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+      const updatedName = `Updated-${suffix}`;
+
+      const ownerRegisterRes = await registerUser(
+        ownerEmail,
+        password,
+        ownerName,
+      );
+      expect(ownerRegisterRes.code).toBe(201);
+
+      const ownerLoginRes = await loginUser(ownerEmail, password);
+      expect(ownerLoginRes.code).toBe(200);
+      const ownerToken = ownerLoginRes.data.tokens.accessToken;
+
+      const groupRes = await createGroup(ownerToken, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
+
+      const familyRes = await createFamily(
+        ownerToken,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+      if (familyRes.code !== 201) {
+        console.error(`FAILED AT ${expect.getState().currentTestName}`);
+        console.dir(familyRes, { depth: null });
+      }
+      expect(familyRes.code).toBe(201);
+
+      const viewerRegisterRes = await registerUser(
+        viewerEmail,
+        password,
+        viewerName,
+      );
+      expect(viewerRegisterRes.code).toBe(201);
+
+      const viewerLoginRes = await loginUser(viewerEmail, password);
+      expect(viewerLoginRes.code).toBe(200);
+      const viewerToken = viewerLoginRes.data.tokens.accessToken;
+
+      const inviteRes = await generateInviteCode(ownerToken, groupId);
+      expect(inviteRes.code).toBe(201);
+
+      const joinRes = await request(baseUrl)
+        .post('/api/group-family/join')
+        .set('Authorization', `Bearer ${viewerToken}`)
+        .query({ token: inviteRes.data.inviteLink.split('token=')[1] });
+      expect((joinRes.body as joinUserType).code).toBe(200);
+
+      const updateRes = await updateFamily(
+        viewerToken,
+        groupId,
+        familyRes.data.family.id,
+        updatedName,
+        familyDescription,
+      );
+      expect(updateRes.code).toBe(403);
+    });
+  });
+
+  describe('FAMILY-11: Security - IDOR Prevention', () => {
+    it('should prevent user A from accessing user B family', async () => {
+      const suffix = generateSuffix();
+      const userAEmail = `userA11-${suffix}@example.com`;
+      const userBEmail = `userB11-${suffix}@example.com`;
+      const password = 'Password123!';
+      const userAName = `userAName-${suffix}`;
+      const userBName = `userBName-${suffix}`;
+      const groupAName = `GroupA-${suffix}`;
+      const groupBName = `GroupB-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+
+      const userARegisterRes = await registerUser(
+        userAEmail,
+        password,
+        userAName,
+      );
+      expect(userARegisterRes.code).toBe(201);
+
+      const userALoginRes = await loginUser(userAEmail, password);
+      expect(userALoginRes.code).toBe(200);
+      const userAToken = userALoginRes.data.tokens.accessToken;
+
+      const userBRegisterRes = await registerUser(
+        userBEmail,
+        password,
+        userBName,
+      );
+      expect(userBRegisterRes.code).toBe(201);
+
+      const userBLoginRes = await loginUser(userBEmail, password);
+      expect(userBLoginRes.code).toBe(200);
+      const userBToken = userBLoginRes.data.tokens.accessToken;
+
+      const groupARes = await createGroup(userAToken, groupAName);
+      expect(groupARes.code).toBe(201);
+
+      const groupBRes = await createGroup(userBToken, groupBName);
+      expect(groupBRes.code).toBe(201);
+      const groupBId = groupBRes.data.id;
+
+      const familyBRes = await createFamily(
+        userBToken,
+        groupBId,
+        familyName,
+        familyDescription,
+      );
+      expect(familyBRes.code).toBe(201);
+      const familyBId = familyBRes.data.family.id;
+
+      const getRes = await getFamily(userAToken, familyBId);
+
+      expect(getRes.code).toBe(403);
+    });
+  });
+
+  describe('FAMILY-12: Security - Cross Group Access Prevention', () => {
+    it('should prevent user from accessing family in different group', async () => {
+      const suffix = generateSuffix();
+      const userAEmail = `userA12-${suffix}@example.com`;
+      const userBEmail = `userB12-${suffix}@example.com`;
+      const password = 'Password123!';
+      const userAName = `userAName-${suffix}`;
+      const userBName = `userBName-${suffix}`;
+      const groupAName = `GroupA-${suffix}`;
+      const groupBName = `GroupB-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+
+      const userARegisterRes = await registerUser(
+        userAEmail,
+        password,
+        userAName,
+      );
+      expect(userARegisterRes.code).toBe(201);
+
+      const userALoginRes = await loginUser(userAEmail, password);
+      expect(userALoginRes.code).toBe(200);
+      const userAToken = userALoginRes.data.tokens.accessToken;
+
+      const userBRegisterRes = await registerUser(
+        userBEmail,
+        password,
+        userBName,
+      );
+      expect(userBRegisterRes.code).toBe(201);
+
+      const userBLoginRes = await loginUser(userBEmail, password);
+      expect(userBLoginRes.code).toBe(200);
+      const userBToken = userBLoginRes.data.tokens.accessToken;
+
+      const groupARes = await createGroup(userAToken, groupAName);
+      expect(groupARes.code).toBe(201);
+      const groupAId = groupARes.data.id;
+
+      const groupBRes = await createGroup(userBToken, groupBName);
+      expect(groupBRes.code).toBe(201);
+
+      const familyARes = await createFamily(
+        userAToken,
+        groupAId,
+        familyName,
+        familyDescription,
+      );
+      expect(familyARes.code).toBe(201);
+
+      const getRes = await getFamily(userBToken, familyARes.data.family.id);
+
+      expect(getRes.code).toBe(403);
+    });
+  });
+
+  describe('FAMILY-13: Security - Unauthorized Token', () => {
+    it('should reject requests with invalid token', async () => {
+      const suffix = generateSuffix();
+      const email = `user13-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+      const invalidToken = 'invalid.jwt.token';
+
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
+
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
+
+      const groupRes = await createGroup(token, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
+
+      const familyRes = await createFamily(
+        invalidToken,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+
+      expect(familyRes.code).toBe(401);
+    });
+  });
+
+  describe('FAMILY-14: Security - No Token Provided', () => {
+    it('should reject requests without authorization token', async () => {
+      const suffix = generateSuffix();
+      const email = `user14-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
+
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
+
+      const groupRes = await createGroup(token, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
+
+      const familyRes = await request(baseUrl)
+        .post(`/api/family/${groupId}`)
+        .send({
+          name: familyName,
+          description: familyDescription,
+        });
+      expect(familyRes.status).toBe(401);
+    });
+  });
+
+  describe('FAMILY-15: Security - Token Expiration', () => {
+    it('should handle expired token gracefully', async () => {
+      const suffix = generateSuffix();
+      const email = `user15-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+      const expiredToken =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyMzkwMjJ9.invalid';
+
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
+
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
+
+      const groupRes = await createGroup(token, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
+
+      const familyRes = await createFamily(
+        expiredToken,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+      expect(familyRes.code).toBe(401);
+    });
+  });
+
+  describe('FAMILY-16: Edge Case - Invalid UUID for Group', () => {
+    it('should reject invalid UUID for groupId', async () => {
+      const suffix = generateSuffix();
+      const email = `user16-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const invalidGroupId = 'invalid-uuid';
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
+
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
+
+      const familyRes = await createFamily(
+        token,
+        invalidGroupId,
+        familyName,
+        familyDescription,
+      );
+
+      expect(familyRes.code).toBe(403);
+    });
+  });
+
+  describe('FAMILY-17: Edge Case - Invalid UUID for Family', () => {
+    it('should reject invalid UUID for familyId', async () => {
+      const suffix = generateSuffix();
+      const email = `user17-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const invalidFamilyId = 'invalid-uuid';
+
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
+
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
+
+      const getRes = await getFamily(token, invalidFamilyId);
+      expect(getRes.code).toBe(400);
+    });
+  });
+
+  describe('FAMILY-18: Edge Case - Empty Family Name', () => {
+    it('should reject empty family name', async () => {
+      const suffix = generateSuffix();
+      const email = `user18-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const groupName = `Group-${suffix}`;
+      const familyName = '';
+      const familyDescription = `Description-${suffix}`;
+
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
+
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
+
+      const groupRes = await createGroup(token, groupName);
+      expect(groupRes.code).toBe(201);
+      const groupId = groupRes.data.id;
+
+      const familyRes = await createFamily(
+        token,
+        groupId,
+        familyName,
+        familyDescription,
+      );
+      expect(familyRes.code).toBe(400);
+    });
+  });
+
+  describe('FAMILY-19: Edge Case - Non-existent Group', () => {
+    it('should reject operations on non-existent group', async () => {
+      const suffix = generateSuffix();
+      const email = `user19-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const nonExistentGroupId = '00000000-0000-0000-0000-000000000000';
+      const familyName = `Family-${suffix}`;
+      const familyDescription = `Description-${suffix}`;
+
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
+
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
+
+      const familyRes = await createFamily(
+        token,
+        nonExistentGroupId,
+        familyName,
+        familyDescription,
+      );
+
+      expect(familyRes.code).toBe(403);
+    });
+  });
+
+  describe('FAMILY-20: Edge Case - Non-existent Family', () => {
+    it('should reject get operation on non-existent family', async () => {
+      const suffix = generateSuffix();
+      const email = `user20-${suffix}@example.com`;
+      const password = 'Password123!';
+      const fullName = `userName-${suffix}`;
+      const nonExistentFamilyId = '00000000-0000-0000-0000-000000000000';
+
+      const registerRes = await registerUser(email, password, fullName);
+      expect(registerRes.code).toBe(201);
+
+      const loginRes = await loginUser(email, password);
+      expect(loginRes.code).toBe(200);
+      const token = loginRes.data.tokens.accessToken;
+
+      const getRes = await getFamily(token, nonExistentFamilyId);
+
+      expect(getRes.code).toBe(403);
     });
   });
 });

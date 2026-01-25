@@ -17,23 +17,28 @@ import { isUUID } from 'class-validator';
 export class GroupFamilyService {
   constructor(private prisma: PrismaService) {}
   async create(userId: string, data: CreateGroupFamilyDto) {
-    const newGroup = await this.prisma.groupFamily.create({
-      data: {
-        ...data,
-      },
-      select: { id: true, name: true, description: true },
-    });
-    // Add creator as owner and leader of the new group
-    const newMember = await this.prisma.groupMember.create({
-      data: {
-        groupId: newGroup.id,
-        memberId: userId,
-        role: data.role || USER_ROLE.OWNER,
-        isLeader: true,
-      },
-    });
-    console.log('new member at create group family service: ', newMember);
-    return newGroup;
+    try {
+      const newGroup = await this.prisma.groupFamily.create({
+        data: {
+          ...data,
+        },
+        select: { id: true, name: true, description: true },
+      });
+      // Add creator as owner and leader of the new group
+      const newMember = await this.prisma.groupMember.create({
+        data: {
+          groupId: newGroup.id,
+          memberId: userId,
+          role: data.role || USER_ROLE.OWNER,
+          isLeader: true,
+        },
+      });
+      //console.log('new member at create group family service: ', newMember);
+      return newGroup;
+    } catch (err) {
+      console.log('err at create group family service:', err);
+      // throw err;
+    }
   }
   async update(userId: string, groupId: string, data: UpdateGroupFamilyDto) {
     if (!isUUID(groupId, 'all')) {
@@ -135,27 +140,39 @@ export class GroupFamilyService {
     return groups;
   }
   async delete(userId: string, groupId: string) {
-    const groupMember = await this.prisma.groupMember.findFirst({
-      where: {
-        memberId: userId,
-        groupId: groupId,
-      },
-      select: {
-        isLeader: true,
-      },
-    });
+    try {
+      const groupMember = await this.prisma.groupMember.findFirst({
+        where: {
+          memberId: userId,
+          groupId: groupId,
+        },
+        select: {
+          isLeader: true,
+        },
+      });
 
-    if (!groupMember) {
-      throw new NotFoundException(Exception.NOT_EXIST);
+      if (!groupMember) {
+        throw new NotFoundException(Exception.NOT_EXIST);
+      }
+
+      if (!groupMember.isLeader) {
+        throw new ForbiddenException(Exception.PEMRISSION);
+      }
+      //check group family exist
+      const groupFamily = await this.prisma.groupFamily.findFirst({
+        where: {
+          id: groupId,
+        },
+      });
+
+      if (!groupFamily) throw new NotFoundException(Exception.NOT_EXIST);
+
+      return await this.prisma.groupFamily.delete({
+        where: { id: groupId },
+      });
+    } catch (err) {
+      console.log('failed at delete of group-family service: ', err);
     }
-
-    if (!groupMember.isLeader) {
-      throw new ForbiddenException(Exception.PEMRISSION);
-    }
-
-    return await this.prisma.groupFamily.delete({
-      where: { id: groupId },
-    });
   }
   async joinGroup(token: string, getterId: string) {
     //check token valid

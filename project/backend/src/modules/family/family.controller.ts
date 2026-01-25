@@ -25,6 +25,7 @@ import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AtGuard } from '../auth/guards/auth.guard';
 import { FamilyUpdateDto } from './dto/update-family.dto';
+import { HttpStatus } from 'src/common/constants/api';
 
 @ApiTags('family')
 @ApiBearerAuth()
@@ -34,6 +35,7 @@ export class FamilyController {
   constructor(private readonly familyService: FamilyService) {}
 
   @Post(':groupId')
+  @UseGuards(AtGuard)
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Create a new family' })
   @ApiParam({ name: 'groupId', description: 'Group ID' })
@@ -48,6 +50,7 @@ export class FamilyController {
     const family = await this.familyService.create(userId, groupId, familyDto);
     return ResponseFactory.success({
       data: family,
+      code: HttpStatus.CREATED,
       message: ValidMessageResponse.CREATED,
     });
   }
@@ -71,6 +74,7 @@ export class FamilyController {
     );
     return ResponseFactory.success({
       data: family,
+      code: HttpStatus.OK,
       message: ValidMessageResponse.UPDATED,
     });
   }

@@ -12,6 +12,7 @@ import { Exception } from '../messages/messages.response';
 import { JwtRequest } from 'src/modules/auth/types/jwt-payload.type';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Request } from 'express';
+import { isUUID } from 'class-validator';
 interface AuthenticatedRequest extends Request {
   user?: JwtRequest;
 }
@@ -44,7 +45,7 @@ export class RolesGuard implements CanActivate {
 
     const groupId = req.params.groupId || req.query.groupId;
 
-    if (!groupId) return false;
+    if (!groupId || !isUUID(groupId)) return false;
     else {
       const member = await this.prisma.groupMember.findUnique({
         where: {

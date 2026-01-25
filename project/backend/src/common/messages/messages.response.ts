@@ -46,6 +46,7 @@ export const Exception = {
   UPLOAD_FAILED: 't_upload_failed',
   URL_MISSING: 't_url_asset_missing',
   ID_MISSING: 't_id_missing',
+  ID_INVALID: 't_id_invalid',
   NOT_EXIST: 't_data_not_exist',
   EXISTED: 't_data_existed',
   EXPIRED: 't_expires',

@@ -84,75 +84,80 @@ export class MemberService {
     data: MemberUpdateDto,
     file?: Express.Multer.File,
   ) {
-    if (!isUUID(groupId, 'all'))
-      throw new NotFoundException(Exception.NOT_EXIST);
-    if (!isUUID(data.id, 'all'))
-      throw new NotFoundException(Exception.NOT_EXIST);
+    try {
+      if (!isUUID(groupId, 'all'))
+        throw new NotFoundException(Exception.NOT_EXIST);
+      if (!isUUID(data.id, 'all'))
+        throw new NotFoundException(Exception.NOT_EXIST);
 
-    //check if user is in group that have family member or not
-    const group = await this.prisma.groupFamily.findFirst({
-      where: {
-        family: {
-          groupFamilyId: groupId,
+      //check if user is in group that have family member or not
+      const group = await this.prisma.groupFamily.findFirst({
+        where: {
+          family: {
+            groupFamilyId: groupId,
+          },
         },
-      },
-    });
+      });
 
-    if (!group) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!group) throw new NotFoundException(Exception.NOT_EXIST);
 
-    let avatarUrl: string = '';
-    //check if form has file (image), destroy old image and upload new
-    const member = await this.prisma.familyMember.findFirst({
-      where: {
-        id: data.id,
-      },
-      select: {
-        id: true,
-        avatarUrl: true,
-      },
-    });
+      let avatarUrl: string = '';
+      //check if form has file (image), destroy old image and upload new
+      const member = await this.prisma.familyMember.findFirst({
+        where: {
+          id: data.id,
+        },
+        select: {
+          id: true,
+          avatarUrl: true,
+        },
+      });
 
-    if (!member) {
-      throw new ForbiddenException(Exception.ID_MISSING);
-    }
-    if (file) {
-      if (member.avatarUrl !== null) {
-        const resultDestroy: { result: string } =
-          await this.cloudinaryService.destroyFile(
-            member.avatarUrl,
-            this.envConfig.folderFamilyName,
-          );
-
-        if (resultDestroy.result === 'ok') {
-          const upload: UploadApiResponse | UploadApiErrorResponse =
-            await this.cloudinaryService.uploadFile(
-              file,
+      if (!member) {
+        throw new ForbiddenException(Exception.ID_MISSING);
+      }
+      if (file) {
+        if (member.avatarUrl !== null) {
+          const resultDestroy: { result: string } =
+            await this.cloudinaryService.destroyFile(
+              member.avatarUrl,
               this.envConfig.folderFamilyName,
             );
 
-          if (upload.secure_url) avatarUrl = upload.secure_url as string;
+          if (resultDestroy.result === 'ok') {
+            const upload: UploadApiResponse | UploadApiErrorResponse =
+              await this.cloudinaryService.uploadFile(
+                file,
+                this.envConfig.folderFamilyName,
+              );
+
+            if (upload.secure_url) avatarUrl = upload.secure_url as string;
+          }
         }
-      }
-    } else throw new NotFoundException(Exception.FILE_BUFFER_MISSING);
+      } else throw new NotFoundException(Exception.FILE_BUFFER_MISSING);
 
-    if (avatarUrl === '')
-      throw new BadRequestException(Exception.UPLOAD_FAILED);
-    const updateData = Object.fromEntries(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      Object.entries(data).filter(([_, v]) => v !== undefined && v !== null),
-    );
+      if (avatarUrl === '')
+        throw new BadRequestException(Exception.UPLOAD_FAILED);
+      const updateData = Object.fromEntries(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        Object.entries(data).filter(([_, v]) => v !== undefined && v !== null),
+      );
 
-    return await this.prisma.familyMember.update({
-      where: { id: data.id },
-      data: { ...updateData, avatarUrl: avatarUrl },
-      select: {
-        id: true,
-        fullName: true,
-        generation: true,
-        isAlive: true,
-        avatarUrl: true,
-      },
-    });
+      return await this.prisma.familyMember.update({
+        where: { id: data.id },
+        data: { ...updateData, avatarUrl: avatarUrl },
+        select: {
+          id: true,
+          fullName: true,
+          generation: true,
+          isAlive: true,
+          avatarUrl: true,
+        },
+      });
+    } catch (err) {
+      console.log('error at update member service: ', err);
+      throw err;
+    }
   }
 
   async getOne(userId: string, familyId: string, memberId: string) {

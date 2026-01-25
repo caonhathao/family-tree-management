@@ -45,11 +45,12 @@ export class GroupFamilyController {
     @GetCurrentUserId() userId: string,
     @Body() data: CreateGroupFamilyDto,
   ) {
-    console.log('userId:', userId);
-    console.log('data:', data);
+    // console.log('userId:', userId);
+    // console.log('data:', data);
     const groupFamily = await this.groupFamilyService.create(userId, data);
     return ResponseFactory.success({
       data: groupFamily,
+      code: HttpStatus.CREATED,
       message: ValidMessageResponse.CREATED,
     });
   }
@@ -119,7 +120,6 @@ export class GroupFamilyController {
   }
 
   @Post('join')
-  @HttpCode(200)
   @UseGuards(AtGuard)
   @ApiOperation({ summary: 'Join a group family using invitation token' })
   @ApiQuery({

@@ -240,7 +240,7 @@ Use these import aliases consistently:
 
 ## Important Notes
 
-- Package manager: pnpm (evidenced by pnpm-lock.yaml)
+- Package manager: npm (npm-lock.yaml present)
 - Database migrations: Use Prisma CLI for schema changes
 - Environment variables: Managed through EnvConfigService
 - API documentation: Available at `/api/docs` (Swagger)
