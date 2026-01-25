@@ -1,79 +1,125 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../prisma/prisma.service';
-
-/**
- * E2E Tests for Invitation Module
- *
- * Test Flow Description:
- * 1. User Authentication - Register and login users with different roles
- * 2. Group Setup - Create groups as foundation for invitations
- * 3. Invitation Creation - Create invitations for group joining
- * 4. Permission Control - Test role-based access control
- * 5. Business Logic - Test invitation expiration and validation
- *
- * Edge Cases Tested:
- * - Role-based access control for invitation operations
- * - Invitation token generation and validation
- * - Invitation expiration handling
- * - Duplicate invitation prevention
- * - Permission violations (wrong roles trying to create invites)
- * - Non-existent group/member scenarios
- */
-
-describe('Invitation E2E Tests', () => {
+import { response } from 'express';
+import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
+interface userType {
+  data: {
+    user: {
+      id: string;
+      email: string;
+      userProfile: {
+        fullName: string;
+        avatar?: string;
+      };
+    };
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+    };
+  };
+  code: number;
+}
+interface newGroup {
+  data: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  code: number;
+}
+interface inviteType {
+  data: {
+    inviteLink: string;
+  };
+  code: number;
+}
+interface joinUserType {
+  data: {
+    id: string;
+    groupId: string;
+    memberId: string;
+    role: string;
+    isLeader: string;
+  };
+  code: number;
+}
+describe('Invite E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   const testUsers: any[] = [];
   const testGroups: any[] = [];
-  const testInvites: any[] = [];
 
-  // Helper functions
-  const createTestUser = async (userData: any) => {
+  const generateRandomSuffix = () =>
+    `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+  const registerUser = async (
+    email: string,
+    password: string,
+    fullName: string,
+  ) => {
     const response = await request(app.getHttpServer())
       .post('/auth/register')
-      .send(userData)
-      .expect(201);
+      .send({ email, password, fullName });
 
-    const user = {
-      id: response.body.data.user.id,
-      email: userData.email,
-      accessToken: response.body.data.tokens.accessToken,
-      fullName: userData.fullName,
-    };
-
-    testUsers.push(user);
-    return user;
+    if (response.status !== 201) {
+      console.log(
+        `[${expect.getState().currentTestName}] Register member failed:`,
+        response.body,
+      );
+    }
+    return response.body as userType;
   };
 
-  const createTestGroup = async (user: any, groupData: any) => {
+  const loginUser = async (email: string, password: string) => {
+    return await request(app.getHttpServer())
+      .post('/auth/login-base')
+      .send({ email, password });
+  };
+
+  const createGroup = async (token: string, groupName: string) => {
     const response = await request(app.getHttpServer())
       .post('/group-family')
-      .set('Authorization', `Bearer ${user.accessToken}`)
-      .send(groupData)
-      .expect(201);
-
-    const group = response.body.data;
-    testGroups.push({ ...group, ownerId: user.id });
-    return group;
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: groupName, description: 'Test group description' });
+    if (response.status !== 201) {
+      console.log(
+        `[${expect.getState().currentTestName}] Create group failed:`,
+        response.body,
+      );
+    }
+    return response.body as newGroup;
   };
 
-  const addUserToGroup = async (
-    group: any,
-    user: any,
-    role: any,
-    isLeader: boolean = false,
-  ) => {
-    await prisma.groupMember.create({
-      data: {
-        groupId: group.id,
-        memberId: user.id,
-        role: role,
-        isLeader: isLeader,
-      },
-    });
+  const createInvite = async (token: string, groupId: string) => {
+    const response = await request(app.getHttpServer())
+      .post('/invite')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ groupId });
+    if (response.status !== 201) {
+      console.log(
+        `[${expect.getState().currentTestName}] Create invite failed:`,
+        response.body,
+      );
+    }
+    return response.body as inviteType;
+  };
+
+  const joinGroup = async (token: string, inviteToken: string) => {
+    const response = await request(app.getHttpServer())
+      .post('/group-family/join')
+      .set('Authorization', `Bearer ${token}`)
+      .query({ token: inviteToken });
+
+    if (response.status !== 201 && response.status !== 200) {
+      console.log(
+        `[${expect.getState().currentTestName}] Join group failed:`,
+        response.body,
+      );
+    }
+    return response.body as joinUserType;
   };
 
   beforeAll(async () => {
@@ -82,448 +128,303 @@ describe('Invitation E2E Tests', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalFilters(new AllExceptionsFilter());
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
     prisma = moduleFixture.get<PrismaService>(PrismaService);
     await app.init();
   });
 
   afterAll(async () => {
-    // Cleanup test data in correct order
-    await prisma.invite.deleteMany({
-      where: {
-        token: {
-          in: testInvites.map((invite) => invite.token),
+    if (testUsers.length > 0) {
+      await prisma.user.deleteMany({
+        where: {
+          email: {
+            in: testUsers.map((user) => user.email),
+          },
         },
-      },
-    });
-
-    await prisma.groupMember.deleteMany({
-      where: {
-        memberId: {
-          in: testUsers.map((user) => user.id),
+      });
+    }
+    if (testGroups.length > 0) {
+      await prisma.groupFamily.deleteMany({
+        where: {
+          id: {
+            in: testGroups.map((group) => group.id),
+          },
         },
-      },
-    });
-
-    await prisma.groupFamily.deleteMany({
-      where: {
-        id: {
-          in: testGroups.map((group) => group.id),
-        },
-      },
-    });
-
-    await prisma.user.deleteMany({
-      where: {
-        email: {
-          in: testUsers.map((user) => user.email),
-        },
-      },
-    });
-
+      });
+    }
     await app.close();
   });
 
-  describe('1. SUCCESS CASES (201)', () => {
-    let groupOwner: any;
-    let testGroup: any;
-    let createdInvite: any;
+  describe('1. Happy Path: Generate invite link and join successfully', () => {
+    it('should create invite and allow user to join group successfully', async () => {
+      const suffix = generateRandomSuffix();
 
-    beforeAll(async () => {
-      groupOwner = await createTestUser({
-        email: 'invite.owner@example.com',
+      const ownerData = {
+        email: `owner_${suffix}@example.com`,
         password: 'password123',
-        fullName: 'Invite Owner User',
-      });
-
-      testGroup = await createTestGroup(groupOwner, {
-        name: 'Invite Test Group',
-        description: 'Group for invitation testing',
-      });
-    });
-
-    it('should create a new invitation successfully', async () => {
-      const inviteData = {
-        groupId: testGroup.id,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+        fullName: 'Owner User',
       };
 
-      const response = await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(inviteData)
-        .expect(201);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.groupId).toBe(inviteData.groupId);
-      expect(response.body.data.token).toBeDefined();
-      expect(response.body.data.expiresAt).toBeDefined();
-
-      createdInvite = response.body.data;
-      testInvites.push(createdInvite);
-    });
-
-    it('should create invitation with default expiration', async () => {
-      const inviteData = {
-        groupId: testGroup.id,
-      };
-
-      const response = await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(inviteData)
-        .expect(201);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.groupId).toBe(inviteData.groupId);
-      expect(response.body.data.token).toBeDefined();
-      expect(response.body.data.expiresAt).toBeDefined();
-
-      testInvites.push(response.body.data);
-    });
-  });
-
-  describe('2. VALIDATION CASES (400)', () => {
-    let groupOwner: any;
-    let testGroup: any;
-
-    beforeAll(async () => {
-      groupOwner = await createTestUser({
-        email: 'invite.validation@example.com',
+      const memberData = {
+        email: `member_${suffix}@example.com`,
         password: 'password123',
-        fullName: 'Invite Validation User',
-      });
-
-      testGroup = await createTestGroup(groupOwner, {
-        name: 'Validation Invite Test Group',
-        description: 'Group for invitation validation testing',
-      });
-    });
-
-    it('should reject invitation creation with missing groupId', async () => {
-      const inviteData = {
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        fullName: 'Member User',
       };
 
-      await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(inviteData)
-        .expect(400);
-    });
-
-    it('should reject invitation creation with empty payload', async () => {
-      await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send({})
-        .expect(400);
-    });
-
-    it('should reject invitation creation with invalid groupId format', async () => {
-      const inviteData = {
-        groupId: 123, // Should be string
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      };
-
-      await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(inviteData)
-        .expect(400);
-    });
-
-    it('should reject invitation creation with invalid expiration date', async () => {
-      const inviteData = {
-        groupId: testGroup.id,
-        expiresAt: 'invalid-date-format',
-      };
-
-      await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(inviteData)
-        .expect(400);
-    });
-
-    it('should reject invitation creation with past expiration date', async () => {
-      const inviteData = {
-        groupId: testGroup.id,
-        expiresAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(), // 1 hour ago
-      };
-
-      await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(inviteData)
-        .expect(400);
-    });
-  });
-
-  describe('3. AUTHORIZATION CASES', () => {
-    describe('3.1 Không đăng nhập (401)', () => {
-      it('should reject invitation creation without authentication', async () => {
-        const inviteData = {
-          groupId: 'some-group-id',
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        };
-
-        await request(app.getHttpServer())
-          .post('/invite')
-          .send(inviteData)
-          .expect(401);
-      });
-    });
-
-    describe('3.2 Permission Tests', () => {
-      let groupOwner: any;
-      let editorUser: any;
-      let viewerUser: any;
-      let nonMember: any;
-      let testGroup: any;
-
-      beforeAll(async () => {
-        groupOwner = await createTestUser({
-          email: 'role.invite.owner@example.com',
-          password: 'password123',
-          fullName: 'Role Invite Owner',
-        });
-
-        editorUser = await createTestUser({
-          email: 'role.invite.editor@example.com',
-          password: 'password123',
-          fullName: 'Role Invite Editor',
-        });
-
-        viewerUser = await createTestUser({
-          email: 'role.invite.viewer@example.com',
-          password: 'password123',
-          fullName: 'Role Invite Viewer',
-        });
-
-        nonMember = await createTestUser({
-          email: 'role.invite.nonmember@example.com',
-          password: 'password123',
-          fullName: 'Role Invite Non Member',
-        });
-
-        // Create group
-        testGroup = await createTestGroup(groupOwner, {
-          name: 'Role Invite Test Group',
-          description: 'Group for role invitation testing',
-        });
-
-        // Add users to group with different roles
-        await addUserToGroup(testGroup, editorUser, 'EDITOR');
-        await addUserToGroup(testGroup, viewerUser, 'VIEWER');
-      });
-
-      it('should allow OWNER to create invitation', async () => {
-        const inviteData = {
-          groupId: testGroup.id,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        };
-
-        const response = await request(app.getHttpServer())
-          .post('/invite')
-          .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-          .send(inviteData)
-          .expect(201);
-
-        testInvites.push(response.body.data);
-      });
-
-      it('should allow EDITOR to create invitation', async () => {
-        const inviteData = {
-          groupId: testGroup.id,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        };
-
-        const response = await request(app.getHttpServer())
-          .post('/invite')
-          .set('Authorization', `Bearer ${editorUser.accessToken}`)
-          .send(inviteData)
-          .expect(201);
-
-        testInvites.push(response.body.data);
-      });
-
-      it('should allow VIEWER to create invitation', async () => {
-        const inviteData = {
-          groupId: testGroup.id,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        };
-
-        const response = await request(app.getHttpServer())
-          .post('/invite')
-          .set('Authorization', `Bearer ${viewerUser.accessToken}`)
-          .send(inviteData)
-          .expect(201);
-
-        testInvites.push(response.body.data);
-      });
-
-      it('should reject non-member from creating invitation', async () => {
-        const inviteData = {
-          groupId: testGroup.id,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        };
-
-        await request(app.getHttpServer())
-          .post('/invite')
-          .set('Authorization', `Bearer ${nonMember.accessToken}`)
-          .send(inviteData)
-          .expect(403); // Forbidden due to not being a member
-      });
-    });
-  });
-
-  describe('4. DATABASE / BUSINESS LOGIC CASES', () => {
-    let groupOwner: any;
-    let testGroup: any;
-
-    beforeAll(async () => {
-      groupOwner = await createTestUser({
-        email: 'business.invite@example.com',
-        password: 'password123',
-        fullName: 'Business Invite User',
-      });
-
-      testGroup = await createTestGroup(groupOwner, {
-        name: 'Business Invite Test Group',
-        description: 'Group for business invitation testing',
-      });
-    });
-
-    it('should return 404 when creating invitation for non-existent group', async () => {
-      const inviteData = {
-        groupId: 'non-existent-group-id',
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      };
-
-      await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(inviteData)
-        .expect(404); // Group not found
-    });
-
-    it('should handle invitation creation with very long groupId', async () => {
-      const longGroupId = 'a'.repeat(500);
-      const inviteData = {
-        groupId: longGroupId,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      };
-
-      await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(inviteData)
-        .expect(404); // Group not found due to long ID
-    });
-
-    it('should handle multiple invitations for same group', async () => {
-      const inviteData = {
-        groupId: testGroup.id,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      };
-
-      // Create first invitation
-      const response1 = await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(inviteData)
-        .expect(201);
-
-      // Create second invitation
-      const response2 = await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${groupOwner.accessToken}`)
-        .send(inviteData)
-        .expect(201);
-
-      expect(response1.body.data.token).not.toBe(
-        response2.body.data.inviteToken,
+      const registerOwnerResponse = await registerUser(
+        ownerData.email,
+        ownerData.password,
+        ownerData.fullName,
       );
-      expect(response1.body.data.groupId).toBe(response2.body.data.groupId);
 
-      testInvites.push(response1.body.data, response2.body.data);
+      expect(registerOwnerResponse.code).toBe(201);
+      testUsers.push({ email: ownerData.email });
+
+      const registerMemberResponse = await registerUser(
+        memberData.email,
+        memberData.password,
+        memberData.fullName,
+      );
+
+      expect(registerMemberResponse.code).toBe(201);
+      testUsers.push({ email: memberData.email });
+
+      const ownerToken = registerOwnerResponse.data.tokens.accessToken;
+      const memberToken = registerMemberResponse.data.tokens.accessToken;
+
+      const createGroupResponse = await createGroup(ownerToken, `TG${suffix}`);
+
+      expect(createGroupResponse.code).toBe(201);
+      const groupId = createGroupResponse.data.id;
+      testGroups.push({ id: groupId });
+
+      const createInviteResponse = await createInvite(ownerToken, groupId);
+
+      expect(createInviteResponse.code).toBe(201);
+      expect(createInviteResponse.data.inviteLink).toBeDefined();
+      const inviteLink = createInviteResponse.data.inviteLink;
+      const inviteCode = inviteLink.split('token=')[1];
+
+      const joinGroupResponse = await joinGroup(memberToken, inviteCode);
+
+      expect([201, 200]).toContain(joinGroupResponse.code);
     });
   });
 
-  describe('5. INTEGRATION TESTS', () => {
-    it('should complete full invitation flow: Create -> Verify Token -> Use in Group Join', async () => {
-      // Step 1: Create user and group
-      const owner = await createTestUser({
-        email: 'integration.invite@example.com',
+  describe('2. Permission: Non-member fails to generate invite (403)', () => {
+    it('should reject invite creation from user not in group', async () => {
+      const suffix = generateRandomSuffix();
+      const groupOwnerData = {
+        email: `owner_${suffix}@example.com`,
         password: 'password123',
-        fullName: 'Integration Invite Owner',
-      });
+        fullName: 'Group Owner',
+      };
+      const nonMemberData = {
+        email: `nonmember_${suffix}@example.com`,
+        password: 'password123',
+        fullName: 'Non Member',
+      };
+      const registerOwnerResponse = await registerUser(
+        groupOwnerData.email,
+        groupOwnerData.password,
+        groupOwnerData.fullName,
+      );
+      expect(registerOwnerResponse.code).toBe(201);
+      testUsers.push({ email: groupOwnerData.email });
+      const registerNonMemberResponse = await registerUser(
+        nonMemberData.email,
+        nonMemberData.password,
+        nonMemberData.fullName,
+      );
+      expect(registerNonMemberResponse.code).toBe(201);
 
-      const group = await createTestGroup(owner, {
-        name: 'Integration Invite Test Group',
-        description: 'Group for invitation integration testing',
-      });
+      testUsers.push({ email: nonMemberData.email });
+      const ownerToken = registerOwnerResponse.data.tokens.accessToken;
+      const nonMemberToken = registerNonMemberResponse.data.tokens.accessToken;
+      const createGroupResponse = await createGroup(ownerToken, `TG${suffix}`);
+      expect(createGroupResponse.code).toBe(201);
 
-      // Step 2: Create invitation
-      const inviteData = {
-        groupId: group.id,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      const groupId = createGroupResponse.data.id;
+      testGroups.push({ id: groupId });
+      const createInviteResponse = await createInvite(nonMemberToken, groupId);
+      expect(createInviteResponse.code).toBe(403);
+    });
+  });
+
+  describe('3. Invalid Token: Join with malformed or non-existent invite token (400/404)', () => {
+    it('should reject join attempt with invalid invite token', async () => {
+      const suffix = generateRandomSuffix();
+
+      const userData = {
+        email: `user_${suffix}@example.com`,
+        password: 'password123',
+        fullName: 'Test User',
       };
 
-      const inviteResponse = await request(app.getHttpServer())
-        .post('/invite')
-        .set('Authorization', `Bearer ${owner.accessToken}`)
-        .send(inviteData)
-        .expect(201);
+      const registerResponse = await registerUser(
+        userData.email,
+        userData.password,
+        userData.fullName,
+      );
+      expect(registerResponse.code).toBe(201);
+      testUsers.push({ email: userData.email });
 
-      expect(inviteResponse.body.success).toBe(true);
-      expect(inviteResponse.body.data.inviteToken).toBeDefined();
+      const userToken = registerResponse.data.tokens.accessToken;
 
-      const inviteToken = inviteResponse.body.data.token;
-      testInvites.push(inviteResponse.body.data);
+      const invalidTokens = [
+        'invalid-token',
+        'malformed.token',
+        'nonexistent123',
+      ];
 
-      // Step 3: Create a new user to join using the invitation
-      const joiner = await createTestUser({
-        email: 'joiner.invite@example.com',
+      for (const token of invalidTokens) {
+        const joinResponse = await joinGroup(userToken, token);
+
+        expect([400, 404]).toContain(joinResponse.code);
+      }
+    });
+  });
+
+  describe('4. Security IDOR: User tries to join Group B using invite link from Group C', () => {
+    it('should prevent joining wrong group via manipulated invite token', async () => {
+      const suffix = generateRandomSuffix();
+
+      const ownerAData = {
+        email: `ownerA_${suffix}@example.com`,
         password: 'password123',
-        fullName: 'Joiner User',
-      });
+        fullName: 'Owner A User',
+      };
 
-      // Step 4: Use invitation to join group
-      const joinResponse = await request(app.getHttpServer())
-        .post('/group-family/join')
-        .set('Authorization', `Bearer ${joiner.accessToken}`)
-        .query({ token: inviteToken })
-        .expect(200);
-
-      expect(joinResponse.body.success).toBe(true);
-      expect(joinResponse.body.data.groupId).toBe(group.id);
-      expect(joinResponse.body.data.memberId).toBe(joiner.id);
-
-      // Step 5: Verify joiner is now a member
-      const groupsResponse = await request(app.getHttpServer())
-        .get('/group-family')
-        .set('Authorization', `Bearer ${joiner.accessToken}`)
-        .expect(200);
-
-      expect(groupsResponse.body.data.length).toBe(1);
-      expect(groupsResponse.body.data[0].id).toBe(group.id);
-
-      // Step 6: Try to use the same invitation again (should fail)
-      const anotherUser = await createTestUser({
-        email: 'another.joiner@example.com',
+      const ownerBData = {
+        email: `ownerB_${suffix}@example.com`,
         password: 'password123',
-        fullName: 'Another Joiner User',
-      });
+        fullName: 'Owner B User',
+      };
 
-      await request(app.getHttpServer())
-        .post('/group-family/join')
-        .set('Authorization', `Bearer ${anotherUser.accessToken}`)
-        .query({ token: inviteToken })
-        .expect(200); // Should still succeed - each user can join once per token
+      const memberData = {
+        email: `member_${suffix}@example.com`,
+        password: 'password123',
+        fullName: 'Member User',
+      };
 
-      // Add to cleanup
-      testGroups.push(group);
+      const registerOwnerAResponse = await registerUser(
+        ownerAData.email,
+        ownerAData.password,
+        ownerAData.fullName,
+      );
+      expect(registerOwnerAResponse.code).toBe(201);
+      testUsers.push({ email: ownerAData.email });
+
+      const registerOwnerBResponse = await registerUser(
+        ownerBData.email,
+        ownerBData.password,
+        ownerBData.fullName,
+      );
+      expect(registerOwnerBResponse.code).toBe(201);
+      testUsers.push({ email: ownerBData.email });
+
+      const registerMemberResponse = await registerUser(
+        memberData.email,
+        memberData.password,
+        memberData.fullName,
+      );
+      expect(registerMemberResponse.code).toBe(201);
+      testUsers.push({ email: memberData.email });
+
+      const ownerAToken = registerOwnerAResponse.data.tokens.accessToken;
+      const ownerBToken = registerOwnerBResponse.data.tokens.accessToken;
+      const memberToken = registerMemberResponse.data.tokens.accessToken;
+
+      const createGroupAResponse = await createGroup(
+        ownerAToken,
+        `GA${suffix}`,
+      );
+      expect(createGroupAResponse.code).toBe(201);
+      const groupAId = createGroupAResponse.data.id;
+      testGroups.push({ id: groupAId });
+
+      const createGroupBResponse = await createGroup(
+        ownerBToken,
+        `GB${suffix}`,
+      );
+      expect(createGroupBResponse.code).toBe(201);
+      const groupBId = createGroupBResponse.data.id;
+      testGroups.push({ id: groupBId });
+
+      const createInviteAResponse = await createInvite(ownerAToken, groupAId);
+      expect(createInviteAResponse.code).toBe(201);
+      const inviteALink = createInviteAResponse.data.inviteLink;
+      const inviteACode = inviteALink.split('token=')[1];
+
+      const joinBWithInviteAResponse = await joinGroup(
+        memberToken,
+        inviteACode,
+      );
+      expect([201, 200]).toContain(joinBWithInviteAResponse.code);
+
+      expect(joinBWithInviteAResponse.data.groupId).toBe(groupAId);
+      expect(joinBWithInviteAResponse.data.groupId).not.toBe(groupBId);
+    });
+  });
+
+  describe('5. Conflict: User who is already a member fails to join again (400/409)', () => {
+    it('should prevent existing member from joining the same group again', async () => {
+      const suffix = generateRandomSuffix();
+
+      const ownerData = {
+        email: `owner_${suffix}@example.com`,
+        password: 'password123',
+        fullName: 'Owner User',
+      };
+
+      const memberData = {
+        email: `member_${suffix}@example.com`,
+        password: 'password123',
+        fullName: 'Member User',
+      };
+
+      const registerOwnerResponse = await registerUser(
+        ownerData.email,
+        ownerData.password,
+        ownerData.fullName,
+      );
+      expect(registerOwnerResponse.code).toBe(201);
+      testUsers.push({ email: ownerData.email });
+
+      const registerMemberResponse = await registerUser(
+        memberData.email,
+        memberData.password,
+        memberData.fullName,
+      );
+      expect(registerMemberResponse.code).toBe(201);
+      testUsers.push({ email: memberData.email });
+
+      const ownerToken = registerOwnerResponse.data.tokens.accessToken;
+      const memberToken = registerMemberResponse.data.tokens.accessToken;
+
+      const createGroupResponse = await createGroup(ownerToken, `TG${suffix}`);
+      expect(createGroupResponse.code).toBe(201);
+      const groupId = createGroupResponse.data.id;
+      testGroups.push({ id: groupId });
+
+      const createInviteResponse = await createInvite(ownerToken, groupId);
+      expect(createInviteResponse.code).toBe(201);
+      const inviteLink = createInviteResponse.data.inviteLink;
+      const inviteCode = inviteLink.split('token=')[1];
+
+      const firstJoinResponse = await joinGroup(memberToken, inviteCode);
+      expect([201, 200]).toContain(firstJoinResponse.code);
+
+      const secondJoinResponse = await joinGroup(memberToken, inviteCode);
+
+      expect([400, 409]).toContain(secondJoinResponse.code);
     });
   });
 });

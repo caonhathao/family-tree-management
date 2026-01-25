@@ -26,6 +26,7 @@ import { USER_ROLE } from '@prisma/client';
  * - Non-Member: 404 for group-specific operations
  */
 
+//passed
 describe('Group Family E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;

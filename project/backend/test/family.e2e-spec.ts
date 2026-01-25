@@ -3,7 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
-
+//passed
 interface newFamily {
   data: {
     family: {

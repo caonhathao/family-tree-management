@@ -21,6 +21,8 @@ import { PrismaService } from '../prisma/prisma.service';
  * - Authentication bypass attempts
  */
 
+//passed
+
 describe('Authentication E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
