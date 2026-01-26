@@ -14,7 +14,7 @@ import { CloudinaryModule } from './common/config/cloudinary/cloudinary.module';
 import { RelationshipsModule } from './modules/relationships/relationships.module';
 import { GroupFamilyModule } from './modules/group-family/group-family.module';
 import { UserModule } from './modules/users/user.module';
-import { GroupMemberModule } from './modules/group-member/group-member.module';
+import { GroupMemberModule } from './modules/group-members/group-members.module';
 import { InviteModule } from './modules/invite/invite.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TaskModule } from './schedule/task-schedule.module';

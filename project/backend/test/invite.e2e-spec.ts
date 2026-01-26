@@ -3,8 +3,9 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../prisma/prisma.service';
-import { response } from 'express';
+
 import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
+//passed
 interface userType {
   data: {
     user: {
