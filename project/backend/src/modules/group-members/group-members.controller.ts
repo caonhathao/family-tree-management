@@ -13,7 +13,7 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { GroupMemberService } from './group-member.service';
+import { GroupMemberService } from './group-members.service';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { UpdateGroupMemberDto } from './dto/update-group-member.dto';
 import { ResponseFactory } from 'src/common/factories/response.factory';
