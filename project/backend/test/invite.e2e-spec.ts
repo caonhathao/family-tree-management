@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
 //passed
-interface userType {
+interface IUserType {
   data: {
     user: {
       id: string;
@@ -23,7 +23,7 @@ interface userType {
   };
   code: number;
 }
-interface newGroup {
+interface INewGroup {
   data: {
     id: string;
     name: string;
@@ -31,13 +31,13 @@ interface newGroup {
   };
   code: number;
 }
-interface inviteType {
+interface IInviteType {
   data: {
     inviteLink: string;
   };
   code: number;
 }
-interface joinUserType {
+interface IJoinUserType {
   data: {
     id: string;
     groupId: string;
@@ -61,6 +61,7 @@ describe('Invite E2E Tests', () => {
     password: string,
     fullName: string,
   ) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const response = await request(app.getHttpServer())
       .post('/auth/register')
       .send({ email, password, fullName });
@@ -71,16 +72,17 @@ describe('Invite E2E Tests', () => {
         response.body,
       );
     }
-    return response.body as userType;
+    return response.body as IUserType;
   };
 
-  const loginUser = async (email: string, password: string) => {
-    return await request(app.getHttpServer())
-      .post('/auth/login-base')
-      .send({ email, password });
-  };
+  // const loginUser = async (email: string, password: string) => {
+  //   return await request(app.getHttpServer())
+  //     .post('/auth/login-base')
+  //     .send({ email, password });
+  // };
 
   const createGroup = async (token: string, groupName: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const response = await request(app.getHttpServer())
       .post('/group-family')
       .set('Authorization', `Bearer ${token}`)
@@ -91,10 +93,11 @@ describe('Invite E2E Tests', () => {
         response.body,
       );
     }
-    return response.body as newGroup;
+    return response.body as INewGroup;
   };
 
   const createInvite = async (token: string, groupId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const response = await request(app.getHttpServer())
       .post('/invite')
       .set('Authorization', `Bearer ${token}`)
@@ -105,10 +108,11 @@ describe('Invite E2E Tests', () => {
         response.body,
       );
     }
-    return response.body as inviteType;
+    return response.body as IInviteType;
   };
 
   const joinGroup = async (token: string, inviteToken: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const response = await request(app.getHttpServer())
       .post('/group-family/join')
       .set('Authorization', `Bearer ${token}`)
@@ -120,7 +124,7 @@ describe('Invite E2E Tests', () => {
         response.body,
       );
     }
-    return response.body as joinUserType;
+    return response.body as IJoinUserType;
   };
 
   beforeAll(async () => {
@@ -146,6 +150,7 @@ describe('Invite E2E Tests', () => {
       await prisma.user.deleteMany({
         where: {
           email: {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
             in: testUsers.map((user) => user.email),
           },
         },
@@ -155,6 +160,7 @@ describe('Invite E2E Tests', () => {
       await prisma.groupFamily.deleteMany({
         where: {
           id: {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
             in: testGroups.map((group) => group.id),
           },
         },

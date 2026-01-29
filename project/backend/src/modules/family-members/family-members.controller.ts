@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  FileTypeValidator,
   MaxFileSizeValidator,
   Param,
   ParseFilePipe,
@@ -35,9 +34,9 @@ import { MemberUpdateDto } from './dto/update-members.dto';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 
 const maxFileSize = Number(process.env.MAX_FILE_SIZE) || 2;
-@ApiTags('member')
+@ApiTags('family-member')
 @ApiBearerAuth()
-@Controller('member')
+@Controller('family-member')
 @UseGuards(AtGuard, RolesGuard)
 export class MemberController {
   constructor(private readonly memberService: MemberService) {}
@@ -106,17 +105,17 @@ export class MemberController {
       message: ValidMessageResponse.CREATED,
     });
   }
-  @Patch(':groupId')
+  @Patch(':groupId/:familyId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @UseInterceptors(FileInterceptor('avatar'))
   @ApiOperation({ summary: 'Update a family member' })
   @ApiParam({ name: 'groupId', description: 'Group ID' })
+  @ApiParam({ name: 'familyId', description: 'Family ID' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        id: { type: 'string', description: 'Member ID' },
         fullName: { type: 'string', description: 'Member full name' },
         gender: {
           type: 'string',
@@ -151,6 +150,7 @@ export class MemberController {
     @Body() data: MemberUpdateDto,
     @GetCurrentUserId() userId: string,
     @Param('groupId') groupId: string,
+    @Param('familyId') familyId: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -161,7 +161,14 @@ export class MemberController {
     )
     file?: Express.Multer.File,
   ) {
-    const member = await this.memberService.update(userId, groupId, data, file);
+    console.log(`familyIdL ${familyId}`);
+    const member = await this.memberService.update(
+      userId,
+      groupId,
+      familyId,
+      data,
+      file,
+    );
     return ResponseFactory.success({
       data: member,
       message: ValidMessageResponse.UPDATED,
@@ -183,7 +190,7 @@ export class MemberController {
     @Param('memberId') memberId: string,
     @Param('familyId') familyId: string,
   ) {
-    const data = await this.memberService.getOne(userId, memberId, familyId);
+    const data = await this.memberService.getOne(userId, familyId, memberId);
     return ResponseFactory.success({
       data: data,
       message: ValidMessageResponse.GETTED,
@@ -207,9 +214,10 @@ export class MemberController {
     });
   }
 
-  @Delete(':familyId/:memberId')
+  @Delete(':groupId/:familyId/:memberId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Delete a family member' })
+  @ApiParam({ name: 'groupId', description: 'Group ID' })
   @ApiParam({ name: 'familyId', description: 'Family ID' })
   @ApiParam({ name: 'memberId', description: 'Member ID' })
   @ApiResponse({ status: 200, description: 'Member deleted successfully' })
@@ -220,8 +228,9 @@ export class MemberController {
     @GetCurrentUserId() userId: string,
     @Param('memberId') memberId: string,
     @Param('familyId') familyId: string,
+    @Param('groupId') groupId: string,
   ) {
-    await this.memberService.remove(userId, memberId, familyId);
+    await this.memberService.remove(userId, memberId, familyId, groupId);
     return ResponseFactory.success({
       data: null,
       message: ValidMessageResponse.DELETED,

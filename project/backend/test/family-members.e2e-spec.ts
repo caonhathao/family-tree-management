@@ -1,13 +1,145 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
-import { USER_ROLE, GENDER } from '@prisma/client';
+import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
+import { PrismaService } from '../prisma/prisma.service';
+import { USER_ROLE } from '@prisma/client';
+import {
+  generateRandomUser,
+  generateRandomFamily,
+  generateRandomMember,
+} from './factories';
 
-describe('Family Members E2E Tests', () => {
+import * as path from 'path';
+import { Server } from 'http';
+import * as fs from 'fs';
+import { error } from 'console';
+
+interface IUserType {
+  data: {
+    user: {
+      id: string;
+      email: string;
+      userProfile: {
+        fullName: string;
+        avatar?: string;
+      };
+    };
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+    };
+  };
+  code: number;
+}
+
+interface IGroupType {
+  data: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  code: number;
+}
+
+interface INewFamily {
+  data: {
+    family: {
+      id: string;
+      name: string;
+      description: string;
+    };
+    owner: {
+      id: string;
+      name: string;
+      avatar: string;
+    };
+  };
+  code: number;
+}
+
+interface IFamilyMember {
+  id: string;
+  familyId: string;
+  fullName: string;
+  generation: string;
+  isAlive: string;
+  avatarUrl: string;
+}
+
+interface INewFamilyMember {
+  data: IFamilyMember;
+  code: number;
+}
+
+interface IGetFamilyMembers {
+  data: IFamilyMember[];
+  code: number;
+}
+
+interface RegisterDto {
+  email: string;
+  fullName: string;
+  password?: string;
+  isGoogle?: boolean;
+}
+
+interface LoginBaseDto {
+  email: string;
+  password?: string;
+  isGoogle?: boolean;
+}
+
+interface FamilyDto {
+  name: string;
+  description?: string;
+}
+
+describe('Family Members (e2e)', () => {
   let app: INestApplication;
-  let baseUrl: any;
+  let prisma: PrismaService;
+  let httpServer: Server;
+
+  // Helper function to register a user
+  const registerUser = async (userDto: RegisterDto): Promise<IUserType> => {
+    const response = await request(httpServer)
+      .post('/api/auth/register')
+      .send(userDto);
+    return response.body as IUserType;
+  };
+
+  // Helper function to log in a user
+  const loginUser = async (credentials: LoginBaseDto): Promise<IUserType> => {
+    const response = await request(httpServer)
+      .post('/api/auth/login-base')
+      .send(credentials);
+    return response.body as IUserType;
+  };
+
+  const createGroup = async (
+    token: string,
+    groupDto: { name: string; description: string },
+  ): Promise<IGroupType> => {
+    const response = await request(httpServer)
+      .post('/api/group-family')
+      .set('Authorization', `Bearer ${token}`)
+      .send(groupDto);
+    return response.body as IGroupType;
+  };
+
+  // Helper function to create a family
+  const createFamily = async (
+    token: string,
+    groupId: string,
+    familyDto: FamilyDto,
+  ): Promise<INewFamily> => {
+    const response = await request(httpServer)
+      .post(`/api/family/${groupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(familyDto);
+    return response.body as INewFamily;
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -15,850 +147,652 @@ describe('Family Members E2E Tests', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('/api');
+    prisma = app.get<PrismaService>(PrismaService);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    httpServer = app.getHttpServer();
+
+    app.setGlobalPrefix('api');
     app.useGlobalPipes(
-      new ValidationPipe({ transform: true, whitelist: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     );
     app.useGlobalFilters(new AllExceptionsFilter());
 
     await app.init();
-    baseUrl = app.getHttpServer();
   });
 
   afterAll(async () => {
+    // Manually clean up the database tables
+    await prisma.relationship.deleteMany();
+    await prisma.familyMember.deleteMany();
+    await prisma.album.deleteMany();
+    await prisma.event.deleteMany();
+    await prisma.activityLog.deleteMany();
+    await prisma.family.deleteMany();
+    await prisma.groupMember.deleteMany();
+    await prisma.invite.deleteMany();
+    await prisma.groupFamily.deleteMany();
+    await prisma.session.deleteMany();
+    await prisma.user.deleteMany();
+
     await app.close();
   });
 
-  const generateSuffix = () =>
-    `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  // ===========================================================================================
+  // CATEGORY 1: Basic CRUD Operations (Happy Path)
+  // ===========================================================================================
 
-  const registerUser = async (email, password, fullName) => {
-    const response = await request(baseUrl)
-      .post('/api/auth/register')
-      .send({ email, password, fullName });
-    if (response.status !== 201) {
-      console.error(`FAILED AT: ${expect.getState().currentTestName}`);
-      console.dir(response.body, { depth: null });
-    }
-    return response;
-  };
+  it('1.1 should create a new family member successfully', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
 
-  const loginUser = async (email, password) => {
-    const response = await request(baseUrl)
-      .post('/api/auth/login-base')
-      .send({ email, password });
-    if (response.status !== 200) {
-      console.error(`FAILED AT: ${expect.getState().currentTestName}`);
-      console.dir(response.body, { depth: null });
-    }
-    return response;
-  };
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(
+      newUser.data.tokens.accessToken,
+      groupData,
+    );
 
-  const createGroup = async (token, groupName) => {
-    const response = await request(baseUrl)
-      .post('/api/group-family')
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(
+      newUser.data.tokens.accessToken,
+      groupRes.data.id,
+      familyData,
+    );
+
+    const memberData = generateRandomMember(familyRes.data.family.id);
+
+    const res = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
+      .set('Authorization', `Bearer ${newUser.data.tokens.accessToken}`)
+      .field('familyId', memberData.familyId)
+      .field('fullName', memberData.fullName)
+      .field('gender', memberData.gender)
+      .field('dateOfBirth', memberData.dateOfBirth.toISOString())
+      .field('generation', memberData.generation);
+
+    expect(res.status).toBe(HttpStatus.CREATED);
+    const responseBody: INewFamilyMember = res.body as INewFamilyMember;
+    expect(responseBody.data.fullName).toBe(memberData.fullName);
+    expect(responseBody.data.familyId).toBe(familyRes.data.family.id);
+  });
+
+  it('1.2 should get all family members for a specific family', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(
+      newUser.data.tokens.accessToken,
+      groupData,
+    );
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(
+      newUser.data.tokens.accessToken,
+      groupRes.data.id,
+      familyData,
+    );
+    // console.log(familyRes);
+
+    // Create two members
+    const memberOne = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
+      .set('Authorization', `Bearer ${newUser.data.tokens.accessToken}`)
+      .send(generateRandomMember(familyRes.data.family.id));
+    // if (!memberOne) throw new error('member one can not init');
+    const memberTwo = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
+      .set('Authorization', `Bearer ${newUser.data.tokens.accessToken}`)
+      .send(generateRandomMember(familyRes.data.family.id));
+    if (!memberTwo) throw new error('member one can not init');
+    console.log(memberOne);
+
+    const res = await request(httpServer)
+      .get(`/api/family-member/${familyRes.data.family.id}`)
+      .set('Authorization', `Bearer ${newUser.data.tokens.accessToken}`);
+
+    expect(res.status).toBe(HttpStatus.OK);
+    const responseBody: IGetFamilyMembers = res.body as IGetFamilyMembers;
+    expect(responseBody.data).toBeInstanceOf(Array);
+    expect(responseBody.data.length).toBe(2);
+  });
+
+  it('1.3 should get a specific family member by ID', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(token, groupRes.data.id, familyData);
+    //console.log('new family at 275:', familyRes);
+
+    const memberData = generateRandomMember(familyRes.data.family.id);
+
+    //create new family member
+    const createRes = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ name: groupName, description: 'Test Group' });
-    if (response.status !== 201) {
-      console.error(`FAILED AT: ${expect.getState().currentTestName}`);
-      console.dir(response.body, { depth: null });
-    }
-    return response;
-  };
+      .send(memberData);
+    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
+    const member = memberBody.data;
 
-  const createFamily = async (token, groupId, data) => {
-    const response = await request(baseUrl)
-      .post(`/api/family/${groupId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(data);
-    if (response.status !== 201) {
-      console.error(`FAILED AT: ${expect.getState().currentTestName}`);
-      console.dir(response.body, { depth: null });
-    }
-    return response;
-  };
-
-  const getFamilyMembers = async (token, familyId) => {
-    const response = await request(baseUrl)
-      .get(`/api/member/${familyId}`)
+    //get family member detail (get one)
+    const res = await request(httpServer)
+      .get(`/api/family-member/${familyRes.data.family.id}/${member.id}`)
       .set('Authorization', `Bearer ${token}`);
-    if (
-      response.status !== 200 &&
-      response.status !== 403 &&
-      response.status !== 404 &&
-      response.status !== 400
-    ) {
-      console.error(`FAILED AT: ${expect.getState().currentTestName}`);
-      console.dir(response.body, { depth: null });
-    }
-    return response;
-  };
 
-  const updateMemberRole = async (token, groupId, memberId, newRole) => {
-    const response = await request(baseUrl)
-      .patch(`/api/group-member/${groupId}`)
+    expect(res.status).toBe(HttpStatus.OK);
+    const responseBody: INewFamilyMember = res.body as INewFamilyMember;
+    console.log(responseBody);
+    expect(responseBody.data.id).toBe(member.id);
+    expect(responseBody.data.fullName).toBe(memberData.fullName);
+  });
+
+  it('1.4 should update a family member successfully', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+    console.log('group at 307:', groupRes);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(token, groupRes.data.id, familyData);
+    console.log('family at 311: ', familyRes);
+
+    const memberData = generateRandomMember(familyRes.data.family.id);
+    const createRes = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ memberId, role: newRole });
-    if (
-      response.status !== 200 &&
-      response.status !== 403 &&
-      response.status !== 400
-    ) {
-      console.error(`FAILED AT: ${expect.getState().currentTestName}`);
-      console.dir(response.body, { depth: null });
-    }
-    return response;
-  };
+      .send(memberData);
+    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
+    const member = memberBody.data;
+    console.log('member at 320:', member);
 
-  const removeMember = async (token, familyId, memberId) => {
-    const response = await request(baseUrl)
-      .delete(`/api/member/${familyId}/${memberId}`)
+    const updatedName = 'Jane Doe Updated';
+    const res = await request(httpServer)
+      .patch(
+        `/api/family-member/${groupRes.data.id}/${familyRes.data.family.id}`,
+      )
+      .set('Authorization', `Bearer ${token}`)
+      .send({ memberId: member.id, fullName: updatedName });
+
+    expect(res.status).toBe(HttpStatus.OK);
+    const responseBody: INewFamilyMember = res.body as INewFamilyMember;
+    expect(responseBody.data.id).toBe(member.id);
+    expect(responseBody.data.fullName).toBe(updatedName);
+  });
+
+  // ===========================================================================================
+  // CATEGORY 2: Data Validation & Constraints
+  // ===========================================================================================
+  it('2.1 should fail to create a member with missing required fields (fullName)', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(token, groupRes.data.id, familyData);
+
+    const memberData = generateRandomMember(familyRes.data.family.id);
+    delete memberData.fullName; // Remove required field
+
+    const res = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(memberData);
+
+    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+  });
+
+  it('2.2 should fail to create a member with an invalid gender', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(token, groupRes.data.id, familyData);
+
+    const memberData = generateRandomMember(familyRes.data.family.id);
+
+    const res = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ ...memberData, gender: 'INVALID_GENDER' });
+
+    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+  });
+
+  it('2.3 should fail to update a member with an invalid date of birth format', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+    console.log('group at 386: ', groupRes);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(token, groupRes.data.id, familyData);
+    console.log('family at 390: ', familyRes);
+
+    const memberData = generateRandomMember(familyRes.data.family.id);
+    const createRes = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(memberData);
+    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
+    const member = memberBody.data;
+    console.log('member at 399: ', member);
+
+    const res = await request(httpServer)
+      .patch(`/api/family-member/${groupRes.data.id}/${member.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ id: member.id, dateOfBirth: 'not-a-date' });
+
+    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+  });
+
+  it('2.4 should fail to create a member with a non-existent familyId', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+
+    await createFamily(token, groupRes.data.id, generateRandomFamily());
+
+    const nonExistentFamilyId = '00000000-0000-0000-0000-000000000000';
+    const memberData = generateRandomMember(nonExistentFamilyId);
+
+    const res = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}/${nonExistentFamilyId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(memberData);
+
+    expect(res.status).toBe(HttpStatus.NOT_FOUND);
+  });
+  // ===========================================================================================
+  // CATEGORY 3: Relationship & Integrity
+  // ===========================================================================================
+
+  it('3.1 should not get members from a family the user does not belong to', async () => {
+    const userAData = generateRandomUser();
+    const newUserA = await registerUser(userAData);
+    const tokenA = newUserA.data.tokens.accessToken;
+
+    const groupAData = { name: 'Group A', description: 'Group A Desc' };
+    const groupARes = await createGroup(tokenA, groupAData);
+
+    const familyAData = generateRandomFamily();
+    const familyARes = await createFamily(
+      tokenA,
+      groupARes.data.id,
+      familyAData,
+    );
+    const familyA = familyARes.data.family;
+
+    // User B
+    const userBData = generateRandomUser();
+    const newUserB = await registerUser(userBData);
+
+    const tokenB = newUserB.data.tokens.accessToken;
+
+    // User B tries to get members from User A's family
+    const res = await request(httpServer)
+      .get(`/api/family-member/${familyA.id}`)
+      .set('Authorization', `Bearer ${tokenB}`);
+
+    console.log(res.body);
+
+    expect(res.status).toBe(HttpStatus.FORBIDDEN);
+  });
+
+  it('3.2 should not add a member to a family using a wrong group id in params', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(token, groupRes.data.id, familyData);
+
+    const memberData = generateRandomMember(familyRes.data.family.id);
+
+    const wrongGroupId = '00000000-0000-0000-0000-000000000000';
+    const res = await request(httpServer)
+      .post(`/api/family-member/${wrongGroupId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(memberData);
+
+    expect(res.status).toBe(HttpStatus.FORBIDDEN);
+  });
+
+  it('3.3 should successfully delete a family member as owner', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(token, groupRes.data.id, familyData);
+
+    const memberData = generateRandomMember(familyRes.data.family.id);
+
+    const createRes = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(memberData);
+    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
+    const member = memberBody.data;
+
+    const res = await request(httpServer)
+      .delete(
+        `/api/family-member/${groupRes.data.id}/${familyRes.data.family.id}/${member.id}`,
+      )
       .set('Authorization', `Bearer ${token}`);
-    if (
-      response.status !== 200 &&
-      response.status !== 403 &&
-      response.status !== 404
-    ) {
-      console.error(`FAILED AT: ${expect.getState().currentTestName}`);
-      console.dir(response.body, { depth: null });
+
+    expect(res.status).toBe(HttpStatus.OK);
+
+    // Verify it's gone
+    const getRes = await request(httpServer)
+      .get(`/api/family-member/${familyRes.data.family.id}/${member.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(getRes.status).toBe(HttpStatus.NOT_FOUND);
+  });
+
+  it('3.4 should create a member with an avatar successfully', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(token, groupRes.data.id, familyData);
+
+    const memberData = generateRandomMember(familyRes.data.family.id);
+
+    const imagePath = path.join(__dirname, '..', 'test', '1099451.jpg');
+    // Ensure the test file exists
+    if (!fs.existsSync(imagePath)) {
+      console.error('Test image not found at:', imagePath);
+      throw new Error('Test image not found');
     }
-    return response;
-  };
 
-  const createMemberRecord = async (token, groupId, data) => {
-    const req = request(baseUrl)
-      .post(`/api/member/${groupId}`)
+    const res = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
       .set('Authorization', `Bearer ${token}`)
-      .field('familyId', data.familyId)
-      .field('fullName', data.fullName)
-      .field('gender', data.gender)
-      .field('dateOfBirth', data.dateOfBirth)
-      .field('generation', data.generation)
-      .field('isAlive', data.isAlive ?? true);
+      .field('familyId', memberData.familyId)
+      .field('fullName', memberData.fullName)
+      .field('gender', memberData.gender)
+      .field('dateOfBirth', memberData.dateOfBirth.toISOString())
+      .field('generation', memberData.generation)
+      .attach('avatar', imagePath);
 
-    const response = await req;
-    if (
-      response.status !== 201 &&
-      response.status !== 403 &&
-      response.status !== 400
-    ) {
-      console.error(`FAILED AT: ${expect.getState().currentTestName}`);
-      console.dir(response.body, { depth: null });
-    }
-    return response;
-  };
-
-  const joinGroup = async (token, inviteToken) => {
-    return await request(baseUrl)
-      .post('/api/group-family/join')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ token: inviteToken });
-  };
-
-  const getInviteLink = async (token, groupId) => {
-    const res = await request(baseUrl)
-      .post('/api/invite')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ groupId });
-    return res.body.data.inviteLink.split('token=')[1];
-  };
-
-  describe('Happy Paths (5)', () => {
-    it('MEM-01: Should create a family member successfully', async () => {
-      const suffix = generateSuffix();
-      const email = `user${suffix}@test.com`;
-      await registerUser(email, 'Pass123!', 'Full Name');
-      const login = await loginUser(email, 'Pass123!');
-      const token = login.body.data.tokens.accessToken;
-
-      const group = await createGroup(token, 'Group ' + suffix);
-      const groupId = group.body.data.id;
-
-      const family = await createFamily(token, groupId, {
-        name: 'Family ' + suffix,
-        description: 'Desc',
-      });
-      const familyId = family.body.data.family.id;
-
-      const res = await createMemberRecord(token, groupId, {
-        familyId,
-        fullName: 'Member ' + suffix,
-        gender: GENDER.MALE,
-        dateOfBirth: '1990-01-01',
-        generation: 1,
-      });
-
-      expect(res.status).toBe(201);
-      expect(res.body.data.fullName).toBe('Member ' + suffix);
-    });
-
-    it('MEM-02: Should list all family members', async () => {
-      const suffix = generateSuffix();
-      const email = `user${suffix}@test.com`;
-      await registerUser(email, 'Pass123!', 'Full Name');
-      const login = await loginUser(email, 'Pass123!');
-      const token = login.body.data.tokens.accessToken;
-      const group = await createGroup(token, 'Group ' + suffix);
-      const groupId = group.body.data.id;
-      const family = await createFamily(token, groupId, {
-        name: 'Family ' + suffix,
-        description: 'Desc',
-      });
-      const familyId = family.body.data.family.id;
-
-      await createMemberRecord(token, groupId, {
-        familyId,
-        fullName: 'M1',
-        gender: GENDER.MALE,
-        dateOfBirth: '1990-01-01',
-        generation: 1,
-      });
-
-      const res = await getFamilyMembers(token, familyId);
-      expect(res.status).toBe(200);
-      expect(Array.isArray(res.body.data)).toBe(true);
-      expect(res.body.data.length).toBeGreaterThan(0);
-    });
-
-    it('MEM-03: Should update a family member', async () => {
-      const suffix = generateSuffix();
-      const email = `user${suffix}@test.com`;
-      await registerUser(email, 'Pass123!', 'Full Name');
-      const login = await loginUser(email, 'Pass123!');
-      const token = login.body.data.tokens.accessToken;
-      const group = await createGroup(token, 'Group ' + suffix);
-      const groupId = group.body.data.id;
-      const family = await createFamily(token, groupId, {
-        name: 'Family ' + suffix,
-        description: 'Desc',
-      });
-      const familyId = family.body.data.family.id;
-
-      const member = await createMemberRecord(token, groupId, {
-        familyId,
-        fullName: 'Old Name',
-        gender: GENDER.MALE,
-        dateOfBirth: '1990-01-01',
-        generation: 1,
-      });
-      const memberId = member.body.data.id;
-
-      const res = await request(baseUrl)
-        .patch(`/api/member/${groupId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .field('id', memberId)
-        .field('fullName', 'New Name');
-
-      expect(res.status).toBe(200);
-      expect(res.body.data.fullName).toBe('New Name');
-    });
-
-    it('MEM-04: Should get a single family member', async () => {
-      const suffix = generateSuffix();
-      const email = `user${suffix}@test.com`;
-      await registerUser(email, 'Pass123!', 'Full Name');
-      const login = await loginUser(email, 'Pass123!');
-      const token = login.body.data.tokens.accessToken;
-      const group = await createGroup(token, 'Group ' + suffix);
-      const groupId = group.body.data.id;
-      const family = await createFamily(token, groupId, {
-        name: 'Family ' + suffix,
-        description: 'Desc',
-      });
-      const familyId = family.body.data.family.id;
-      const member = await createMemberRecord(token, groupId, {
-        familyId,
-        fullName: 'Target',
-        gender: GENDER.FEMALE,
-        dateOfBirth: '1995-05-05',
-        generation: 2,
-      });
-      const memberId = member.body.data.id;
-
-      const res = await request(baseUrl)
-        .get(`/api/member/${familyId}/${memberId}`)
-        .set('Authorization', `Bearer ${token}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.data.fullName).toBe('Target');
-    });
-
-    it('MEM-05: Should remove a family member', async () => {
-      const suffix = generateSuffix();
-      const email = `user${suffix}@test.com`;
-      await registerUser(email, 'Pass123!', 'Full Name');
-      const login = await loginUser(email, 'Pass123!');
-      const token = login.body.data.tokens.accessToken;
-      const group = await createGroup(token, 'Group ' + suffix);
-      const groupId = group.body.data.id;
-      const family = await createFamily(token, groupId, {
-        name: 'Family ' + suffix,
-        description: 'Desc',
-      });
-      const familyId = family.body.data.family.id;
-      const member = await createMemberRecord(token, groupId, {
-        familyId,
-        fullName: 'To Be Deleted',
-        gender: GENDER.OTHER,
-        dateOfBirth: '2000-01-01',
-        generation: 3,
-      });
-      const memberId = member.body.data.id;
-
-      const res = await removeMember(token, familyId, memberId);
-      expect(res.status).toBe(200);
-
-      const check = await request(baseUrl)
-        .get(`/api/member/${familyId}/${memberId}`)
-        .set('Authorization', `Bearer ${token}`);
-      expect(check.status).toBe(404);
-    });
+    expect(res.status).toBe(HttpStatus.CREATED);
+    const responseBody: INewFamilyMember = res.body as IFamilyMember;
+    expect(responseBody.data.avatarUrl).not.toBeNull();
+    expect(responseBody.data.avatarUrl).toContain('cloudinary');
   });
 
-  describe('Role Enforcement (5)', () => {
-    it('MEM-06: OWNER can do everything (Create)', async () => {
-      const suffix = generateSuffix();
-      const email = `owner${suffix}@test.com`;
-      await registerUser(email, 'Pass123!', 'Owner');
-      const login = await loginUser(email, 'Pass123!');
-      const token = login.body.data.tokens.accessToken;
-      const group = await createGroup(token, 'G');
-      const family = await createFamily(token, group.body.data.id, {
-        name: 'F',
-        description: 'D',
-      });
+  // ===========================================================================================
+  // CATEGORY 4: Authentication & Authorization
+  // ===========================================================================================
 
-      const res = await createMemberRecord(token, group.body.data.id, {
-        familyId: family.body.data.family.id,
-        fullName: 'P',
-        gender: GENDER.MALE,
-        dateOfBirth: '1990-01-01',
-        generation: 1,
-      });
-      expect(res.status).toBe(201);
-    });
-
-    it('MEM-07: EDITOR can update member', async () => {
-      const suffix = generateSuffix();
-      const ownerLogin = await registerUser(
-        `o${suffix}@t.com`,
-        'Pass123!',
-        'O',
-      ).then(() => loginUser(`o${suffix}@t.com`, 'Pass123!'));
-      const group = await createGroup(
-        ownerLogin.body.data.tokens.accessToken,
-        'G',
-      );
-      const family = await createFamily(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        { name: 'F', description: 'D' },
-      );
-      const member = await createMemberRecord(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        {
-          familyId: family.body.data.family.id,
-          fullName: 'P',
-          gender: GENDER.MALE,
-          dateOfBirth: '1990-01-01',
-          generation: 1,
-        },
-      );
-
-      const editorEmail = `e${suffix}@t.com`;
-      await registerUser(editorEmail, 'Pass123!', 'E');
-      const editorLogin = await loginUser(editorEmail, 'Pass123!');
-      const inviteToken = await getInviteLink(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-      );
-      await joinGroup(editorLogin.body.data.tokens.accessToken, inviteToken);
-
-      const joinerId = editorLogin.body.data.user.id;
-      await updateMemberRole(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        joinerId,
-        USER_ROLE.EDITOR,
-      );
-
-      const res = await request(baseUrl)
-        .patch(`/api/member/${group.body.data.id}`)
-        .set(
-          'Authorization',
-          `Bearer ${editorLogin.body.data.tokens.accessToken}`,
-        )
-        .field('id', member.body.data.id)
-        .field('fullName', 'Updated By Editor');
-
-      expect(res.status).toBe(200);
-    });
-
-    it('MEM-08: VIEWER can list members but not delete', async () => {
-      const suffix = generateSuffix();
-      const ownerLogin = await registerUser(
-        `o${suffix}@t.com`,
-        'Pass123!',
-        'O',
-      ).then(() => loginUser(`o${suffix}@t.com`, 'Pass123!'));
-      const group = await createGroup(
-        ownerLogin.body.data.tokens.accessToken,
-        'G',
-      );
-      const family = await createFamily(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        { name: 'F', description: 'D' },
-      );
-      const member = await createMemberRecord(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        {
-          familyId: family.body.data.family.id,
-          fullName: 'P',
-          gender: GENDER.MALE,
-          dateOfBirth: '1990-01-01',
-          generation: 1,
-        },
-      );
-
-      const viewerLogin = await registerUser(
-        `v${suffix}@t.com`,
-        'Pass123!',
-        'V',
-      ).then(() => loginUser(`v${suffix}@t.com`, 'Pass123!'));
-      const inviteToken = await getInviteLink(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-      );
-      await joinGroup(viewerLogin.body.data.tokens.accessToken, inviteToken);
-      await updateMemberRole(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        viewerLogin.body.data.user.id,
-        USER_ROLE.VIEWER,
-      );
-
-      const list = await getFamilyMembers(
-        viewerLogin.body.data.tokens.accessToken,
-        family.body.data.family.id,
-      );
-      expect(list.status).toBe(200);
-
-      const del = await removeMember(
-        viewerLogin.body.data.tokens.accessToken,
-        family.body.data.family.id,
-        member.body.data.id,
-      );
-      expect(del.status).toBe(403);
-    });
-
-    it('MEM-09: EDITOR can delete member', async () => {
-      const suffix = generateSuffix();
-      const ownerLogin = await registerUser(
-        `o${suffix}@t.com`,
-        'Pass123!',
-        'O',
-      ).then(() => loginUser(`o${suffix}@t.com`, 'Pass123!'));
-      const group = await createGroup(
-        ownerLogin.body.data.tokens.accessToken,
-        'G',
-      );
-      const family = await createFamily(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        { name: 'F', description: 'D' },
-      );
-      const member = await createMemberRecord(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        {
-          familyId: family.body.data.family.id,
-          fullName: 'P',
-          gender: GENDER.MALE,
-          dateOfBirth: '1990-01-01',
-          generation: 1,
-        },
-      );
-
-      const editorLogin = await registerUser(
-        `e${suffix}@t.com`,
-        'Pass123!',
-        'E',
-      ).then(() => loginUser(`e${suffix}@t.com`, 'Pass123!'));
-      const inviteToken = await getInviteLink(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-      );
-      await joinGroup(editorLogin.body.data.tokens.accessToken, inviteToken);
-      await updateMemberRole(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        editorLogin.body.data.user.id,
-        USER_ROLE.EDITOR,
-      );
-
-      const res = await removeMember(
-        editorLogin.body.data.tokens.accessToken,
-        family.body.data.family.id,
-        member.body.data.id,
-      );
-      expect(res.status).toBe(200);
-    });
-
-    it('MEM-10: VIEWER can create member', async () => {
-      const suffix = generateSuffix();
-      const ownerLogin = await registerUser(
-        `o${suffix}@t.com`,
-        'Pass123!',
-        'O',
-      ).then(() => loginUser(`o${suffix}@t.com`, 'Pass123!'));
-      const group = await createGroup(
-        ownerLogin.body.data.tokens.accessToken,
-        'G',
-      );
-      const family = await createFamily(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        { name: 'F', description: 'D' },
-      );
-
-      const viewerLogin = await registerUser(
-        `v${suffix}@t.com`,
-        'Pass123!',
-        'V',
-      ).then(() => loginUser(`v${suffix}@t.com`, 'Pass123!'));
-      const inviteToken = await getInviteLink(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-      );
-      await joinGroup(viewerLogin.body.data.tokens.accessToken, inviteToken);
-      await updateMemberRole(
-        ownerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        viewerLogin.body.data.user.id,
-        USER_ROLE.VIEWER,
-      );
-
-      const res = await createMemberRecord(
-        viewerLogin.body.data.tokens.accessToken,
-        group.body.data.id,
-        {
-          familyId: family.body.data.family.id,
-          fullName: 'V-Created',
-          gender: GENDER.FEMALE,
-          dateOfBirth: '1990-01-01',
-          generation: 1,
-        },
-      );
-      expect(res.status).toBe(201);
-    });
+  it('4.1 should fail to create a member without a valid JWT token', async () => {
+    const res = await request(httpServer)
+      .post('/api/family-member/some-group-id')
+      .send({});
+    expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
   });
 
-  describe('Security & IDOR (5)', () => {
-    it('MEM-11: User A trying to view members of Family B (Not in Group)', async () => {
-      const suffix = generateSuffix();
-      const userALogin = await registerUser(
-        `a${suffix}@t.com`,
-        'Pass123!',
-        'A',
-      ).then(() => loginUser(`a${suffix}@t.com`, 'Pass123!'));
-      const userBLogin = await registerUser(
-        `b${suffix}@t.com`,
-        'Pass123!',
-        'B',
-      ).then(() => loginUser(`b${suffix}@t.com`, 'Pass123!'));
-
-      const groupB = await createGroup(
-        userBLogin.body.data.tokens.accessToken,
-        'GB',
-      );
-      const familyB = await createFamily(
-        userBLogin.body.data.tokens.accessToken,
-        groupB.body.data.id,
-        { name: 'FB', description: 'D' },
-      );
-
-      const res = await getFamilyMembers(
-        userALogin.body.data.tokens.accessToken,
-        familyB.body.data.family.id,
-      );
-      expect(res.status).toBe(403);
-    });
-
-    it('MEM-12: User A trying to create member in Family B', async () => {
-      const suffix = generateSuffix();
-      const userALogin = await registerUser(
-        `a${suffix}@t.com`,
-        'Pass123!',
-        'A',
-      ).then(() => loginUser(`a${suffix}@t.com`, 'Pass123!'));
-      const userBLogin = await registerUser(
-        `b${suffix}@t.com`,
-        'Pass123!',
-        'B',
-      ).then(() => loginUser(`b${suffix}@t.com`, 'Pass123!'));
-
-      const groupB = await createGroup(
-        userBLogin.body.data.tokens.accessToken,
-        'GB',
-      );
-      const familyB = await createFamily(
-        userBLogin.body.data.tokens.accessToken,
-        groupB.body.data.id,
-        { name: 'FB', description: 'D' },
-      );
-
-      const res = await createMemberRecord(
-        userALogin.body.data.tokens.accessToken,
-        groupB.body.data.id,
-        {
-          familyId: familyB.body.data.family.id,
-          fullName: 'Hacker',
-          gender: GENDER.MALE,
-          dateOfBirth: '1990-01-01',
-          generation: 1,
-        },
-      );
-      expect(res.status).toBe(403);
-    });
-
-    it('MEM-13: User A trying to update member of Family B', async () => {
-      const suffix = generateSuffix();
-      const userALogin = await registerUser(
-        `a${suffix}@t.com`,
-        'Pass123!',
-        'A',
-      ).then(() => loginUser(`a${suffix}@t.com`, 'Pass123!'));
-      const userBLogin = await registerUser(
-        `b${suffix}@t.com`,
-        'Pass123!',
-        'B',
-      ).then(() => loginUser(`b${suffix}@t.com`, 'Pass123!'));
-      const groupB = await createGroup(
-        userBLogin.body.data.tokens.accessToken,
-        'GB',
-      );
-      const familyB = await createFamily(
-        userBLogin.body.data.tokens.accessToken,
-        groupB.body.data.id,
-        { name: 'FB', description: 'D' },
-      );
-      const memberB = await createMemberRecord(
-        userBLogin.body.data.tokens.accessToken,
-        groupB.body.data.id,
-        {
-          familyId: familyB.body.data.family.id,
-          fullName: 'B',
-          gender: GENDER.MALE,
-          dateOfBirth: '1990-01-01',
-          generation: 1,
-        },
-      );
-
-      const res = await request(baseUrl)
-        .patch(`/api/member/${groupB.body.data.id}`)
-        .set(
-          'Authorization',
-          `Bearer ${userALogin.body.data.tokens.accessToken}`,
-        )
-        .field('id', memberB.body.data.id)
-        .field('fullName', 'Hacked');
-      expect(res.status).toBe(403);
-    });
-
-    it('MEM-14: User A trying to delete member of Family B', async () => {
-      const suffix = generateSuffix();
-      const userALogin = await registerUser(
-        `a${suffix}@t.com`,
-        'Pass123!',
-        'A',
-      ).then(() => loginUser(`a${suffix}@t.com`, 'Pass123!'));
-      const userBLogin = await registerUser(
-        `b${suffix}@t.com`,
-        'Pass123!',
-        'B',
-      ).then(() => loginUser(`b${suffix}@t.com`, 'Pass123!'));
-      const groupB = await createGroup(
-        userBLogin.body.data.tokens.accessToken,
-        'GB',
-      );
-      const familyB = await createFamily(
-        userBLogin.body.data.tokens.accessToken,
-        groupB.body.data.id,
-        { name: 'FB', description: 'D' },
-      );
-      const memberB = await createMemberRecord(
-        userBLogin.body.data.tokens.accessToken,
-        groupB.body.data.id,
-        {
-          familyId: familyB.body.data.family.id,
-          fullName: 'B',
-          gender: GENDER.MALE,
-          dateOfBirth: '1990-01-01',
-          generation: 1,
-        },
-      );
-
-      const res = await removeMember(
-        userALogin.body.data.tokens.accessToken,
-        familyB.body.data.family.id,
-        memberB.body.data.id,
-      );
-      expect(res.status).toBe(403);
-    });
-
-    it('MEM-15: IDOR - View member with mismatched familyId', async () => {
-      const suffix = generateSuffix();
-      const login = await registerUser(
-        `u${suffix}@t.com`,
-        'Pass123!',
-        'U',
-      ).then(() => loginUser(`u${suffix}@t.com`, 'Pass123!'));
-      const group1 = await createGroup(
-        login.body.data.tokens.accessToken,
-        'G1',
-      );
-      const group2 = await createGroup(
-        login.body.data.tokens.accessToken,
-        'G2',
-      );
-      const family1 = await createFamily(
-        login.body.data.tokens.accessToken,
-        group1.body.data.id,
-        { name: 'F1', description: 'D' },
-      );
-      const family2 = await createFamily(
-        login.body.data.tokens.accessToken,
-        group2.body.data.id,
-        { name: 'F2', description: 'D' },
-      );
-      const member1 = await createMemberRecord(
-        login.body.data.tokens.accessToken,
-        group1.body.data.id,
-        {
-          familyId: family1.body.data.family.id,
-          fullName: 'M1',
-          gender: GENDER.MALE,
-          dateOfBirth: '1990-01-01',
-          generation: 1,
-        },
-      );
-
-      const res = await request(baseUrl)
-        .get(
-          `/api/member/${family2.body.data.family.id}/${member1.body.data.id}`,
-        )
-        .set('Authorization', `Bearer ${login.body.data.tokens.accessToken}`);
-      expect(res.status).toBe(404);
-    });
+  it('4.2 should fail to get members without a valid JWT token', async () => {
+    const res = await request(httpServer).get(
+      '/api/family-member/some-family-id',
+    );
+    expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
   });
 
-  describe('Validation & Conflicts (5)', () => {
-    it('MEM-16: Invalid UUIDs for familyId', async () => {
-      const suffix = generateSuffix();
-      const login = await registerUser(
-        `u${suffix}@t.com`,
-        'Pass123!',
-        'U',
-      ).then(() => loginUser(`u${suffix}@t.com`, 'Pass123!'));
-      const res = await getFamilyMembers(
-        login.body.data.tokens.accessToken,
-        'not-a-uuid',
-      );
-      expect(res.status).toBe(400);
+  it('4.3 should fail to update a member as a VIEWER', async () => {
+    // User A (Owner)
+    const ownerData = generateRandomUser();
+    const newOwner = await registerUser(ownerData);
+
+    const ownerToken = newOwner.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(ownerToken, groupData);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(
+      ownerToken,
+      groupRes.data.id,
+      familyData,
+    );
+
+    // Create member
+    const memberData = generateRandomMember(familyRes.data.family.id);
+    const createRes = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(memberData);
+    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
+    const member = memberBody.data;
+
+    // User B (Viewer)
+    const viewerData = generateRandomUser();
+    const newViewer = await registerUser(viewerData);
+
+    const viewerToken = newViewer.data.tokens.accessToken;
+    const viewerId = newViewer.data.user.id;
+
+    // Owner invites viewer
+    await prisma.groupMember.create({
+      data: {
+        memberId: viewerId,
+        groupId: groupRes.data.id,
+        role: USER_ROLE.VIEWER,
+      },
     });
 
-    it('MEM-17: Promoting to non-existent roles', async () => {
-      const suffix = generateSuffix();
-      const login = await registerUser(
-        `u${suffix}@t.com`,
-        'Pass123!',
-        'U',
-      ).then(() => loginUser(`u${suffix}@t.com`, 'Pass123!'));
-      const group = await createGroup(login.body.data.tokens.accessToken, 'G');
-      const res = await updateMemberRole(
-        login.body.data.tokens.accessToken,
-        group.body.data.id,
-        login.body.data.user.id,
-        'SUPER_ADMIN',
-      );
-      expect(res.status).toBe(400);
+    // Viewer tries to update
+    const res = await request(httpServer)
+      .patch(
+        `/api/family-member/${groupRes.data.id}/${familyRes.data.family.id}`,
+      )
+      .set('Authorization', `Bearer ${viewerToken}`)
+      .send({ id: member.id, fullName: 'New Name From Viewer' });
+
+    expect(res.status).toBe(HttpStatus.FORBIDDEN);
+  });
+
+  it('4.4 should fail to delete a member as a VIEWER', async () => {
+    // User A (Owner)
+    const ownerData = generateRandomUser();
+    const newOwner = await registerUser(ownerData);
+
+    const ownerToken = newOwner.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(ownerToken, groupData);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(
+      ownerToken,
+      groupRes.data.id,
+      familyData,
+    );
+
+    // Create member
+    const memberData = generateRandomMember(familyRes.data.family.id);
+    const createRes = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(memberData);
+    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
+    const member = memberBody.data;
+
+    // User B (Viewer)
+    const viewerData = generateRandomUser();
+    const newViewer = await registerUser(viewerData);
+
+    const viewerToken = newViewer.data.tokens.accessToken;
+    const viewerId = newViewer.data.user.id;
+
+    // Owner invites viewer
+    await prisma.groupMember.create({
+      data: {
+        memberId: viewerId, // Hoặc userId tùy theo Schema của bạn
+        groupId: groupRes.data.id,
+        role: 'VIEWER',
+      },
     });
 
-    it('MEM-18: Removing non-existent member', async () => {
-      const suffix = generateSuffix();
-      const login = await registerUser(
-        `u${suffix}@t.com`,
-        'Pass123!',
-        'U',
-      ).then(() => loginUser(`u${suffix}@t.com`, 'Pass123!'));
-      const group = await createGroup(login.body.data.tokens.accessToken, 'G');
-      const family = await createFamily(
-        login.body.data.tokens.accessToken,
-        group.body.data.id,
-        { name: 'F', description: 'D' },
-      );
-      const fakeId = '00000000-0000-0000-0000-000000000000';
+    // Viewer tries to delete
+    const res = await request(httpServer)
+      .delete(`/api/family-member/${familyRes.data.family.id}/${member.id}`)
+      .set('Authorization', `Bearer ${viewerToken}`);
 
-      const res = await removeMember(
-        login.body.data.tokens.accessToken,
-        family.body.data.family.id,
-        fakeId,
-      );
-      expect(res.status).toBe(404);
+    expect(res.status).toBe(HttpStatus.NOT_FOUND);
+  });
+
+  // ===========================================================================================
+  // CATEGORY 5: Edge Cases & Business Logic
+  // ===========================================================================================
+  it('5.1 should return an empty array when getting members from a family with no members', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(token, groupRes.data.id, familyData);
+
+    const res = await request(httpServer)
+      .get(`/api/family-member/${familyRes.data.family.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(HttpStatus.OK);
+    const responseBody: IGetFamilyMembers = res.body as IGetFamilyMembers;
+    expect(responseBody.data).toEqual([]);
+  });
+
+  it('5.2 should fail to get a member with a non-UUID memberId', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(token, groupRes.data.id, familyData);
+
+    const res = await request(httpServer)
+      .get(`/api/family-member/${familyRes.data.family.id}/not-a-uuid`)
+      .set('Authorization', `Bearer ${token}`);
+
+    // This will be caught by AllExceptionsFilter and returned as a generic error
+    // because no specific pipe is on the param in the controller
+    expect(res.status).toBe(HttpStatus.NOT_FOUND);
+  });
+
+  it('5.3 should fail to update a non-existent member', async () => {
+    const userData = generateRandomUser();
+    const newUser = await registerUser(userData);
+
+    const token = newUser.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(token, groupData);
+
+    await createFamily(token, groupRes.data.id, generateRandomFamily());
+
+    const nonExistentMemberId = '00000000-0000-0000-0000-000000000000';
+
+    const res = await request(httpServer)
+      .patch(`/api/family-member/${groupRes.data.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ id: nonExistentMemberId, fullName: 'Ghost' });
+
+    expect(res.status).toBe(HttpStatus.NOT_FOUND);
+  });
+
+  it('5.4 should allow a user with EDITOR role to create a member', async () => {
+    // User A (Owner)
+    const ownerData = generateRandomUser();
+    const newOwner = await registerUser(ownerData);
+
+    const ownerToken = newOwner.data.tokens.accessToken;
+
+    const groupData = { name: 'Test Group', description: 'Test Group Desc' };
+    const groupRes = await createGroup(ownerToken, groupData);
+
+    const familyData = generateRandomFamily();
+    const familyRes = await createFamily(
+      ownerToken,
+      groupRes.data.id,
+      familyData,
+    );
+
+    // User B (Editor)
+    const editorData = generateRandomUser();
+    const newEditor = await registerUser(editorData);
+
+    const editorToken = newEditor.data.tokens.accessToken;
+    const editorId = newEditor.data.user.id;
+
+    // Owner makes User B an editor
+    await prisma.groupMember.create({
+      data: {
+        memberId: editorId,
+        groupId: groupRes.data.id,
+        role: USER_ROLE.EDITOR,
+      },
     });
 
-    it('MEM-19: Create member with missing required fields (fullName)', async () => {
-      const suffix = generateSuffix();
-      const login = await registerUser(
-        `u${suffix}@t.com`,
-        'Pass123!',
-        'U',
-      ).then(() => loginUser(`u${suffix}@t.com`, 'Pass123!'));
-      const group = await createGroup(login.body.data.tokens.accessToken, 'G');
-      const family = await createFamily(
-        login.body.data.tokens.accessToken,
-        group.body.data.id,
-        { name: 'F', description: 'D' },
-      );
+    const memberData = generateRandomMember(familyRes.data.family.id);
 
-      const res = await request(baseUrl)
-        .post(`/api/member/${group.body.data.id}`)
-        .set('Authorization', `Bearer ${login.body.data.tokens.accessToken}`)
-        .field('familyId', family.body.data.family.id)
-        .field('gender', GENDER.MALE)
-        .field('dateOfBirth', '1990-01-01')
-        .field('generation', 1);
+    // Editor creates member
+    const res = await request(httpServer)
+      .post(`/api/family-member/${groupRes.data.id}`)
+      .set('Authorization', `Bearer ${editorToken}`)
+      .send(memberData);
 
-      expect(res.status).toBe(400);
-    });
-
-    it('MEM-20: Create member with invalid generation type (string)', async () => {
-      const suffix = generateSuffix();
-      const login = await registerUser(
-        `u${suffix}@t.com`,
-        'Pass123!',
-        'U',
-      ).then(() => loginUser(`u${suffix}@t.com`, 'Pass123!'));
-      const group = await createGroup(login.body.data.tokens.accessToken, 'G');
-      const family = await createFamily(
-        login.body.data.tokens.accessToken,
-        group.body.data.id,
-        { name: 'F', description: 'D' },
-      );
-
-      const res = await request(baseUrl)
-        .post(`/api/member/${group.body.data.id}`)
-        .set('Authorization', `Bearer ${login.body.data.tokens.accessToken}`)
-        .field('familyId', family.body.data.family.id)
-        .field('fullName', 'Test')
-        .field('gender', GENDER.MALE)
-        .field('dateOfBirth', '1990-01-01')
-        .field('generation', 'first');
-
-      expect(res.status).toBe(400);
-    });
+    expect(res.status).toBe(HttpStatus.CREATED);
+    const responseBody: INewFamilyMember = res.body as INewFamilyMember;
+    expect(responseBody.data.fullName).toBe(memberData.fullName);
   });
 });

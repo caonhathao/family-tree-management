@@ -42,7 +42,6 @@ import { PassportModule } from '@nestjs/passport';
     GroupMemberModule,
     InviteModule,
     TaskModule,
-    AuthModule,
     PassportModule,
   ],
   controllers: [AppController],
