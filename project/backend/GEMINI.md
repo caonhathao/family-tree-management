@@ -71,6 +71,7 @@
 
 ## Testing & Quality Assurance:
 
+- **File pattern:**: When creating new file, the extension must be '.e2e-spec.ts'
 - **Atomic Test Cases**: Each IT block must be a complete and independent process.
   - **Self-Contained Data**: Each test case must generate its own dataset. For APIs requiring authentication, the process in IT must include: Register (or create user) -> Login -> Obtain Token -> Execute the API to be tested.
   - **No Shared State**: Absolutely do not use Tokens or ID data from previous IT blocks. This ensures that if one test case fails, it does not cause other test cases to fail as well.

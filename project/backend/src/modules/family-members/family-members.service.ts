@@ -3,7 +3,6 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { MemberDto } from './dto/create-members.dto';
@@ -53,10 +52,8 @@ export class MemberService {
           );
 
         if (upload.secure_url) avatarUrl = upload.secure_url as string;
-      } else throw new NotFoundException(Exception.FILE_BUFFER_MISSING);
-
-      if (avatarUrl === '')
-        throw new BadRequestException(Exception.UPLOAD_FAILED);
+        else throw new BadRequestException(Exception.UPLOAD_FAILED);
+      }
 
       const newMember = await this.prisma.familyMember.create({
         data: {
@@ -65,6 +62,7 @@ export class MemberService {
         },
         select: {
           id: true,
+          familyId: true,
           fullName: true,
           generation: true,
           isAlive: true,
@@ -74,27 +72,34 @@ export class MemberService {
 
       return newMember;
     } catch (err) {
-      console.log(err);
-      throw err;
+      console.log('failed at create new family member:', err);
+      // throw err;
     }
   }
   async update(
     userId: string,
     groupId: string,
+    familyId: string,
     data: MemberUpdateDto,
     file?: Express.Multer.File,
   ) {
     try {
       if (!isUUID(groupId, 'all'))
         throw new NotFoundException(Exception.NOT_EXIST);
-      if (!isUUID(data.id, 'all'))
+      if (!isUUID(familyId, 'all'))
         throw new NotFoundException(Exception.NOT_EXIST);
 
       //check if user is in group that have family member or not
       const group = await this.prisma.groupFamily.findFirst({
         where: {
           family: {
+            id: familyId,
             groupFamilyId: groupId,
+          },
+          groupMembers: {
+            some: {
+              memberId: userId,
+            },
           },
         },
       });
@@ -105,7 +110,7 @@ export class MemberService {
       //check if form has file (image), destroy old image and upload new
       const member = await this.prisma.familyMember.findFirst({
         where: {
-          id: data.id,
+          id: data.memberId,
         },
         select: {
           id: true,
@@ -132,20 +137,21 @@ export class MemberService {
               );
 
             if (upload.secure_url) avatarUrl = upload.secure_url as string;
+            else throw new BadRequestException(Exception.UPLOAD_FAILED);
           }
         }
-      } else throw new NotFoundException(Exception.FILE_BUFFER_MISSING);
+      }
 
-      if (avatarUrl === '')
-        throw new BadRequestException(Exception.UPLOAD_FAILED);
       const updateData = Object.fromEntries(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         Object.entries(data).filter(([_, v]) => v !== undefined && v !== null),
       );
-
+      const { memberId, ...patchData } = updateData;
+      if (!isUUID(memberId, 'all'))
+        throw new NotFoundException(Exception.NOT_EXIST);
       return await this.prisma.familyMember.update({
-        where: { id: data.id },
-        data: { ...updateData, avatarUrl: avatarUrl },
+        where: { id: memberId as string },
+        data: { ...patchData, avatarUrl: avatarUrl },
         select: {
           id: true,
           fullName: true,
@@ -156,16 +162,102 @@ export class MemberService {
       });
     } catch (err) {
       console.log('error at update member service: ', err);
+    }
+  }
+  async getOne(userId: string, familyId: string, memberId: string) {
+    try {
+      console.log('user id at 163:', userId);
+      console.log('family id at 164:', familyId);
+      if (!isUUID(familyId)) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!isUUID(memberId)) throw new NotFoundException(Exception.NOT_EXIST);
+      //check if user is in group that have family member or not
+      const [group, member] = await Promise.all([
+        this.prisma.groupFamily.findFirst({
+          where: {
+            family: {
+              id: familyId,
+            },
+            groupMembers: {
+              some: {
+                memberId: userId,
+              },
+            },
+          },
+        }),
+
+        this.prisma.familyMember.findFirst({
+          where: {
+            id: memberId,
+          },
+        }),
+      ]);
+      if (!group) {
+        throw new ForbiddenException(Exception.PEMRISSION);
+      }
+
+      if (!member) throw new NotFoundException(Exception.NOT_EXIST);
+
+      const data = await this.prisma.familyMember.findFirst({
+        where: {
+          id: memberId,
+        },
+        select: {
+          id: true,
+          family: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          gender: true,
+          fullName: true,
+          dateOfBirth: true,
+          dateOfDeath: true,
+          isAlive: true,
+          avatarUrl: true,
+          biography: true,
+          generation: true,
+          relationshipsFrom: {
+            select: {
+              fromMember: {
+                select: {
+                  id: true,
+                  fullName: true,
+                },
+              },
+              type: true,
+            },
+          },
+          relationshipsTo: {
+            select: {
+              toMember: {
+                select: {
+                  id: true,
+                  fullName: true,
+                },
+              },
+              type: true,
+            },
+          },
+        },
+      });
+      if (!data) throw new ForbiddenException(Exception.NOT_EXIST);
+      return data;
+    } catch (err) {
+      console.log(
+        'error at get one family member of family-members service: ',
+        err,
+      );
+
       throw err;
     }
   }
-
-  async getOne(userId: string, familyId: string, memberId: string) {
-    if (!isUUID(familyId)) throw new NotFoundException(Exception.NOT_EXIST);
-    if (!isUUID(memberId)) throw new NotFoundException(Exception.NOT_EXIST);
-    //check if user is in group that have family member or not
-    const [group, member] = await Promise.all([
-      this.prisma.groupFamily.findFirst({
+  async getAll(userId: string, familyId: string) {
+    try {
+      if (!isUUID(familyId, 'all'))
+        throw new NotFoundException(Exception.NOT_EXIST);
+      //check if user is in group that have family member or not
+      const group = await this.prisma.groupFamily.findFirst({
         where: {
           family: {
             id: familyId,
@@ -176,109 +268,52 @@ export class MemberService {
             },
           },
         },
-      }),
+        select: {
+          id: true,
+        },
+      });
 
-      this.prisma.familyMember.findFirst({
+      if (!group) {
+        throw new ForbiddenException(Exception.PEMRISSION);
+      }
+
+      return await this.prisma.familyMember.findMany({
         where: {
-          id: memberId,
+          familyId: familyId,
         },
-      }),
-    ]);
-    if (!group) {
-      throw new ForbiddenException(Exception.PEMRISSION);
+        select: {
+          id: true,
+          familyId: true,
+          fullName: true,
+          isAlive: true,
+          avatarUrl: true,
+        },
+      });
+    } catch (err) {
+      console.log(
+        'error at get all family members in family-members service: ',
+        err,
+      );
+      throw err;
     }
-
-    if (!member) throw new NotFoundException(Exception.NOT_EXIST);
-
-    const data = await this.prisma.familyMember.findFirst({
-      where: {
-        id: memberId,
-      },
-      select: {
-        id: true,
-        family: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        gender: true,
-        dateOfBirth: true,
-        dateOfDeath: true,
-        isAlive: true,
-        avatarUrl: true,
-        biography: true,
-        generation: true,
-        relationshipsFrom: {
-          select: {
-            fromMember: {
-              select: {
-                id: true,
-                fullName: true,
-              },
-            },
-            type: true,
-          },
-        },
-        relationshipsTo: {
-          select: {
-            toMember: {
-              select: {
-                id: true,
-                fullName: true,
-              },
-            },
-            type: true,
-          },
-        },
-      },
-    });
-    if (!data) throw new ForbiddenException(Exception.NOT_EXIST);
-    return data;
   }
-  async getAll(userId: string, familyId: string) {
+  async remove(
+    userId: string,
+    memberId: string,
+    familyId: string,
+    groupId: string,
+  ) {
     //check if user is in group that have family member or not
     const group = await this.prisma.groupFamily.findFirst({
       where: {
+        id: groupId,
         family: {
           id: familyId,
         },
-      },
-    });
-
-    if (!group) {
-      throw new NotFoundException(Exception.NOT_EXIST);
-    }
-
-    return await this.prisma.familyMember.findMany({
-      where: {
-        familyId: familyId,
-      },
-      select: {
-        id: true,
-        fullName: true,
-        isAlive: true,
-        avatarUrl: true,
-      },
-    });
-  }
-  async remove(userId: string, memberId: string, familyId: string) {
-    //check user authorization
-    const user = await this.prisma.user.findFirst({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException(Exception.UNAUTHORIZED);
-    }
-
-    //check if user is in group that have family member or not
-    const group = await this.prisma.groupFamily.findFirst({
-      where: {
-        family: {
-          id: familyId,
+        groupMembers: {
+          some: {
+            memberId: userId,
+          },
         },
       },
     });
