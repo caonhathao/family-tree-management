@@ -1,46 +1,204 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RelationshipCreateDto } from './dto/create-relationships.dto';
 import { RelationshipUpdateDto } from './dto/update-relationship.dto';
+import { Exception } from 'src/common/messages/messages.response';
+import { isUUID } from 'class-validator';
+import { FamilyMember } from '@prisma/client';
+
+interface IMinimizedMember {
+  id: string;
+  fullName: string;
+  avatarUrl: string | null;
+}
+
+export interface IEnrichedFamilyMember extends FamilyMember {
+  parents: IMinimizedMember[];
+  spouse: IMinimizedMember | null;
+  children: IMinimizedMember[];
+}
+
+const minimizeMember = (member: FamilyMember): IMinimizedMember => {
+  const { id, fullName, avatarUrl } = member;
+  return { id, fullName, avatarUrl };
+};
 
 @Injectable()
 export class RelationshipService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: RelationshipCreateDto) {
-    const newRelationship = await this.prisma.relationship.create({
-      data: {
-        ...data,
-      },
-      select: {
-        id: true,
-        familyId: true,
-        fromMemberId: true,
-        toMemberId: true,
-        type: true,
+    try {
+      if (
+        !isUUID(data.familyId) ||
+        !isUUID(data.fromMemberId) ||
+        !isUUID(data.toMemberId)
+      ) {
+        throw new NotFoundException(Exception.NOT_EXIST);
+      }
+
+      //check if self-reference, return bug
+      if (data.fromMemberId === data.toMemberId)
+        throw new BadRequestException(Exception.BAD_REQUEST);
+
+      const newRelationship = await this.prisma.relationship.create({
+        data: {
+          ...data,
+        },
+        select: {
+          id: true,
+          familyId: true,
+          fromMemberId: true,
+          toMemberId: true,
+          type: true,
+        },
+      });
+
+      return newRelationship;
+    } catch (err) {
+      console.log('error at create relationship service: ', err);
+      throw err;
+    }
+  }
+
+  //get all relationship in family
+  async getRelationshipMap(userId: string, familyId: string, groupId: string) {
+    if (!isUUID(familyId)) throw new NotFoundException(Exception.NOT_EXIST);
+
+    //check if user is in group or not
+    const member = await this.prisma.groupFamily.findFirst({
+      where: {
+        id: groupId,
+        groupMembers: {
+          some: {
+            memberId: userId,
+          },
+        },
+        family: {
+          id: familyId,
+        },
       },
     });
+    if (!member) throw new ForbiddenException(Exception.PEMRISSION);
 
-    return newRelationship;
+    const [members, relationships] = await Promise.all([
+      this.prisma.familyMember.findMany({
+        where: { familyId },
+        orderBy: {
+          generation: 'asc',
+        },
+      }),
+      this.prisma.relationship.findMany({
+        where: { familyId },
+      }),
+    ]);
+
+    const membersMap = new Map<string, IEnrichedFamilyMember>(
+      members.map((m) => [
+        m.id,
+        { ...m, parents: [], spouse: null, children: [] },
+      ]),
+    );
+
+    for (const rel of relationships) {
+      const fromMember = membersMap.get(rel.fromMemberId);
+      const toMember = membersMap.get(rel.toMemberId);
+
+      if (fromMember && toMember) {
+        if (rel.type === 'SPOUSE') {
+          fromMember.spouse = minimizeMember(toMember);
+          toMember.spouse = minimizeMember(fromMember);
+        } else if (rel.type === 'PARENT') {
+          // fromMember is parent, toMember is child
+          fromMember.children.push(minimizeMember(toMember));
+          toMember.parents.push(minimizeMember(fromMember));
+        } else if (rel.type === 'CHILD') {
+          // fromMember is child, toMember is parent
+          fromMember.parents.push(minimizeMember(toMember));
+          toMember.children.push(minimizeMember(fromMember));
+        }
+      }
+    }
+
+    const groupedByGeneration: { [key: string]: IEnrichedFamilyMember[] } = {};
+    for (const member of membersMap.values()) {
+      const generation = member.generation.toString();
+      if (!groupedByGeneration[generation]) {
+        groupedByGeneration[generation] = [];
+      }
+      groupedByGeneration[generation].push(member);
+    }
+
+    const result: {
+      generations: { level: number; members: IEnrichedFamilyMember[] }[];
+    } = {
+      generations: Object.keys(groupedByGeneration).map((level) => ({
+        level: parseInt(level),
+        members: groupedByGeneration[level],
+      })),
+    };
+
+    return result;
   }
 
   async update(relationshipId: string, data: RelationshipUpdateDto) {
-    const updateData = Object.fromEntries(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      Object.entries(data).filter(([_, v]) => v !== undefined && v !== null),
-    );
+    try {
+      if (!isUUID(relationshipId)) {
+        throw new NotFoundException(Exception.NOT_EXIST);
+      }
 
-    return await this.prisma.relationship.update({
-      where: { id: relationshipId },
-      data: updateData,
-      select: {
-        id: true,
-        familyId: true,
-        fromMemberId: true,
-        toMemberId: true,
-        type: true,
-      },
-    });
+      const existingRelationship = await this.prisma.relationship.findUnique({
+        where: { id: relationshipId },
+      });
+
+      if (!existingRelationship) {
+        throw new NotFoundException(Exception.NOT_EXIST);
+      }
+
+      const fromMemberId =
+        data.fromMemberId || existingRelationship.fromMemberId;
+      const toMemberId = data.toMemberId || existingRelationship.toMemberId;
+
+      if (fromMemberId === toMemberId) {
+        throw new BadRequestException(Exception.BAD_REQUEST);
+      }
+
+      const members = await this.prisma.familyMember.findMany({
+        where: {
+          id: { in: [fromMemberId, toMemberId] },
+          familyId: data.familyId,
+        },
+      });
+
+      if (members.length !== 2) {
+        throw new NotFoundException(Exception.NOT_EXIST);
+      }
+
+      const updateData = Object.fromEntries(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        Object.entries(data).filter(([_, v]) => v !== undefined && v !== null),
+      );
+
+      return await this.prisma.relationship.update({
+        where: { id: relationshipId },
+        data: updateData,
+        select: {
+          id: true,
+          familyId: true,
+          fromMemberId: true,
+          toMemberId: true,
+          type: true,
+        },
+      });
+    } catch (err) {
+      console.log('error at update relationship service: ', err);
+      throw err;
+    }
   }
 
   async delete(relationshipId: string, familyId: string) {

@@ -2,9 +2,10 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
+  Patch,
   Post,
-  Put,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -23,6 +24,7 @@ import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { RelationshipCreateDto } from './dto/create-relationships.dto';
 import { RelationshipUpdateDto } from './dto/update-relationship.dto';
+import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 
 @ApiTags('relationship')
 @ApiBearerAuth()
@@ -31,7 +33,7 @@ import { RelationshipUpdateDto } from './dto/update-relationship.dto';
 export class RelationshipsController {
   constructor(private readonly relationshipsService: RelationshipService) {}
 
-  @Post()
+  @Post(':groupId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Create a new relationship' })
   @ApiResponse({
@@ -52,7 +54,30 @@ export class RelationshipsController {
     });
   }
 
-  @Put(':relationshipId')
+  @Get(':groupId/:familyId')
+  @ApiOperation({ summary: 'Get all relationship' })
+  @ApiResponse({
+    status: 200,
+    description: 'Get all relationships successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getRelationshipMap(
+    @GetCurrentUserId() userId: string,
+    @Param('familyId') familyId: string,
+    @Param('groupId') groupId: string,
+  ) {
+    const relationships = await this.relationshipsService.getRelationshipMap(
+      userId,
+      familyId,
+      groupId,
+    );
+    return ResponseFactory.success({
+      data: relationships,
+      message: ValidMessageResponse.CREATED,
+    });
+  }
+
+  @Patch(':groupId/:relationshipId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Update a relationship' })
   @ApiParam({ name: 'relationshipId', description: 'Relationship ID' })
@@ -80,7 +105,7 @@ export class RelationshipsController {
     });
   }
 
-  @Delete(':familyId/:relationshipId')
+  @Delete(':groupId/:familyId/:relationshipId')
   @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Delete a relationship' })
   @ApiParam({ name: 'familyId', description: 'Family ID' })

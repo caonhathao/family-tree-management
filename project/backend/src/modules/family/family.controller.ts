@@ -79,9 +79,11 @@ export class FamilyController {
     });
   }
 
-  @Get(':id')
+  @Get(':groupId/:familyId')
+  @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
   @ApiOperation({ summary: 'Get a family by ID' })
-  @ApiParam({ name: 'id', description: 'Family ID' })
+  @ApiParam({ name: 'familyId', description: 'Family ID' })
+  @ApiParam({ name: 'groupId', description: 'Group ID' })
   @ApiResponse({ status: 200, description: 'Family retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Family not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

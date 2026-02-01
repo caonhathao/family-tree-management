@@ -191,6 +191,7 @@ export class FamilyService {
     if (!family) throw new ForbiddenException(Exception.NOT_EXIST);
     return family;
   }
+
   async delete(groupId: string, familyId: string, userId: string) {
     try {
       if (!isUUID(groupId)) throw new BadRequestException(Exception.ID_INVALID);
