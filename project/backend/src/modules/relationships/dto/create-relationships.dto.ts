@@ -1,5 +1,5 @@
 import { TYPE_RELATIONSHIP } from '@prisma/client';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 
@@ -24,6 +24,8 @@ export class RelationshipCreateDto {
     description: 'Target member ID',
     example: 'member456',
   })
+  @IsString()
+  @IsNotEmpty({ message: InvalidMessageResponse.ID_EMPTY })
   toMemberId: string;
 
   @ApiProperty({
@@ -31,5 +33,7 @@ export class RelationshipCreateDto {
     enum: TYPE_RELATIONSHIP,
     example: 'PARENT',
   })
+  @IsEnum(TYPE_RELATIONSHIP)
+  @IsNotEmpty({ message: InvalidMessageResponse.FIELD_EMPTY })
   type: TYPE_RELATIONSHIP;
 }

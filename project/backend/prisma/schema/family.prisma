@@ -56,10 +56,10 @@ model Relationship {
     id           String            @id @default(uuid()) @db.Uuid()
     familyId     String            @db.Uuid
     family       Family            @relation(fields: [familyId], references: [id], onDelete: Cascade)
-    fromMemberId String            @unique @db.Uuid
-    fromMember   FamilyMember      @relation("FromMemberRelation", fields: [fromMemberId], references: [id])
-    toMemberId   String            @unique @db.Uuid
-    toMember     FamilyMember      @relation("ToMemberRelation", fields: [toMemberId], references: [id])
+    fromMemberId String            @db.Uuid
+    fromMember   FamilyMember      @relation("FromMemberRelation", fields: [fromMemberId], references: [id], onDelete: Cascade)
+    toMemberId   String            @db.Uuid
+    toMember     FamilyMember      @relation("ToMemberRelation", fields: [toMemberId], references: [id], onDelete: Cascade)
     type         TYPE_RELATIONSHIP
     createdAt    DateTime          @default(now())
     updatedAt    DateTime          @updatedAt

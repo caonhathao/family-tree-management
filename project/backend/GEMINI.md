@@ -30,6 +30,7 @@
 - **Languages:** TypeScript.
 - **Framework:** NestJS, Prisma.
 - **Database:** PostgreSQL.
+- **Package Manager:** pnpm.
 
 ## Main Directory Struture:
 
