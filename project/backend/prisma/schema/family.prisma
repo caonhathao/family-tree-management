@@ -65,7 +65,6 @@ model Relationship {
     updatedAt    DateTime          @updatedAt
 
     @@index([familyId])
-    @@index([fromMemberId, toMemberId])
-    @@index([fromMemberId, toMemberId, type])
+    @@unique([fromMemberId, toMemberId, type])
     @@map("relationship")
 }

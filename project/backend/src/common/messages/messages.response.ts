@@ -50,4 +50,6 @@ export const Exception = {
   NOT_EXIST: 't_data_not_exist',
   EXISTED: 't_data_existed',
   EXPIRED: 't_expires',
+  SIZE_INVALID: 't_size_invalid',
+  UNIQUE_INVALID: 't_unique_invalid',
 } as const;
