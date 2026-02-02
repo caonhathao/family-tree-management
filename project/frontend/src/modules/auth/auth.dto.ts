@@ -1,4 +1,4 @@
-export interface ResponseLoginDataDto {
+export interface AuthResponseDto {
   user: {
     id: string;
     email: string;
@@ -13,13 +13,14 @@ export interface ResponseLoginDataDto {
   };
 }
 
-export interface CreateRegisterDto {
+export interface RegisterDto {
   email: string;
   password: string;
-  fillName: string;
+  confirmPassword: string;
+  fullName: string;
 }
 
 export interface LoginBaseDto {
-  emai: string;
+  email: string;
   password: string;
 }
