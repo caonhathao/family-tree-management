@@ -2,15 +2,22 @@
 import { Button } from "@/components/ui/button";
 import { IoIosArrowBack, IoIosInformationCircleOutline } from "react-icons/io";
 import { motion } from "framer-motion";
-import { LoginForm } from "@/features/auth/_components/login-form";
-import { SignupForm } from "@/features/auth/_components/signup-form";
-import { useSearchParams } from "next/navigation";
+import { LoginForm } from "@/components/group/auth/login-form";
+import { SignupForm } from "@/components/group/auth/signup-form";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const AuthPage = () => {
   const searchParams = useSearchParams();
 
   const mode = searchParams.get("mode") || "login";
   const isLogin = mode === "login";
+
+  const router = useRouter();
+
+  const navigateToHome = () => {
+    router.push("/");
+  };
+
   return (
     <div className="w-full h-full flex flex-col justify-start items-center">
       {/* header with back and features buttons */}
@@ -19,6 +26,7 @@ const AuthPage = () => {
           variant={"outline"}
           size={"default"}
           className="flex flex-row gap-2 hover:cursor-pointer"
+          onClick={() => navigateToHome()}
         >
           <IoIosArrowBack />
           Quay lại

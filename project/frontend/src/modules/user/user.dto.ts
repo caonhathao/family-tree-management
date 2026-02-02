@@ -16,3 +16,13 @@ export interface ResponseUpdateUserDto {
   avatar: string | null;
   biography: string;
 }
+export interface ResponseGetUserDto {
+  id: string;
+  email: string;
+  userProfile: {
+    fullName: string;
+    avatar: string;
+    dateOfBirth: string;
+    biography: string;
+  };
+}
