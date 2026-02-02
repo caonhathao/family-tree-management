@@ -32,31 +32,91 @@ const minimizeMember = (member: FamilyMember): IMinimizedMember => {
 export class RelationshipService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: RelationshipCreateDto) {
+  async createMany(data: RelationshipCreateDto[]) {
     try {
-      if (
-        !isUUID(data.familyId) ||
-        !isUUID(data.fromMemberId) ||
-        !isUUID(data.toMemberId)
-      ) {
-        throw new NotFoundException(Exception.NOT_EXIST);
+      //prepare data
+      if (data.length === 0) return { count: 0 };
+      const memberIds = new Set<string>();
+      for (const item of data) {
+        memberIds.add(item.fromMemberId);
+        memberIds.add(item.toMemberId);
       }
 
-      //check if self-reference, return bug
-      if (data.fromMemberId === data.toMemberId)
-        throw new BadRequestException(Exception.BAD_REQUEST);
+      const newRelationship = await this.prisma.$transaction(async (tx) => {
+        //check unique family id
+        const uniqueFamilyId = [...new Set(data.map((item) => item.familyId))];
+        if (uniqueFamilyId.length !== 1) {
+          throw new BadRequestException(Exception.UNIQUE_INVALID);
+        }
 
-      const newRelationship = await this.prisma.relationship.create({
-        data: {
-          ...data,
-        },
-        select: {
-          id: true,
-          familyId: true,
-          fromMemberId: true,
-          toMemberId: true,
-          type: true,
-        },
+        //check member in database
+        const membersInDb = await tx.familyMember.findMany({
+          where: {
+            id: { in: Array.from(memberIds) },
+            familyId: uniqueFamilyId[0],
+          },
+        });
+
+        if (membersInDb.length !== memberIds.size)
+          throw new BadRequestException(Exception.SIZE_INVALID);
+
+        // Business Logic Validation
+        const values = data
+          .map(
+            (d) =>
+              `('${d.familyId}'::uuid, '${d.fromMemberId}'::uuid, '${d.toMemberId}'::uuid, '${d.type}')`,
+          )
+          .join(', ');
+
+        const validationResults: any[] = await tx.$queryRawUnsafe(`
+  WITH new_rels(family_id, from_id, to_id, rel_type) AS (
+    VALUES ${values}
+  )
+  -- 1. Check member in family
+  SELECT 'MEMBER_NOT_IN_FAMILY' as error FROM new_rels nr
+  WHERE 
+    (SELECT COUNT(*) FROM family_member fm 
+     WHERE fm."familyId" = nr.family_id AND fm.id IN (nr.from_id, nr.to_id)) < 2
+  
+  UNION ALL
+  
+  -- 2. Check Spouse
+  SELECT 'SPOUSE_EXISTS' FROM new_rels nr
+  WHERE nr.rel_type = 'SPOUSE' AND EXISTS (
+    SELECT 1 FROM relationship r 
+    WHERE r."familyId" = nr.family_id AND r.type = 'SPOUSE'
+    AND (r."fromMemberId" IN (nr.from_id, nr.to_id) OR r."toMemberId" IN (nr.from_id, nr.to_id))
+  )
+  
+  UNION ALL
+  
+  -- 3. Check Parent Limit
+  SELECT 'PARENT_LIMIT_EXCEEDED' FROM new_rels nr
+  WHERE nr.rel_type = 'PARENT' AND (
+    SELECT COUNT(*) FROM relationship r 
+    WHERE r."toMemberId" = nr.to_id AND r.type = 'PARENT'
+  ) >= 2
+  
+  UNION ALL
+  
+  -- 4. Check Circular
+  SELECT 'CIRCULAR_DEPENDENCY' FROM new_rels nr
+  WHERE nr.rel_type = 'PARENT' AND EXISTS (
+    SELECT 1 FROM relationship r 
+    WHERE r."fromMemberId" = nr.to_id AND r."toMemberId" = nr.from_id AND r.type = 'PARENT'
+  );
+`);
+
+        if (validationResults.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const error = validationResults[0].error;
+          throw new BadRequestException(`Business Logic Error: ${error}`);
+        }
+
+        const result = await tx.relationship.createMany({
+          data: data,
+        });
+        return result;
       });
 
       return newRelationship;

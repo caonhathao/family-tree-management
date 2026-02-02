@@ -4,62 +4,74 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  GENDER,
-  GroupFamily,
-  TYPE_RELATIONSHIP,
-  USER_ROLE,
-} from '@prisma/client';
-import { Server } from 'http';
+import { USER_ROLE, GENDER, TYPE_RELATIONSHIP } from '@prisma/client';
 import { faker } from '@faker-js/faker';
+import { Server } from 'http';
 
 // ===========================================================================================
 // INTERFACES
 // ===========================================================================================
 
-interface IUserType {
+interface LoginResponse {
   data: {
     user: {
       id: string;
       email: string;
+      userProfile: {
+        fullName: string;
+        avatar?: string;
+      };
     };
     tokens: {
       accessToken: string;
       refreshToken: string;
     };
   };
+  code: number;
 }
 
-interface IGroupType {
+interface GroupResponse {
   data: {
     id: string;
     name: string;
+    description: string;
   };
+  code: number;
 }
 
-interface INewFamily {
+interface FamilyResponse {
   data: {
     family: {
       id: string;
       name: string;
+      description: string;
+    };
+    owner: {
+      id: string;
+      name: string;
+      avatar: string;
     };
   };
+  code: number;
 }
 
-interface IFamilyMember {
+interface FamilyMember {
   id: string;
   familyId: string;
   fullName: string;
   gender: GENDER;
   dateOfBirth: string;
   generation: number;
+  isAlive: boolean;
+  avatarUrl: string | null;
 }
 
-interface INewFamilyMember {
-  data: IFamilyMember;
+interface FamilyMemberResponse {
+  data: FamilyMember;
+  code: number;
 }
 
-interface IRelationship {
+interface Relationship {
   id: string;
   familyId: string;
   fromMemberId: string;
@@ -67,76 +79,73 @@ interface IRelationship {
   type: TYPE_RELATIONSHIP;
 }
 
-interface IRelationshipResponse {
-  data: IRelationship;
+interface RelationshipResponse {
+  data: Relationship;
+  code: number;
 }
 
-interface IMemberWithRelationships extends IFamilyMember {
-  spouse: IFamilyMember | null;
-  children: IFamilyMember[];
-  parents: IFamilyMember[];
-}
-
-interface IGeneration {
-  level: number;
-  members: IMemberWithRelationships[];
-}
-
-interface IGetRelationshipMapResponse {
+interface RelationshipCreationResponse {
   data: {
-    generations: IGeneration[];
+    count: number;
   };
+  code: number;
+}
+
+interface RelationshipMapResponse {
+  data: {
+    generations: {
+      level: number;
+      members: any[]; // This can be more strictly typed if needed
+    }[];
+  };
+  code: number;
 }
 
 // ===========================================================================================
-// DTOs & FACTORIES
+// FACTORIES
 // ===========================================================================================
 
-interface RegisterDto {
-  email: string;
-  fullName: string;
-  password?: string;
-}
-
-interface LoginDto {
-  email: string;
-  password?: string;
-}
-
-interface FamilyDto {
-  name: string;
-  description?: string;
-}
-
-interface CreateMemberDto {
-  familyId: string;
-  fullName: string;
-  gender: GENDER;
-  dateOfBirth: Date;
-  generation: number;
-}
-
-const generateRandomUser = (): RegisterDto => ({
-  email: faker.internet.email().toLowerCase(),
+/**
+ * Generates a random user object for testing.
+ * @returns A user object with random data.
+ */
+export const generateRandomUser = () => ({
+  email: faker.internet.email(),
+  password: faker.internet.password(),
   fullName: faker.person.fullName(),
-  password: 'password123',
 });
 
-const generateRandomFamily = (): FamilyDto => ({
-  name: `${faker.company.name()} ${faker.string.uuid()}`,
+/**
+ * Generates a random family object for testing.
+ * @returns A family object with a random name and description.
+ */
+export const generateRandomFamily = () => ({
+  name: faker.company.name(),
   description: faker.lorem.sentence(),
 });
 
-const generateRandomMember = (familyId: string): CreateMemberDto => ({
+/**
+ * Generates a random family member object for testing.
+ * @param familyId - The ID of the family this member belongs to.
+ * @returns A family member object with random data.
+ */
+export const generateRandomMember = (familyId: string) => ({
   familyId,
   fullName: faker.person.fullName(),
-  gender: faker.helpers.arrayElement([GENDER.MALE, GENDER.FEMALE]),
-  dateOfBirth: faker.date.past(10),
-  generation: 1,
+  gender: faker.helpers.arrayElement([
+    GENDER.MALE,
+    GENDER.FEMALE,
+    GENDER.OTHER,
+  ]),
+  dateOfBirth: faker.date.past({ years: 50 }).toISOString(),
+  dateOfDeath: null,
+  isAlive: true,
+  biography: faker.lorem.paragraph(),
+  generation: faker.number.int({ min: 1, max: 5 }),
 });
 
 // ===========================================================================================
-// E2E TEST SUITE
+// TEST SUITE
 // ===========================================================================================
 
 describe('Relationships (e2e)', () => {
@@ -148,56 +157,59 @@ describe('Relationships (e2e)', () => {
   // HELPER FUNCTIONS
   // ===========================================================================================
 
-  const registerUser = async (userDto: RegisterDto): Promise<IUserType> => {
-    const response = await request(httpServer)
-      .post('/api/auth/register')
-      .send(userDto);
-    return response.body as IUserType;
-  };
-
-  const loginUser = async (credentials: LoginDto): Promise<IUserType> => {
-    const response = await request(httpServer)
+  const registerAndLogin = async (
+    userDto = generateRandomUser(),
+  ): Promise<{ token: string; userId: string }> => {
+    await request(httpServer).post('/api/auth/register').send(userDto);
+    const loginRes = await request(httpServer)
       .post('/api/auth/login-base')
-      .send(credentials);
-    return response.body as IUserType;
+      .send({ email: userDto.email, password: userDto.password });
+    const body = loginRes.body as LoginResponse;
+    return {
+      token: body.data.tokens.accessToken,
+      userId: body.data.user.id,
+    };
   };
 
   const createGroup = async (
     token: string,
-    groupDto: { name: string; description: string },
-  ): Promise<IGroupType> => {
+    groupDto = { name: 'Test Group', description: 'A group for testing' },
+  ): Promise<GroupResponse> => {
     const response = await request(httpServer)
       .post('/api/group-family')
       .set('Authorization', `Bearer ${token}`)
       .send(groupDto);
-    return response.body as IGroupType;
+    return response.body as GroupResponse;
   };
 
   const createFamily = async (
     token: string,
     groupId: string,
-    familyDto: FamilyDto,
-  ): Promise<INewFamily> => {
+    familyDto = generateRandomFamily(),
+  ): Promise<FamilyResponse> => {
     const response = await request(httpServer)
       .post(`/api/family/${groupId}`)
       .set('Authorization', `Bearer ${token}`)
       .send(familyDto);
-    return response.body as INewFamily;
+    return response.body as FamilyResponse;
   };
 
   const createMember = async (
     token: string,
     groupId: string,
-    memberDto: CreateMemberDto,
-  ): Promise<INewFamilyMember> => {
+    familyId: string,
+    memberDataOverrides: Partial<ReturnType<typeof generateRandomMember>> = {},
+  ): Promise<FamilyMember> => {
+    const memberData = {
+      ...generateRandomMember(familyId),
+      ...memberDataOverrides,
+    };
     const response = await request(httpServer)
       .post(`/api/family-member/${groupId}`)
       .set('Authorization', `Bearer ${token}`)
-      .send({
-        ...memberDto,
-        dateOfBirth: memberDto.dateOfBirth.toISOString(),
-      });
-    return response.body as INewFamilyMember;
+      .send(memberData);
+    const body = response.body as FamilyMemberResponse;
+    return body.data;
   };
 
   // ===========================================================================================
@@ -211,7 +223,6 @@ describe('Relationships (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     prisma = app.get<PrismaService>(PrismaService);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     httpServer = app.getHttpServer();
 
     app.setGlobalPrefix('api');
@@ -225,15 +236,6 @@ describe('Relationships (e2e)', () => {
     app.useGlobalFilters(new AllExceptionsFilter());
 
     await app.init();
-  });
-
-  beforeEach(async () => {
-    await prisma.relationship.deleteMany();
-    await prisma.familyMember.deleteMany();
-    await prisma.family.deleteMany();
-    await prisma.groupMember.deleteMany();
-    await prisma.groupFamily.deleteMany();
-    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -253,851 +255,796 @@ describe('Relationships (e2e)', () => {
     await prisma.family.deleteMany();
     await prisma.groupMember.deleteMany();
     await prisma.groupFamily.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
   });
 
   // ===========================================================================================
-  // CATEGORY 1: Basic CRUD Operations
+  // CATEGORY 1: Basic CRUD (4 cases)
   // ===========================================================================================
+  describe('Category 1: Basic CRUD', () => {
+    it('1.1 should create a new PARENT relationship successfully', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const parent = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const child = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
 
-  it('1.1 should create a new relationship successfully', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
+      const payload = [
+        {
+          familyId: family.data.family.id,
+          fromMemberId: parent.id,
+          toMemberId: child.id,
+          type: 'PARENT',
+        },
+      ];
+
+      const res = await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload);
+
+      expect(res.status).toBe(HttpStatus.CREATED);
+      const body = res.body as RelationshipCreationResponse;
+      expect(body.data.count).toBe(1);
     });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
 
-    const res = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
-      });
+    it('1.2 should get the relationship map for a family', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const parent = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const child = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
 
-    expect(res.status).toBe(HttpStatus.CREATED);
-    const body: IRelationshipResponse = res.body;
-    expect(body.data.fromMemberId).toBe(member1.data.id);
-    expect(body.data.toMemberId).toBe(member2.data.id);
-    expect(body.data.type).toBe(TYPE_RELATIONSHIP.SPOUSE);
-  });
+      await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send([
+          {
+            familyId: family.data.family.id,
+            fromMemberId: parent.id,
+            toMemberId: child.id,
+            type: 'PARENT',
+          },
+        ]);
 
-  it('1.2 should get all relationships for a family', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
+      const res = await request(httpServer)
+        .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(HttpStatus.OK);
+      const body = res.body as RelationshipMapResponse;
+      expect(body.data.generations).toHaveLength(1);
+      const parentInMap = body.data.generations[0].members.find(
+        (m) => m.id === parent.id,
+      );
+      expect(parentInMap.children[0].id).toBe(child.id);
     });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
 
-    await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
-      });
+    it('1.3 should update a relationship successfully', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const member1 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const member2 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
 
-    const res = await request(httpServer)
-      .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
-      .set('Authorization', `Bearer ${token}`);
+      await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send([
+          {
+            familyId: family.data.family.id,
+            fromMemberId: member1.id,
+            toMemberId: member2.id,
+            type: 'PARENT',
+          },
+        ]);
 
-    expect(res.status).toBe(HttpStatus.OK);
-    const body: IGetRelationshipMapResponse = res.body;
+      const rels = await prisma.relationship.findMany();
+      const relationshipId = rels[0].id;
 
-    expect(body.data.generations).toHaveLength(1);
-    expect(body.data.generations[0].level).toBe(1);
-    expect(body.data.generations[0].members).toHaveLength(2);
+      const res = await request(httpServer)
+        .patch(`/api/relationship/${group.data.id}/${relationshipId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ type: 'SPOUSE' });
 
-    const member1WithRels = body.data.generations[0].members.find(
-      (m) => m.id === member1.data.id,
-    );
-    const member2WithRels = body.data.generations[0].members.find(
-      (m) => m.id === member2.data.id,
-    );
-
-    expect(member1WithRels?.spouse?.id).toBe(member2.data.id);
-    expect(member2WithRels?.spouse?.id).toBe(member1.data.id);
-  });
-
-  it('1.3 should update a relationship successfully', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
+      expect(res.status).toBe(HttpStatus.OK);
+      const body = res.body as RelationshipResponse;
+      expect(body.data.id).toBe(relationshipId);
+      expect(body.data.type).toBe('SPOUSE');
     });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member3 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
 
-    const createRes = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
+    it('1.4 should delete a relationship successfully', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const member1 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const member2 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+
+      await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send([
+          {
+            familyId: family.data.family.id,
+            fromMemberId: member1.id,
+            toMemberId: member2.id,
+            type: 'PARENT',
+          },
+        ]);
+
+      const rels = await prisma.relationship.findMany();
+      const relationshipId = rels[0].id;
+
+      const res = await request(httpServer)
+        .delete(
+          `/api/relationship/${group.data.id}/${family.data.family.id}/${relationshipId}`,
+        )
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(HttpStatus.OK);
+
+      const findDeleted = await prisma.relationship.findUnique({
+        where: { id: relationshipId },
       });
-    const relationshipId = createRes.body.data.id;
-
-    const res = await request(httpServer)
-      .patch(`/api/relationship/${group.data.id}/${relationshipId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        toMemberId: member3.data.id,
-        fromMemberId: member1.data.id,
-        type: TYPE_RELATIONSHIP.PARENT,
-      });
-
-    expect(res.status).toBe(HttpStatus.OK);
-    const body: IRelationshipResponse = res.body;
-    expect(body.data.id).toBe(relationshipId);
-    expect(body.data.toMemberId).toBe(member3.data.id);
-    expect(body.data.type).toBe(TYPE_RELATIONSHIP.PARENT);
-  });
-
-  it('1.4 should delete a relationship successfully', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
+      expect(findDeleted).toBeNull();
     });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-
-    const createRes = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
-      });
-    const relationshipId = createRes.body.data.id;
-
-    const res = await request(httpServer)
-      .delete(
-        `/api/relationship/${group.data.id}/${family.data.family.id}/${relationshipId}`,
-      )
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(HttpStatus.OK);
-
-    const getRes = await request(httpServer)
-      .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
-      .set('Authorization', `Bearer ${token}`);
-    const body: IGetRelationshipMapResponse = getRes.body;
-    const member1WithRels = body.data.generations[0]?.members.find(
-      (m) => m.id === member1.data.id,
-    );
-    expect(member1WithRels?.spouse).toBe(null);
   });
 
   // ===========================================================================================
-  // CATEGORY 2: Validation Logic
+  // CATEGORY 2: Validation Logic (4 cases)
   // ===========================================================================================
+  describe('Category 2: Validation Logic', () => {
+    it('2.1 should fail to create a relationship with a non-existent fromMemberId', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const member = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
 
-  it('2.1 should fail to create a relationship with a missing fromMemberId', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
+      const payload = [
+        {
+          familyId: family.data.family.id,
+          fromMemberId: '00000000-0000-0000-0000-000000000000',
+          toMemberId: member.id,
+          type: 'PARENT',
+        },
+      ];
+
+      const res = await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload);
+
+      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
     });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member2 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
 
-    const res = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
-      });
+    it('2.2 should fail to create a self-referencing relationship', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const member = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
 
-    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
-  });
+      const payload = [
+        {
+          familyId: family.data.family.id,
+          fromMemberId: member.id,
+          toMemberId: member.id,
+          type: 'PARENT',
+        },
+      ];
 
-  it('2.2 should fail to create a relationship with an invalid type', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
+      const res = await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload);
+
+      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      expect(res.body.message).toContain(
+        'fromMemberId and toMemberId must be different',
+      );
     });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
 
-    const res = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: 'INVALID_TYPE',
-      });
+    it('2.3 should fail to create a relationship with an invalid type enum', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const member1 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const member2 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
 
-    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
-  });
+      const payload = [
+        {
+          familyId: family.data.family.id,
+          fromMemberId: member1.id,
+          toMemberId: member2.id,
+          type: 'INVALID_TYPE',
+        },
+      ];
 
-  it('2.3 should fail to create a relationship with a non-existent familyId', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
+      const res = await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload);
+
+      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
     });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
 
-    const nonExistentFamilyId = '00000000-0000-0000-0000-000000000000';
+    it('2.4 should fail to create a relationship with a non-UUID familyId', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const member1 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const member2 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
 
-    const res = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: nonExistentFamilyId,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
-      });
+      const payload = [
+        {
+          familyId: 'not-a-uuid',
+          fromMemberId: member1.id,
+          toMemberId: member2.id,
+          type: 'PARENT',
+        },
+      ];
 
-    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
-  });
+      const res = await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload);
 
-  it('2.4 should fail to update a relationship with an invalid type', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
+      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
     });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-
-    const createRes = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
-      });
-    const relationshipId = createRes.body.data.id;
-
-    const res = await request(httpServer)
-      .patch(`/api/relationship/${group.data.id}/${relationshipId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        type: 'INVALID_TYPE',
-      });
-
-    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
   });
 
   // ===========================================================================================
-  // CATEGORY 3: Business Logic & Integrity
+  // CATEGORY 3: Business Logic & Integrity (4 cases)
   // ===========================================================================================
+  describe('Category 3: Business Logic & Integrity', () => {
+    it('3.1 should fail to create a third PARENT for a child', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const parent1 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const parent2 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const parent3 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const child = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
 
-  it('3.1 should currently succeed in creating a self-referencing relationship (BUG)', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
-    });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-
-    const res = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member1.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
+      await prisma.relationship.createMany({
+        data: [
+          {
+            familyId: family.data.family.id,
+            fromMemberId: parent1.id,
+            toMemberId: child.id,
+            type: 'PARENT',
+          },
+          {
+            familyId: family.data.family.id,
+            fromMemberId: parent2.id,
+            toMemberId: child.id,
+            type: 'PARENT',
+          },
+        ],
       });
 
-    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
-  });
+      const payload = [
+        {
+          familyId: family.data.family.id,
+          fromMemberId: parent3.id,
+          toMemberId: child.id,
+          type: 'PARENT',
+        },
+      ];
 
-  it('3.2 should currently succeed in creating a duplicate relationship (BUG)', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
-    });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
+      const res = await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload);
 
-    await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
-      });
-
-    const res = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
-      });
-
-    expect(res.status).toBe(HttpStatus.CREATED);
-  });
-
-  it('3.3 should currently succeed in creating a relationship with members from different families (BUG)', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group1 = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
-    });
-    const family1 = await createFamily(
-      token,
-      group1.data.id,
-      generateRandomFamily(),
-    );
-    const group2 = await createGroup(token, {
-      name: 'group-two',
-      description: 'description-two',
-    });
-    const family2 = await createFamily(
-      token,
-      group2.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      token,
-      group1.data.id,
-      generateRandomMember(family1.data.family.id),
-    );
-    const member2 = await createMember(
-      token,
-      group2.data.id,
-      generateRandomMember(family2.data.family.id),
-    );
-
-    const res = await request(httpServer)
-      .post(`/api/relationship/${group1.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family1.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
-      });
-
-    expect(res.status).toBe(HttpStatus.CREATED);
-  });
-
-  it('3.4 should currently succeed in updating a relationship to create a self-reference (BUG)', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
-    });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-
-    const createRes = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
-      });
-    const relationshipId = (createRes.body as IRelationshipResponse).data.id;
-
-    const res = await request(httpServer)
-      .patch(`/api/relationship/${group.data.id}/${relationshipId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        toMemberId: member1.data.id,
-      });
-
-    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
-  });
-
-  // ===========================================================================================
-  // CATEGORY 4: Security & Auth
-  // ===========================================================================================
-
-  it('4.1 should fail to create a relationship without an auth token', async () => {
-    const res = await request(httpServer)
-      .post('/api/relationship/some-group-id')
-      .send({});
-
-    expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
-  });
-
-  it('4.2 should fail to get relationships for a family the user does not belong to', async () => {
-    const userAData = generateRandomUser();
-    const userA = await registerUser(userAData);
-    const tokenA = userA.data.tokens.accessToken;
-    const groupA = await createGroup(tokenA, {
-      name: 'group-a',
-      description: 'description-a',
-    });
-    const familyA = await createFamily(
-      tokenA,
-      groupA.data.id,
-      generateRandomFamily(),
-    );
-
-    const userBData = generateRandomUser();
-    const userB = await registerUser(userBData);
-    const tokenB = userB.data.tokens.accessToken;
-
-    const res = await request(httpServer)
-      .get(`/api/relationship/${groupA.data.id}/${familyA.data.family.id}`)
-      .set('Authorization', `Bearer ${tokenB}`);
-
-    expect(res.status).toBe(HttpStatus.FORBIDDEN);
-  });
-
-  it('4.3 should fail to update a relationship as a VIEWER', async () => {
-    const ownerData = generateRandomUser();
-    const owner = await registerUser(ownerData);
-    const ownerToken = owner.data.tokens.accessToken;
-
-    const group = await createGroup(ownerToken, {
-      name: 'group-one',
-      description: 'description-one',
-    });
-    const family = await createFamily(
-      ownerToken,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      ownerToken,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      ownerToken,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-
-    const createRes = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${ownerToken}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
-      });
-    const relationshipId = createRes.body.data.id;
-
-    const viewerData = generateRandomUser();
-    const viewer = await registerUser(viewerData);
-    const viewerToken = viewer.data.tokens.accessToken;
-
-    await prisma.groupMember.create({
-      data: {
-        groupId: group.data.id,
-        memberId: viewer.data.user.id,
-        role: USER_ROLE.VIEWER,
-      },
+      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      expect(res.body.message).toContain(
+        'Business Logic Error: PARENT_LIMIT_EXCEEDED',
+      );
     });
 
-    const res = await request(httpServer)
-      .patch(`/api/relationship/${group.data.id}/${relationshipId}`)
-      .set('Authorization', `Bearer ${viewerToken}`)
-      .send({
-        familyId: family.data.family.id,
-        type: TYPE_RELATIONSHIP.PARENT,
+    it('3.2 should fail to create a second SPOUSE for a member', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const husband = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const wife1 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const wife2 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+
+      await prisma.relationship.create({
+        data: {
+          familyId: family.data.family.id,
+          fromMemberId: husband.id,
+          toMemberId: wife1.id,
+          type: 'SPOUSE',
+        },
       });
 
-    expect(res.status).toBe(HttpStatus.FORBIDDEN);
-  });
+      const payload = [
+        {
+          familyId: family.data.family.id,
+          fromMemberId: husband.id,
+          toMemberId: wife2.id,
+          type: 'SPOUSE',
+        },
+      ];
 
-  it('4.4 should fail to delete a relationship in a group the user is not a member of', async () => {
-    const ownerData = generateRandomUser();
-    const owner = await registerUser(ownerData);
-    const ownerToken = owner.data.tokens.accessToken;
+      const res = await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload);
 
-    const group = await createGroup(ownerToken, {
-      name: 'group-one',
-      description: 'description-one',
+      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      expect(res.body.message).toContain('Business Logic Error: SPOUSE_EXISTS');
     });
-    const family = await createFamily(
-      ownerToken,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      ownerToken,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      ownerToken,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
 
-    const createRes = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${ownerToken}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
+    it('3.3 should fail to create a circular PARENT relationship', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const memberA = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const memberB = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+
+      // A is parent of B
+      await prisma.relationship.create({
+        data: {
+          familyId: family.data.family.id,
+          fromMemberId: memberA.id,
+          toMemberId: memberB.id,
+          type: 'PARENT',
+        },
       });
-    const relationshipId = (createRes.body as IRelationshipResponse).data.id;
 
-    const otherUserData = generateRandomUser();
-    const otherUser = await registerUser(otherUserData);
-    const otherToken = otherUser.data.tokens.accessToken;
+      // Try to make B parent of A
+      const payload = [
+        {
+          familyId: family.data.family.id,
+          fromMemberId: memberB.id,
+          toMemberId: memberA.id,
+          type: 'PARENT',
+        },
+      ];
 
-    const res = await request(httpServer)
-      .delete(
-        `/api/relationship/${group.data.id}/${family.data.family.id}/${relationshipId}`,
-      )
-      .set('Authorization', `Bearer ${otherToken}`);
+      const res = await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload);
 
-    expect(res.status).toBe(HttpStatus.FORBIDDEN);
+      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      expect(res.body.message).toContain(
+        'Business Logic Error: CIRCULAR_DEPENDENCY',
+      );
+    });
+
+    it('3.4 should correctly handle a CHILD relationship type', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const parent = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const child = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+
+      const payload = [
+        {
+          familyId: family.data.family.id,
+          fromMemberId: child.id,
+          toMemberId: parent.id,
+          type: 'CHILD',
+        },
+      ];
+
+      const createRes = await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload);
+
+      expect(createRes.status).toBe(HttpStatus.CREATED);
+
+      const mapRes = await request(httpServer)
+        .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      const body = mapRes.body as RelationshipMapResponse;
+      const parentInMap = body.data.generations[0].members.find(
+        (m) => m.id === parent.id,
+      );
+      const childInMap = body.data.generations[0].members.find(
+        (m) => m.id === child.id,
+      );
+
+      expect(parentInMap.children[0].id).toBe(child.id);
+      expect(childInMap.parents[0].id).toBe(parent.id);
+    });
   });
 
   // ===========================================================================================
-  // CATEGORY 5: Edge Cases
+  // CATEGORY 4: Security & Auth (4 cases)
   // ===========================================================================================
-
-  it('5.1 should return an empty generation array when getting relationships from a family with no members', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
-    });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-
-    const res = await request(httpServer)
-      .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(HttpStatus.OK);
-    const body: IGetRelationshipMapResponse =
-      res.body as IGetRelationshipMapResponse;
-    expect(body.data.generations).toEqual([]);
-  });
-
-  it('5.2 should fail to delete a non-existent relationship', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
-    });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const nonExistentRelationshipId = '00000000-0000-0000-0000-000000000000';
-
-    const res = await request(httpServer)
-      .delete(
-        `/api/relationship/${group.data.id}/${family.data.family.id}/${nonExistentRelationshipId}`,
-      )
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(HttpStatus.NOT_FOUND);
-  });
-
-  it('5.3 should succeed in creating a relationship as an EDITOR', async () => {
-    const ownerData = generateRandomUser();
-    const owner = await registerUser(ownerData);
-    const ownerToken = owner.data.tokens.accessToken;
-
-    const group = await createGroup(ownerToken, {
-      name: 'group-one',
-      description: 'description-one',
-    });
-    const family = await createFamily(
-      ownerToken,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const member1 = await createMember(
-      ownerToken,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const member2 = await createMember(
-      ownerToken,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-
-    const editorData = generateRandomUser();
-    const editor = await registerUser(editorData);
-    const editorToken = editor.data.tokens.accessToken;
-
-    await prisma.groupMember.create({
-      data: {
-        groupId: group.data.id,
-        memberId: editor.data.user.id,
-        role: USER_ROLE.EDITOR,
-      },
+  describe('Category 4: Security & Auth', () => {
+    it('4.1 should fail to create a relationship without a token', async () => {
+      const res = await request(httpServer)
+        .post('/api/relationship/some-group-id')
+        .send([]);
+      expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
     });
 
-    const res = await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${editorToken}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: member1.data.id,
-        toMemberId: member2.data.id,
-        type: TYPE_RELATIONSHIP.SPOUSE,
+    it('4.2 should fail to create a relationship as a VIEWER', async () => {
+      const { token: ownerToken } = await registerAndLogin();
+      const { token: viewerToken, userId: viewerId } = await registerAndLogin();
+
+      const group = await createGroup(ownerToken);
+      const family = await createFamily(ownerToken, group.data.id);
+      const member1 = await createMember(
+        ownerToken,
+        group.data.id,
+        family.data.family.id,
+      );
+      const member2 = await createMember(
+        ownerToken,
+        group.data.id,
+        family.data.family.id,
+      );
+
+      await prisma.groupMember.create({
+        data: { groupId: group.data.id, memberId: viewerId, role: 'VIEWER' },
       });
 
-    expect(res.status).toBe(HttpStatus.CREATED);
-  });
+      const payload = [
+        {
+          familyId: family.data.family.id,
+          fromMemberId: member1.id,
+          toMemberId: member2.id,
+          type: 'PARENT',
+        },
+      ];
 
-  it('5.4 should create one way PARENT-CHILD relationships', async () => {
-    const userData = generateRandomUser();
-    const newUser = await registerUser(userData);
-    const token = newUser.data.tokens.accessToken;
-    const group = await createGroup(token, {
-      name: 'group-one',
-      description: 'description-one',
-    });
-    const family = await createFamily(
-      token,
-      group.data.id,
-      generateRandomFamily(),
-    );
-    const parent = await createMember(
-      token,
-      group.data.id,
-      generateRandomMember(family.data.family.id),
-    );
-    const child = await createMember(token, group.data.id, {
-      ...generateRandomMember(family.data.family.id),
-      generation: 2,
+      const res = await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${viewerToken}`)
+        .send(payload);
+
+      expect(res.status).toBe(HttpStatus.FORBIDDEN);
     });
 
-    // Parent -> Child
-    await request(httpServer)
-      .post(`/api/relationship/${group.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        familyId: family.data.family.id,
-        fromMemberId: parent.data.id,
-        toMemberId: child.data.id,
-        type: TYPE_RELATIONSHIP.PARENT,
+    it('4.3 should fail to get relationships for a family in a group the user is not part of', async () => {
+      const { token: ownerToken } = await registerAndLogin();
+      const { token: outsiderToken } = await registerAndLogin();
+
+      const group = await createGroup(ownerToken);
+      const family = await createFamily(ownerToken, group.data.id);
+
+      const res = await request(httpServer)
+        .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
+        .set('Authorization', `Bearer ${outsiderToken}`);
+
+      expect(res.status).toBe(HttpStatus.FORBIDDEN);
+    });
+
+    it('4.4 should fail to delete a relationship as a VIEWER', async () => {
+      const { token: ownerToken } = await registerAndLogin();
+      const { token: viewerToken, userId: viewerId } = await registerAndLogin();
+      const group = await createGroup(ownerToken);
+      const family = await createFamily(ownerToken, group.data.id);
+      const member1 = await createMember(
+        ownerToken,
+        group.data.id,
+        family.data.family.id,
+      );
+      const member2 = await createMember(
+        ownerToken,
+        group.data.id,
+        family.data.family.id,
+      );
+
+      const rel = await prisma.relationship.create({
+        data: {
+          familyId: family.data.family.id,
+          fromMemberId: member1.id,
+          toMemberId: member2.id,
+          type: 'PARENT',
+        },
       });
 
-    const getRes = await request(httpServer)
-      .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
-      .set('Authorization', `Bearer ${token}`);
-    const body: IGetRelationshipMapResponse =
-      getRes.body as IGetRelationshipMapResponse;
+      await prisma.groupMember.create({
+        data: { groupId: group.data.id, memberId: viewerId, role: 'VIEWER' },
+      });
 
-    // console.log(body.data);
+      const res = await request(httpServer)
+        .delete(
+          `/api/relationship/${group.data.id}/${family.data.family.id}/${rel.id}`,
+        )
+        .set('Authorization', `Bearer ${viewerToken}`);
 
-    const parentMember = body.data.generations[0]?.members.find(
-      (m) => m.id === parent.data.id,
-    );
-    const childMember = body.data.generations[1]?.members.find(
-      (m) => m.id === child.data.id,
-    );
+      expect(res.status).toBe(HttpStatus.FORBIDDEN);
+    });
+  });
 
-    expect(parentMember?.children).toHaveLength(1);
-    expect(parentMember?.children?.[0]?.id).toBe(child.data.id);
-    expect(childMember?.parents).toHaveLength(1);
-    expect(childMember?.parents?.[0]?.id).toBe(parent.data.id);
+  // ===========================================================================================
+  // CATEGORY 5: Edge Cases (4 cases)
+  // ===========================================================================================
+  describe('Category 5: Edge Cases', () => {
+    it('5.1 should create multiple relationships in a single batch request', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      const p1 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const p2 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const c1 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+
+      const payload = [
+        {
+          familyId: family.data.family.id,
+          fromMemberId: p1.id,
+          toMemberId: p2.id,
+          type: 'SPOUSE',
+        },
+        {
+          familyId: family.data.family.id,
+          fromMemberId: p1.id,
+          toMemberId: c1.id,
+          type: 'PARENT',
+        },
+        {
+          familyId: family.data.family.id,
+          fromMemberId: p2.id,
+          toMemberId: c1.id,
+          type: 'PARENT',
+        },
+      ];
+
+      const res = await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload);
+
+      expect(res.status).toBe(HttpStatus.CREATED);
+      const body = res.body as RelationshipCreationResponse;
+      expect(body.data.count).toBe(3);
+    });
+
+    it('5.2 should get an empty map from a family with no relationships', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+      await createMember(token, group.data.id, family.data.family.id);
+
+      const res = await request(httpServer)
+        .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(HttpStatus.OK);
+      const body = res.body as RelationshipMapResponse;
+      expect(body.data.generations[0].members[0].parents).toEqual([]);
+      expect(body.data.generations[0].members[0].spouse).toBeNull();
+      expect(body.data.generations[0].members[0].children).toEqual([]);
+    });
+
+    it('5.3 should fail to update a non-existent relationship', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const nonExistentId = '00000000-0000-0000-0000-000000000000';
+
+      const res = await request(httpServer)
+        .patch(`/api/relationship/${group.data.id}/${nonExistentId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ type: 'SPOUSE' });
+
+      expect(res.status).toBe(HttpStatus.NOT_FOUND);
+    });
+
+    it('5.4 should create a full family tree and verify the map structure', async () => {
+      const { token } = await registerAndLogin();
+      const group = await createGroup(token);
+      const family = await createFamily(token, group.data.id);
+
+      // Gen 1
+      const gp = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const gm = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+
+      // Gen 2
+      const p1 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+      const p2 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+
+      // Gen 3
+      const c1 = await createMember(
+        token,
+        group.data.id,
+        family.data.family.id,
+      );
+
+      const payload = [
+        // Gen 1 marriage
+        {
+          familyId: family.data.family.id,
+          fromMemberId: gp.id,
+          toMemberId: gm.id,
+          type: 'SPOUSE',
+        },
+        // Gen 1 -> Gen 2
+        {
+          familyId: family.data.family.id,
+          fromMemberId: gp.id,
+          toMemberId: p1.id,
+          type: 'PARENT',
+        },
+        {
+          familyId: family.data.family.id,
+          fromMemberId: gm.id,
+          toMemberId: p1.id,
+          type: 'PARENT',
+        },
+        // Gen 2 marriage
+        {
+          familyId: family.data.family.id,
+          fromMemberId: p1.id,
+          toMemberId: p2.id,
+          type: 'SPOUSE',
+        },
+        // Gen 2 -> Gen 3
+        {
+          familyId: family.data.family.id,
+          fromMemberId: p1.id,
+          toMemberId: c1.id,
+          type: 'PARENT',
+        },
+        {
+          familyId: family.data.family.id,
+          fromMemberId: p2.id,
+          toMemberId: c1.id,
+          type: 'PARENT',
+        },
+      ];
+
+      await request(httpServer)
+        .post(`/api/relationship/${group.data.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(payload);
+
+      const res = await request(httpServer)
+        .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(HttpStatus.OK);
+      const body = res.body as RelationshipMapResponse;
+
+      // This test assumes generation is set correctly on member creation.
+      // A more robust test would not rely on the order of members in the array.
+      const firstGen = body.data.generations[0].members;
+      const secondGen = body.data.generations[1].members;
+      const thirdGen = body.data.generations[2].members;
+
+      // A simple check to see if relationships are linked
+      const p1InMap = secondGen.find((m) => m.id === p1.id);
+      expect(p1InMap.parents).toHaveLength(2);
+      expect(p1InMap.spouse).not.toBeNull();
+      expect(p1InMap.children).toHaveLength(1);
+    });
   });
 });

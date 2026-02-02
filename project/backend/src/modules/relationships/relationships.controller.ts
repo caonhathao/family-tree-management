@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  ParseArrayPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -45,9 +46,12 @@ export class RelationshipsController {
     description: 'Forbidden - Insufficient permissions',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async createRelationship(@Body() relationshipDto: RelationshipCreateDto) {
+  async createRelationship(
+    @Body(new ParseArrayPipe({ items: RelationshipCreateDto }))
+    relationshipDto: RelationshipCreateDto[],
+  ) {
     const relationship =
-      await this.relationshipsService.create(relationshipDto);
+      await this.relationshipsService.createMany(relationshipDto);
     return ResponseFactory.success({
       data: relationship,
       message: ValidMessageResponse.CREATED,
