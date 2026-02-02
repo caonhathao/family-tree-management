@@ -19,6 +19,7 @@ import { RtGuard } from './guards/auth.guard';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { GetCurrentUser } from 'src/common/decorators/get-user.decorator';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 // Verifies the username and password.
 
@@ -85,6 +86,21 @@ export class AuthController {
       ipAddress: ip,
       userAgent: userAgent,
     });
+
+    return ResponseFactory.success({
+      data: user,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.LOGIN,
+    });
+  }
+
+  @Post('reset')
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async resetPassword(@Body() resetData: ResetPasswordDto) {
+    const user = await this.authService.resetPassword(resetData);
 
     return ResponseFactory.success({
       data: user,

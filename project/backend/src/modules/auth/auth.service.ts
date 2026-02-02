@@ -16,6 +16,7 @@ import {
   Exception,
   InvalidMessageResponse,
 } from 'src/common/messages/messages.response';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -236,6 +237,24 @@ export class AuthService {
       },
       tokens,
     };
+  }
+
+  async resetPassword(data: ResetPasswordDto) {
+    try {
+      //check user by email in database
+      const user = await this.prisma.user.findFirst({
+        where: {
+          email: data.email,
+        },
+      });
+      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+    } catch (err) {
+      console.log(
+        `error at reset password service with email: ${data.email}`,
+        err,
+      );
+      throw err;
+    }
   }
 
   private async getTokens(payload: Record<string, string>) {
