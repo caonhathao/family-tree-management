@@ -3,14 +3,14 @@
 import { AuthService } from "@/modules/auth/auth.service";
 import { redirect } from "next/navigation";
 import {
-  CreateRegisterDto,
+  RegisterDto,
   LoginBaseDto,
 } from "./auth.dto";
 import { cookies } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { handleError } from "@/lib/utils.lib";
 
-export async function registerAction(data: CreateRegisterDto) {
+export async function registerAction(data: RegisterDto) {
   let isSuccess = false;
 
   try {

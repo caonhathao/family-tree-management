@@ -1,9 +1,10 @@
+"use server";
 import { apiClient } from "@/lib/api/api-path.lib";
-import { CreateRegisterDto, LoginBaseDto } from "./auth.dto";
+import { RegisterDto, LoginBaseDto } from "./auth.dto";
 import { cookies } from "next/headers";
 
 export const AuthService = {
-  register: async (data: CreateRegisterDto) => {
+  register: async (data: RegisterDto) => {
     const res = await fetch(apiClient.auth.register, {
       method: "POST",
       headers: {
@@ -37,10 +38,14 @@ export const AuthService = {
 
     if (res.ok && result.success) {
       // Cập nhật lại Cookies mới
-      cookieStore.set("access_token", result.data.accessToken, { /* ...options... */ });
-      cookieStore.set("refresh_token", result.data.refreshToken, { /* ...options... */ });
+      cookieStore.set("access_token", result.data.accessToken, {
+        /* ...options... */
+      });
+      cookieStore.set("refresh_token", result.data.refreshToken, {
+        /* ...options... */
+      });
     }
-    
+
     return result;
   },
 };

@@ -4,7 +4,7 @@ import { fetchWithAuth } from "@/lib/api/fetch-with-auth";
 import { apiClient } from "@/lib/api/api-path.lib";
 
 export const RelationshipService = {
-  createRelationship: async (data: RelationshipDto) => {
+  createRelationship: async (data: RelationshipDto[]) => {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
     const res = await fetchWithAuth(apiClient.relationship.createRelationship, {

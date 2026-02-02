@@ -1,4 +1,8 @@
-const AuthLayout = () => {
-  return <div></div>;
+const AuthLayout = ({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) => {
+  return <div className="w-screen h-screen">{children}</div>;
 };
 export default AuthLayout;
