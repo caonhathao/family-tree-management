@@ -5,7 +5,6 @@ import {
   Body,
   Get,
   UseInterceptors,
-  FileTypeValidator,
   MaxFileSizeValidator,
   ParseFilePipe,
   UploadedFile,

@@ -1,15 +1,17 @@
+export interface UserType {
+  id: string;
+  email: string;
+  userProfile: {
+    fullName: string;
+    avatar: string | undefined;
+  };
+}
+
 export interface AuthResponseDto {
-  user: {
-    id: string;
-    email: string;
-    userProfile: {
-      fullName: string;
-      avatar: string | undefined;
-    };
-    tokens: {
-      accessToken: string;
-      refreshToken: string;
-    };
+  user: UserType;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
   };
 }
 

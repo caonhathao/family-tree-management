@@ -1,4 +1,3 @@
-"use server";
 import { apiClient } from "@/lib/api/api-path.lib";
 import { RegisterDto, LoginBaseDto } from "./auth.dto";
 import { cookies } from "next/headers";
