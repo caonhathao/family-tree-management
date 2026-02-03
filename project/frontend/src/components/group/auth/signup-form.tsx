@@ -16,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { RegisterDto } from "@/modules/auth/auth.dto";
 import { registerAction } from "@/modules/auth/auth.actions";
 import { RegisterSchema } from "@/modules/auth/auth.schemas";
+import { Toaster } from "@/components/shared/toast";
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   const router = useRouter();
@@ -39,9 +40,18 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     },
   });
 
-  const onSubmit = (values: RegisterDto) => {
-    startTransition(() => {
-      registerAction(values);
+  const onSubmit = (values: RegisterDto, e?: React.BaseSyntheticEvent) => {
+    console.log(values);
+    e?.preventDefault();
+    startTransition(async () => {
+      const result = await registerAction(values);
+      if (result?.error) {
+        Toaster({
+          title: "Đăng kí thất bại",
+          description: result.error,
+          type: "error",
+        });
+      }
     });
   };
 

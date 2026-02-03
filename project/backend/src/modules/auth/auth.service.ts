@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -17,6 +18,8 @@ import {
   InvalidMessageResponse,
 } from 'src/common/messages/messages.response';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import { GoogleLoginDto } from './dto/google-login.dto';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +33,7 @@ export class AuthService {
     data: RegisterDto,
     { ipAddress, userAgent }: { ipAddress: string; userAgent: string },
   ) {
+    console.log(data);
     const email = await this.prisma.user.findFirst({
       where: {
         email: data.email,
@@ -101,7 +105,7 @@ export class AuthService {
     { userAgent, ipAddress }: { userAgent: string; ipAddress: string },
   ) {
     try {
-      console.log('login data:', data);
+      //console.log('login data:', data);
       const user = await this.prisma.user.findUnique({
         where: {
           email: data.email,
@@ -162,6 +166,21 @@ export class AuthService {
           ipAddress: ipAddress,
         },
       });
+      await this.prisma.account.update({
+        where: {
+          userId: user.id,
+        },
+        data: {
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          accessTokenExpiresAt: new Date(
+            Date.now() + this.envCofig.accessExpires,
+          ),
+          refreshTokenExpiresAt: new Date(
+            Date.now() + this.envCofig.refreshExpires,
+          ),
+        },
+      });
       return {
         user: {
           id: user.id,
@@ -172,6 +191,146 @@ export class AuthService {
       };
     } catch (err) {
       console.log('login falied: ', err);
+      throw err;
+    }
+  }
+
+  async loginGoogle(
+    token: GoogleLoginDto,
+    { userAgent, ipAddress }: { userAgent: string; ipAddress: string },
+  ) {
+    try {
+      const client = new OAuth2Client(this.envCofig.googleClientId);
+      const ticket = await client.verifyIdToken({
+        idToken: token.token,
+        audience: this.envCofig.googleClientId,
+      });
+
+      const payload: TokenPayload | undefined = ticket.getPayload();
+      if (!payload) throw new BadRequestException(Exception.BAD_REQUEST);
+
+      //check user in database
+      const user = await this.prisma.user.findFirst({
+        where: {
+          email: payload?.email,
+        },
+        select: {
+          id: true,
+          email: true,
+          userProfile: {
+            select: {
+              fullName: true,
+              avatar: true,
+            },
+          },
+        },
+      });
+
+      //if user is eixist, generate new token and session
+      //if not, register account
+      if (user) {
+        const payload = {
+          sub: user.id,
+          email: user.email,
+        };
+        const tokens = await this.getTokens(payload);
+        const safeUserAgent = userAgent || 'unknow';
+        await this.prisma.session.upsert({
+          where: {
+            userId_userAgent: {
+              userId: user.id,
+              userAgent: safeUserAgent,
+            },
+          },
+          update: {
+            token: tokens.refreshToken,
+            expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+          },
+          create: {
+            userId: user.id,
+            token: tokens.refreshToken,
+            expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+            userAgent: userAgent,
+            ipAddress: ipAddress,
+          },
+        });
+        return {
+          user: {
+            id: user.id,
+            email: user.email,
+            userProfile: user.userProfile as UserProfileDto,
+          },
+          tokens,
+        };
+      } else {
+        const newUser = await this.prisma.user.create({
+          data: {
+            email: payload.email as string,
+            userProfile: {
+              create: {
+                fullName: payload.name as string,
+                avatar: payload.picture as string,
+              },
+            },
+          },
+          select: {
+            id: true,
+            email: true,
+            userProfile: {
+              select: {
+                fullName: true,
+                avatar: true,
+              },
+            },
+          },
+        });
+
+        if (!newUser.userProfile) {
+          throw new Error('can not create new user profile');
+        } else {
+          const profile: UserProfileDto = newUser.userProfile as UserProfileDto;
+          const payload = {
+            sub: newUser.id,
+            email: newUser.email,
+          };
+          const tokens = await this.getTokens(payload);
+
+          await this.prisma.session.create({
+            data: {
+              userId: newUser.id,
+              token: tokens.refreshToken,
+              expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+              userAgent: userAgent,
+              ipAddress: ipAddress,
+            },
+          });
+
+          await this.prisma.account.create({
+            data: {
+              userId: newUser.id,
+              accessToken: tokens.accessToken,
+              refreshToken: tokens.refreshToken,
+              accessTokenExpiresAt: new Date(
+                Date.now() + this.envCofig.accessExpires,
+              ),
+              refreshTokenExpiresAt: new Date(
+                Date.now() + this.envCofig.refreshExpires,
+              ),
+            },
+          });
+
+          return {
+            user: {
+              id: newUser.id,
+              email: newUser.email,
+              userProfile: profile,
+            },
+            tokens,
+          };
+        }
+      }
+    } catch (err) {
+      console.log('error at login by google', err);
       throw err;
     }
   }

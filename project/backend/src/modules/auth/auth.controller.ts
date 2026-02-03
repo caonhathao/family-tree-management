@@ -20,6 +20,7 @@ import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { GetCurrentUser } from 'src/common/decorators/get-user.decorator';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 
 // Verifies the username and password.
 
@@ -83,6 +84,28 @@ export class AuthController {
     @Headers('user-agent') userAgent: string,
   ) {
     const user = await this.authService.loginBase(loginBase, {
+      ipAddress: ip,
+      userAgent: userAgent,
+    });
+
+    return ResponseFactory.success({
+      data: user,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.LOGIN,
+    });
+  }
+
+  @Post('login-google')
+  @ApiOperation({ summary: 'Login with google account' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async loginGoogle(
+    @Body() data: GoogleLoginDto,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+  ) {
+    const user = await this.authService.loginGoogle(data, {
       ipAddress: ip,
       userAgent: userAgent,
     });

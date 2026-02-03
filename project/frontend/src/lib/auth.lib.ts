@@ -4,8 +4,12 @@ import { jwtDecode } from "jwt-decode";
 import { getUserDetail } from "@/modules/user/user.actions";
 
 interface payloadToken {
-  sub: string;
-  email: string;
+  payload: {
+    sub: string;
+    email: string;
+  };
+  iat: string;
+  exp: string;
 }
 
 export const getuserFromToken = cache(async (token: string | undefined) => {
@@ -13,6 +17,6 @@ export const getuserFromToken = cache(async (token: string | undefined) => {
 
   const payload: payloadToken = jwtDecode(token);
 
-  const response = await getUserDetail(payload.sub);
-  return response.data as ResponseGetUserDto;
+  const response = await getUserDetail(payload.payload.sub);
+  return response as ResponseGetUserDto;
 });

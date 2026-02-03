@@ -3,6 +3,9 @@ export const apiClient = {
     register: "/api/auth/register",
     refresh: "/api/auth/refresh",
     loginBase: "/api/auth/login-base",
+    loginGoogle: "/api/auth/login-google",
+    resetPassword: "/api/auth/reset",
+    LogOut: "/api/auth/logout",
   },
   family: {
     createFamily: (groupId: string) => `/api/family/${groupId}`,

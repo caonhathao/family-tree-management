@@ -8,6 +8,7 @@ export async function HeaderServer() {
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token");
   const user: ResponseGetUserDto | null = await getuserFromToken(token?.value);
+  console.log(user);
 
   return (
     <header className="w-full px-3 py-2 flex flex-row justify-between items-center shadow-2xl">

@@ -16,6 +16,7 @@ import { IoIosArrowDown } from "react-icons/io";
 import { motion } from "framer-motion";
 import { IoPersonOutline } from "react-icons/io5";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 export const UserMenu = ({
   user,
   className,
@@ -24,6 +25,7 @@ export const UserMenu = ({
   className?: string;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
   return (
     <div className={className}>
       <Avatar>
@@ -72,10 +74,16 @@ export const UserMenu = ({
           </DropdownMenuContent>
         ) : (
           <DropdownMenuContent>
-            <DropdownMenuItem className="hover:cursor-pointer">
+            <DropdownMenuItem
+              className="hover:cursor-pointer"
+              onClick={() => router.push("/auth?mode=login")}
+            >
               Đăng nhập
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:cursor-pointer">
+            <DropdownMenuItem
+              className="hover:cursor-pointer"
+              onClick={() => router.push("/auth?mode=register")}
+            >
               Đăng kí
             </DropdownMenuItem>
           </DropdownMenuContent>
