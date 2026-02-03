@@ -1,20 +1,26 @@
 "use client";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-export const Navigation = ({
-  className,
-}: {
-  className?: string;
-}) => {
+import Image from "next/image";
+import logo from "../../../../public/img/family-tree-logo.png";
+export const Navigation = ({ className }: { className?: string }) => {
   return (
     <div className={className}>
+      <div className="relative w-12 h-12 overflow-hidden rounded-full border">
+        {" "}
+        <Image
+          src={logo}
+          fill
+          sizes="48px"
+          alt="logo"
+          className="object-cover object-center"
+        />
+      </div>
       <NavigationMenu>
         <NavigationMenuList>
           <NavigationMenuItem>
