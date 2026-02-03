@@ -10,13 +10,14 @@ import {
 import { Field, FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
-import { startTransition, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { ShowHideButton } from "@/components/shared/show-hide-button";
 import { loginBaseAction } from "@/modules/auth/auth.actions";
-import { LoginBaseDto, RegisterDto } from "@/modules/auth/auth.dto";
+import { LoginBaseDto } from "@/modules/auth/auth.dto";
 import { LoginSchema } from "@/modules/auth/auth.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { Toaster } from "@/components/shared/toast";
 
 export function LoginForm({
   className,
@@ -42,9 +43,20 @@ export function LoginForm({
     },
   });
 
-  const onSubmit = (values: LoginBaseDto) => {
-    startTransition(() => {
-      loginBaseAction(values);
+  const onSubmit = (values: LoginBaseDto, e?: React.BaseSyntheticEvent) => {
+    e?.preventDefault();
+
+    startTransition(async () => {
+      const result = await loginBaseAction(values);
+      console.log(result);
+
+      if (result?.error) {
+        Toaster({
+          title: "Đăng nhập thất bại",
+          description: result.error,
+          type: "error",
+        });
+      }
     });
   };
   return (
@@ -103,13 +115,16 @@ export function LoginForm({
                 </div>
               </Field>
               <Field>
-                <Button type="submit">Login</Button>
-                <Button variant="outline" type="button">
+                <Button type="submit" className="hover:cursor-pointer">
+                  Đăng nhập
+                </Button>
+                <Button variant="outline" type="button" className="hover:cursor-pointer">
                   Đăng nhập với Google
                 </Button>
                 <FieldDescription className="text-center">
                   Không có tài khoản?
                   <Button
+                    type="button"
                     variant={"link"}
                     className="hover:cursor-pointer p-1"
                     onClick={() => navigateToRegister()}

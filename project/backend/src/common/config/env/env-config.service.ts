@@ -49,4 +49,7 @@ export class EnvConfigService {
   get domain(): string {
     return this.configService.getOrThrow<string>('DOMAIN');
   }
+  get googleClientId(): string {
+    return this.configService.getOrThrow<string>('GOOGLE_CLIENT_ID');
+  }
 }

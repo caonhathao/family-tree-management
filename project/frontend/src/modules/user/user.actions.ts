@@ -1,4 +1,4 @@
-'use server'
+"use server";
 import { ResponseDataBase } from "@/types/base.types";
 import { ResponseUpdateUserDto } from "./user.dto";
 import { UserServices } from "./user.service";

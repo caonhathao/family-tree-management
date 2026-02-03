@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { LoginForm } from "@/components/group/auth/login-form";
 import { SignupForm } from "@/components/group/auth/signup-form";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createSlideVariants, scrollConfig } from "@/configs/animation.config";
 
 const AuthPage = () => {
   const searchParams = useSearchParams();
@@ -17,6 +18,8 @@ const AuthPage = () => {
   const navigateToHome = () => {
     router.push("/");
   };
+
+  const variantSlideAnimation = createSlideVariants();
 
   return (
     <div className="w-full h-full flex flex-col justify-start items-center">
@@ -41,7 +44,18 @@ const AuthPage = () => {
       </div>
       <div className="w-[80%] flex justify-center items-center">
         {/* main container */}
-        <div className=" flex min-h-125 min-w-200 rounded-lg shadow-2xl">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          exit={"exit"}
+          viewport={{
+            once: scrollConfig.once,
+            amount: scrollConfig.amount,
+          }}
+          custom={{ direction: "right", delay: 0.2 }}
+          variants={variantSlideAnimation}
+          className=" flex min-h-125 min-w-200 rounded-lg shadow-2xl"
+        >
           <motion.div
             layout
             transition={{
@@ -67,7 +81,7 @@ const AuthPage = () => {
               </p>
             </motion.div>
           </motion.div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
