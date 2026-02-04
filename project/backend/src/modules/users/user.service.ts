@@ -136,7 +136,7 @@ export class UserService {
   }
 
   async get(targetId: string, userId: string) {
-    console.log(targetId, userId);
+    // console.log(targetId, userId);
     if (!isUUID(targetId, 'all'))
       throw new NotFoundException(Exception.NOT_EXIST);
 

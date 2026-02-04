@@ -2,8 +2,8 @@
 import { Button } from "@/components/ui/button";
 import { IoIosArrowBack, IoIosInformationCircleOutline } from "react-icons/io";
 import { motion } from "framer-motion";
-import { LoginForm } from "@/components/group/auth/login-form";
-import { SignupForm } from "@/components/group/auth/signup-form";
+import { LoginForm } from "@/app/auth/components/login-form";
+import { SignupForm } from "@/app/auth/components/signup-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSlideVariants, scrollConfig } from "@/configs/animation.config";
 

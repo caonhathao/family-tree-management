@@ -33,7 +33,7 @@ export class AuthService {
     data: RegisterDto,
     { ipAddress, userAgent }: { ipAddress: string; userAgent: string },
   ) {
-    console.log(data);
+    // console.log(data);
     const email = await this.prisma.user.findFirst({
       where: {
         email: data.email,
@@ -412,6 +412,36 @@ export class AuthService {
         `error at reset password service with email: ${data.email}`,
         err,
       );
+      throw err;
+    }
+  }
+
+  async logout(userId: string, token: string) {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        // 1. Kiểm tra user (Bước này có thể bỏ qua nếu Guard đã làm)
+        const user = await tx.user.findUnique({ where: { id: userId } });
+        if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+
+        await tx.session.deleteMany({
+          where: {
+            userId: user.id,
+            token: token,
+          },
+        });
+
+        await tx.account.update({
+          where: { userId: user.id },
+          data: {
+            refreshToken: null,
+            refreshTokenExpiresAt: null,
+          },
+        });
+
+        return { success: true };
+      });
+    } catch (err) {
+      console.log('error at logout service:', err);
       throw err;
     }
   }

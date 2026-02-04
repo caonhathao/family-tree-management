@@ -18,7 +18,7 @@ export class InviteService {
   ) {}
 
   async createInvite(userId: string, data: CreateInviteDto) {
-    console.log('body at invite controller: ', data);
+    // console.log('body at invite controller: ', data);
     if (!isUUID(data.groupId))
       throw new BadRequestException(Exception.BAD_REQUEST);
 

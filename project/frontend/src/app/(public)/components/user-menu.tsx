@@ -15,8 +15,10 @@ import { ResponseGetUserDto } from "@/modules/user/user.dto";
 import { IoIosArrowDown } from "react-icons/io";
 import { motion } from "framer-motion";
 import { IoPersonOutline } from "react-icons/io5";
-import { useState } from "react";
+import { startTransition, useState } from "react";
 import { useRouter } from "next/navigation";
+import { logoutAction } from "@/modules/auth/auth.actions";
+import { Toaster } from "@/components/shared/toast";
 export const UserMenu = ({
   user,
   className,
@@ -26,6 +28,18 @@ export const UserMenu = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const handleLogOut = () => {
+    startTransition(async () => {
+      const result = await logoutAction();
+      if (result?.error) {
+        Toaster({
+          title: "Đăng kí thất bại",
+          description: result.error,
+          type: "error",
+        });
+      }
+    });
+  };
   return (
     <div className={className}>
       <Avatar>
@@ -60,7 +74,10 @@ export const UserMenu = ({
               <DropdownMenuItem className="hover:cursor-pointer">
                 Hồ sơ
               </DropdownMenuItem>
-              <DropdownMenuItem className="hover:cursor-pointer">
+              <DropdownMenuItem
+                className="hover:cursor-pointer"
+                onClick={() => router.push("/group")}
+              >
                 Nhóm
               </DropdownMenuItem>
               <DropdownMenuItem className="hover:cursor-pointer">
@@ -68,7 +85,10 @@ export const UserMenu = ({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="hover:cursor-pointer">
+            <DropdownMenuItem
+              className="hover:cursor-pointer"
+              onClick={() => handleLogOut()}
+            >
               Đăng xuất
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -48,7 +48,7 @@ export function LoginForm({
 
     startTransition(async () => {
       const result = await loginBaseAction(values);
-      console.log(result);
+      // console.log(result);
 
       if (result?.error) {
         Toaster({

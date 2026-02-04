@@ -38,6 +38,7 @@ export const AuthService = {
     );
     return res.json();
   },
+
   refresh: async () => {
     const cookieStore = await cookies();
     const token = cookieStore.get("refresh_token")?.value;
@@ -62,4 +63,18 @@ export const AuthService = {
 
     return result;
   },
+
+  logout:async()=>{
+    const cookieStore = await cookies();
+    const token = cookieStore.get("refresh_token")?.value;
+    const res = await fetch(EnvConfig.serverDomain + apiClient.auth.logOut, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const result = await res.json();
+    return result;
+  }
 };

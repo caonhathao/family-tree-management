@@ -35,7 +35,7 @@ export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
       .replace('Bearer ', '')
       .trim();
 
-    console.log('payload:', payload);
+    // console.log('payload:', payload);
     return {
       ...payload,
       refreshToken,
