@@ -25,6 +25,7 @@ export class GroupFamilyService {
         select: { id: true, name: true, description: true },
       });
       // Add creator as owner and leader of the new group
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const newMember = await this.prisma.groupMember.create({
         data: {
           groupId: newGroup.id,

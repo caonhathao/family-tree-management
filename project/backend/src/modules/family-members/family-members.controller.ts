@@ -161,7 +161,7 @@ export class MemberController {
     )
     file?: Express.Multer.File,
   ) {
-    console.log(`familyIdL ${familyId}`);
+    // console.log(`familyIdL ${familyId}`);
     const member = await this.memberService.update(
       userId,
       groupId,

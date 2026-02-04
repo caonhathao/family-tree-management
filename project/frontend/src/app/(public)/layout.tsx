@@ -1,5 +1,5 @@
-import Footer from "@/components/group/public/footer";
-import { HeaderServer } from "@/components/group/public/header-server";
+import Footer from "@/app/(public)/components/footer";
+import { HeaderServer } from "@/app/(public)/components/header-server";
 
 const HomeLayout = ({
   children,

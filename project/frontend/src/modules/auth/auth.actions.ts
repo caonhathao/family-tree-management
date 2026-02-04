@@ -113,3 +113,21 @@ export async function loginGoogleAction(token: string) {
     redirect("/");
   }
 }
+
+export async function logoutAction() {
+  let isSuccess = false;
+
+  try {
+    const res = await AuthService.logout();
+    if (res.success) {
+      isSuccess = true;
+      const cookieStore = await cookies();
+
+      cookieStore.delete("access_token");
+      cookieStore.delete("refresh_token");
+    }
+  } catch (err) {
+    return handleError(err);
+  }
+  if (isSuccess) redirect("/");
+}

@@ -131,4 +131,23 @@ export class AuthController {
       message: ValidMessageResponse.LOGIN,
     });
   }
+
+  @Post('logout')
+  @UseGuards(RtGuard)
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async logout(
+    @GetCurrentUserId() userId: string,
+    @GetCurrentUser('refreshToken') refreshToken: string,
+  ) {
+    const user = await this.authService.logout(userId, refreshToken);
+
+    return ResponseFactory.success({
+      data: user,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.LOGIN,
+    });
+  }
 }

@@ -5,7 +5,7 @@ export const apiClient = {
     loginBase: "/api/auth/login-base",
     loginGoogle: "/api/auth/login-google",
     resetPassword: "/api/auth/reset",
-    LogOut: "/api/auth/logout",
+    logOut: "/api/auth/logout",
   },
   family: {
     createFamily: (groupId: string) => `/api/family/${groupId}`,

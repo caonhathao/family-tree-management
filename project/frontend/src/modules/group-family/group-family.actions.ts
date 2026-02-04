@@ -65,3 +65,15 @@ export async function joinGroupAcion(token: string) {
     return handleError(err);
   }
 }
+
+export async function getAllGroupAction() {
+  try {
+    const res: ResponseDataBase<ResponseGroupFamilyDetailDto> =
+      await GroupFamilyService.getAll();
+    if (res.success) {
+      return res.data;
+    } else return { error: res.message || "error" };
+  } catch (err) {
+    return handleError(err);
+  }
+}

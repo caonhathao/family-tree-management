@@ -41,7 +41,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   });
 
   const onSubmit = (values: RegisterDto, e?: React.BaseSyntheticEvent) => {
-    console.log(values);
+    // console.log(values);
     e?.preventDefault();
     startTransition(async () => {
       const result = await registerAction(values);

@@ -1,5 +1,5 @@
 "use client";
-import { ScrollSection } from "@/components/group/public/scroll-section";
+import { ScrollSection } from "@/app/(public)/components/scroll-section";
 import Image from "next/image";
 import logo from "../../../public/img/family-tree-logo.png";
 import { delay, motion } from "framer-motion";
@@ -10,7 +10,7 @@ import {
   scrollConfig,
 } from "@/configs/animation.config";
 import { Button } from "@/components/ui/button";
-import ScrollToTop from "@/components/group/public/scroll-to-top-btn";
+import ScrollToTop from "@/app/(public)/components/scroll-to-top-btn";
 const HomePage = () => {
   const variantSlideAnimation = createSlideVariants();
   const variantListContainerAnim = createListContainerVariants();
