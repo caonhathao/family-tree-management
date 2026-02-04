@@ -1,5 +1,6 @@
 import { USER_ROLE } from '@prisma/client';
 import {
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -37,5 +38,6 @@ export class CreateGroupFamilyDto {
   })
   @IsString()
   @IsOptional()
+  @IsEnum(USER_ROLE)
   role?: USER_ROLE;
 }

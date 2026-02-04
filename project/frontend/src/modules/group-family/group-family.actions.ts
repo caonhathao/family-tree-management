@@ -1,6 +1,8 @@
+"use server";
 import { ResponseDataBase } from "@/types/base.types";
 import {
   CreateGroupFamilyDto,
+  ResponseGroupFamiliesDto,
   ResponseGroupFamilyDetailDto,
   ResponseJoinGroupDto,
   UpdateGroupFamilyDto,
@@ -9,14 +11,17 @@ import { GroupFamilyService } from "./group-family.service";
 import { redirect } from "next/navigation";
 import { handleError } from "@/lib/utils.lib";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
   let isSuccess = false;
   let id = "";
 
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseGroupFamilyDetailDto> =
-      await GroupFamilyService.createGroup(data);
+      await GroupFamilyService.createGroup(data, token);
     if (res.success) {
       isSuccess = true;
       id = res.data.id;
@@ -28,7 +33,7 @@ export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
     return handleError(err);
   }
   if (isSuccess) {
-    redirect(`/group-family/${id}`);
+    revalidatePath(`/group`);
   }
 }
 
@@ -38,8 +43,10 @@ export async function updateGroupFamilyAction(
 ) {
   let isSuccess = false;
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseGroupFamilyDetailDto> =
-      await GroupFamilyService.updateGroup(groupId, data);
+      await GroupFamilyService.updateGroup(groupId, data, token);
     if (res.success) {
       isSuccess = true;
     } else return { error: res.message || "error" };
@@ -48,15 +55,17 @@ export async function updateGroupFamilyAction(
   }
 
   if (isSuccess) {
-    revalidatePath(`/groups/${groupId}`);
+    revalidatePath(`/groups`);
   }
 }
 
-export async function joinGroupAcion(token: string) {
+export async function joinGroupAcion(tokenCode: string) {
   let groupId: string;
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseJoinGroupDto> =
-      await GroupFamilyService.joinGroup(token);
+      await GroupFamilyService.joinGroup(tokenCode, token);
     if (res.success) {
       groupId = res.data.groupId;
       revalidatePath(`/groups/${groupId}`);
@@ -68,8 +77,25 @@ export async function joinGroupAcion(token: string) {
 
 export async function getAllGroupAction() {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
+    const res: ResponseDataBase<ResponseGroupFamiliesDto[]> =
+      await GroupFamilyService.getAll(token);
+    console.log(res);
+    if (res.success) {
+      return res.data;
+    } else return { error: res.message || "error" };
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+export async function getDetailGroupAction(groupId: string) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseGroupFamilyDetailDto> =
-      await GroupFamilyService.getAll();
+      await GroupFamilyService.getDetail(groupId, token);
     if (res.success) {
       return res.data;
     } else return { error: res.message || "error" };

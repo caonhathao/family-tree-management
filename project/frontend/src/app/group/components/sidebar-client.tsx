@@ -23,6 +23,9 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MdOutlineContactSupport } from "react-icons/md";
+import NewGroupForm from "./new-group-form";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 export const SideBarClient = ({
   data,
@@ -30,6 +33,21 @@ export const SideBarClient = ({
   data: ResponseGroupFamiliesDto[];
 }) => {
   const router = useRouter();
+  const getColorFromName = (name: string) => {
+    const colors = [
+      "#ef4444",
+      "#3b82f6",
+      "#10b981",
+      "#f59e0b",
+      "#8b5cf6",
+      "#ec4899",
+    ];
+    // Tính tổng mã ASCII của các ký tự trong tên
+    const charCodeSum = name
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[charCodeSum % colors.length];
+  };
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="flex flex-row justify-between items-center">
@@ -79,29 +97,35 @@ export const SideBarClient = ({
           {data && data.length === 0 ? (
             <div className="w-full flex flex-col justify-center items-center gap-3 group-data-[collapsible=icon]:hidden">
               <p className="italic">Không có nhóm nào</p>
-              <Button variant={"outline"} className="hover:cursor-pointer">
-                Tạo nhóm mới
-              </Button>
             </div>
           ) : (
             data.map((item, index) => (
-              <div
+              <SidebarMenuButton
                 key={index}
-                className="px-2 py-1 flex flex-row justify-between items-center gap-3"
+                className={cn(
+                  "w-full h-fit p-0 justify-start items-center gap-2 hover:cursor-pointer",
+                  // Khi thu nhỏ: bỏ padding mặc định, ép căn giữa tuyệt đối
+                  "group-data-[state=collapsed]:p-0! group-data-[state=collapsed]:justify-center",
+                )}
+                onClick={() => router.push(`/group/${item.id}`)}
               >
-                <div className="max-w-[75%]">{item.name}</div>
-                <div className="max-w-[25%]">
-                  <Button
-                    variant={"default"}
-                    size={"icon"}
-                    className="hover:cursor-pointer"
-                  >
-                    <HiDotsVertical />
-                  </Button>
+                <div
+                  style={{
+                    backgroundColor: getColorFromName(item.name) + "20",
+                    color: getColorFromName(item.name),
+                    borderColor: getColorFromName(item.name),
+                  }}
+                  className="size-7 shrink-0 border rounded-lg font-bold flex items-center justify-center"
+                >
+                  {item.name[0]}
                 </div>
-              </div>
+                <div className="group-data-[collapsible=icon]:hidden">
+                  {item.name}
+                </div>
+              </SidebarMenuButton>
             ))
           )}
+          <NewGroupForm className="group-data-[collapsible=icon]:hidden" />
         </SidebarContent>
       </SidebarGroup>
       <SidebarFooter></SidebarFooter>
