@@ -1,7 +1,7 @@
 export interface CreateGroupFamilyDto {
   name: string;
   description: string;
-  role: string | undefined;
+  role: string;
 }
 
 export interface UpdateGroupFamilyDto {

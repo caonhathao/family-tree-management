@@ -1,28 +1,30 @@
 import { apiClient } from "@/lib/api/api-path.lib";
 import { CreateGroupFamilyDto, UpdateGroupFamilyDto } from "./group-family.dto";
-import { cookies } from "next/headers";
 import { fetchWithAuth } from "@/lib/api/fetch-with-auth";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 
 export const GroupFamilyService = {
-  createGroup: async (data: CreateGroupFamilyDto) => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-    const result = await fetchWithAuth(apiClient.groupFamily.createGroup, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
-    return result.json();
-  },
-  getAll: async () => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
+  createGroup: async (
+    data: CreateGroupFamilyDto,
+    token: string | undefined,
+  ) => {
     const result = await fetchWithAuth(
-      EnvConfig.serverDomain + apiClient.groupFamily.getAll,
+      EnvConfig.serverDomain + apiClient.groupFamily.createGroup,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      },
+    );
+    return result;
+  },
+  getAll: async (token: string | undefined) => {
+    const result = await fetchWithAuth(
+        EnvConfig.serverDomain +
+        apiClient.groupFamily.getAll,
       {
         method: "GET",
         headers: {
@@ -33,11 +35,13 @@ export const GroupFamilyService = {
     );
     return result;
   },
-  updateGroup: async (groupId: string, data: UpdateGroupFamilyDto) => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
+  updateGroup: async (
+    groupId: string,
+    data: UpdateGroupFamilyDto,
+    token: string | undefined,
+  ) => {
     const result = await fetchWithAuth(
-      apiClient.groupFamily.updateGroup(groupId),
+      EnvConfig.serverDomain + apiClient.groupFamily.updateGroup(groupId),
       {
         method: "PATCH",
         headers: {
@@ -49,11 +53,9 @@ export const GroupFamilyService = {
     );
     return result.json();
   },
-  getDetail: async (groupId: string) => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
+  getDetail: async (groupId: string, token: string | undefined) => {
     const result = await fetchWithAuth(
-      apiClient.groupFamily.getDetail(groupId),
+      EnvConfig.serverDomain + apiClient.groupFamily.getDetail(groupId),
       {
         method: "GET",
         headers: {
@@ -62,13 +64,11 @@ export const GroupFamilyService = {
         },
       },
     );
-    return result.json();
+    return result;
   },
-  joinGroup: async (tokenCode: string) => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
+  joinGroup: async (tokenCode: string, token: string | undefined) => {
     const result = await fetchWithAuth(
-      apiClient.groupFamily.updateGroup(tokenCode),
+      EnvConfig.serverDomain + apiClient.groupFamily.updateGroup(tokenCode),
       {
         method: "POST",
         headers: {

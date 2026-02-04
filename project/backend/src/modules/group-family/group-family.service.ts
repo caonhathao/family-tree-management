@@ -17,10 +17,12 @@ import { isUUID } from 'class-validator';
 export class GroupFamilyService {
   constructor(private prisma: PrismaService) {}
   async create(userId: string, data: CreateGroupFamilyDto) {
+    console.log(data);
     try {
       const newGroup = await this.prisma.groupFamily.create({
         data: {
-          ...data,
+          name: data.name,
+          description: data.description,
         },
         select: { id: true, name: true, description: true },
       });

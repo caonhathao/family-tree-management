@@ -4,7 +4,7 @@ import { RelationshipService } from "./relationship.service";
 import { ResponseDataBase } from "@/types/base.types";
 import { revalidatePath } from "next/cache";
 
-export async function CreateRelationshipAction(data: RelationshipDto) {
+export async function CreateRelationshipAction(data: RelationshipDto[]) {
   let isSuccess = false;
   try {
     const res: ResponseDataBase<RelationshipDto> =
