@@ -12,7 +12,7 @@ interface payloadToken {
   exp: string;
 }
 
-export const getuserFromToken = cache(async (token: string | undefined) => {
+export const getUserFromToken = cache(async (token: string | undefined) => {
   if (!token || token.length === 0) return null;
 
   const payload: payloadToken = jwtDecode(token);

@@ -1,4 +1,20 @@
-const GroupPage = () => {
-  return <div></div>;
-};
-export default GroupPage;
+"use server";
+
+import { LoaderModule } from "@/components/shared/loader-module";
+import { Suspense } from "react";
+import { GroupContentWrapper } from "./components/group-content-wrapper";
+
+// page.tsx
+export default async function GroupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ groupId: string }>;
+}) {
+  const { groupId } = await searchParams;
+
+  return (
+    <Suspense fallback={<LoaderModule />}>
+      <GroupContentWrapper groupId={groupId} />
+    </Suspense>
+  );
+}

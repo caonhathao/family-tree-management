@@ -1,17 +1,14 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarHeader,
-  SidebarInset,
   SidebarMenu,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { ResponseGroupFamiliesDto } from "@/modules/group-family/group-family.dto";
-import { HiDotsVertical } from "react-icons/hi";
 import logo from "../../../../public/img/family-tree-logo.png";
 import { IoIosArrowForward, IoMdHome } from "react-icons/io";
 import {
@@ -23,8 +20,7 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MdOutlineContactSupport } from "react-icons/md";
-import NewGroupForm from "./new-group-form";
-import { Separator } from "@/components/ui/separator";
+import NewGroupForm from "./forms/new-group-form";
 import { cn } from "@/lib/utils";
 
 export const SideBarClient = ({
@@ -107,7 +103,7 @@ export const SideBarClient = ({
                   // Khi thu nhỏ: bỏ padding mặc định, ép căn giữa tuyệt đối
                   "group-data-[state=collapsed]:p-0! group-data-[state=collapsed]:justify-center",
                 )}
-                onClick={() => router.push(`/group/${item.id}`)}
+                onClick={() => router.push(`/group?groupId=${item.id}`)}
               >
                 <div
                   style={{

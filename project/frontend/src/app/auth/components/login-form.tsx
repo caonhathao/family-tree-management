@@ -18,6 +18,7 @@ import { LoginSchema } from "@/modules/auth/auth.schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Toaster } from "@/components/shared/toast";
+import { LoaderModule } from "@/components/shared/loader-module";
 
 export function LoginForm({
   className,
@@ -115,10 +116,24 @@ export function LoginForm({
                 </div>
               </Field>
               <Field>
-                <Button type="submit" className="hover:cursor-pointer">
-                  Đăng nhập
+                <Button
+                  type="submit"
+                  className={`hover:cursor-pointer ${isPending ? "disabled" : ""}`}
+                >
+                  {isPending ? (
+                    <>
+                      <LoaderModule scale={0.4} className="w-1 h-1" /> Đang đăng
+                      nhập
+                    </>
+                  ) : (
+                    "Đăng nhập"
+                  )}
                 </Button>
-                <Button variant="outline" type="button" className="hover:cursor-pointer">
+                <Button
+                  variant="outline"
+                  type="button"
+                  className="hover:cursor-pointer"
+                >
                   Đăng nhập với Google
                 </Button>
                 <FieldDescription className="text-center">

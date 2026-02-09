@@ -1,23 +1,9 @@
 import { apiClient } from "@/lib/api/api-path.lib";
 import { fetchWithAuth } from "@/lib/api/fetch-with-auth";
 import { cookies } from "next/headers";
-import { CreateFamilyDto, UpdateFamilyDto } from "./family.dto";
+import { UpdateFamilyDto } from "./family.dto";
 
 export const FamilyService = {
-  createFamily: async (groupId: string, data: CreateFamilyDto) => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-
-    const result = await fetchWithAuth(apiClient.family.createFamily(groupId), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
-    return result.json();
-  },
   updateFamily: async (groupId: string, data: UpdateFamilyDto) => {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;

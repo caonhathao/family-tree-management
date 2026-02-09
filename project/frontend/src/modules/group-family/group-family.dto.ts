@@ -13,9 +13,24 @@ export interface ResponseGroupFamilyDetailDto {
   id: string;
   name: string;
   description: string;
+  createdAt: string;
+  updatedAt: string;
+  groupMembers: {
+    member: {
+      userProfile: {
+        avatar: string;
+        fullName: string;
+        id: string;
+        userId: string;
+      };
+    };
+  }[];
 }
 
-export interface ResponseGroupFamiliesDto extends ResponseGroupFamilyDetailDto {
+export interface ResponseGroupFamiliesDto {
+  id: string;
+  name: string;
+  description: string;
   createdAt: Date;
   updatedAt: Date;
 }
