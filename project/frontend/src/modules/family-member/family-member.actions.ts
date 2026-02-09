@@ -1,39 +1,16 @@
 import { handleError } from "@/lib/utils.lib";
 import {
-  CreateFamilyMemberDto,
   ResponseCreateFamilyMemberDto,
-  updateFamilyMemberDto,
+  IUpdateFamilyMemberDto,
 } from "./family-member.dto";
 import { FamilyMemberService } from "./family-member.service";
 import { ResponseDataBase } from "@/types/base.types";
 import { revalidatePath } from "next/cache";
 
-export async function CreateFamilyMemberAction(
-  groupId: string,
-  data: CreateFamilyMemberDto,
-) {
-  let isSuccess = false;
-
-  try {
-    const res: ResponseDataBase<ResponseCreateFamilyMemberDto> =
-      await FamilyMemberService.createMember(groupId, data);
-    if (res.success) {
-      isSuccess = true;
-    } else
-      return {
-        error: res.message || "error",
-      };
-  } catch (err: unknown) {
-    return handleError(err);
-  }
-  if (isSuccess) {
-    revalidatePath(`/family`);
-  }
-}
 
 export async function updateFamilyMemberAction(
   groupId: string,
-  data: updateFamilyMemberDto,
+  data: IUpdateFamilyMemberDto,
 ) {
   let isSuccess = false;
 

@@ -81,7 +81,7 @@ export async function getAllGroupAction() {
     const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseGroupFamiliesDto[]> =
       await GroupFamilyService.getAll(token);
-    console.log(res);
+    // console.log(res);
     if (res.success) {
       return res.data;
     } else return { error: res.message || "error" };

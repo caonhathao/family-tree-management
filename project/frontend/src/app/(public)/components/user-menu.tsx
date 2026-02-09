@@ -20,10 +20,10 @@ import { useRouter } from "next/navigation";
 import { logoutAction } from "@/modules/auth/auth.actions";
 import { Toaster } from "@/components/shared/toast";
 export const UserMenu = ({
-  user,
+  data,
   className,
 }: {
-  user: ResponseGetUserDto | null;
+  data: ResponseGetUserDto | null;
   className?: string;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,18 +33,19 @@ export const UserMenu = ({
       const result = await logoutAction();
       if (result?.error) {
         Toaster({
-          title: "Đăng kí thất bại",
+          title: "Đăng xuất thất bại",
           description: result.error,
           type: "error",
         });
       }
     });
   };
+  console.log(data);
   return (
     <div className={className}>
       <Avatar>
         <AvatarImage
-          src={user?.userProfile.avatar}
+          src={data ? data.userProfile.avatar : ""}
           alt="@shadcn"
           className="grayscale"
         />
@@ -67,7 +68,7 @@ export const UserMenu = ({
             </motion.div>
           </Button>
         </DropdownMenuTrigger>
-        {user ? (
+        {data ? (
           <DropdownMenuContent>
             <DropdownMenuGroup>
               <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>

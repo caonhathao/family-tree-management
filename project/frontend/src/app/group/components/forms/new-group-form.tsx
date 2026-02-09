@@ -34,7 +34,6 @@ const NewGroupForm = ({ className }: { className?: string }) => {
   const {
     register,
     handleSubmit,
-    setValue,
     control,
     reset,
     formState: { errors },
@@ -135,13 +134,13 @@ const NewGroupForm = ({ className }: { className?: string }) => {
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
-                    <SelectTrigger className="w-45">
+                    <SelectTrigger className="w-45 hover:cursor-pointer">
                       <SelectValue placeholder="Vai trò" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="OWNER">Chủ gia đình</SelectItem>
-                        <SelectItem value="EDITOR">Người chỉnh sửa</SelectItem>
+                        <SelectItem value="OWNER" className="hover:cursor-pointer">Chủ gia đình</SelectItem>
+                        <SelectItem value="EDITOR" className="hover:cursor-pointer">Người chỉnh sửa</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -163,7 +162,7 @@ const NewGroupForm = ({ className }: { className?: string }) => {
             <Button
               type="submit"
               disabled={isPending}
-              className={`w-fit flex justify-center items-center gap-2 ${isPending ? "hover:cursor-pointer" : "hover:cursor-not-allowed"}`}
+              className={`w-fit flex justify-center items-center gap-2 ${!isPending ? "hover:cursor-pointer" : "hover:cursor-not-allowed"}`}
             >
               {isPending ? (
                 <>

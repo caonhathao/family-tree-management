@@ -1,6 +1,7 @@
-export interface CreateFamilyDto {
+export interface ICreateFamilyDto {
+  localId: string;
   name: string;
-  description: string;
+  description?: string;
 }
 export interface ResponseCreateFamilyDto {
   family: {

@@ -1,15 +1,15 @@
-export interface CreateFamilyMemberDto {
-  familyId: string;
+export interface ICreateFamilyMemberDto {
+  localId: string;
   fullName: string;
   gender: string;
-  dateOfBirth: Date;
-  dateOfDeath?: Date;
+  dateOfBirth?: string;
+  dateOfDeath?: string;
   isAlive?: boolean;
   biography?: string;
   generation: number;
 }
 
-export interface updateFamilyMemberDto {
+export interface IUpdateFamilyMemberDto {
   id: string;
   fullName: string;
   gender: string;

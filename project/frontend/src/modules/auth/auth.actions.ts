@@ -2,10 +2,11 @@
 
 import { AuthService } from "@/modules/auth/auth.service";
 import { redirect } from "next/navigation";
-import { RegisterDto, LoginBaseDto } from "./auth.dto";
+import { RegisterDto, LoginBaseDto, AuthResponseDto } from "./auth.dto";
 import { cookies } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { handleError } from "@/lib/utils.lib";
+import { ResponseDataBase } from "@/types/base.types";
 
 export async function registerAction(data: RegisterDto) {
   let isSuccess = false;
@@ -47,20 +48,21 @@ export async function loginBaseAction(data: LoginBaseDto) {
   let isSuccess = false;
 
   try {
-    const res = await AuthService.loginBase(data);
-    //console.log("action:", res);
+    const res: ResponseDataBase<AuthResponseDto> =
+      await AuthService.loginBase(data);
+    console.log("action:", res);
     if (res.success) {
       isSuccess = true;
       const cookieStore = await cookies();
       //storing tokens authentication
-      cookieStore.set("access_token", res.data.user.tokens.accessToken, {
+      cookieStore.set("access_token", res.data.tokens.accessToken, {
         httpOnly: true,
         secure: EnvConfig.nodeValue === "production",
         sameSite: "lax",
         path: "/",
         maxAge: EnvConfig.accessTokenExpireIn,
       });
-      cookieStore.set("refresh_token", res.data.user.tokens.refreshToken, {
+      cookieStore.set("refresh_token", res.data.tokens.refreshToken, {
         httpOnly: true,
         secure: EnvConfig.nodeValue === "production",
         sameSite: "lax",

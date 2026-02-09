@@ -1,4 +1,5 @@
-export interface RelationshipDto {
+export interface IRelationshipDto {
+  localId: string;
   familyId: string;
   fromMemberId: string;
   toMemberId: string;

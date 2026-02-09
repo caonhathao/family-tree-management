@@ -336,66 +336,71 @@ export class AuthService {
   }
 
   async refresh(userId: string, token: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        userProfile: {
-          select: {
-            fullName: true,
-            avatar: true,
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          userProfile: {
+            select: {
+              fullName: true,
+              avatar: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!user) {
-      throw new ForbiddenException(InvalidMessageResponse.USER_NOT_FOUND);
-    }
-    const session = await this.prisma.session.findFirst({
-      where: {
-        userId: user?.id,
-        token: token,
-      },
-      select: {
-        id: true,
-        token: true,
-        expiresAt: true,
-      },
-    });
+      if (!user) {
+        throw new ForbiddenException(InvalidMessageResponse.USER_NOT_FOUND);
+      }
+      const session = await this.prisma.session.findFirst({
+        where: {
+          userId: user?.id,
+          token: token,
+        },
+        select: {
+          id: true,
+          token: true,
+          expiresAt: true,
+        },
+      });
 
-    // console.log('session', session);
-    // console.log('token', token);
+      // console.log('session', session);
+      // console.log('token', token);
 
-    if (!session || session.expiresAt < new Date()) {
-      if (session)
-        await this.prisma.session.delete({ where: { id: session.id } });
-      throw new ForbiddenException(InvalidMessageResponse.SESSION_BAD_ACCESS);
-    }
+      if (!session || session.expiresAt < new Date()) {
+        if (session)
+          await this.prisma.session.delete({ where: { id: session.id } });
+        throw new ForbiddenException(InvalidMessageResponse.SESSION_BAD_ACCESS);
+      }
 
-    const payload = {
-      sub: user.id,
-      email: user.email,
-    };
-
-    const tokens = await this.getTokens(payload);
-
-    await this.prisma.session.update({
-      where: { id: session.id },
-      data: {
-        token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
-      },
-    });
-    return {
-      user: {
-        id: user.id,
+      const payload = {
+        sub: user.id,
         email: user.email,
-        userProfile: user.userProfile,
-      },
-      tokens,
-    };
+      };
+
+      const tokens = await this.getTokens(payload);
+
+      await this.prisma.session.update({
+        where: { id: session.id },
+        data: {
+          token: tokens.refreshToken,
+          expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+        },
+      });
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          userProfile: user.userProfile,
+        },
+        tokens,
+      };
+    } catch (err) {
+      console.log('error at refresh service:', err);
+      throw err;
+    }
   }
 
   async resetPassword(data: ResetPasswordDto) {

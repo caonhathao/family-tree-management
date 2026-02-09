@@ -1,40 +1,10 @@
 import { apiClient } from "@/lib/api/api-path.lib";
 import { cookies } from "next/headers";
-import {
-  CreateFamilyMemberDto,
-  updateFamilyMemberDto,
-} from "./family-member.dto";
+import { IUpdateFamilyMemberDto } from "./family-member.dto";
 import { fetchWithAuth } from "@/lib/api/fetch-with-auth";
 
 export const FamilyMemberService = {
-  createMember: async (groupId: string, data: CreateFamilyMemberDto) => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-
-    const formData = new FormData();
-
-    // Duyệt qua các key của DTO để append vào FormData
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        // Nếu là File (ảnh), append trực tiếp
-        // Nếu là dữ liệu khác, FormData sẽ tự chuyển về string
-        formData.append(key, value instanceof Blob ? value : String(value));
-      }
-    });
-
-    const result = await fetchWithAuth(
-      apiClient.familyMember.createMember(groupId),
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      },
-    );
-    return result.json();
-  },
-  updateMember: async (groupId: string, data: updateFamilyMemberDto) => {
+  updateMember: async (groupId: string, data: IUpdateFamilyMemberDto) => {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
 

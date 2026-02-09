@@ -23,6 +23,7 @@ export async function UpdateUserAction(userId: string, data: FormData) {
 export async function getUserDetail(userId: string) {
   try {
     const res = await UserServices.getUserDetail(userId);
+    
     if (res.success) {
       return res.data;
     } else return { err: res.message || "error" };
