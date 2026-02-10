@@ -30,14 +30,18 @@ import { Controller, useForm } from "react-hook-form";
 import { v4 } from "uuid";
 
 const NewFamilyMemberForm = ({
-  className,
+  currentData,
   openState,
+  draft,
+  setCurrentData,
   setOpenState,
   setDraft,
 }: {
-  className?: string;
+  currentData?: ICreateFamilyMemberDto | null;
   openState: boolean;
+  draft: IDraftFamilyData;
   setOpenState: Dispatch<SetStateAction<boolean>>;
+  setCurrentData: Dispatch<SetStateAction<ICreateFamilyMemberDto | null>>;
   setDraft: Dispatch<SetStateAction<IDraftFamilyData>>;
 }) => {
   const {
@@ -49,7 +53,7 @@ const NewFamilyMemberForm = ({
     formState: { errors },
   } = useForm<ICreateFamilyMemberDto>({
     resolver: zodResolver(FamilyMemberSchema),
-    defaultValues: {
+    defaultValues: currentData || {
       localId: "",
       fullName: "",
       gender: "",
@@ -61,6 +65,7 @@ const NewFamilyMemberForm = ({
     },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const isAlive = watch("isAlive");
 
   const onSubmit = (
@@ -68,27 +73,72 @@ const NewFamilyMemberForm = ({
     e?: React.BaseSyntheticEvent,
   ) => {
     e?.preventDefault();
-    values.localId = v4();
+    if (draft.family.localId.length === 0) {
+      Toaster({
+        title: "Hành động thất bại",
+        description: "Sơ đồ chưa được tạo.",
+        type: "warning",
+      });
+      return;
+    }
+
+    const isUpdate = !!currentData;
+    const memberId = isUpdate && currentData ? currentData.localId : v4();
+    const finalValues = { ...values, localId: memberId };
 
     setDraft((prev: IDraftFamilyData) => ({
       ...prev,
-      member: [...prev.member, values],
+      member: isUpdate
+        ? prev.member.map((m) =>
+            m.localId === memberId ? { ...m, ...finalValues } : m,
+          )
+        : [...prev.member, finalValues],
     }));
     Toaster({
-      title: "Thành công",
-      description: "Tạo thành viên thành công",
+      title: "Hành động thành công",
+      description: isUpdate
+        ? "Cập nhật thành viên thành công."
+        : "Tạo thành viên thành công.",
       type: "success",
     });
+    setCurrentData(null);
     setOpenState(false);
     reset();
   };
+
+  const deleteMemberFromDraft = (memberId: string) => {
+    setDraft((prev) => {
+      // 1. Lọc bỏ thành viên có id trùng với memberId
+      const updatedMembers = prev.member.filter((m) => m.localId !== memberId);
+
+      // 2. Quan trọng: Lọc bỏ tất cả quan hệ mà thành viên này tham gia (dù là nguồn hay đích)
+      const updatedRelationships = prev.relationships.filter(
+        (rel) => rel.fromMemberId !== memberId && rel.toMemberId !== memberId,
+      );
+
+      return {
+        ...prev,
+        member: updatedMembers,
+        relationships: updatedRelationships,
+      };
+    });
+
+    Toaster({
+      title: "Đã xóa",
+      description: "Thành viên và các quan hệ liên quan đã được gỡ bỏ.",
+      type: "info",
+    });
+    setOpenState(false);
+    setCurrentData(null);
+    reset();
+  };
   return (
-    <div className={`absolute z-10 ${className}`}>
+    <div className={`absolute z-10 `}>
       <Dialog open={openState} onOpenChange={setOpenState}>
         <DialogContent className="sm:max-w-sm">
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>
-              <DialogTitle>Thêm thành viên mới</DialogTitle>
+              <DialogTitle>Tạo/Cập nhật thành viên mới</DialogTitle>
               <DialogDescription>
                 Điền thông tin thành viên vào biểu mẫu dưới đây.
               </DialogDescription>
@@ -229,6 +279,17 @@ const NewFamilyMemberForm = ({
                   Hủy
                 </Button>
               </DialogClose>
+              <Button
+                type="button"
+                variant={"destructive"}
+                disabled={currentData === null}
+                className="hover:cursor-pointer"
+                onClick={() =>
+                  deleteMemberFromDraft(currentData?.localId || "")
+                }
+              >
+                Xóa
+              </Button>
               <Button
                 type="submit"
                 className={

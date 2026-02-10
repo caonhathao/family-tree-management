@@ -1,4 +1,4 @@
-export interface ICreateFamilyDto {
+export interface IFamilyDto {
   localId: string;
   name: string;
   description?: string;

@@ -10,25 +10,37 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { IDraftFamilyData } from "@/types/draft.types";
 import { motion, useDragControls } from "framer-motion";
 import { Dispatch, SetStateAction, useRef, useState } from "react";
 import { BiDetail } from "react-icons/bi";
 import { FaPlus, FaRegSave, FaSort } from "react-icons/fa";
-import { IoCreateOutline } from "react-icons/io5";
+import { IoCreateOutline, IoLink } from "react-icons/io5";
 import { LuLayoutPanelTop, LuGripVertical } from "react-icons/lu";
 import { MdOutlineCancel, MdOutlineGrid4X4 } from "react-icons/md";
+import { RiDragMoveFill } from "react-icons/ri";
 
 interface IPanelEditorProps {
   constraintsRef: React.RefObject<HTMLDivElement | null>;
   setOpenFamilyMemberForm: Dispatch<SetStateAction<boolean>>;
   setOpenFamilyForm: Dispatch<SetStateAction<boolean>>;
+  setOpenRelationshipForm: Dispatch<SetStateAction<boolean>>;
+  showGrid: boolean;
+  setShowGrid: Dispatch<SetStateAction<boolean>>;
+  onLayout: () => void;
+  nodesDraggable: boolean;
+  setNodesDraggable: Dispatch<SetStateAction<boolean>>;
 }
 
 export const PanelEditor = ({
   constraintsRef,
   setOpenFamilyMemberForm,
   setOpenFamilyForm,
+  setOpenRelationshipForm,
+  showGrid,
+  setShowGrid,
+  onLayout,
+  nodesDraggable,
+  setNodesDraggable,
 }: IPanelEditorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const controls = useDragControls();
@@ -81,17 +93,38 @@ export const PanelEditor = ({
               <FaPlus />
               Thêm thành viên
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:cursor-pointer">
-              <FaSort />
-              Sắp xếp sơ đồ
+            <DropdownMenuItem
+              className="hover:cursor-pointer"
+              onClick={() => setOpenRelationshipForm(true)}
+            >
+              <IoLink />
+              Thêm quan hệ
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuLabel>Hiển thị</DropdownMenuLabel>
-            <DropdownMenuCheckboxItem className="hover:cursor-pointer">
+            <DropdownMenuItem
+              onClick={onLayout}
+              className="hover:cursor-pointer"
+            >
+              <FaSort />
+              Sắp xếp sơ đồ
+            </DropdownMenuItem>
+            <DropdownMenuCheckboxItem
+              checked={showGrid}
+              onCheckedChange={setShowGrid}
+              className="hover:cursor-pointer"
+            >
               <MdOutlineGrid4X4 />
               Lưới
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={nodesDraggable}
+              onCheckedChange={setNodesDraggable}
+            >
+              <RiDragMoveFill />
+              Cho phép kéo thả
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem className="hover:cursor-pointer">
               <BiDetail />
