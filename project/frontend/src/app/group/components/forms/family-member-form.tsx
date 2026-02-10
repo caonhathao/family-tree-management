@@ -21,7 +21,7 @@ import {
   Select,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ICreateFamilyMemberDto } from "@/modules/family-member/family-member.dto";
+import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import { FamilyMemberSchema } from "@/modules/family-member/family-member.schemas";
 import { IDraftFamilyData } from "@/types/draft.types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,11 +37,11 @@ const NewFamilyMemberForm = ({
   setOpenState,
   setDraft,
 }: {
-  currentData?: ICreateFamilyMemberDto | null;
+  currentData?: IFamilyMemberDto | null;
   openState: boolean;
   draft: IDraftFamilyData;
   setOpenState: Dispatch<SetStateAction<boolean>>;
-  setCurrentData: Dispatch<SetStateAction<ICreateFamilyMemberDto | null>>;
+  setCurrentData: Dispatch<SetStateAction<IFamilyMemberDto | null>>;
   setDraft: Dispatch<SetStateAction<IDraftFamilyData>>;
 }) => {
   const {
@@ -51,7 +51,7 @@ const NewFamilyMemberForm = ({
     reset,
     watch,
     formState: { errors },
-  } = useForm<ICreateFamilyMemberDto>({
+  } = useForm<IFamilyMemberDto>({
     resolver: zodResolver(FamilyMemberSchema),
     defaultValues: currentData || {
       localId: "",
@@ -69,7 +69,7 @@ const NewFamilyMemberForm = ({
   const isAlive = watch("isAlive");
 
   const onSubmit = (
-    values: ICreateFamilyMemberDto,
+    values: IFamilyMemberDto,
     e?: React.BaseSyntheticEvent,
   ) => {
     e?.preventDefault();

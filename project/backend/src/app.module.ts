@@ -9,9 +9,8 @@ import config from './common/config/env/config';
 import { EnvConfigService } from './common/config/env/env-config.service';
 import { FamilyModule } from './modules/family/family.module';
 import { EnvConfigModule } from './common/config/env/env-config.module';
-import { MemberModule } from './modules/family-members/family-members.module';
+
 import { CloudinaryModule } from './common/config/cloudinary/cloudinary.module';
-import { RelationshipsModule } from './modules/relationships/relationships.module';
 import { GroupFamilyModule } from './modules/group-family/group-family.module';
 import { UserModule } from './modules/users/user.module';
 import { GroupMemberModule } from './modules/group-members/group-members.module';
@@ -34,9 +33,7 @@ import { PassportModule } from '@nestjs/passport';
     PrismaModule,
     AuthModule,
     FamilyModule,
-    MemberModule,
     CloudinaryModule,
-    RelationshipsModule,
     GroupFamilyModule,
     UserModule,
     GroupMemberModule,

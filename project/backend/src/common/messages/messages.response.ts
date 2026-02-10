@@ -11,6 +11,7 @@ export const InvalidMessageResponse = {
   ID_EMPTY: 't_id_empty',
   ID_INVAILD: 't_id_invalid',
   GENDER_EMPTY: 't_gender_empty',
+  GENDER_INVALID: 't_gender_invalid',
   OTP_MIN: 't_otp_code_min_invalid',
   GOOGLE_TOKEN: 't_google_empty',
   CREATED: 't_created_failed',

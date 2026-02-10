@@ -8,7 +8,7 @@ export const FamilyService = {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
 
-    const result = await fetchWithAuth(apiClient.family.createFamily(groupId), {
+    const result = await fetchWithAuth(apiClient.family.syncFamily(groupId), {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

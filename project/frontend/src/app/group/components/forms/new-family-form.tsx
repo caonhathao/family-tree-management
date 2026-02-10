@@ -13,7 +13,7 @@ import { FieldGroup, Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ICreateFamilyDto } from "@/modules/family/family.dto";
+import { IFamilyDto } from "@/modules/family/family.dto";
 import { FamilySchema } from "@/modules/family/family.schemas";
 import { IDraftFamilyData } from "@/types/draft.types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,7 +39,7 @@ const NewFamilyForm = ({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<ICreateFamilyDto>({
+  } = useForm<IFamilyDto>({
     resolver: zodResolver(FamilySchema),
     defaultValues: {
       localId: "",
@@ -48,7 +48,7 @@ const NewFamilyForm = ({
     },
   });
 
-  const onSubmit = (values: ICreateFamilyDto, e?: React.BaseSyntheticEvent) => {
+  const onSubmit = (values: IFamilyDto, e?: React.BaseSyntheticEvent) => {
     e?.preventDefault();
     if (draft.family.localId.length !== 0) {
       Toaster({
