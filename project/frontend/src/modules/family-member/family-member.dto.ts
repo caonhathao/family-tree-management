@@ -1,4 +1,4 @@
-export interface ICreateFamilyMemberDto {
+export interface IFamilyMemberDto {
   localId: string;
   fullName: string;
   gender: string;
@@ -7,6 +7,8 @@ export interface ICreateFamilyMemberDto {
   isAlive?: boolean;
   biography?: string;
   generation: number;
+  positionX?: number;
+  positionY?: number;
 }
 
 export interface IUpdateFamilyMemberDto {

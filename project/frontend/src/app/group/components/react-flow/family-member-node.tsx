@@ -1,7 +1,6 @@
 import { ICreateFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import { Handle, Position } from "@xyflow/react";
 
-// Component nhận tham số qua prop 'data'
 export const FamilyMemberNode = ({
   data,
 }: {
@@ -26,7 +25,9 @@ export const FamilyMemberNode = ({
 
       {/* Các cổng kết nối (Handle) để vẽ Edges */}
       <Handle type="target" position={Position.Top} className="w-2 h-2" />
-      <Handle type="source" position={Position.Bottom} className="w-2 h-2" />
+      <Handle type="target" position={Position.Bottom} className="w-2 h-2" />
+      <Handle type="target" position={Position.Left} className="w-2 h-2" />
+      <Handle type="target" position={Position.Right} className="w-2 h-2" />
     </div>
   );
 };
