@@ -1,31 +1,17 @@
-import {
-  Body,
-  Controller,
-  Patch,
-  Post,
-  Get,
-  UseGuards,
-  Delete,
-  Param,
-} from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Param } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { FamilyService } from './family.service';
 import { FamilyDto } from './dto/create-family.dto';
-import { Roles } from 'src/common/decorators/roles.decorator';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
-import { USER_ROLE } from '@prisma/client';
 import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AtGuard } from '../auth/guards/auth.guard';
-import { FamilyUpdateDto } from './dto/update-family.dto';
-import { HttpStatus } from 'src/common/constants/api';
 
 @ApiTags('family')
 @ApiBearerAuth()
@@ -34,87 +20,27 @@ import { HttpStatus } from 'src/common/constants/api';
 export class FamilyController {
   constructor(private readonly familyService: FamilyService) {}
 
-  @Post(':groupId')
+  @Post('/sync-data/:groupId')
   @UseGuards(AtGuard)
-  @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
-  @ApiOperation({ summary: 'Create a new family' })
-  @ApiParam({ name: 'groupId', description: 'Group ID' })
-  @ApiResponse({ status: 201, description: 'Family created successfully' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiOperation({ summary: 'Sync family data' })
+  @ApiResponse({
+    status: 200,
+    description: 'Family data synced successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async createFamily(
+  async syncFamilyData(
     @GetCurrentUserId() userId: string,
     @Param('groupId') groupId: string,
-    @Body() familyDto: FamilyDto,
+    @Body() data: FamilyDto,
   ) {
-    const family = await this.familyService.create(userId, groupId, familyDto);
-    return ResponseFactory.success({
-      data: family,
-      code: HttpStatus.CREATED,
-      message: ValidMessageResponse.CREATED,
-    });
-  }
-
-  @Patch(':groupId')
-  @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
-  @ApiOperation({ summary: 'Update a family' })
-  @ApiParam({ name: 'groupId', description: 'Group ID' })
-  @ApiResponse({ status: 200, description: 'Family updated successfully' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async updateFamily(
-    @GetCurrentUserId() userId: string,
-    @Param('groupId') groupId: string,
-    @Body() familyUpdate: FamilyUpdateDto,
-  ) {
-    const family = await this.familyService.update(
-      familyUpdate,
+    const syncFamily = await this.familyService.syncFamilyData(
       userId,
       groupId,
+      data,
     );
     return ResponseFactory.success({
-      data: family,
-      code: HttpStatus.OK,
+      data: syncFamily,
       message: ValidMessageResponse.UPDATED,
-    });
-  }
-
-  @Get(':groupId/:familyId')
-  @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
-  @ApiOperation({ summary: 'Get a family by ID' })
-  @ApiParam({ name: 'familyId', description: 'Family ID' })
-  @ApiParam({ name: 'groupId', description: 'Group ID' })
-  @ApiResponse({ status: 200, description: 'Family retrieved successfully' })
-  @ApiResponse({ status: 404, description: 'Family not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getFamily(
-    @Param('id') familyId: string,
-    @GetCurrentUserId() userId: string,
-  ) {
-    const family = await this.familyService.get(familyId, userId);
-    return ResponseFactory.success({
-      data: family,
-      message: ValidMessageResponse.GETTED,
-    });
-  }
-
-  @Delete(':groupId/:familyId')
-  @Roles(USER_ROLE.EDITOR, USER_ROLE.OWNER)
-  @ApiOperation({ summary: 'Delete a family' })
-  @ApiParam({ name: 'groupId', description: 'Group ID' })
-  @ApiParam({ name: 'familyId', description: 'Family ID' })
-  @ApiResponse({ status: 200, description: 'Family deleted successfully' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Family not found' })
-  async deleteFamily(
-    @GetCurrentUserId() userId: string,
-    @Param('familyId') familyId: string,
-    @Param('groupId') groupId: string,
-  ) {
-    await this.familyService.delete(groupId, familyId, userId);
-    return ResponseFactory.success({
-      message: ValidMessageResponse.DELETED,
     });
   }
 }

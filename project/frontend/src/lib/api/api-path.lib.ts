@@ -8,27 +8,11 @@ export const apiClient = {
     logOut: "/api/auth/logout",
   },
   family: {
-    createFamily: (groupId: string) => `/api/family/${groupId}`,
-    updateFamily: (groupId: string) => `/api/family/${groupId}`,
+    syncFamily: (groupId: string) => `/api/family/sync-data/${groupId}`,
+
     getFamily: (familyId: string) => `/api/family/${familyId}`,
     deleteFamily: (familyId: string, groupId: string) =>
       `/api/family/${groupId}/${familyId}`,
-  },
-  familyMember: {
-    createMember: (groupId: string) => `/api/member/${groupId}`,
-    updateMember: (groupId: string) => `/api/member/${groupId}`,
-    getOneMember: (memberId: string, familyId: string) =>
-      `/api/member/${familyId}/${memberId}`,
-    getAllMembers: (familyId: string) => `/api/member/${familyId}`,
-    deleteMember: (memberId: string, familyId: string) =>
-      `/api/member/${familyId}/${memberId}`,
-  },
-  relationship: {
-    createRelationship: `/api/relationship`,
-    updateRelatioship: (relatioshipId: string) =>
-      `/api/relationship/${relatioshipId}`,
-    deleteRelationship: (relationshipId: string, familyId: string) =>
-      `/api/relationship/${familyId}/${relationshipId}`,
   },
   groupFamily: {
     createGroup: "/api/group-family",

@@ -1,10 +1,10 @@
-import { ICreateFamilyMemberDto } from "@/modules/family-member/family-member.dto";
+import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import { Handle, Position } from "@xyflow/react";
 
 export const FamilyMemberNode = ({
   data,
 }: {
-  data: ICreateFamilyMemberDto;
+  data: IFamilyMemberDto;
 }) => {
   const nameParts = data.fullName.trim().split(/\s+/);
   const lastName = nameParts[nameParts.length - 1];

@@ -19,7 +19,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { FamilyMemberNode } from "./react-flow/family-member-node";
-import { ICreateFamilyMemberDto } from "@/modules/family-member/family-member.dto";
+import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import RelationshipForm from "./forms/relationship-form";
 import { IRelationshipDto } from "@/modules/relationships/relationship.dto";
 import dagre from "@dagrejs/dagre";
@@ -41,7 +41,7 @@ export const GroupContentPage = ({
   const [showGrid, setShowGrid] = useState(true);
   const [nodesDraggable, setNodesDraggable] = useState(true);
   const [editingMember, setEditingMember] =
-    useState<ICreateFamilyMemberDto | null>(null);
+    useState<IFamilyMemberDto | null>(null);
   if (!openFamilyMemberForm && editingMember !== null) setEditingMember(null);
 
   const [editingRelation, setEditingRelation] =
