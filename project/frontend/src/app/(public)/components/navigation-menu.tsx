@@ -11,14 +11,14 @@ import logo from "../../../../public/img/family-tree-logo.png";
 export const Navigation = ({ className }: { className?: string }) => {
   return (
     <div className={className}>
-      <div className="relative w-12 h-12 overflow-hidden rounded-full border">
+      <div className={"relative w-12 h-12 overflow-hidden rounded-full border"}>
         {" "}
         <Image
           src={logo}
           fill
-          sizes="48px"
-          alt="logo"
-          className="object-cover object-center"
+          sizes={"48px"}
+          alt={"logo"}
+          className={"object-cover object-center"}
         />
       </div>
       <NavigationMenu>
@@ -26,7 +26,7 @@ export const Navigation = ({ className }: { className?: string }) => {
           <NavigationMenuItem>
             <NavigationMenuLink
               className={navigationMenuTriggerStyle()}
-              href="/"
+              href={"/"}
             >
               Giới thiệu
             </NavigationMenuLink>
@@ -34,7 +34,7 @@ export const Navigation = ({ className }: { className?: string }) => {
           <NavigationMenuItem>
             <NavigationMenuLink
               className={navigationMenuTriggerStyle()}
-              href="/features"
+              href={"/features"}
             >
               Tính năng
             </NavigationMenuLink>
@@ -42,7 +42,7 @@ export const Navigation = ({ className }: { className?: string }) => {
           <NavigationMenuItem>
             <NavigationMenuLink
               className={navigationMenuTriggerStyle()}
-              href="/tutorials"
+              href={"/tutorials"}
             >
               Hướng dẫn
             </NavigationMenuLink>
@@ -50,7 +50,7 @@ export const Navigation = ({ className }: { className?: string }) => {
           <NavigationMenuItem>
             <NavigationMenuLink
               className={navigationMenuTriggerStyle()}
-              href="/feedback"
+              href={"/feedback"}
             >
               Phản hồi
             </NavigationMenuLink>

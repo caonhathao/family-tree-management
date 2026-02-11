@@ -64,7 +64,7 @@ export const AuthService = {
     return result;
   },
 
-  logout:async()=>{
+  logout: async () => {
     const cookieStore = await cookies();
     const token = cookieStore.get("refresh_token")?.value;
     const res = await fetch(EnvConfig.serverDomain + apiClient.auth.logOut, {
@@ -76,5 +76,5 @@ export const AuthService = {
     });
     const result = await res.json();
     return result;
-  }
+  },
 };

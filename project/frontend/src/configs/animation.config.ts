@@ -108,7 +108,6 @@ export const createListItemVariants = ({
 
 export const createScrollToTopVariants = ({
   distance = 20,
-  duration = 0.4,
 } = {}): Variants => ({
   hidden: {
     opacity: 0,

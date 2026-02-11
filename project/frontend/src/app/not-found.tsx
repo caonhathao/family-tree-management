@@ -12,13 +12,13 @@ const NotFoundPage = () => {
     router.back();
   };
   return (
-    <div className="w-screen flex flex-col gap-3 justify-start items-center">
+    <div className={"w-screen flex flex-col gap-3 justify-start items-center"}>
       {/* header */}
-      <div className="w-full flex flex-row justify-between items-center p-2">
+      <div className={"w-full flex flex-row justify-between items-center p-2"}>
         <Button
           variant={"outline"}
           size={"default"}
-          className="flex flex-row gap-2 hover:cursor-pointer"
+          className={"flex flex-row gap-2 hover:cursor-pointer"}
           onClick={() => navigateBack()}
         >
           <IoIosArrowBack />
@@ -27,14 +27,14 @@ const NotFoundPage = () => {
         <Button
           variant={"outline"}
           size={"icon"}
-          className="hover:cursor-pointer"
+          className={"hover:cursor-pointer"}
         >
           <IoIosInformationCircleOutline />
         </Button>
       </div>
       {/* notification */}
       <motion.div>
-        <Image src={notFound} alt="not-found-img" />
+        <Image src={notFound} alt={"not-found-img"} />
       </motion.div>
     </div>
   );

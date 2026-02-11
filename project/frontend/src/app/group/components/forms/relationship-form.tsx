@@ -155,7 +155,7 @@ const RelationshipForm = ({
   return (
     <div className={`absolute z-10`}>
       <Dialog open={openState} onOpenChange={setOpenState}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className={"sm:max-w-sm"}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>
               <DialogTitle>Tạo/Cập nhật mối quan hệ</DialogTitle>
@@ -165,50 +165,50 @@ const RelationshipForm = ({
             </DialogHeader>
             <FieldGroup>
               <Field>
-                <Label htmlFor="fromMemberId">Thành viên 1 (Nguồn)</Label>
+                <Label htmlFor={"fromMemberId"}>Thành viên 1 (Nguồn)</Label>
                 <Controller
-                  name="fromMemberId"
+                  name={"fromMemberId"}
                   control={control}
                   render={({ field }) => (
                     <MemberSelect
                       members={draft.members}
                       value={field.value}
                       onChange={field.onChange}
-                      placeholder="Chọn hoặc gõ tìm tên..."
+                      placeholder={"Chọn hoặc gõ tìm tên..."}
                     />
                   )}
                 />
                 {errors.fromMemberId && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.fromMemberId.message}
                   </span>
                 )}
               </Field>
               <Field>
-                <Label htmlFor="toMemberId">Thành viên 2 (Đích)</Label>
+                <Label htmlFor={"toMemberId"}>Thành viên 2 (Đích)</Label>
                 <Controller
-                  name="toMemberId"
+                  name={"toMemberId"}
                   control={control}
                   render={({ field }) => (
                     <MemberSelect
                       members={draft.members}
                       value={field.value}
                       onChange={field.onChange}
-                      placeholder="Chọn hoặc gõ tìm tên..."
+                      placeholder={"Chọn hoặc gõ tìm tên..."}
                     />
                   )}
                 />
                 {errors.toMemberId && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.toMemberId.message}
                   </span>
                 )}
               </Field>
 
               <Field>
-                <Label htmlFor="type">Loại quan hệ</Label>
+                <Label htmlFor={"type"}>Loại quan hệ</Label>
                 <Controller
-                  name="type"
+                  name={"type"}
                   control={control}
                   render={({ field }) => (
                     <Select
@@ -216,20 +216,20 @@ const RelationshipForm = ({
                       value={field.value}
                       defaultValue={field.value}
                     >
-                      <SelectTrigger className="hover:cursor-pointer">
-                        <SelectValue placeholder="Chọn loại quan hệ" />
+                      <SelectTrigger className={"hover:cursor-pointer"}>
+                        <SelectValue placeholder={"Chọn loại quan hệ"} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
                           <SelectItem
-                            value="PARENT"
-                            className="hover:cursor-pointer"
+                            value={"PARENT"}
+                            className={"hover:cursor-pointer"}
                           >
                             Cha/Mẹ
                           </SelectItem>
                           <SelectItem
-                            value="SPOUSE"
-                            className="hover:cursor-pointer"
+                            value={"SPOUSE"}
+                            className={"hover:cursor-pointer"}
                           >
                             Vợ/Chồng
                           </SelectItem>
@@ -239,24 +239,24 @@ const RelationshipForm = ({
                   )}
                 />
                 {errors.type && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.type.message}
                   </span>
                 )}
               </Field>
             </FieldGroup>
-            <DialogFooter className="pt-2">
+            <DialogFooter className={"pt-2"}>
               <DialogClose asChild>
                 <Button
-                  type="button"
-                  variant="outline"
-                  className="hover:cursor-pointer"
+                  type={"button"}
+                  variant={"outline"}
+                  className={"hover:cursor-pointer"}
                 >
                   Hủy
                 </Button>
               </DialogClose>
               <Button
-                type="submit"
+                type={"submit"}
                 className={`w-fit flex justify-center items-center gap-2 hover:cursor-pointer`}
               >
                 {currentData ? "Cập nhật" : "Tạo"}

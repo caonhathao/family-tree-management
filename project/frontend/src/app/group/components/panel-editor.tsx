@@ -1,6 +1,5 @@
 "use client";
 import { LoaderModule } from "@/components/shared/loader-module";
-import { Toaster } from "@/components/shared/toast";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -86,38 +85,44 @@ export const PanelEditor = ({
       onDragEnd={() => {
         setTimeout(() => (isDragging.current = false), 100);
       }}
-      className="absolute z-50 flex items-center bg-background border rounded-lg shadow-lg overflow-hidden touch-none"
+      className={
+        "absolute z-50 flex items-center bg-background border rounded-lg shadow-lg overflow-hidden touch-none"
+      }
       initial={{ x: 20, y: 20 }}
     >
       <div
         onPointerDown={startDrag}
-        className="px-1 py-2 cursor-grab active:cursor-grabbing hover:bg-accent flex items-center justify-center border-r"
+        className={
+          "px-1 py-2 cursor-grab active:cursor-grabbing hover:bg-accent flex items-center justify-center border-r"
+        }
       >
-        <LuGripVertical className="text-muted-foreground h-4 w-4" />
+        <LuGripVertical className={"text-muted-foreground h-4 w-4"} />
       </div>
 
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-none h-10 w-10 hover:bg-accent hover:cursor-pointer"
+            variant={"ghost"}
+            size={"icon"}
+            className={
+              "rounded-none h-10 w-10 hover:bg-accent hover:cursor-pointer"
+            }
           >
-            <LuLayoutPanelTop className="h-5 w-5" />
+            <LuLayoutPanelTop className={"h-5 w-5"} />
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="w-56" align="start" side="right">
+        <DropdownMenuContent className={"w-56"} align={"start"} side={"right"}>
           <DropdownMenuGroup>
             <DropdownMenuItem
-              className="hover:cursor-pointer"
+              className={"hover:cursor-pointer"}
               onClick={() => setOpenFamilyMemberForm(true)}
             >
               <FaPlus />
               Thêm thành viên
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="hover:cursor-pointer"
+              className={"hover:cursor-pointer"}
               onClick={() => setOpenRelationshipForm(true)}
             >
               <IoLink />
@@ -129,7 +134,7 @@ export const PanelEditor = ({
             <DropdownMenuLabel>Hiển thị</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={onLayout}
-              className="hover:cursor-pointer"
+              className={"hover:cursor-pointer"}
             >
               <FaSort />
               Sắp xếp sơ đồ
@@ -137,7 +142,7 @@ export const PanelEditor = ({
             <DropdownMenuCheckboxItem
               checked={showGrid}
               onCheckedChange={setShowGrid}
-              className="hover:cursor-pointer"
+              className={"hover:cursor-pointer"}
             >
               <MdOutlineGrid4X4 />
               Lưới
@@ -149,7 +154,7 @@ export const PanelEditor = ({
               <RiDragMoveFill />
               Cho phép kéo thả
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem className="hover:cursor-pointer">
+            <DropdownMenuCheckboxItem className={"hover:cursor-pointer"}>
               <BiDetail />
               Chi tiết
             </DropdownMenuCheckboxItem>
@@ -158,21 +163,25 @@ export const PanelEditor = ({
           <DropdownMenuGroup>
             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
             <DropdownMenuItem
-              className="hover:cursor-pointer"
+              className={"hover:cursor-pointer"}
               onClick={() => setOpenFamilyForm(true)}
             >
               <IoCreateOutline />
               Tạo sơ đồ
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="hover:cursor-pointer"
+              className={"hover:cursor-pointer"}
               disabled={!isDirty}
               onClick={() => handleSaveFamilyDraft()}
             >
-              {isPending ? <LoaderModule className="w-1 h-1" /> : <FaRegSave />}
+              {isPending ? (
+                <LoaderModule className={"w-1 h-1"} />
+              ) : (
+                <FaRegSave />
+              )}
               Lưu
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:cursor-pointer">
+            <DropdownMenuItem className={"hover:cursor-pointer"}>
               <MdOutlineCancel />
               Hủy
             </DropdownMenuItem>

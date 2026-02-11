@@ -9,7 +9,7 @@ const AuthPage = () => {
     // Bọc Suspense ở cấp độ cao nhất của trang Page
     <Suspense
       fallback={
-        <div className="h-screen w-full flex items-center justify-center">
+        <div className={"h-screen w-full flex items-center justify-center"}>
           <LoaderModule />
         </div>
       }

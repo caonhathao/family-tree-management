@@ -16,7 +16,7 @@ export async function SyncFamilyAction(
     const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseCreateFamilyDto> =
       await FamilyService.syncFamily(groupId, data, token);
-      console.log(res)
+    console.log(res);
     if (res.success) {
       return res.data;
     } else
@@ -32,7 +32,7 @@ export async function GetFamilyData(groupId: string) {
   try {
     const res: ResponseDataBase<IDraftFamilyData> =
       await FamilyService.getFamily(groupId);
-    
+
     if (res.success) return res.data;
     else
       return {

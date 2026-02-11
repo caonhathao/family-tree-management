@@ -46,8 +46,8 @@ export const UserMenu = ({
       <Avatar>
         <AvatarImage
           src={data ? data.userProfile.avatar : ""}
-          alt="@shadcn"
-          className="grayscale"
+          alt={"@shadcn"}
+          className={"grayscale"}
         />
         <AvatarFallback>
           <IoPersonOutline />
@@ -56,9 +56,9 @@ export const UserMenu = ({
       <DropdownMenu onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
-            variant="outline"
-            size="icon"
-            className="hover:cursor-pointer"
+            variant={"outline"}
+            size={"icon"}
+            className={"hover:cursor-pointer"}
           >
             <motion.div
               animate={{ rotate: isOpen ? 180 : 0 }}
@@ -72,22 +72,22 @@ export const UserMenu = ({
           <DropdownMenuContent>
             <DropdownMenuGroup>
               <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
-              <DropdownMenuItem className="hover:cursor-pointer">
+              <DropdownMenuItem className={"hover:cursor-pointer"}>
                 Hồ sơ
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="hover:cursor-pointer"
+                className={"hover:cursor-pointer"}
                 onClick={() => router.push("/group")}
               >
                 Nhóm
               </DropdownMenuItem>
-              <DropdownMenuItem className="hover:cursor-pointer">
+              <DropdownMenuItem className={"hover:cursor-pointer"}>
                 Cài đặt
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="hover:cursor-pointer"
+              className={"hover:cursor-pointer"}
               onClick={() => handleLogOut()}
             >
               Đăng xuất
@@ -96,13 +96,13 @@ export const UserMenu = ({
         ) : (
           <DropdownMenuContent>
             <DropdownMenuItem
-              className="hover:cursor-pointer"
+              className={"hover:cursor-pointer"}
               onClick={() => router.push("/auth?mode=login")}
             >
               Đăng nhập
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="hover:cursor-pointer"
+              className={"hover:cursor-pointer"}
               onClick={() => router.push("/auth?mode=register")}
             >
               Đăng kí
