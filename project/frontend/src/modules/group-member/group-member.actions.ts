@@ -1,3 +1,4 @@
+"use server";
 import { handleError } from "@/lib/utils.lib";
 import {
   ResponseUpdateGroupMemberDto,
@@ -6,6 +7,7 @@ import {
 import { GroupMemberService } from "./group-member.service";
 import { ResponseDataBase } from "@/types/base.types";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 export async function UpdateGroupMemberRoleAction(
   groupId: string,
@@ -13,8 +15,10 @@ export async function UpdateGroupMemberRoleAction(
 ) {
   let isSuccess = false;
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseUpdateGroupMemberDto> =
-      await GroupMemberService.updateRole(groupId, data);
+      await GroupMemberService.updateRole(groupId, data, token);
     if (res.success) {
       isSuccess = true;
     } else return { err: res.message || "error" };
@@ -32,8 +36,10 @@ export async function UpdateGroupMemberLeaderAction(
 ) {
   let isSuccess = false;
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseUpdateGroupMemberDto> =
-      await GroupMemberService.changeLeader(groupId, data);
+      await GroupMemberService.changeLeader(groupId, data, token);
     if (res.success) {
       isSuccess = true;
     } else return { err: res.message || "error" };
@@ -51,8 +57,31 @@ export async function DeleteGroupMemberAction(
 ) {
   let isSuccess = false;
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseUpdateGroupMemberDto> =
-      await GroupMemberService.deleteGroupMember(groupId, memberId);
+      await GroupMemberService.deleteGroupMember(groupId, memberId, token);
+    if (res.success) {
+      isSuccess = true;
+    } else return { err: res.message || "error" };
+  } catch (err) {
+    return handleError(err);
+  }
+  if (isSuccess) {
+    revalidatePath(`/group/${groupId}`);
+  }
+}
+
+export async function RemoveFromGroupAction(groupId: string, memberId: string) {
+  let isSuccess = false;
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
+    const res = await GroupMemberService.removeFromGroup(
+      groupId,
+      memberId,
+      token,
+    );
     if (res.success) {
       isSuccess = true;
     } else return { err: res.message || "error" };

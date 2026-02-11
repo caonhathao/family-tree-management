@@ -24,6 +24,8 @@ export interface ResponseGroupFamilyDetailDto {
         userId: string;
       };
     };
+    role: string;
+    isLeader: boolean;
   }[];
 }
 
@@ -35,10 +37,10 @@ export interface ResponseGroupFamiliesDto {
   updatedAt: Date;
 }
 
-export interface ResponseJoinGroupDto {
+export interface IResponseJoinGroupDto {
   id: string;
   groupId: string;
   memberId: string;
   role: string;
-  inLeader: string;
+  isLeader: boolean;
 }

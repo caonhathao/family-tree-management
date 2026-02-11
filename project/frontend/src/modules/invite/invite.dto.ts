@@ -1,7 +1,7 @@
-export interface CreateInviteDto {
+export interface ICreateInviteDto {
   groupId: string;
   expiresAt: Date;
 }
-export interface ResponseCreateInviteDto {
+export interface IResponseCreateInviteDto {
   inviteLink: string;
 }

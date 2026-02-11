@@ -57,7 +57,7 @@ export class InviteService {
     });
 
     if (invite) {
-      const inviteLink = `${this.envConfig.domain}?token=${invite.token}`;
+      const inviteLink = `${this.envConfig.domain}/invite?token=${invite.token}`;
 
       return { inviteLink: inviteLink };
     }
@@ -77,7 +77,7 @@ export class InviteService {
       },
     });
 
-    const inviteLink = `${this.envConfig.domain}?token=${inviteToken}`;
+    const inviteLink = `${this.envConfig.domain}/invite?token=${inviteToken}`;
     return { inviteLink: inviteLink };
   }
 }

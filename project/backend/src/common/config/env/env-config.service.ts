@@ -46,8 +46,11 @@ export class EnvConfigService {
   get cloudinaryName(): string {
     return this.configService.getOrThrow<string>('cloudinary.cloudName');
   }
-  get domain(): string {
-    return this.configService.getOrThrow<string>('DOMAIN');
+  get serverDomain(): string {
+    return this.configService.getOrThrow<string>('SERVER_DOMAIN');
+  }
+  get clientDomain(): string {
+    return this.configService.getOrThrow<string>('CLIENT_DOMAIN');
   }
   get googleClientId(): string {
     return this.configService.getOrThrow<string>('GOOGLE_CLIENT_ID');

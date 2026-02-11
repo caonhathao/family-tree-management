@@ -30,6 +30,8 @@ export const apiClient = {
     changeLeader: (groupId: string) => `/api/group-member/leader/${groupId}`,
     deleteGroupMember: (groupId: string, memberId: string) =>
       `/api/group-member/${groupId}/${memberId}`,
+    removeFromGroup: (groupId: string, memberId: string) =>
+      `/api/group-member/${groupId}/${memberId}`,
   },
   invite: {
     createInvite: "/api/invite",

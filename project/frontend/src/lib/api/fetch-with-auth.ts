@@ -1,3 +1,4 @@
+"use server";
 import { AuthService } from "@/modules/auth/auth.service";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
