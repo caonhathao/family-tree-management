@@ -19,5 +19,8 @@ export default () => ({
     apiSecret: process.env.CLOUDINARY_API_SECRET,
     url: process.env.CLOUDINARY_URL,
   },
-  domain: process.env.DOMAIN,
+  domain: {
+    serverDomain: process.env.SERVER_DOMAIN,
+    clientDomain: process.env.CLIENT_DOMAIN,
+  },
 });

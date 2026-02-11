@@ -19,17 +19,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Field } from "@/components/ui/field";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { updateGroupFamilyAction } from "@/modules/group-family/group-family.actions";
 import {
   IUpdateGroupFamilyDto,
   ResponseGroupFamilyDetailDto,
 } from "@/modules/group-family/group-family.dto";
 import { UpdateGroupFamilySchema } from "@/modules/group-family/group-family.schemas";
+import { RemoveFromGroupAction } from "@/modules/group-member/group-member.actions";
+import { CreateInviteLinkAction } from "@/modules/invite/invite.actions";
+import {
+  ICreateInviteDto,
+  IResponseCreateInviteDto,
+} from "@/modules/invite/invite.dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import isEqual from "lodash.isequal";
 import { Controller, useForm } from "react-hook-form";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { CiLogout } from "react-icons/ci";
+import { IoMdKey } from "react-icons/io";
 import { IoSwapVertical } from "react-icons/io5";
 import { MdOutlineInfo } from "react-icons/md";
 import { TbEdit } from "react-icons/tb";
@@ -66,6 +74,45 @@ export const FamilyInfoDrawer = ({
       });
     }
     const res = await updateGroupFamilyAction(data.id, values);
+    // console.log(res);
+    if (res && "error" in res) {
+      Toaster({
+        title: "Lỗi",
+        description: res.error,
+        type: "error",
+      });
+    } else {
+      Toaster({
+        title: "Thành công",
+        description: "Cập nhật thành công",
+        type: "success",
+      });
+    }
+  };
+  const handleCopy = useCopyToClipboard();
+  const handleCreateInviteLink = async () => {
+    const payload: ICreateInviteDto = {
+      groupId: data.id,
+      expiresAt: new Date(),
+    };
+    const res:
+      | { success: boolean; error: string }
+      | IResponseCreateInviteDto
+      | { err: string } = await CreateInviteLinkAction(payload);
+    console.log(res);
+    if (res && "error" in res) {
+      Toaster({
+        title: "Lỗi",
+        description: res.error as string,
+        type: "error",
+      });
+    } else if (res && "inviteLink" in res) {
+      handleCopy(res.inviteLink);
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    const res = await RemoveFromGroupAction(data.id, memberId);
     console.log(res);
   };
 
@@ -83,24 +130,26 @@ export const FamilyInfoDrawer = ({
         <DrawerHeader>
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-row justify-between items-center w-full"
+            className={"flex flex-row justify-between items-center w-full"}
           >
-            <div className="w-full">
+            <div className={"w-full"}>
               <DrawerTitle>
                 <Field>
                   <Controller
-                    name="name"
+                    name={"name"}
                     control={control}
                     render={({ field }) => (
                       <input
                         {...field}
-                        className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-ring rounded px-1 -ml-1 w-full"
-                        placeholder="Nhập tên nhóm..."
+                        className={
+                          "text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-ring rounded px-1 -ml-1 w-full"
+                        }
+                        placeholder={"Nhập tên nhóm..."}
                       />
                     )}
                   />
                   {errors.name && (
-                    <span className="text-xs text-red-500">
+                    <span className={"text-xs text-red-500"}>
                       {errors.name.message}
                     </span>
                   )}
@@ -109,18 +158,20 @@ export const FamilyInfoDrawer = ({
               <DrawerDescription>
                 <Field>
                   <Controller
-                    name="description"
+                    name={"description"}
                     control={control}
                     render={({ field }) => (
                       <input
                         {...field}
-                        className="text-sm text-muted-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-ring rounded px-1 -ml-1 w-full resize-none"
-                        placeholder="Thêm mô tả ngắn gọn..."
+                        className={
+                          "text-sm text-muted-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-ring rounded px-1 -ml-1 w-full resize-none"
+                        }
+                        placeholder={"Thêm mô tả ngắn gọn..."}
                       />
                     )}
                   />
                   {errors.description && (
-                    <span className="text-xs text-red-500">
+                    <span className={"text-xs text-red-500"}>
                       {errors.description.message}
                     </span>
                   )}
@@ -128,10 +179,10 @@ export const FamilyInfoDrawer = ({
               </DrawerDescription>
             </div>
             <Button
-              type="submit"
+              type={"submit"}
               variant={"outline"}
               size={"icon"}
-              className="hover:cursor-pointer"
+              className={"hover:cursor-pointer"}
             >
               <TbEdit />
             </Button>
@@ -163,8 +214,20 @@ export const FamilyInfoDrawer = ({
                   </AvatarFallback>
                 </Avatar>
               </div>
-              <div className={"col-span-4"}>
+              <div
+                className={
+                  "col-span-4 flex flex-row justify-between items-center"
+                }
+              >
                 {item.member.userProfile.fullName}
+                {item.role === "OWNER" ? (
+                  <p>(Chủ sở hữu)</p>
+                ) : item.role === "EDITOR" ? (
+                  <p>(Biên soạn)</p>
+                ) : (
+                  ""
+                )}
+                {item.isLeader ? <IoMdKey color={"yellow"} /> : ""}
               </div>
               <div className={"col-span-1"}>
                 <DropdownMenu>
@@ -179,7 +242,12 @@ export const FamilyInfoDrawer = ({
                   </DropdownMenuTrigger>
                   <DropdownMenuGroup>
                     <DropdownMenuContent>
-                      <DropdownMenuItem className={"hover:cursor-pointer"}>
+                      <DropdownMenuItem
+                        className={"hover:cursor-pointer"}
+                        onClick={() =>
+                          handleRemoveMember(item.member.userProfile.userId)
+                        }
+                      >
                         <CiLogout />
                         Rời nhóm
                       </DropdownMenuItem>
@@ -199,7 +267,13 @@ export const FamilyInfoDrawer = ({
           ))}
         </div>
         <DrawerFooter>
-          <Button>Tạo lời mời</Button>
+          <Button
+            type={"button"}
+            onClick={() => handleCreateInviteLink()}
+            className={"hover:cursor-pointer"}
+          >
+            Tạo lời mời
+          </Button>
           <DrawerClose asChild>
             <Button variant={"outline"}>Thoát</Button>
           </DrawerClose>

@@ -70,7 +70,7 @@ export const GroupFamilyService = {
   },
   joinGroup: async (tokenCode: string, token: string | undefined) => {
     const result = await fetchWithAuth(
-      EnvConfig.serverDomain + apiClient.groupFamily.updateGroup(tokenCode),
+      EnvConfig.serverDomain + apiClient.groupFamily.joinGroup(tokenCode),
       {
         method: "POST",
         headers: {
@@ -79,6 +79,6 @@ export const GroupFamilyService = {
         },
       },
     );
-    return result.json();
+    return result;
   },
 };

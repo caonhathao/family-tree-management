@@ -1,20 +1,24 @@
 import { fetchWithAuth } from "@/lib/api/fetch-with-auth";
-import { CreateInviteDto } from "./invite.dto";
+import { ICreateInviteDto } from "./invite.dto";
 import { apiClient } from "@/lib/api/api-path.lib";
-import { cookies } from "next/headers";
+import { EnvConfig } from "@/lib/env/env-config.lib";
 
 export const InviteService = {
-  createInviteLink: async (data: CreateInviteDto) => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-    const res = await fetchWithAuth(apiClient.invite.createInvite, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+  createInviteLink: async (
+    data: ICreateInviteDto,
+    token: string | undefined,
+  ) => {
+    const res = await fetchWithAuth(
+      EnvConfig.serverDomain + apiClient.invite.createInvite,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
       },
-      body: JSON.stringify(data),
-    });
-    return res.json();
+    );
+    return res;
   },
 };

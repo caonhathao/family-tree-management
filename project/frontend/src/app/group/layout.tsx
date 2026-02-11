@@ -26,7 +26,7 @@ const GroupLayout = ({
             <Separator orientation={"vertical"} className={"mr-2 h-4"} />
             <div className={""}>Quản lý gia phả</div>
           </header>
-          <main className="max-h-screen overflow-hidden">{children}</main>
+          <main className={"max-h-screen overflow-hidden"}>{children}</main>
         </SidebarInset>
       </SidebarProvider>
     </div>

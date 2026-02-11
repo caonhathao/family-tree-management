@@ -4,7 +4,7 @@ import {
   CreateGroupFamilyDto,
   ResponseGroupFamiliesDto,
   ResponseGroupFamilyDetailDto,
-  ResponseJoinGroupDto,
+  IResponseJoinGroupDto,
   IUpdateGroupFamilyDto,
 } from "./group-family.dto";
 import { GroupFamilyService } from "./group-family.service";
@@ -57,15 +57,13 @@ export async function updateGroupFamilyAction(
 }
 
 export async function joinGroupAcion(tokenCode: string) {
-  let groupId: string;
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
-    const res: ResponseDataBase<ResponseJoinGroupDto> =
+    const res: ResponseDataBase<IResponseJoinGroupDto> =
       await GroupFamilyService.joinGroup(tokenCode, token);
     if (res.success) {
-      groupId = res.data.groupId;
-      revalidatePath(`/groups/${groupId}`);
+      return res.data;
     } else return { error: res.message || "error" };
   } catch (err) {
     return handleError(err);

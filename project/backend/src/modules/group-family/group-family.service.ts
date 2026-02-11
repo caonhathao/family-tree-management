@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -114,6 +113,8 @@ export class GroupFamilyService {
                 },
               },
             },
+            role: true,
+            isLeader: true,
           },
         },
         createdAt: true,
@@ -216,7 +217,19 @@ export class GroupFamilyService {
     });
 
     if (existedGetter) {
-      throw new ConflictException(Exception.EXISTED);
+      return await this.prisma.groupMember.findFirst({
+        where: {
+          memberId: getterId,
+          groupId: invite.groupId,
+        },
+        select: {
+          id: true,
+          groupId: true,
+          memberId: true,
+          role: true,
+          isLeader: true,
+        },
+      });
     }
 
     //check group exist

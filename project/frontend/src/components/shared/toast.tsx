@@ -7,6 +7,9 @@ export const Toaster = ({
   description,
   type = "default",
   position = "top-right",
+  duration,
+  icon,
+  cancel,
 }: {
   title: string;
   description: string;
@@ -18,10 +21,19 @@ export const Toaster = ({
     | "bottom-right"
     | "top-center"
     | "bottom-center";
+  duration?: number;
+  icon?: React.ReactNode;
+  cancel?: {
+    label: string;
+    onClick: () => void;
+  };
 }) => {
   const options = {
     description,
     position,
+    duration,
+    icon,
+    cancel,
   };
 
   switch (type) {
