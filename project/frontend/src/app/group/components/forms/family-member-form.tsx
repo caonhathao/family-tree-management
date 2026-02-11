@@ -147,7 +147,7 @@ const NewFamilyMemberForm = ({
   return (
     <div className={`absolute z-10 `}>
       <Dialog open={openState} onOpenChange={setOpenState}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className={"sm:max-w-sm"}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>
               <DialogTitle>Tạo/Cập nhật thành viên mới</DialogTitle>
@@ -157,50 +157,50 @@ const NewFamilyMemberForm = ({
             </DialogHeader>
             <FieldGroup>
               <Field>
-                <Label htmlFor="fullName">Họ và tên</Label>
+                <Label htmlFor={"fullName"}>Họ và tên</Label>
                 <Input
-                  id="fullName"
-                  type="text"
+                  id={"fullName"}
+                  type={"text"}
                   required
                   {...register("fullName")}
                 />
                 {errors.fullName && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.fullName.message}
                   </span>
                 )}
               </Field>
-              <div className="grid grid-cols-2 gap-4">
+              <div className={"grid grid-cols-2 gap-4"}>
                 <Field>
-                  <Label htmlFor="gender">Giới tính</Label>
+                  <Label htmlFor={"gender"}>Giới tính</Label>
                   <Controller
-                    name="gender"
+                    name={"gender"}
                     control={control}
                     render={({ field }) => (
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
-                        <SelectTrigger className="hover:cursor-pointer">
-                          <SelectValue placeholder="Chọn" />
+                        <SelectTrigger className={"hover:cursor-pointer"}>
+                          <SelectValue placeholder={"Chọn"} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
                             <SelectItem
-                              value="MALE"
-                              className="hover:cursor-pointer"
+                              value={"MALE"}
+                              className={"hover:cursor-pointer"}
                             >
                               Nam
                             </SelectItem>
                             <SelectItem
-                              value="FEMALE"
-                              className="hover:cursor-pointer"
+                              value={"FEMALE"}
+                              className={"hover:cursor-pointer"}
                             >
                               Nữ
                             </SelectItem>
                             <SelectItem
-                              value="OTHER"
-                              className="hover:cursor-pointer"
+                              value={"OTHER"}
+                              className={"hover:cursor-pointer"}
                             >
                               Khác
                             </SelectItem>
@@ -210,92 +210,97 @@ const NewFamilyMemberForm = ({
                     )}
                   />
                   {errors.gender && (
-                    <span className="text-xs text-red-500">
+                    <span className={"text-xs text-red-500"}>
                       {errors.gender.message}
                     </span>
                   )}
                 </Field>
                 <Field>
-                  <Label htmlFor="generation">Thế hệ</Label>
+                  <Label htmlFor={"generation"}>Thế hệ</Label>
                   <Input
-                    id="generation"
-                    type="number"
+                    id={"generation"}
+                    type={"number"}
                     min={1}
                     {...register("generation", { valueAsNumber: true })}
                   />
                   {errors.generation && (
-                    <span className="text-xs text-red-500">
+                    <span className={"text-xs text-red-500"}>
                       {errors.generation.message}
                     </span>
                   )}
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className={"grid grid-cols-2 gap-4"}>
                 <Field>
-                  <Label htmlFor="dateOfBirth">Ngày sinh</Label>
+                  <Label htmlFor={"dateOfBirth"}>Ngày sinh</Label>
                   <Input
-                    id="dateOfBirth"
-                    type="date"
+                    id={"dateOfBirth"}
+                    type={"date"}
                     {...register("dateOfBirth")}
                   />
                   {errors.dateOfBirth && (
-                    <span className="text-xs text-red-500">
+                    <span className={"text-xs text-red-500"}>
                       {errors.dateOfBirth.message}
                     </span>
                   )}
                 </Field>
                 <Field>
-                  <Label htmlFor="dateOfDeath">Ngày mất</Label>
+                  <Label htmlFor={"dateOfDeath"}>Ngày mất</Label>
                   <Input
-                    id="dateOfDeath"
-                    type="date"
+                    id={"dateOfDeath"}
+                    type={"date"}
                     disabled={isAlive}
                     {...register("dateOfDeath")}
                   />
                   {errors.dateOfDeath && (
-                    <span className="text-xs text-red-500">
+                    <span className={"text-xs text-red-500"}>
                       {errors.dateOfDeath.message}
                     </span>
                   )}
                 </Field>
               </div>
-              <div className="flex items-center space-x-2 py-2">
+              <div className={"flex items-center space-x-2 py-2"}>
                 <input
-                  type="checkbox"
-                  id="isAlive"
-                  className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer"
+                  type={"checkbox"}
+                  id={"isAlive"}
+                  className={
+                    "h-4 w-4 rounded border-gray-300 hover:cursor-pointer"
+                  }
                   {...register("isAlive")}
                 />
-                <Label htmlFor="isAlive" className="font-normal cursor-pointer">
+                <Label
+                  htmlFor={"isAlive"}
+                  className={"font-normal cursor-pointer"}
+                >
                   Thành viên này còn sống
                 </Label>
               </div>
               <Field>
-                <Label htmlFor="biography">Tiểu sử</Label>
+                <Label htmlFor={"biography"}>Tiểu sử</Label>
                 <Textarea
-                  id="biography"
-                  placeholder="Nhập tiểu sử..."
-                  className="resize-none"
+                  id={"biography"}
+                  placeholder={"Nhập tiểu sử..."}
+                  className={"resize-none"}
                   {...register("biography")}
                 />
                 {errors.biography && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.biography.message}
                   </span>
                 )}
               </Field>
             </FieldGroup>
-            <DialogFooter className="pt-2">
+            <DialogFooter className={"pt-2"}>
               <DialogClose asChild>
-                <Button variant="outline" className="hover:cursor-pointer">
+                <Button variant={"outline"} className={"hover:cursor-pointer"}>
                   Hủy
                 </Button>
               </DialogClose>
               <Button
-                type="button"
+                type={"button"}
                 variant={"destructive"}
                 disabled={currentData === null}
-                className="hover:cursor-pointer"
+                className={"hover:cursor-pointer"}
                 onClick={() =>
                   deleteMemberFromDraft(currentData?.localId || "")
                 }
@@ -303,7 +308,7 @@ const NewFamilyMemberForm = ({
                 Xóa
               </Button>
               <Button
-                type="submit"
+                type={"submit"}
                 className={
                   "w-fit flex justify-center items-center gap-2 hover:cursor-pointer"
                 }

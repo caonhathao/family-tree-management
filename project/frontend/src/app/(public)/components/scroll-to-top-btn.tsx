@@ -36,16 +36,16 @@ const ScrollToTop = () => {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial="hidden"
-          animate="visible"
-          exit="hidden"
+          initial={"hidden"}
+          animate={"visible"}
+          exit={"hidden"}
           variants={variants}
-          className="fixed bottom-20 right-3 z-50"
+          className={"fixed bottom-20 right-3 z-50"}
         >
           <Button
-            variant="outline"
-            size="icon"
-            className="hover:cursor-pointer shadow-lg bg-white"
+            variant={"outline"}
+            size={"icon"}
+            className={"hover:cursor-pointer shadow-lg bg-white"}
             onClick={scrollToTop}
           >
             <IoMdArrowRoundUp />

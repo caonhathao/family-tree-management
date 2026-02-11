@@ -56,7 +56,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   };
 
   return (
-    <Card {...props} className="border-none shadow-none">
+    <Card {...props} className={"border-none shadow-none"}>
       <CardHeader>
         <CardTitle>Tạo tài khoản</CardTitle>
         <CardDescription>
@@ -66,44 +66,44 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
-            <FieldGroup className="flex flex-row">
+            <FieldGroup className={"flex flex-row"}>
               <Field>
                 <Input
-                  id="name"
-                  type="text"
-                  placeholder="Tên của bạn"
+                  id={"name"}
+                  type={"text"}
+                  placeholder={"Tên của bạn"}
                   disabled={isPending}
                   {...register("fullName")}
                 />
                 {errors.fullName && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.fullName.message}
                   </span>
                 )}
               </Field>
               <Field>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="Email của bạn"
-                  autoComplete="email"
+                  id={"email"}
+                  type={"email"}
+                  placeholder={"Email của bạn"}
+                  autoComplete={"email"}
                   disabled={isPending}
                   {...register("email")}
                 />
                 {errors.email && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.email.message}
                   </span>
                 )}
               </Field>
             </FieldGroup>
             <Field>
-              <div className="flex flex-row gap-1">
+              <div className={"flex flex-row gap-1"}>
                 <Input
-                  id="password"
+                  id={"password"}
                   type={isPasswordVisible ? "text" : "password"}
-                  placeholder="Mật khẩu của bạn"
-                  autoComplete="new-password"
+                  placeholder={"Mật khẩu của bạn"}
+                  autoComplete={"new-password"}
                   disabled={isPending}
                   {...register("password")}
                 />
@@ -113,7 +113,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 />
               </div>
               {errors.password ? (
-                <span className="text-xs text-red-500">
+                <span className={"text-xs text-red-500"}>
                   {errors.password.message}
                 </span>
               ) : (
@@ -124,15 +124,15 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
             </Field>
             <Field>
               <Input
-                id="confirm-password"
-                type="password"
-                placeholder="Xác nhận mật khẩu"
-                autoComplete="new-password"
+                id={"confirm-password"}
+                type={"password"}
+                placeholder={"Xác nhận mật khẩu"}
+                autoComplete={"new-password"}
                 disabled={isPending}
                 {...register("confirmPassword")}
               />
               {errors.confirmPassword ? (
-                <span className="text-xs text-red-500">
+                <span className={"text-xs text-red-500"}>
                   {errors.confirmPassword.message}
                 </span>
               ) : (
@@ -142,25 +142,25 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
             <FieldGroup>
               <Field>
                 <Button
-                  type="submit"
-                  className="hover:cursor-pointer"
+                  type={"submit"}
+                  className={"hover:cursor-pointer"}
                   disabled={isPending}
                 >
                   Tạo tài khoản
                 </Button>
                 <Button
-                  variant="outline"
-                  type="button"
-                  className="hover:cursor-pointer"
+                  variant={"outline"}
+                  type={"button"}
+                  className={"hover:cursor-pointer"}
                 >
                   Đăng kí với Google
                 </Button>
-                <FieldDescription className="px-6 text-center ">
+                <FieldDescription className={"px-6 text-center "}>
                   Đã có tài khoản?
                   <Button
-                    type="button"
+                    type={"button"}
                     variant={"link"}
-                    className="hover:cursor-pointer p-1"
+                    className={"hover:cursor-pointer p-1"}
                     onClick={() => navigateToLogin()}
                   >
                     Đăng nhập ngay

@@ -45,25 +45,33 @@ export const SideBarClient = ({
     return colors[charCodeSum % colors.length];
   };
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="flex flex-row justify-between items-center">
+    <Sidebar collapsible={"icon"}>
+      <SidebarHeader className={"flex flex-row justify-between items-center"}>
         <SidebarMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
                 size={"lg"}
-                className="min-h-12 hover:cursor-pointer w-full flex flex-row justify-between items-center"
+                className={
+                  "min-h-12 hover:cursor-pointer w-full flex flex-row justify-between items-center"
+                }
               >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg shrink-0">
+                <div
+                  className={
+                    "flex aspect-square size-8 items-center justify-center rounded-lg shrink-0"
+                  }
+                >
                   <Image
                     src={logo.src}
                     width={2000}
                     height={2000}
-                    alt="logo"
-                    className="rounded-lg w-10 border-2"
+                    alt={"logo"}
+                    className={"rounded-lg w-10 border-2"}
                   />
                 </div>
-                <div className="font-bold group-data-[collapsible=icon]:hidden">
+                <div
+                  className={"font-bold group-data-[collapsible=icon]:hidden"}
+                >
                   Nhóm của bạn
                 </div>
                 <IoIosArrowForward />
@@ -71,14 +79,14 @@ export const SideBarClient = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem
-                className="hover:cursor-pointer"
+                className={"hover:cursor-pointer"}
                 onClick={() => router.push("/")}
               >
                 <IoMdHome />
                 Về trang chủ
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="hover:cursor-pointer"
+                className={"hover:cursor-pointer"}
                 onClick={() => router.push("/")}
               >
                 <MdOutlineContactSupport />
@@ -91,8 +99,12 @@ export const SideBarClient = ({
       <SidebarGroup>
         <SidebarContent>
           {data && data.length === 0 ? (
-            <div className="w-full flex flex-col justify-center items-center gap-3 group-data-[collapsible=icon]:hidden">
-              <p className="italic">Không có nhóm nào</p>
+            <div
+              className={
+                "w-full flex flex-col justify-center items-center gap-3 group-data-[collapsible=icon]:hidden"
+              }
+            >
+              <p className={"italic"}>Không có nhóm nào</p>
             </div>
           ) : (
             data.map((item, index) => (
@@ -111,17 +123,19 @@ export const SideBarClient = ({
                     color: getColorFromName(item.name),
                     borderColor: getColorFromName(item.name),
                   }}
-                  className="size-7 shrink-0 border rounded-lg font-bold flex items-center justify-center"
+                  className={
+                    "size-7 shrink-0 border rounded-lg font-bold flex items-center justify-center"
+                  }
                 >
                   {item.name[0]}
                 </div>
-                <div className="group-data-[collapsible=icon]:hidden">
+                <div className={"group-data-[collapsible=icon]:hidden"}>
                   {item.name}
                 </div>
               </SidebarMenuButton>
             ))
           )}
-          <NewGroupForm className="group-data-[collapsible=icon]:hidden" />
+          <NewGroupForm className={"group-data-[collapsible=icon]:hidden"} />
         </SidebarContent>
       </SidebarGroup>
       <SidebarFooter></SidebarFooter>

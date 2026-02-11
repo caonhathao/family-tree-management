@@ -36,7 +36,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     } else {
       // Refresh thất bại (hết cả refresh token) -> yêu cầu login lại
       // Có thể redirect về trang login ở đây
-      redirect('/login')
+      redirect("/login");
     }
   }
 

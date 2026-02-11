@@ -36,21 +36,21 @@ export function MemberSelect({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
-          role="combobox"
+          variant={"outline"}
+          role={"combobox"}
           aria-expanded={open}
-          className="w-full justify-between font-normal hover:cursor-pointer"
+          className={"w-full justify-between font-normal hover:cursor-pointer"}
         >
           {value
             ? members.find((m: IFamilyMemberDto) => m.localId === value)
                 ?.fullName
             : placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className={"ml-2 h-4 w-4 shrink-0 opacity-50"} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
+      <PopoverContent className={"w-(--radix-popover-trigger-width) p-0"}>
         <Command>
-          <CommandInput placeholder="Tìm tên thành viên..." />
+          <CommandInput placeholder={"Tìm tên thành viên..."} />
           <CommandList>
             <CommandEmpty>Không tìm thấy thành viên.</CommandEmpty>
             <CommandGroup>
@@ -62,7 +62,7 @@ export function MemberSelect({
                     onChange(member.localId);
                     setOpen(false);
                   }}
-                  className="hover:cursor-pointer"
+                  className={"hover:cursor-pointer"}
                 >
                   <Check
                     className={cn(

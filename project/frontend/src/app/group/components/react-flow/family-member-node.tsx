@@ -9,40 +9,44 @@ export const FamilyMemberNode = ({ data }: { data: IFamilyMemberDto }) => {
     <div
       className={`px-4 py-2 shadow-md rounded-md border-2 bg-white ${data.gender === "male" ? "border-blue-400" : "border-pink-400"}`}
     >
-      <div className="flex items-center">
-        <div className="rounded-full w-8 h-8 flex items-center justify-center bg-gray-100 mr-2 text-xs font-bold">
+      <div className={"flex items-center"}>
+        <div
+          className={
+            "rounded-full w-8 h-8 flex items-center justify-center bg-gray-100 mr-2 text-xs font-bold"
+          }
+        >
           {tempAvatar}
         </div>
-        <div className="ml-2">
-          <div className="text-sm font-bold">{data.fullName}</div>
-          <div className="text-gray-500 text-[10px]">{data.gender}</div>
+        <div className={"ml-2"}>
+          <div className={"text-sm font-bold"}>{data.fullName}</div>
+          <div className={"text-gray-500 text-[10px]"}>{data.gender}</div>
         </div>
       </div>
 
       {/* Các cổng kết nối (Handle) để vẽ Edges */}
       <Handle
-        type="target"
+        type={"target"}
         position={Position.Top}
         id={"t"}
-        className="w-2 h-2"
+        className={"w-2 h-2"}
       />
       <Handle
-        type="source"
+        type={"source"}
         position={Position.Bottom}
         id={"b"}
-        className="w-2 h-2"
+        className={"w-2 h-2"}
       />
       <Handle
-        type="target"
+        type={"target"}
         position={Position.Left}
         id={"l"}
-        className="w-2 h-2"
+        className={"w-2 h-2"}
       />
       <Handle
-        type="source"
+        type={"source"}
         position={Position.Right}
         id={"r"}
-        className="w-2 h-2"
+        className={"w-2 h-2"}
       />
     </div>
   );

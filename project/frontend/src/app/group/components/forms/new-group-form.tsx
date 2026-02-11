@@ -82,9 +82,9 @@ const NewGroupForm = ({ className }: { className?: string }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <div className="w-full flex justify-center items-center">
+        <div className={"w-full flex justify-center items-center"}>
           <Button
-            variant="outline"
+            variant={"outline"}
             size={"sm"}
             className={`hover:cursor-pointer w-fit ${className}`}
           >
@@ -92,7 +92,7 @@ const NewGroupForm = ({ className }: { className?: string }) => {
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className={"sm:max-w-sm"}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Tạo nhóm mới</DialogTitle>
@@ -102,71 +102,86 @@ const NewGroupForm = ({ className }: { className?: string }) => {
           </DialogHeader>
           <FieldGroup>
             <Field>
-              <Label htmlFor="name-1">Tên nhóm</Label>
-              <Input id="name-1" type="text" required {...register("name")} />
+              <Label htmlFor={"name-1"}>Tên nhóm</Label>
+              <Input
+                id={"name-1"}
+                type={"text"}
+                required
+                {...register("name")}
+              />
               {errors.name && (
-                <span className="text-xs text-red-500">
+                <span className={"text-xs text-red-500"}>
                   {errors.name.message}
                 </span>
               )}
             </Field>
             <Field>
-              <Label htmlFor="username-1">Mô tả</Label>
+              <Label htmlFor={"username-1"}>Mô tả</Label>
               <Input
-                id="username-1"
-                type="text"
+                id={"username-1"}
+                type={"text"}
                 required
                 {...register("description")}
               />
               {errors.description && (
-                <span className="text-xs text-red-500">
+                <span className={"text-xs text-red-500"}>
                   {errors.description.message}
                 </span>
               )}
             </Field>
             <Field>
-              <Label htmlFor="username-1">Vai trò của bạn</Label>
+              <Label htmlFor={"username-1"}>Vai trò của bạn</Label>
               <Controller
-                name="role"
+                name={"role"}
                 control={control}
                 render={({ field }) => (
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
-                    <SelectTrigger className="w-45 hover:cursor-pointer">
-                      <SelectValue placeholder="Vai trò" />
+                    <SelectTrigger className={"w-45 hover:cursor-pointer"}>
+                      <SelectValue placeholder={"Vai trò"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="OWNER" className="hover:cursor-pointer">Chủ gia đình</SelectItem>
-                        <SelectItem value="EDITOR" className="hover:cursor-pointer">Người chỉnh sửa</SelectItem>
+                        <SelectItem
+                          value={"OWNER"}
+                          className={"hover:cursor-pointer"}
+                        >
+                          Chủ gia đình
+                        </SelectItem>
+                        <SelectItem
+                          value={"EDITOR"}
+                          className={"hover:cursor-pointer"}
+                        >
+                          Người chỉnh sửa
+                        </SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
                 )}
               />
               {errors.role && (
-                <span className="text-xs text-red-500">
+                <span className={"text-xs text-red-500"}>
                   {errors.role.message}
                 </span>
               )}
             </Field>
           </FieldGroup>
-          <DialogFooter className="pt-2">
+          <DialogFooter className={"pt-2"}>
             <DialogClose asChild>
-              <Button variant="outline" className="hover:cursor-pointer">
+              <Button variant={"outline"} className={"hover:cursor-pointer"}>
                 Hủy
               </Button>
             </DialogClose>
             <Button
-              type="submit"
+              type={"submit"}
               disabled={isPending}
               className={`w-fit flex justify-center items-center gap-2 ${!isPending ? "hover:cursor-pointer" : "hover:cursor-not-allowed"}`}
             >
               {isPending ? (
                 <>
-                  <LoaderModule scale={0.6} className="w-1 h-1" />
+                  <LoaderModule scale={0.6} className={"w-1 h-1"} />
                   Đang tạo...
                 </>
               ) : (
