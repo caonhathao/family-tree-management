@@ -2,6 +2,7 @@ export interface IFamilyDto {
   localId: string;
   name: string;
   description?: string;
+  lineageType: string;
 }
 export interface ResponseCreateFamilyDto {
   family: {

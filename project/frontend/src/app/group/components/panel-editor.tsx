@@ -1,4 +1,6 @@
 "use client";
+import { LoaderModule } from "@/components/shared/loader-module";
+import { Toaster } from "@/components/shared/toast";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,16 +12,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AppDispatch, RootState } from "@/store";
+import { saveFamilyDraft } from "@/store/familyThunk";
 import { motion, useDragControls } from "framer-motion";
-import { Dispatch, SetStateAction, useRef, useState } from "react";
+import isEqual from "lodash.isequal";
+import {
+  Dispatch,
+  SetStateAction,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { BiDetail } from "react-icons/bi";
 import { FaPlus, FaRegSave, FaSort } from "react-icons/fa";
 import { IoCreateOutline, IoLink } from "react-icons/io5";
 import { LuLayoutPanelTop, LuGripVertical } from "react-icons/lu";
 import { MdOutlineCancel, MdOutlineGrid4X4 } from "react-icons/md";
 import { RiDragMoveFill } from "react-icons/ri";
+import { useDispatch, useSelector } from "react-redux";
 
 interface IPanelEditorProps {
+  groupId: string;
   constraintsRef: React.RefObject<HTMLDivElement | null>;
   setOpenFamilyMemberForm: Dispatch<SetStateAction<boolean>>;
   setOpenFamilyForm: Dispatch<SetStateAction<boolean>>;
@@ -32,6 +45,7 @@ interface IPanelEditorProps {
 }
 
 export const PanelEditor = ({
+  groupId,
   constraintsRef,
   setOpenFamilyMemberForm,
   setOpenFamilyForm,
@@ -45,11 +59,20 @@ export const PanelEditor = ({
   const [isOpen, setIsOpen] = useState(false);
   const controls = useDragControls();
   const isDragging = useRef(false);
-
+  const dispatch = useDispatch<AppDispatch>();
+  const { draft, origin } = useSelector((state: RootState) => state.family);
+  const isDirty = !isEqual(draft, origin);
   const startDrag = (e: React.PointerEvent) => {
     controls.start(e);
   };
 
+  const [isPending, startTransition] = useTransition();
+
+  const handleSaveFamilyDraft = async () => {
+    startTransition(() => {
+      dispatch(saveFamilyDraft(groupId));
+    });
+  };
   return (
     <motion.div
       drag
@@ -134,21 +157,25 @@ export const PanelEditor = ({
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-            <DropdownMenuCheckboxItem
+            <DropdownMenuItem
               className="hover:cursor-pointer"
               onClick={() => setOpenFamilyForm(true)}
             >
               <IoCreateOutline />
               Tạo sơ đồ
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem className="hover:cursor-pointer">
-              <FaRegSave />
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="hover:cursor-pointer"
+              disabled={!isDirty}
+              onClick={() => handleSaveFamilyDraft()}
+            >
+              {isPending ? <LoaderModule className="w-1 h-1" /> : <FaRegSave />}
               Lưu
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem className="hover:cursor-pointer">
+            </DropdownMenuItem>
+            <DropdownMenuItem className="hover:cursor-pointer">
               <MdOutlineCancel />
               Hủy
-            </DropdownMenuCheckboxItem>
+            </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
