@@ -1,7 +1,14 @@
+enum LINEAGE_TYPE {
+    PATRIARCHAL
+    MATRIARCHAL
+    OTHER
+}
+
 model Family {
     id            String         @id @default(uuid()) @db.Uuid
     name          String
     description   String
+    lineageType   LINEAGE_TYPE   @default(PATRIARCHAL)
     ownerId       String         @db.Uuid
     owner         User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
     familyMembers FamilyMember[]

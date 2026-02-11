@@ -23,16 +23,24 @@ import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import RelationshipForm from "./forms/relationship-form";
 import { IRelationshipDto } from "@/modules/relationships/relationship.dto";
 import dagre from "@dagrejs/dagre";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
+import { setDraft, setOrigin } from "@/store/familySlide";
+import isEqual from "lodash.isequal";
 
 const nodeTypes = {
   familyNode: FamilyMemberNode, // Đăng ký 'familyNode'
 };
 
 export const GroupContentPage = ({
-  data,
+  group,
+  family,
 }: {
-  data: ResponseGroupFamilyDetailDto;
+  group: ResponseGroupFamilyDetailDto;
+  family: IDraftFamilyData | null;
 }) => {
+  const dispatch = useDispatch<AppDispatch>();
+
   const constrainRef = useRef<HTMLDivElement>(null);
   const [openFamilyForm, setOpenFamilyForm] = useState<boolean>(false);
   const [openRelationForm, setOpenRelationForm] = useState<boolean>(false);
@@ -40,39 +48,23 @@ export const GroupContentPage = ({
     useState<boolean>(false);
   const [showGrid, setShowGrid] = useState(true);
   const [nodesDraggable, setNodesDraggable] = useState(true);
-  const [editingMember, setEditingMember] =
-    useState<IFamilyMemberDto | null>(null);
+  const [editingMember, setEditingMember] = useState<IFamilyMemberDto | null>(
+    null,
+  );
+
   if (!openFamilyMemberForm && editingMember !== null) setEditingMember(null);
 
   const [editingRelation, setEditingRelation] =
     useState<IRelationshipDto | null>(null);
   if (!openRelationForm && editingRelation !== null) setEditingRelation(null);
 
-  //create raw data sate
-  const [draft, setDraft] = useState<IDraftFamilyData>({
-    member: [],
-    relationships: [],
-    family: {
-      localId: "",
-      name: "",
-      description: "",
-    },
-  });
+  const { draft } = useSelector((state: RootState) => state.family);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  useEffect(() => {
-    const { nodes: flowNodes, edges: flowEdges } = mapDraftToFlow(
-      draft,
-      "familyNode",
-    );
-    setNodes(flowNodes);
-    setEdges(flowEdges);
-  }, [draft, setNodes, setEdges]);
-
   const onNodeDoubleClick = (event: React.MouseEvent, node: Node) => {
-    const member = draft.member.find((m) => m.localId === node.id);
+    const member = draft.members.find((m) => m.localId === node.id);
     if (member) {
       setEditingMember(member);
       setOpenFamilyMemberForm(true); // Mở form
@@ -91,29 +83,47 @@ export const GroupContentPage = ({
   const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
     const dagreGraph = new dagre.graphlib.Graph();
     dagreGraph.setDefaultEdgeLabel(() => ({}));
-    dagreGraph.setGraph({ rankdir: "TB", nodesep: 100, ranksep: 150 });
+    dagreGraph.setGraph({
+      rankdir: "TB",
+      nodesep: 50,
+      ranksep: 80,
+      ranker: "tight-tree",
+    });
 
-    nodes.forEach((node) => {
+    const sortedNodes = [...nodes].sort((a, b) => {
+      if (a.data.gender === "MALE" && b.data.gender === "FEMALE") return -1;
+      if (a.data.gender === "FEMALE" && b.data.gender === "MALE") return 1;
+      return 0;
+    });
+    sortedNodes.forEach((node) => {
       dagreGraph.setNode(node.id, {
         width: 150,
         height: 50,
-        rank: node.data.generation, // Sử dụng generation để ép hàng ngang [cite: 34]
+        rank: node.data.generation, // Sử dụng generation để ép hàng ngang
       });
     });
 
     edges.forEach((edge) => {
       // Lưu ý: React Flow Edge dùng 'source' và 'target'
       if (edge.label === "SPOUSE") {
-        // Hoặc dựa trên logic loại quan hệ của bạn [cite: 3, 35]
         const virtualNodeId = `v_${edge.source}_${edge.target}`;
-
         dagreGraph.setNode(virtualNodeId, { width: 1, height: 1 });
 
-        // Ép trọng số cao để Cha và Mẹ nằm sát nhau trên cùng 1 hàng
-        dagreGraph.setEdge(edge.source, virtualNodeId, { weight: 10 });
-        dagreGraph.setEdge(edge.target, virtualNodeId, { weight: 10 });
+        // Tìm node cha (Male) để ưu tiên vị trí
+        const sourceNode = nodes.find((n) => n.id === edge.source);
+        const isMaleSource = sourceNode?.data.gender === "MALE";
 
-        // Tìm con cái dựa trên danh sách quan hệ trong draft
+        // Tăng weight cho phía Male để Dagre ưu tiên kéo node này về gần trục giữa hơn
+        dagreGraph.setEdge(edge.source, virtualNodeId, {
+          weight: isMaleSource ? 20 : 10,
+          minlen: 1,
+        });
+        dagreGraph.setEdge(edge.target, virtualNodeId, {
+          weight: isMaleSource ? 10 : 20,
+          minlen: 1,
+        });
+
+        // Nối từ điểm ảo xuống con cái [cite: 23]
         const children = draft.relationships.filter(
           (r) =>
             r.type === "CHILD" &&
@@ -145,36 +155,74 @@ export const GroupContentPage = ({
   const onLayout = () => {
     const { nodes: layoutedNodes } = getLayoutedElements(nodes, edges);
 
-    setDraft((prev) => ({
-      ...prev,
-      member: prev.member.map((m) => {
-        // Tìm node tương ứng đã được Dagre tính toán vị trí
-        const layoutedNode = layoutedNodes.find((n) => n.id === m.localId);
-        return {
-          ...m,
-          // Cập nhật tọa độ mới vào member (bạn cần thêm trường x, y vào ICreateFamilyMemberDto)
-          positionX: layoutedNode?.position.x,
-          positionY: layoutedNode?.position.y,
-        };
-      }),
-    }));
+    const updatedMembers = draft.members.map((m) => {
+      // Tìm node tương ứng đã được Dagre tính toán vị trí
+      const layoutedNode = layoutedNodes.find((n) => n.id === m.localId);
+      return {
+        ...m,
+        // Cập nhật tọa độ mới vào member (bạn cần thêm trường x, y vào ICreateFamilyMemberDto)
+        positionX: layoutedNode?.position.x,
+        positionY: layoutedNode?.position.y,
+      };
+    });
+    dispatch(setDraft({ ...draft, members: updatedMembers }));
 
     console.log("Sơ đồ đã được cập nhật tọa độ vào Draft!");
   };
 
   const onNodeDragStop = (event: React.MouseEvent, node: Node) => {
-    setDraft((prev) => ({
-      ...prev,
-      member: prev.member.map((m) =>
-        m.localId === node.id
-          ? { ...m, positionX: node.position.x, positionY: node.position.y }
-          : m,
-      ),
-    }));
+    // Lấy bản draft hiện tại từ store và cập nhật thành viên bị kéo
+    const updatedMember = draft.members.map((m) =>
+      m.localId === node.id
+        ? { ...m, positionX: node.position.x, positionY: node.position.y }
+        : m,
+    );
+
+    // Gửi bản draft đã cập nhật tọa độ vào Redux
+    dispatch(setDraft({ ...draft, members: updatedMember }));
   };
 
   useEffect(() => {
+    if (draft && draft.members && draft.family.localId.length !== 0) {
+      const { nodes: flowNodes, edges: flowEdges } = mapDraftToFlow(
+        draft,
+        "familyNode",
+      );
+      setNodes(flowNodes);
+      setEdges(flowEdges);
+    }
+  }, [draft, setNodes, setEdges]);
+
+  useEffect(() => {
     console.log("draft: ", draft);
+    console.log("family: ", family);
+  }, [draft, family]);
+
+  useEffect(() => {
+    if (family) {
+      dispatch(setOrigin(family));
+      //dispatch(setDraft(family));
+    }
+  }, [family]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Kiểm tra logic isDirty từ Redux
+      // Lưu ý: isDirty = !isEqual(draft, origin)
+      if (!isEqual(draft, origin)) {
+        const message =
+          "Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn thoát?";
+        e.preventDefault();
+        e.returnValue = message; // Hiển thị thông báo chuẩn của trình duyệt
+        return message;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, [draft]);
 
   return (
@@ -189,32 +237,27 @@ export const GroupContentPage = ({
         onLayout={onLayout}
         nodesDraggable={nodesDraggable}
         setNodesDraggable={setNodesDraggable}
+        groupId={group.id}
       />
-      <FamilyInfoDrawer data={data} />
+      <FamilyInfoDrawer data={group} />
       {openFamilyMemberForm && (
         <NewFamilyMemberForm
           currentData={editingMember}
           setCurrentData={setEditingMember}
           openState={openFamilyMemberForm}
           setOpenState={setOpenFamilyMemberForm}
-          draft={draft}
-          setDraft={setDraft}
         />
       )}
       {openFamilyForm && (
         <NewFamilyForm
           openState={openFamilyForm}
           setOpenState={setOpenFamilyForm}
-          draft={draft}
-          setDraft={setDraft}
         />
       )}
       {openRelationForm && (
         <RelationshipForm
-          draft={draft}
           openState={openRelationForm}
           setOpenState={setOpenRelationForm}
-          setDraft={setDraft}
           setCurrentData={setEditingRelation}
           currentData={editingRelation}
         />

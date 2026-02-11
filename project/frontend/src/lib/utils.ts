@@ -8,7 +8,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const mapDraftToFlow = (draft: IDraftFamilyData, type: string) => {
-  const nodes: Node[] = draft.member.map((m, index) => ({
+  const members = draft.members || [];
+  const relationships = draft.relationships || [];
+
+  const nodes: Node[] = members.map((m, index) => ({
     id: m.localId,
     // Truyền toàn bộ thông tin member vào data để Custom Node hiển thị
     data: {
@@ -24,7 +27,7 @@ export const mapDraftToFlow = (draft: IDraftFamilyData, type: string) => {
     type: type,
   }));
 
-  const edges: Edge[] = draft.relationships.map((r) => {
+  const edges: Edge[] = relationships.map((r) => {
     const isSpouse = r.type === "SPOUSE";
     return {
       id: r.localId,
@@ -33,7 +36,6 @@ export const mapDraftToFlow = (draft: IDraftFamilyData, type: string) => {
       label: r.type,
       animated: true,
       type: "smoothstep",
-      // Ví dụ: Nếu là vợ chồng thì nối vào cạnh PHẢI của chồng và cạnh TRÁI của vợ
       sourceHandle: isSpouse ? "r" : "b",
       targetHandle: isSpouse ? "l" : "t",
     };

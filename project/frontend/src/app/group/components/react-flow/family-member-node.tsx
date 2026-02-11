@@ -1,11 +1,7 @@
 import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import { Handle, Position } from "@xyflow/react";
 
-export const FamilyMemberNode = ({
-  data,
-}: {
-  data: IFamilyMemberDto;
-}) => {
+export const FamilyMemberNode = ({ data }: { data: IFamilyMemberDto }) => {
   const nameParts = data.fullName.trim().split(/\s+/);
   const lastName = nameParts[nameParts.length - 1];
   const tempAvatar = lastName ? lastName[0].toUpperCase() : "?";
@@ -24,10 +20,30 @@ export const FamilyMemberNode = ({
       </div>
 
       {/* Các cổng kết nối (Handle) để vẽ Edges */}
-      <Handle type="target" position={Position.Top} className="w-2 h-2" />
-      <Handle type="target" position={Position.Bottom} className="w-2 h-2" />
-      <Handle type="target" position={Position.Left} className="w-2 h-2" />
-      <Handle type="target" position={Position.Right} className="w-2 h-2" />
+      <Handle
+        type="target"
+        position={Position.Top}
+        id={"t"}
+        className="w-2 h-2"
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id={"b"}
+        className="w-2 h-2"
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id={"l"}
+        className="w-2 h-2"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id={"r"}
+        className="w-2 h-2"
+      />
     </div>
   );
 };

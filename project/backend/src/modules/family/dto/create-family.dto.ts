@@ -10,10 +10,10 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
-import { TYPE_RELATIONSHIP } from '@prisma/client';
+import { LINEAGE_TYPE, TYPE_RELATIONSHIP } from '@prisma/client';
 
 export class FamilyDto {
-  member: IFamilyMemberDto[];
+  members: IFamilyMemberDto[];
   relationships: IRelationshipDto[];
   family: IFamilyDto;
 }
@@ -157,6 +157,15 @@ export class IFamilyDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiProperty({
+    description: 'Type of family lineage',
+    required: true,
+  })
+  @IsEnum(LINEAGE_TYPE, {
+    message: InvalidMessageResponse.LINEAGE_TYPE_INVALID,
+  })
+  lineageType: string;
 }
 export type IBiographyContent = {
   education_level: string;

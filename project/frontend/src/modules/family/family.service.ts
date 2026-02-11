@@ -1,35 +1,44 @@
 import { apiClient } from "@/lib/api/api-path.lib";
 import { fetchWithAuth } from "@/lib/api/fetch-with-auth";
 import { cookies } from "next/headers";
-import { UpdateFamilyDto } from "./family.dto";
+import { IDraftFamilyData } from "@/types/draft.types";
+import { EnvConfig } from "@/lib/env/env-config.lib";
 
 export const FamilyService = {
-  updateFamily: async (groupId: string, data: UpdateFamilyDto) => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-
-    const result = await fetchWithAuth(apiClient.family.syncFamily(groupId), {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+  syncFamily: async (
+    groupId: string,
+    data: IDraftFamilyData,
+    token: string | undefined,
+  ) => {
+    const result = await fetchWithAuth(
+      EnvConfig.serverDomain + apiClient.family.syncFamily(groupId),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
       },
-      body: JSON.stringify(data),
-    });
-    return result.json();
+    );
+    return result;
   },
-  getFamily: async (familyId: string) => {
+
+  getFamily: async (groupId: string) => {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
 
-    const result = await fetchWithAuth(apiClient.family.getFamily(familyId), {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    const result = await fetchWithAuth(
+      EnvConfig.serverDomain + apiClient.family.getFamily(groupId),
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
-    return result.json();
+    );
+    return result;
   },
 
   deleteFamily: async (familyId: string, groupId: string) => {

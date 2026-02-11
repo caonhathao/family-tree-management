@@ -21,26 +21,25 @@ import {
 } from "@/components/ui/select";
 import { IRelationshipDto } from "@/modules/relationships/relationship.dto";
 import { RelationshipSchema } from "@/modules/relationships/relationship.schema";
-import { IDraftFamilyData } from "@/types/draft.types";
+import { RootState, AppDispatch } from "@/store";
+import { setDraft } from "@/store/familySlide";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useSelector, useDispatch } from "react-redux";
 import { v4 } from "uuid";
+import { MemberSelect } from "../member-select";
 
 const RelationshipForm = ({
   currentData,
   openState,
-  draft,
   setCurrentData,
   setOpenState,
-  setDraft,
 }: {
   currentData?: IRelationshipDto | null;
   openState: boolean;
-  draft: IDraftFamilyData;
   setOpenState: Dispatch<SetStateAction<boolean>>;
   setCurrentData: Dispatch<SetStateAction<IRelationshipDto | null>>;
-  setDraft: Dispatch<SetStateAction<IDraftFamilyData>>;
 }) => {
   const {
     handleSubmit,
@@ -70,8 +69,12 @@ const RelationshipForm = ({
     }
   }, [currentData, reset, openState]);
 
+  const { draft } = useSelector((state: RootState) => state.family);
+  // console.log(draft);
+  const dispatch = useDispatch<AppDispatch>();
   const onSubmit = (values: IRelationshipDto, e?: React.BaseSyntheticEvent) => {
     e?.preventDefault();
+
     if (draft.family.localId.length === 0) {
       Toaster({
         title: "Hành động thất bại",
@@ -101,18 +104,43 @@ const RelationshipForm = ({
       return;
     }
 
+    // Check the validity of the clan for the PARENT relationship
+    const sourceMember = draft.members.find(
+      (m) => m.localId === values.fromMemberId,
+    );
+    const lineage = draft.family.lineageType;
+
+    if (values.type === "PARENT" && lineage !== "OTHER") {
+      const isPatrilinealError =
+        lineage === "PATRIARCHAL" && sourceMember?.gender !== "MALE";
+      const isMatrilinealError =
+        lineage === "MATRIARCHAL" && sourceMember?.gender !== "FEMALE";
+
+      if (isPatrilinealError || isMatrilinealError) {
+        Toaster({
+          title: "Sai hệ tộc",
+          description: `Theo ${lineage === "PATRIARCHAL" ? "Phụ hệ" : "Mẫu hệ"}, người kết nối phải là ${lineage === "PATRIARCHAL" ? "Nam" : "Nữ"}.`,
+          type: "error",
+        });
+        return;
+      }
+    }
+
     if (!isUpdate) {
       values.localId = v4();
     }
 
-    setDraft((prev: IDraftFamilyData) => ({
-      ...prev,
+    const updatedDraft = {
+      ...draft,
       relationships: isUpdate
-        ? prev.relationships.map((r) =>
+        ? draft.relationships.map((r) =>
             r.localId === values.localId ? values : r,
           )
-        : [...prev.relationships, values],
-    }));
+        : [...draft.relationships, values],
+    };
+
+    dispatch(setDraft(updatedDraft));
+
     Toaster({
       title: "Hành động thành công",
       description: isUpdate
@@ -142,28 +170,12 @@ const RelationshipForm = ({
                   name="fromMemberId"
                   control={control}
                   render={({ field }) => (
-                    <Select
-                      onValueChange={field.onChange}
+                    <MemberSelect
+                      members={draft.members}
                       value={field.value}
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger className="hover:cursor-pointer">
-                        <SelectValue placeholder="Chọn thành viên" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {draft.member.map((member) => (
-                            <SelectItem
-                              key={member.localId}
-                              value={member.localId}
-                              className="hover:cursor-pointer"
-                            >
-                              {member.fullName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                      onChange={field.onChange}
+                      placeholder="Chọn hoặc gõ tìm tên..."
+                    />
                   )}
                 />
                 {errors.fromMemberId && (
@@ -172,35 +184,18 @@ const RelationshipForm = ({
                   </span>
                 )}
               </Field>
-
               <Field>
                 <Label htmlFor="toMemberId">Thành viên 2 (Đích)</Label>
                 <Controller
                   name="toMemberId"
                   control={control}
                   render={({ field }) => (
-                    <Select
-                      onValueChange={field.onChange}
+                    <MemberSelect
+                      members={draft.members}
                       value={field.value}
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger className="hover:cursor-pointer">
-                        <SelectValue placeholder="Chọn thành viên" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {draft.member.map((member) => (
-                            <SelectItem
-                              key={member.localId}
-                              value={member.localId}
-                              className="hover:cursor-pointer"
-                            >
-                              {member.fullName}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                      onChange={field.onChange}
+                      placeholder="Chọn hoặc gõ tìm tên..."
+                    />
                   )}
                 />
                 {errors.toMemberId && (
