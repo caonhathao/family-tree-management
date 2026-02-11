@@ -226,7 +226,7 @@ export const GroupContentPage = ({
   }, [draft]);
 
   return (
-    <div ref={constrainRef} className="relative min-h-screen w-full">
+    <div ref={constrainRef} className="relative h-[calc(100vh-3.5rem)] w-full overflow-hidden">
       <PanelEditor
         constraintsRef={constrainRef}
         setOpenFamilyForm={setOpenFamilyForm}
@@ -239,7 +239,9 @@ export const GroupContentPage = ({
         setNodesDraggable={setNodesDraggable}
         groupId={group.id}
       />
-      <FamilyInfoDrawer data={group} />
+      <div className="fixed top-20 right-5 z-50">
+        <FamilyInfoDrawer data={group} />
+      </div>
       {openFamilyMemberForm && (
         <NewFamilyMemberForm
           currentData={editingMember}

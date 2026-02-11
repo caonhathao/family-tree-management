@@ -1,5 +1,8 @@
 import { apiClient } from "@/lib/api/api-path.lib";
-import { CreateGroupFamilyDto, UpdateGroupFamilyDto } from "./group-family.dto";
+import {
+  CreateGroupFamilyDto,
+  IUpdateGroupFamilyDto,
+} from "./group-family.dto";
 import { fetchWithAuth } from "@/lib/api/fetch-with-auth";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 
@@ -23,8 +26,7 @@ export const GroupFamilyService = {
   },
   getAll: async (token: string | undefined) => {
     const result = await fetchWithAuth(
-        EnvConfig.serverDomain +
-        apiClient.groupFamily.getAll,
+      EnvConfig.serverDomain + apiClient.groupFamily.getAll,
       {
         method: "GET",
         headers: {
@@ -37,7 +39,7 @@ export const GroupFamilyService = {
   },
   updateGroup: async (
     groupId: string,
-    data: UpdateGroupFamilyDto,
+    data: IUpdateGroupFamilyDto,
     token: string | undefined,
   ) => {
     const result = await fetchWithAuth(
@@ -51,7 +53,7 @@ export const GroupFamilyService = {
         body: JSON.stringify(data),
       },
     );
-    return result.json();
+    return result;
   },
   getDetail: async (groupId: string, token: string | undefined) => {
     const result = await fetchWithAuth(

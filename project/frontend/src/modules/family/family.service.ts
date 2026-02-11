@@ -3,6 +3,7 @@ import { fetchWithAuth } from "@/lib/api/fetch-with-auth";
 import { cookies } from "next/headers";
 import { IDraftFamilyData } from "@/types/draft.types";
 import { EnvConfig } from "@/lib/env/env-config.lib";
+import { IFamilyDto } from "./family.dto";
 
 export const FamilyService = {
   syncFamily: async (
@@ -24,10 +25,7 @@ export const FamilyService = {
     return result;
   },
 
-  getFamily: async (groupId: string) => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-
+  getFamily: async (groupId: string, token: string | undefined) => {
     const result = await fetchWithAuth(
       EnvConfig.serverDomain + apiClient.family.getFamily(groupId),
       {
@@ -36,6 +34,25 @@ export const FamilyService = {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+      },
+    );
+    return result;
+  },
+
+  updateFamily: async (
+    groupId: string,
+    data: IFamilyDto,
+    token: string | undefined,
+  ) => {
+    const result = await fetchWithAuth(
+      EnvConfig.serverDomain + apiClient.family.updateFamily(groupId),
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
       },
     );
     return result;

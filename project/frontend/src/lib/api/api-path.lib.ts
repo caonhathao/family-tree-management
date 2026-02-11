@@ -9,6 +9,7 @@ export const apiClient = {
   },
   family: {
     syncFamily: (groupId: string) => `/api/family/sync-data/${groupId}`,
+    updateFamily: (groupId: string) => `/api/family/${groupId}`,
     getFamily: (groupId: string) => `/api/family/${groupId}`,
     deleteFamily: (familyId: string, groupId: string) =>
       `/api/family/${groupId}/${familyId}`,

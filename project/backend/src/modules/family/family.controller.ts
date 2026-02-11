@@ -1,4 +1,12 @@
-import { Body, Controller, Post, UseGuards, Param, Get } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  Param,
+  Get,
+  Put,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -7,7 +15,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { FamilyService } from './family.service';
-import { FamilyDto } from './dto/create-family.dto';
+import { FamilyDto, IFamilyDto } from './dto/create-family.dto';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
@@ -19,12 +27,12 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 @ApiBearerAuth()
 @Controller('family')
 @UseGuards(AtGuard, RolesGuard)
-@Roles('EDITOR', 'OWNER')
 export class FamilyController {
   constructor(private readonly familyService: FamilyService) {}
 
   @Post('/sync-data/:groupId')
   @UseGuards(AtGuard)
+  @Roles('EDITOR', 'OWNER')
   @ApiOperation({ summary: 'Sync family data' })
   @ApiParam({ name: 'groupId', description: 'Group family ID' })
   @ApiResponse({
@@ -49,6 +57,7 @@ export class FamilyController {
   }
 
   @Get(':groupId')
+  @Roles('EDITOR', 'OWNER', 'VIEWER')
   @UseGuards(AtGuard)
   @ApiOperation({ summary: 'Get family data' })
   @ApiParam({ name: 'groupId', description: 'Group family ID' })
@@ -65,6 +74,32 @@ export class FamilyController {
     return ResponseFactory.success({
       data: familyData,
       message: ValidMessageResponse.GETTED,
+    });
+  }
+
+  @Put(':groupId')
+  @Roles('OWNER', 'EDITOR')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Get family data' })
+  @ApiParam({ name: 'groupId', description: 'Group family ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Family data retrieved successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async updateFamilyInfo(
+    @GetCurrentUserId() userId: string,
+    @Param('groupId') groupId: string,
+    @Body() data: IFamilyDto,
+  ) {
+    const familyData = await this.familyService.updateFamilyInfo(
+      userId,
+      groupId,
+      data,
+    );
+    return ResponseFactory.success({
+      data: familyData,
+      message: ValidMessageResponse.UPDATED,
     });
   }
 }

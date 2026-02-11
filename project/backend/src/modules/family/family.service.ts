@@ -1,12 +1,9 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
   FamilyDto,
   IBiographyContent,
+  IFamilyDto,
   IFamilyMemberDto,
   IRelationshipDto,
 } from './dto/create-family.dto';
@@ -163,19 +160,6 @@ export class FamilyService {
       if (!isUUID(groupId, 'all'))
         throw new NotFoundException(Exception.NOT_EXIST);
 
-      //check if user is in the same group
-      const user = await this.prisma.groupMember.findFirst({
-        where: {
-          groupId: groupId,
-          memberId: userId,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      if (!user) throw new ForbiddenException(Exception.PEMRISSION);
-
       const family = await this.prisma.family.findFirst({
         where: { groupFamilyId: groupId },
         select: {
@@ -237,6 +221,34 @@ export class FamilyService {
       };
     } catch (err) {
       console.error('err at get family data service:', err);
+      throw err;
+    }
+  }
+  async updateFamilyInfo(userId: string, groupId: string, data: IFamilyDto) {
+    try {
+      //check validation
+      if (!isUUID(groupId, 'all'))
+        throw new NotFoundException(Exception.NOT_EXIST);
+
+      const family = await this.prisma.family.update({
+        where: { id: data.localId },
+        data: {
+          name: data.name,
+          description: data.description as string,
+          lineageType: data.lineageType as LINEAGE_TYPE,
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          lineageType: true,
+        },
+      });
+
+      if (!family) throw new NotFoundException(Exception.NOT_EXIST);
+      return family;
+    } catch (err) {
+      console.error('err at update family info service:', err);
       throw err;
     }
   }

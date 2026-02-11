@@ -7,7 +7,7 @@ export async function GroupContentWrapper({ groupId }: { groupId: string }) {
 
   const dataGroup = await getDetailGroupAction(groupId);
   const familyData = await GetFamilyData(groupId);
-  console.log("familyData: ", familyData);
+  //console.log("familyData: ", familyData);
 
   if ("error" in dataGroup) {
     return <div>Lỗi: {dataGroup.error}</div>;

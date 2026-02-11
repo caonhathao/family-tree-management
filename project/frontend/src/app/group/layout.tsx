@@ -13,7 +13,7 @@ const GroupLayout = ({
   children: React.ReactNode;
 }>) => {
   return (
-    <div className="w-full h-full">
+    <div className="w-full max-h-screen">
       <SidebarProvider>
         <SideBarServer>
           {(groups) => <SideBarClient data={groups} />}
@@ -24,7 +24,7 @@ const GroupLayout = ({
             <Separator orientation="vertical" className="mr-2 h-4" />
             <div className="">Quản lý gia phả</div>
           </header>
-          {children}
+          <main className="max-h-screen overflow-hidden">{children}</main>
         </SidebarInset>
       </SidebarProvider>
     </div>

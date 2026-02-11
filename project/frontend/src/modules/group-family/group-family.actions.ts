@@ -5,17 +5,15 @@ import {
   ResponseGroupFamiliesDto,
   ResponseGroupFamilyDetailDto,
   ResponseJoinGroupDto,
-  UpdateGroupFamilyDto,
+  IUpdateGroupFamilyDto,
 } from "./group-family.dto";
 import { GroupFamilyService } from "./group-family.service";
-import { redirect } from "next/navigation";
 import { handleError } from "@/lib/utils.lib";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
 export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
   let isSuccess = false;
-  let id = "";
 
   try {
     const cookieStore = await cookies();
@@ -24,7 +22,6 @@ export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
       await GroupFamilyService.createGroup(data, token);
     if (res.success) {
       isSuccess = true;
-      id = res.data.id;
     } else
       return {
         error: res.message || "error",
@@ -39,13 +36,13 @@ export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
 
 export async function updateGroupFamilyAction(
   groupId: string,
-  data: UpdateGroupFamilyDto,
+  data: IUpdateGroupFamilyDto,
 ) {
   let isSuccess = false;
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
-    const res: ResponseDataBase<ResponseGroupFamilyDetailDto> =
+    const res: ResponseDataBase<IUpdateGroupFamilyDto> =
       await GroupFamilyService.updateGroup(groupId, data, token);
     if (res.success) {
       isSuccess = true;

@@ -4,7 +4,7 @@ export interface CreateGroupFamilyDto {
   role: string;
 }
 
-export interface UpdateGroupFamilyDto {
+export interface IUpdateGroupFamilyDto {
   name: string;
   description: string;
 }

@@ -1,6 +1,6 @@
 "use server";
 import { ResponseDataBase } from "@/types/base.types";
-import { ResponseCreateFamilyDto } from "./family.dto";
+import { IFamilyDto, ResponseCreateFamilyDto } from "./family.dto";
 import { FamilyService } from "./family.service";
 import { handleError } from "@/lib/utils.lib";
 import { revalidatePath } from "next/cache";
@@ -16,7 +16,7 @@ export async function SyncFamilyAction(
     const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseCreateFamilyDto> =
       await FamilyService.syncFamily(groupId, data, token);
-      console.log(res)
+    //console.log(res)
     if (res.success) {
       return res.data;
     } else
@@ -30,15 +30,31 @@ export async function SyncFamilyAction(
 
 export async function GetFamilyData(groupId: string) {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<IDraftFamilyData> =
-      await FamilyService.getFamily(groupId);
-    
+      await FamilyService.getFamily(groupId, token);
+
     if (res.success) return res.data;
     else
       return {
         error: res.message || "error",
       };
   } catch (err: unknown) {
+    return handleError(err);
+  }
+}
+
+export async function UpdatefamilyInfo(groupId: string, data: IFamilyDto) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
+    const res: ResponseDataBase<ResponseCreateFamilyDto> =
+      await FamilyService.updateFamily(groupId, data, token);
+    if (res.success) {
+      return res.data;
+    } else return { error: res.message || "error" };
+  } catch (err) {
     return handleError(err);
   }
 }
