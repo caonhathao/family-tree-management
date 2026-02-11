@@ -7,18 +7,21 @@ import { Navigation } from "./navigation-menu";
 export async function HeaderServer() {
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token");
-  const user: ResponseGetUserDto | null =
-    await getUserFromToken(token?.value);
+  const user: ResponseGetUserDto | null = await getUserFromToken(token?.value);
   //console.log(user);
 
   return (
-    <header className="w-full px-3 py-2 flex flex-row justify-between items-center shadow-2xl">
+    <header
+      className={
+        "w-full px-3 py-2 flex flex-row justify-between items-center shadow-2xl"
+      }
+    >
       {/* logo web and navigation  menu */}
-      <Navigation className="w-[60%] flex justify-start items-center gap-3" />
+      <Navigation className={"w-[60%] flex justify-start items-center gap-3"} />
       {/* account menu */}
       <UserMenu
         data={user}
-        className="w-[40%] flex flex-row gap-3 justify-end items-center"
+        className={"w-[40%] flex flex-row gap-3 justify-end items-center"}
       />
     </header>
   );

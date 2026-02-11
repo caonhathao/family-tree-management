@@ -5,6 +5,10 @@ sequenceDiagram
     participant AuthService
     participant FamilyController
     participant FamilyService
+    participant FamilyMemberController
+    participant FamilyMemberService
+    participant RelationshipController
+    participant RelationshipService
     participant Database
     participant JWT
     participant RolesGuard
@@ -49,3 +53,25 @@ sequenceDiagram
     Database-->>GroupFamilyController: group created
     GroupFamilyController-->>Frontend: group created
     Frontend-->>User: Group created for family
+    Note over User,Database: 5. Add Family Members
+    User->>Frontend: Add Family Member (name, gender, birthDate)
+    Frontend->>FamilyMemberController: POST /family-member<br/>Authorization: Bearer {access_token}
+    FamilyMemberController->>JWT: validate token
+    JWT-->>FamilyMemberController: userId
+    FamilyMemberController->>FamilyMemberService: create(userId, memberData)
+    FamilyMemberService->>Database: create FamilyMember<br/>{familyId, ...data}
+    Database-->>FamilyMemberService: newMember
+    FamilyMemberService-->>FamilyMemberController: member created
+    FamilyMemberController-->>Frontend: success response
+    Frontend-->>User: Member added to family graph
+    Note over User,Database: 6. Add Relationships
+    User->>Frontend: Connect members (Parent-Child / Spouse)
+    Frontend->>RelationshipController: POST /relationship<br/>Authorization: Bearer {access_token}
+    RelationshipController->>JWT: validate token
+    JWT-->>RelationshipController: userId
+    RelationshipController->>RelationshipService: create(userId, relationData)
+    RelationshipService->>Database: create Relationship<br/>{fromId, toId, type}
+    Database-->>RelationshipService: newRelationship
+    RelationshipService-->>RelationshipController: relationship created
+    RelationshipController-->>Frontend: success response
+    Frontend-->>User: Relationship visualized on graph

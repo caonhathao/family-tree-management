@@ -23,8 +23,7 @@ export const GroupFamilyService = {
   },
   getAll: async (token: string | undefined) => {
     const result = await fetchWithAuth(
-        EnvConfig.serverDomain +
-        apiClient.groupFamily.getAll,
+      EnvConfig.serverDomain + apiClient.groupFamily.getAll,
       {
         method: "GET",
         headers: {

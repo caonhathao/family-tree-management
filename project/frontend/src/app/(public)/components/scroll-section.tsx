@@ -10,12 +10,12 @@ interface ScrollSectionProps {
 export const ScrollSection = ({ children, className }: ScrollSectionProps) => {
   return (
     <motion.section
-      initial="hidden"
-      whileInView="visible"
-      exit="exit"
-      viewport={{ 
-        once: scrollConfig.once, 
-        amount: scrollConfig.amount 
+      initial={"hidden"}
+      whileInView={"visible"}
+      exit={"exit"}
+      viewport={{
+        once: scrollConfig.once,
+        amount: scrollConfig.amount,
       }}
       variants={fadeVariants as Variants}
       className={className}
@@ -23,4 +23,4 @@ export const ScrollSection = ({ children, className }: ScrollSectionProps) => {
       {children}
     </motion.section>
   );
-}
+};

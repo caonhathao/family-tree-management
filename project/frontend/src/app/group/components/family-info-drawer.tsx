@@ -29,12 +29,12 @@ export const FamilyInfoDrawer = ({
   data: ResponseGroupFamilyDetailDto;
 }) => {
   return (
-    <Drawer direction="right">
+    <Drawer direction={"right"}>
       <DrawerTrigger
         asChild
-        className="fixed right-3 top-15 hover:cursor-pointer"
+        className={"fixed right-3 top-15 hover:cursor-pointer"}
       >
-        <Button variant="outline" size={"icon-lg"}>
+        <Button variant={"outline"} size={"icon-lg"}>
           <MdOutlineInfo />
         </Button>
       </DrawerTrigger>
@@ -43,14 +43,20 @@ export const FamilyInfoDrawer = ({
           <DrawerTitle>{data.name}</DrawerTitle>
           <DrawerDescription>{data.description}</DrawerDescription>
         </DrawerHeader>
-        <div className="w-full flex flex-col gap-3 justify-center items-start p-2">
-          <p className="font-semibold">Thành viên nhóm</p>
+        <div
+          className={
+            "w-full flex flex-col gap-3 justify-center items-start p-2"
+          }
+        >
+          <p className={"font-semibold"}>Thành viên nhóm</p>
           {data.groupMembers.map((item, index) => (
             <div
               key={index}
-              className="w-full grid grid-cols-6 justify-between items-center gap-2"
+              className={
+                "w-full grid grid-cols-6 justify-between items-center gap-2"
+              }
             >
-              <div className="col-span-1">
+              <div className={"col-span-1"}>
                 <Avatar>
                   <AvatarImage src={item.member.userProfile.avatar} />
                   <AvatarFallback>
@@ -63,31 +69,31 @@ export const FamilyInfoDrawer = ({
                   </AvatarFallback>
                 </Avatar>
               </div>
-              <div className="col-span-4">
+              <div className={"col-span-4"}>
                 {item.member.userProfile.fullName}
               </div>
-              <div className="col-span-1">
+              <div className={"col-span-1"}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant={"outline"}
                       size={"icon"}
-                      className="hover:cursor-pointer"
+                      className={"hover:cursor-pointer"}
                     >
                       <BsThreeDotsVertical />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuGroup>
                     <DropdownMenuContent>
-                      <DropdownMenuItem className="hover:cursor-pointer">
+                      <DropdownMenuItem className={"hover:cursor-pointer"}>
                         <CiLogout />
                         Rời nhóm
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="hover:cursor-pointer">
+                      <DropdownMenuItem className={"hover:cursor-pointer"}>
                         <MdOutlineInfo />
                         Thông tin
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="hover:cursor-pointer">
+                      <DropdownMenuItem className={"hover:cursor-pointer"}>
                         <IoSwapVertical />
                         Đổi vai trò
                       </DropdownMenuItem>
@@ -101,7 +107,7 @@ export const FamilyInfoDrawer = ({
         <DrawerFooter>
           <Button>Tạo lời mời</Button>
           <DrawerClose asChild>
-            <Button variant="outline">Thoát</Button>
+            <Button variant={"outline"}>Thoát</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>

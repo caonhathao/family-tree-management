@@ -201,9 +201,8 @@ export const GroupContentPage = ({
   useEffect(() => {
     if (family) {
       dispatch(setOrigin(family));
-      //dispatch(setDraft(family));
     }
-  }, [family]);
+  }, [dispatch, family]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -226,7 +225,7 @@ export const GroupContentPage = ({
   }, [draft]);
 
   return (
-    <div ref={constrainRef} className="relative min-h-screen w-full">
+    <div ref={constrainRef} className={"relative min-h-screen w-full"}>
       <PanelEditor
         constraintsRef={constrainRef}
         setOpenFamilyForm={setOpenFamilyForm}
@@ -262,7 +261,7 @@ export const GroupContentPage = ({
           currentData={editingRelation}
         />
       )}
-      <div className="w-full h-full border bg-slate-50">
+      <div className={"w-full h-full border bg-slate-50"}>
         <ReactFlow
           nodes={nodes}
           edges={edges}

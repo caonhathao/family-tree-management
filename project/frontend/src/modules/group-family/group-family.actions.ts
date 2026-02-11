@@ -8,14 +8,12 @@ import {
   UpdateGroupFamilyDto,
 } from "./group-family.dto";
 import { GroupFamilyService } from "./group-family.service";
-import { redirect } from "next/navigation";
 import { handleError } from "@/lib/utils.lib";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
 export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
   let isSuccess = false;
-  let id = "";
 
   try {
     const cookieStore = await cookies();
@@ -24,7 +22,6 @@ export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
       await GroupFamilyService.createGroup(data, token);
     if (res.success) {
       isSuccess = true;
-      id = res.data.id;
     } else
       return {
         error: res.message || "error",

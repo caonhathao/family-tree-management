@@ -90,13 +90,13 @@ const NewFamilyForm = ({
   return (
     <div className={`absolute z-10 ${className}`}>
       <Dialog open={openState} onOpenChange={setOpenState}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className={"sm:max-w-sm"}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>
               <DialogTitle>Tạo sơ đồ mới</DialogTitle>
               <DialogDescription>
                 {draft.family.localId.length !== 0 ? (
-                  <p className="text-red-500">Sơ đồ đã được tạo rồi</p>
+                  <p className={"text-red-500"}>Sơ đồ đã được tạo rồi</p>
                 ) : (
                   "Điền thông tin sơ đồ vào biểu mẫu dưới đây."
                 )}
@@ -104,64 +104,64 @@ const NewFamilyForm = ({
             </DialogHeader>
             <FieldGroup>
               <Field>
-                <Label htmlFor="fullName">Tên sơ đồ</Label>
+                <Label htmlFor={"fullName"}>Tên sơ đồ</Label>
                 <Input
-                  id="fullName"
-                  type="text"
+                  id={"fullName"}
+                  type={"text"}
                   required
                   {...register("name")}
                 />
                 {errors.name && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.name.message}
                   </span>
                 )}
               </Field>
 
               <Field>
-                <Label htmlFor="biography">Mô tả chung</Label>
+                <Label htmlFor={"biography"}>Mô tả chung</Label>
                 <Textarea
-                  id="biography"
-                  className="resize-none"
+                  id={"biography"}
+                  className={"resize-none"}
                   {...register("description")}
                 />
                 {errors.description && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.description.message}
                   </span>
                 )}
               </Field>
 
               <Field>
-                <Label htmlFor="lineageType">Loại sơ đồ</Label>
+                <Label htmlFor={"lineageType"}>Loại sơ đồ</Label>
                 <Controller
-                  name="lineageType"
+                  name={"lineageType"}
                   control={control}
                   render={({ field }) => (
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
-                      <SelectTrigger className="hover:cursor-pointer">
-                        <SelectValue placeholder="Chọn" />
+                      <SelectTrigger className={"hover:cursor-pointer"}>
+                        <SelectValue placeholder={"Chọn"} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
                           <SelectItem
-                            value="PATRIARCHAL"
-                            className="hover:cursor-pointer"
+                            value={"PATRIARCHAL"}
+                            className={"hover:cursor-pointer"}
                           >
                             Phụ hệ
                           </SelectItem>
                           <SelectItem
-                            value="MATRIARCHAL"
-                            className="hover:cursor-pointer"
+                            value={"MATRIARCHAL"}
+                            className={"hover:cursor-pointer"}
                           >
                             Mẫu hệ
                           </SelectItem>
                           <SelectItem
-                            value="OTHER"
-                            className="hover:cursor-pointer"
+                            value={"OTHER"}
+                            className={"hover:cursor-pointer"}
                           >
                             Khác
                           </SelectItem>
@@ -171,24 +171,24 @@ const NewFamilyForm = ({
                   )}
                 />
                 {errors.lineageType && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.lineageType.message}
                   </span>
                 )}
               </Field>
             </FieldGroup>
-            <DialogFooter className="pt-2">
+            <DialogFooter className={"pt-2"}>
               <DialogClose asChild>
                 <Button
-                  type="button"
-                  variant="outline"
-                  className="hover:cursor-pointer"
+                  type={"button"}
+                  variant={"outline"}
+                  className={"hover:cursor-pointer"}
                 >
                   Hủy
                 </Button>
               </DialogClose>
               <Button
-                type="submit"
+                type={"submit"}
                 disabled={draft.family.localId.length !== 0}
                 className={`w-fit flex justify-center items-center gap-2 ${draft.family.localId.length === 0 ? "hover:cursor-pointer" : "hover:cursor-not-allowed"}`}
               >

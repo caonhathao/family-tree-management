@@ -62,7 +62,7 @@ export function LoginForm({
   };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="border-0 shadow-none">
+      <Card className={"border-0 shadow-none"}>
         <CardHeader>
           <CardTitle>Đăng nhập vào tài khoản</CardTitle>
           <CardDescription>
@@ -74,25 +74,25 @@ export function LoginForm({
             <FieldGroup>
               <Field>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="Email của bạn"
-                  autoComplete="email"
+                  id={"email"}
+                  type={"email"}
+                  placeholder={"Email của bạn"}
+                  autoComplete={"email"}
                   required
                   {...register("email")}
                 />
                 {errors.email && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.email.message}
                   </span>
                 )}
               </Field>
               <Field>
-                <div className="flex flex-row gap-1">
+                <div className={"flex flex-row gap-1"}>
                   <Input
-                    id="password"
+                    id={"password"}
                     type={isPasswordVisible ? "text" : "password"}
-                    placeholder="Mật khẩu của bạn"
+                    placeholder={"Mật khẩu của bạn"}
                     required
                     {...register("password")}
                   />
@@ -102,14 +102,16 @@ export function LoginForm({
                   />
                 </div>
                 {errors.password && (
-                  <span className="text-xs text-red-500">
+                  <span className={"text-xs text-red-500"}>
                     {errors.password.message}
                   </span>
                 )}
-                <div className="flex items-center">
+                <div className={"flex items-center"}>
                   <a
-                    href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    href={"#"}
+                    className={
+                      "ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    }
                   >
                     Quên mật khẩu?
                   </a>
@@ -117,31 +119,31 @@ export function LoginForm({
               </Field>
               <Field>
                 <Button
-                  type="submit"
+                  type={"submit"}
                   className={`hover:cursor-pointer ${isPending ? "disabled" : ""}`}
                 >
                   {isPending ? (
                     <>
-                      <LoaderModule scale={0.4} className="w-1 h-1" /> Đang đăng
-                      nhập
+                      <LoaderModule scale={0.4} className={"w-1 h-1"} /> Đang
+                      đăng nhập
                     </>
                   ) : (
                     "Đăng nhập"
                   )}
                 </Button>
                 <Button
-                  variant="outline"
-                  type="button"
-                  className="hover:cursor-pointer"
+                  variant={"outline"}
+                  type={"button"}
+                  className={"hover:cursor-pointer"}
                 >
                   Đăng nhập với Google
                 </Button>
-                <FieldDescription className="text-center">
+                <FieldDescription className={"text-center"}>
                   Không có tài khoản?
                   <Button
-                    type="button"
+                    type={"button"}
                     variant={"link"}
-                    className="hover:cursor-pointer p-1"
+                    className={"hover:cursor-pointer p-1"}
                     onClick={() => navigateToRegister()}
                   >
                     Đăng kí ngay
