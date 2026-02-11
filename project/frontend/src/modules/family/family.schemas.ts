@@ -4,4 +4,5 @@ export const FamilySchema = z.object({
   localId: z.string(),
   name: z.string().nonempty({ message: "Thiếu tên gia đình" }),
   description: z.string().optional(),
+  lineageType: z.string().nonempty({ message: "Thiếu loại gia đình" }),
 });

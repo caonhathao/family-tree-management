@@ -12,32 +12,40 @@ import {
 import { FieldGroup, Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  Select,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { IFamilyDto } from "@/modules/family/family.dto";
 import { FamilySchema } from "@/modules/family/family.schemas";
-import { IDraftFamilyData } from "@/types/draft.types";
+import { AppDispatch, RootState } from "@/store";
+import { setDraft } from "@/store/familySlide";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dispatch, SetStateAction } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
 import { v4 } from "uuid";
 
 const NewFamilyForm = ({
   className,
   openState,
   setOpenState,
-  draft,
-  setDraft,
 }: {
   className?: string;
   openState: boolean;
   setOpenState: Dispatch<SetStateAction<boolean>>;
-  draft: IDraftFamilyData;
-  setDraft: Dispatch<SetStateAction<IDraftFamilyData>>;
 }) => {
   const {
     register,
     handleSubmit,
     reset,
+    control,
+
     formState: { errors },
   } = useForm<IFamilyDto>({
     resolver: zodResolver(FamilySchema),
@@ -45,9 +53,11 @@ const NewFamilyForm = ({
       localId: "",
       name: "",
       description: "",
+      lineageType: "PATRIARCHAL",
     },
   });
-
+  const { draft } = useSelector((state: RootState) => state.family);
+  const dispatch = useDispatch<AppDispatch>();
   const onSubmit = (values: IFamilyDto, e?: React.BaseSyntheticEvent) => {
     e?.preventDefault();
     if (draft.family.localId.length !== 0) {
@@ -59,11 +69,16 @@ const NewFamilyForm = ({
       return;
     }
     values.localId = v4();
-
-    setDraft((prev: IDraftFamilyData) => ({
-      ...prev,
-      family: values,
-    }));
+    const updatedDraft = {
+      ...draft,
+      family: {
+        ...draft.family,
+        name: values.name,
+        description: values.description,
+        localId: values.localId,
+      },
+    };
+    dispatch(setDraft(updatedDraft));
     Toaster({
       title: "Tạo sơ đồ thành công",
       description: "Hãy tạo thêm thành viên trong sơ đồ",
@@ -113,6 +128,51 @@ const NewFamilyForm = ({
                 {errors.description && (
                   <span className="text-xs text-red-500">
                     {errors.description.message}
+                  </span>
+                )}
+              </Field>
+
+              <Field>
+                <Label htmlFor="lineageType">Loại sơ đồ</Label>
+                <Controller
+                  name="lineageType"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger className="hover:cursor-pointer">
+                        <SelectValue placeholder="Chọn" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem
+                            value="PATRIARCHAL"
+                            className="hover:cursor-pointer"
+                          >
+                            Phụ hệ
+                          </SelectItem>
+                          <SelectItem
+                            value="MATRIARCHAL"
+                            className="hover:cursor-pointer"
+                          >
+                            Mẫu hệ
+                          </SelectItem>
+                          <SelectItem
+                            value="OTHER"
+                            className="hover:cursor-pointer"
+                          >
+                            Khác
+                          </SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.lineageType && (
+                  <span className="text-xs text-red-500">
+                    {errors.lineageType.message}
                   </span>
                 )}
               </Field>

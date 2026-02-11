@@ -40,7 +40,7 @@ export const UserMenu = ({
       }
     });
   };
-  console.log(data);
+  //console.log(data);
   return (
     <div className={className}>
       <Avatar>

@@ -3,7 +3,7 @@ import { IFamilyDto } from "@/modules/family/family.dto";
 import { IRelationshipDto } from "@/modules/relationships/relationship.dto";
 
 export interface IDraftFamilyData {
-  member: IFamilyMemberDto[];
+  members: IFamilyMemberDto[];
   relationships: IRelationshipDto[];
   family: IFamilyDto;
 }

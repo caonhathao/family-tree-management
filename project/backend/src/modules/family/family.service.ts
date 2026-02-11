@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
   FamilyDto,
@@ -8,7 +12,7 @@ import {
 } from './dto/create-family.dto';
 import { Exception } from 'src/common/messages/messages.response';
 import { isUUID } from 'class-validator';
-import { GENDER, TYPE_RELATIONSHIP } from '@prisma/client';
+import { GENDER, LINEAGE_TYPE, TYPE_RELATIONSHIP } from '@prisma/client';
 
 @Injectable()
 export class FamilyService {
@@ -29,11 +33,13 @@ export class FamilyService {
             description: data.family.description as string,
             ownerId: userId,
             groupFamilyId: groupId,
+            lineageType: data.family.lineageType as LINEAGE_TYPE,
           },
           select: {
             id: true,
             name: true,
             description: true,
+            lineageType: true,
           },
           create: {
             id: data.family.localId,
@@ -41,11 +47,12 @@ export class FamilyService {
             description: data.family.description as string,
             ownerId: userId,
             groupFamilyId: groupId,
+            lineageType: data.family.lineageType as LINEAGE_TYPE,
           },
         });
         // handle member data
         //remove old members if they were deleted in current
-        const incomingMemberIds = data.member.map((m) => m.localId);
+        const incomingMemberIds = data.members.map((m) => m.localId);
         await tx.familyMember.deleteMany({
           where: {
             familyId: family.id,
@@ -54,7 +61,7 @@ export class FamilyService {
         });
         const mappingMember = {};
         const saveMembers: IFamilyMemberDto[] = [];
-        for (const m of data.member) {
+        for (const m of data.members) {
           const savedMember = await tx.familyMember.upsert({
             where: { id: m.localId },
             update: {
@@ -105,10 +112,10 @@ export class FamilyService {
             isAlive: savedMember.isAlive,
             biography: savedMember.biography as unknown as IBiographyContent,
             positionX: savedMember.positionX
-              ? (savedMember.positionX as number)
+              ? savedMember.positionX
               : undefined,
             positionY: savedMember.positionY
-              ? (savedMember.positionY as number)
+              ? savedMember.positionY
               : undefined,
           });
         }
@@ -147,6 +154,89 @@ export class FamilyService {
       return syncFamily;
     } catch (err) {
       console.error('err at sync family data service:', err);
+      throw err;
+    }
+  }
+  async getFamilyData(userId: string, groupId: string) {
+    try {
+      //check validation
+      if (!isUUID(groupId, 'all'))
+        throw new NotFoundException(Exception.NOT_EXIST);
+
+      //check if user is in the same group
+      const user = await this.prisma.groupMember.findFirst({
+        where: {
+          groupId: groupId,
+          memberId: userId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!user) throw new ForbiddenException(Exception.PEMRISSION);
+
+      const family = await this.prisma.family.findFirst({
+        where: { groupFamilyId: groupId },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          lineageType: true,
+        },
+      });
+      if (family !== null) {
+        const members = await this.prisma.familyMember.findMany({
+          where: { familyId: family.id },
+          select: {
+            id: true,
+            fullName: true,
+            gender: true,
+            biography: true,
+            dateOfBirth: true,
+            dateOfDeath: true,
+            isAlive: true,
+            generation: true,
+            positionX: true,
+            positionY: true,
+          },
+        });
+        const relationships = await this.prisma.relationship.findMany({
+          where: { familyId: family.id },
+          select: {
+            id: true,
+            fromMemberId: true,
+            toMemberId: true,
+            type: true,
+          },
+        });
+        return {
+          members: members.map((m) => ({
+            ...m,
+            localId: m.id,
+            biography: m.biography as unknown as IBiographyContent,
+          })),
+          relationships: relationships.map((r) => ({
+            ...r,
+            localId: r.id,
+          })),
+          family: {
+            ...family,
+            localId: family.id,
+          },
+        };
+      }
+      return {
+        member: [],
+        relationships: [],
+        family: {
+          localId: '',
+          name: '',
+          description: '',
+        },
+      };
+    } catch (err) {
+      console.error('err at get family data service:', err);
       throw err;
     }
   }

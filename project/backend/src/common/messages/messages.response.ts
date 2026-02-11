@@ -19,6 +19,7 @@ export const InvalidMessageResponse = {
   USER_NOT_FOUND: 't_user_not_found',
   SESSION_BAD_ACCESS: 't_session_bad_access',
   FIELD_EMPTY: 't_field_empty',
+  LINEAGE_TYPE_INVALID: 't_lineage_type_invalid',
 } as const;
 
 export type InvalidMessage =

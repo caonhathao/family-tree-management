@@ -23,26 +23,26 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import { FamilyMemberSchema } from "@/modules/family-member/family-member.schemas";
-import { IDraftFamilyData } from "@/types/draft.types";
+import { AppDispatch, RootState } from "@/store";
+import { setDraft } from "@/store/familySlide";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
 import { v4 } from "uuid";
 
 const NewFamilyMemberForm = ({
   currentData,
   openState,
-  draft,
+
   setCurrentData,
   setOpenState,
-  setDraft,
 }: {
   currentData?: IFamilyMemberDto | null;
   openState: boolean;
-  draft: IDraftFamilyData;
+
   setOpenState: Dispatch<SetStateAction<boolean>>;
   setCurrentData: Dispatch<SetStateAction<IFamilyMemberDto | null>>;
-  setDraft: Dispatch<SetStateAction<IDraftFamilyData>>;
 }) => {
   const {
     register,
@@ -67,11 +67,10 @@ const NewFamilyMemberForm = ({
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const isAlive = watch("isAlive");
-
-  const onSubmit = (
-    values: IFamilyMemberDto,
-    e?: React.BaseSyntheticEvent,
-  ) => {
+  const { draft } = useSelector((state: RootState) => state.family);
+  // console.log(draft);
+  const dispatch = useDispatch<AppDispatch>();
+  const onSubmit = (values: IFamilyMemberDto, e?: React.BaseSyntheticEvent) => {
     e?.preventDefault();
     if (draft.family.localId.length === 0) {
       Toaster({
@@ -84,16 +83,34 @@ const NewFamilyMemberForm = ({
 
     const isUpdate = !!currentData;
     const memberId = isUpdate && currentData ? currentData.localId : v4();
-    const finalValues = { ...values, localId: memberId };
+    let position = { x: 0, y: 0 };
+    if (!isUpdate && draft.members.length > 0) {
+      const lastMember = draft.members[draft.members.length - 1];
+      position = {
+        x: (lastMember.positionX ?? 0) + 200, // Đặt sang phải một chút
+        y: lastMember.positionY ?? 0,
+      };
+    }
 
-    setDraft((prev: IDraftFamilyData) => ({
-      ...prev,
-      member: isUpdate
-        ? prev.member.map((m) =>
-            m.localId === memberId ? { ...m, ...finalValues } : m,
-          )
-        : [...prev.member, finalValues],
-    }));
+    const finalValues = {
+      ...values,
+      localId: v4(),
+      positionX: position.x,
+      positionY: position.y,
+    };
+
+    const updatedMembers = isUpdate
+      ? draft.members.map((m) =>
+          m.localId === memberId ? { ...m, ...finalValues } : m,
+        )
+      : [...draft.members, finalValues];
+
+    const updatedDraft = {
+      ...draft,
+      members: updatedMembers,
+    };
+
+    dispatch(setDraft(updatedDraft));
     Toaster({
       title: "Hành động thành công",
       description: isUpdate
@@ -107,22 +124,17 @@ const NewFamilyMemberForm = ({
   };
 
   const deleteMemberFromDraft = (memberId: string) => {
-    setDraft((prev) => {
-      // 1. Lọc bỏ thành viên có id trùng với memberId
-      const updatedMembers = prev.member.filter((m) => m.localId !== memberId);
+    const updatedMembers = draft.members.filter((m) => m.localId !== memberId);
+    const updatedRelationships = draft.relationships.filter(
+      (rel) => rel.fromMemberId !== memberId && rel.toMemberId !== memberId,
+    );
 
-      // 2. Quan trọng: Lọc bỏ tất cả quan hệ mà thành viên này tham gia (dù là nguồn hay đích)
-      const updatedRelationships = prev.relationships.filter(
-        (rel) => rel.fromMemberId !== memberId && rel.toMemberId !== memberId,
-      );
-
-      return {
-        ...prev,
-        member: updatedMembers,
-        relationships: updatedRelationships,
-      };
-    });
-
+    const updateDraft = {
+      ...draft,
+      members: updatedMembers,
+      relationships: updatedRelationships,
+    };
+    dispatch(setDraft(updateDraft));
     Toaster({
       title: "Đã xóa",
       description: "Thành viên và các quan hệ liên quan đã được gỡ bỏ.",
