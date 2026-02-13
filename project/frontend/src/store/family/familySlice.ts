@@ -32,6 +32,10 @@ const familySlice = createSlice({
         m.localId === action.payload.localId ? action.payload : m,
       );
     },
+    deleteAll: (state) => {
+      state.draft = initialState.draft;
+      state.origin = initialState.origin;
+    },
     setOrigin: (state, action) => {
       const data = JSON.parse(JSON.stringify(action.payload));
       state.origin = data;
@@ -43,5 +47,11 @@ const familySlice = createSlice({
   },
 });
 
-export const { setDraft, setOrigin, syncSuccess } = familySlice.actions;
+export const {
+  setDraft,
+  setOrigin,
+  updateMemberInDraft,
+  deleteAll,
+  syncSuccess,
+} = familySlice.actions;
 export default familySlice.reducer;

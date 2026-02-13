@@ -1,8 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import isEqual from "lodash.isequal";
-import { SyncFamilyAction } from "@/modules/family/family.actions";
+import {
+  DeleteFamilyAction,
+  SyncFamilyAction,
+} from "@/modules/family/family.actions";
 import { RootState } from "@/store";
-import { syncSuccess } from "./familySlice";
+import { deleteAll, syncSuccess } from "./familySlice";
 export const saveFamilyDraft = createAsyncThunk(
   "family/save",
   async (groupId: string, { getState, dispatch }) => {
@@ -13,6 +16,16 @@ export const saveFamilyDraft = createAsyncThunk(
 
     const result = await SyncFamilyAction(groupId, draft);
     dispatch(syncSuccess());
+    return result;
+  },
+);
+
+export const deleteFamily = createAsyncThunk(
+  "family/delete",
+  async (groupId: string, { getState, dispatch }) => {
+    const { draft } = (getState() as RootState).family;
+    const result = await DeleteFamilyAction(draft.family.localId, groupId);
+    dispatch(deleteAll());
     return result;
   },
 );

@@ -6,6 +6,7 @@ import {
   Param,
   Get,
   Put,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -96,6 +97,33 @@ export class FamilyController {
       userId,
       groupId,
       data,
+    );
+    return ResponseFactory.success({
+      data: familyData,
+      message: ValidMessageResponse.UPDATED,
+    });
+  }
+
+  @Delete(':groupId/:familyId')
+  @Roles('OWNER', 'EDITOR')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Delete family data' })
+  @ApiParam({ name: 'groupId', description: 'Group family ID' })
+  @ApiParam({ name: 'familyId', description: 'Family ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Family data retrieved successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async deleteFamilyData(
+    @GetCurrentUserId() userId: string,
+    @Param('groupId') groupId: string,
+    @Param('familyId') familyId: string,
+  ) {
+    const familyData = await this.familyService.deleteFamilyData(
+      userId,
+      groupId,
+      familyId,
     );
     return ResponseFactory.success({
       data: familyData,

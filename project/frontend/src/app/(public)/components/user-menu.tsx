@@ -22,6 +22,7 @@ import { AppDispatch, RootState } from "@/store";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { clearProfile } from "@/store/user/userSlice";
+import { IErrorResponse } from "@/types/base.types";
 export const UserMenu = ({ className }: { className?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
@@ -29,7 +30,8 @@ export const UserMenu = ({ className }: { className?: string }) => {
   const { profile } = useSelector((state: RootState) => state.user);
   const handleLogOut = () => {
     startTransition(async () => {
-      const result = await logoutAction();
+      const result: IErrorResponse | undefined = await logoutAction();
+      //console.log(result);
       if (result?.error) {
         Toaster({
           title: "Đăng xuất thất bại",
@@ -37,8 +39,8 @@ export const UserMenu = ({ className }: { className?: string }) => {
           type: "error",
         });
       } else {
+        dispatch(clearProfile());
       }
-      dispatch(clearProfile());
     });
   };
   //console.log(data);
@@ -46,7 +48,7 @@ export const UserMenu = ({ className }: { className?: string }) => {
     <div className={className}>
       <Avatar>
         <AvatarImage
-          src={profile ? profile.userProfile.avatar : ""}
+          src={profile && profile.id !== "" ? profile.userProfile.avatar : ""}
           alt={"@shadcn"}
           className={"grayscale"}
         />
@@ -69,7 +71,7 @@ export const UserMenu = ({ className }: { className?: string }) => {
             </motion.div>
           </Button>
         </DropdownMenuTrigger>
-        {profile ? (
+        {profile && profile.id !== "" ? (
           <DropdownMenuContent>
             <DropdownMenuGroup>
               <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>

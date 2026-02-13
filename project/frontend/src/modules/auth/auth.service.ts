@@ -3,6 +3,7 @@ import { RegisterDto, LoginBaseDto, IAuthResponseDto } from "./auth.dto";
 import { cookies } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { ResponseDataBase } from "@/types/base.types";
+import { fetchWithAuth } from "@/lib/api/fetch-with-auth";
 
 export const AuthService = {
   register: async (data: RegisterDto) => {
@@ -55,7 +56,7 @@ export const AuthService = {
 
   logout: async () => {
     const cookieStore = await cookies();
-    const token = cookieStore.get("refresh_token")?.value;
+    const token = cookieStore.get("access_token")?.value;
     const res = await fetch(EnvConfig.serverDomain + apiClient.auth.logOut, {
       method: "POST",
       headers: {
@@ -63,7 +64,7 @@ export const AuthService = {
         Authorization: `Bearer ${token}`,
       },
     });
-    const result = await res.json();
-    return result;
+    //console.log("logout:", res);
+    return res.json();
   },
 };

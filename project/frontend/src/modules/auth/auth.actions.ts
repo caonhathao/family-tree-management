@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { handleError } from "@/lib/utils.lib";
 import { IErrorResponse, ResponseDataBase } from "@/types/base.types";
+import { revalidatePath } from "next/cache";
 
 export async function registerAction(data: RegisterDto) {
   let isSuccess = false;
@@ -50,7 +51,7 @@ export async function loginBaseAction(data: LoginBaseDto) {
   try {
     const res: ResponseDataBase<IAuthResponseDto> =
       await AuthService.loginBase(data);
-    console.log("action:", res);
+    //console.log("action:", res);
     if (res.success) {
       isSuccess = true;
       const cookieStore = await cookies();
@@ -117,21 +118,17 @@ export async function loginGoogleAction(token: string) {
 }
 
 export async function logoutAction() {
-  let isSuccess = false;
-
   try {
-    const res = await AuthService.logout();
-    if (res.success) {
-      isSuccess = true;
-      const cookieStore = await cookies();
-
-      cookieStore.delete("access_token");
-      cookieStore.delete("refresh_token");
-    }
-  } catch (err) {
+    await AuthService.logout();
+  } catch (err: unknown) {
+    console.log("error at logout action", err);
     return handleError(err);
+  } finally {
+    const cookieStore = await cookies();
+    cookieStore.delete("access_token");
+    cookieStore.delete("refresh_token");
+    revalidatePath("/");
   }
-  if (isSuccess) redirect("/");
 }
 
 export async function refreshAction() {
