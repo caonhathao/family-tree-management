@@ -21,9 +21,11 @@ const AuthContent = () => {
   const variantSlideAnimation = createSlideVariants();
 
   return (
-    <div className={"w-full h-full flex flex-col justify-start items-center"}>
+    <div className={"w-full h-full flex flex-col justify-between items-center"}>
       {/* header with back and features buttons */}
-      <div className={"w-full flex flex-row justify-between items-center p-2"}>
+      <div
+        className={"w-full h-20 flex flex-row justify-between items-center p-2"}
+      >
         <Button
           variant={"outline"}
           size={"default"}
@@ -41,7 +43,7 @@ const AuthContent = () => {
           <IoIosInformationCircleOutline />
         </Button>
       </div>
-      <div className={"w-[80%] flex justify-center items-center"}>
+      <div className={"w-[80%] h-full flex justify-center items-center"}>
         {/* main container */}
         <motion.div
           initial={"hidden"}
@@ -53,7 +55,7 @@ const AuthContent = () => {
           }}
           custom={{ direction: "right", delay: 0.2 }}
           variants={variantSlideAnimation}
-          className={" flex min-h-125 min-w-200 rounded-lg shadow-2xl"}
+          className={`flex min-h-125 min-w-200 rounded-lg shadow-2xl border ${isLogin ? " border-blue-400" : "border-amber-400"}`}
         >
           <motion.div
             layout

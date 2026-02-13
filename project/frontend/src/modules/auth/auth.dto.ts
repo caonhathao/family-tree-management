@@ -7,7 +7,7 @@ export interface UserType {
   };
 }
 
-export interface AuthResponseDto {
+export interface IAuthResponseDto {
   user: UserType;
   tokens: {
     accessToken: string;

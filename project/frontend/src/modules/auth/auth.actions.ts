@@ -2,18 +2,18 @@
 
 import { AuthService } from "@/modules/auth/auth.service";
 import { redirect } from "next/navigation";
-import { RegisterDto, LoginBaseDto, AuthResponseDto } from "./auth.dto";
+import { RegisterDto, LoginBaseDto, IAuthResponseDto } from "./auth.dto";
 import { cookies } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { handleError } from "@/lib/utils.lib";
-import { ResponseDataBase } from "@/types/base.types";
+import { IErrorResponse, ResponseDataBase } from "@/types/base.types";
 
 export async function registerAction(data: RegisterDto) {
   let isSuccess = false;
 
   try {
     const res = await AuthService.register(data);
-    // console.log(res)
+    console.log("register:,", res.data);
     if (res.success) {
       isSuccess = true;
       const cookieStore = await cookies();
@@ -48,7 +48,7 @@ export async function loginBaseAction(data: LoginBaseDto) {
   let isSuccess = false;
 
   try {
-    const res: ResponseDataBase<AuthResponseDto> =
+    const res: ResponseDataBase<IAuthResponseDto> =
       await AuthService.loginBase(data);
     console.log("action:", res);
     if (res.success) {
@@ -132,4 +132,28 @@ export async function logoutAction() {
     return handleError(err);
   }
   if (isSuccess) redirect("/");
+}
+
+export async function refreshAction() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("refresh_token")?.value;
+    const res: ResponseDataBase<IAuthResponseDto> =
+      await AuthService.refresh(token);
+    if (res.success) {
+      cookieStore.set("access_token", res.data.tokens.accessToken, {
+        path: "/",
+      });
+      cookieStore.set("refresh_token", res.data.tokens.refreshToken, {
+        path: "/",
+      });
+      return undefined;
+    } else
+      return {
+        success: false,
+        error: res.message || "error",
+      } as IErrorResponse;
+  } catch (err) {
+    return handleError(err);
+  }
 }

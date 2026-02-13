@@ -3,3 +3,8 @@ export interface ResponseDataBase<T> {
   message: string;
   success: boolean;
 }
+
+export interface IErrorResponse {
+  success: boolean;
+  error: string;
+}
