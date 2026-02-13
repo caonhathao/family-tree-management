@@ -1,45 +1,40 @@
 "use server";
-import { AuthService } from "@/modules/auth/auth.service";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const cookieStore = await cookies();
-  let token = cookieStore.get("access_token")?.value;
 
-  // Lần 1: Gọi API bình thường
-  let res = await fetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  // 1. Lấy Access Token hiện có (Nếu Middleware vừa refresh, nó đã gán vào Header/Cookie rồi)
+  const token = cookieStore.get("access_token")?.value;
 
-  // Nếu bị 401 (Hết hạn Access Token)
-  if (res.status === 401) {
-    const refreshResult = await AuthService.refresh();
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 
-    if (refreshResult.success) {
-      // Lấy token mới vừa được set vào cookie
-      token = (await cookies()).get("access_token")?.value;
-
-      // Lần 2: Gửi lại request ban đầu với token mới
-      res = await fetch(url, {
-        ...options,
-        headers: {
-          ...options.headers,
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-    } else {
-      // Refresh thất bại (hết cả refresh token) -> yêu cầu login lại
-      // Có thể redirect về trang login ở đây
-      redirect("/login");
-    }
+  if (!(options.body instanceof FormData) && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
   }
 
-  return res.json();
+  // 2. Gọi API
+  const res = await fetch(url, { ...options, headers });
+
+  // 3. Nếu vẫn bị 401, nghĩa là cả Refresh Token cũng đã chết hoặc có lỗi nghiêm trọng
+  if (res.status === 401) {
+    console.log(
+      "Unauthorized và Middleware không thể cứu. Chuyển hướng login.",
+    );
+    // Lưu ý: redirect() ném ra một error đặc biệt, đừng bọc nó trong try-catch vô tội vạ
+    redirect("/login");
+  }
+
+  // 4. Parse dữ liệu an toàn
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.message || "Lỗi kết nối Server");
+  }
+
+  return data;
 }

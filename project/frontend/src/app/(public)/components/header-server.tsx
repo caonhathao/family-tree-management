@@ -1,28 +1,20 @@
+"use server";
 import { getUserFromToken } from "@/lib/auth.lib";
 import { ResponseGetUserDto } from "@/modules/user/user.dto";
 import { cookies } from "next/headers";
-import { UserMenu } from "./user-menu";
-import { Navigation } from "./navigation-menu";
+import { IErrorResponse } from "@/types/base.types";
+import HeaderClient from "./header-client";
 
 export async function HeaderServer() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("access_token");
-  const user: ResponseGetUserDto | null = await getUserFromToken(token?.value);
-  //console.log(user);
+  let token: string | undefined;
+  if (cookieStore.get("access_token")?.value !== undefined) {
+    token = cookieStore.get("access_token")?.value;
+  } else token = cookieStore.get("refresh_token")?.value;
 
-  return (
-    <header
-      className={
-        "w-full px-3 py-2 flex flex-row justify-between items-center shadow-2xl"
-      }
-    >
-      {/* logo web and navigation  menu */}
-      <Navigation className={"w-[60%] flex justify-start items-center gap-3"} />
-      {/* account menu */}
-      <UserMenu
-        data={user}
-        className={"w-[40%] flex flex-row gap-3 justify-end items-center"}
-      />
-    </header>
-  );
+  let user: ResponseGetUserDto | IErrorResponse | null = null;
+  user = await getUserFromToken(token);
+  console.log("user at header server:", user);
+
+  return <HeaderClient user={user} />;
 }

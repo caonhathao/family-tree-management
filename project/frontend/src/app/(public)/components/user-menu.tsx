@@ -19,11 +19,12 @@ import { startTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 import { logoutAction } from "@/modules/auth/auth.actions";
 import { Toaster } from "@/components/shared/toast";
+import { IErrorResponse } from "@/types/base.types";
 export const UserMenu = ({
   data,
   className,
 }: {
-  data: ResponseGetUserDto | null;
+  data: ResponseGetUserDto | IErrorResponse | null;
   className?: string;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,7 +46,7 @@ export const UserMenu = ({
     <div className={className}>
       <Avatar>
         <AvatarImage
-          src={data ? data.userProfile.avatar : ""}
+          src={data && "userProfile" in data ? data.userProfile.avatar : ""}
           alt={"@shadcn"}
           className={"grayscale"}
         />
@@ -68,7 +69,7 @@ export const UserMenu = ({
             </motion.div>
           </Button>
         </DropdownMenuTrigger>
-        {data ? (
+        {data && "userProfile" in data ? (
           <DropdownMenuContent>
             <DropdownMenuGroup>
               <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
