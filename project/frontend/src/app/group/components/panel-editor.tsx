@@ -1,5 +1,6 @@
 "use client";
 import { LoaderModule } from "@/components/shared/loader-module";
+import { Toaster } from "@/components/shared/toast";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,7 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AppDispatch, RootState } from "@/store";
-import { saveFamilyDraft } from "@/store/familyThunk";
+import { deleteFamily, saveFamilyDraft } from "@/store/family/familyThunk";
+
 import { motion, useDragControls } from "framer-motion";
 import isEqual from "lodash.isequal";
 import {
@@ -25,7 +27,7 @@ import {
 import { BiDetail } from "react-icons/bi";
 import { FaPlus, FaRegSave, FaSort } from "react-icons/fa";
 import { IoCreateOutline, IoLink } from "react-icons/io5";
-import { LuLayoutPanelTop, LuGripVertical } from "react-icons/lu";
+import { LuLayoutPanelTop, LuGripVertical, LuEraser } from "react-icons/lu";
 import { MdOutlineCancel, MdOutlineGrid4X4 } from "react-icons/md";
 import { RiDragMoveFill } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
@@ -68,10 +70,66 @@ export const PanelEditor = ({
   const [isPending, startTransition] = useTransition();
 
   const handleSaveFamilyDraft = async () => {
-    startTransition(() => {
-      dispatch(saveFamilyDraft(groupId));
+    startTransition(async () => {
+      try {
+        // unwrap() sẽ ném lỗi vào catch nếu Thunk bị rejected
+        await dispatch(saveFamilyDraft(groupId)).unwrap();
+
+        Toaster({
+          title: "Thành công",
+          description: "Bản nháp gia đình đã được lưu.",
+          type: "success",
+          cancel: { label: "OK", onClick: () => {} },
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        Toaster({
+          title: "Lỗi",
+          description: error?.message || "Không thể lưu bản nháp.",
+          type: "error",
+          cancel: { label: "OK", onClick: () => {} },
+        });
+      }
     });
   };
+
+  const handleOpenFamilyMemberForm = () => {
+    if (draft.family.localId === "") {
+      Toaster({
+        title: "Lỗi",
+        description: "Vui lòng tạo sơ đồ trước khi thêm thành viên.",
+        type: "error",
+        cancel: { label: "OK", onClick: () => {} },
+      });
+    } else {
+      setOpenFamilyMemberForm(true);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    startTransition(async () => {
+      try {
+        const result = await dispatch(deleteFamily(groupId)).unwrap();
+        console.log(result);
+
+        Toaster({
+          title: "Thành công",
+          description: "Sơ đồ gia đình đã được xóa.",
+          type: "success",
+          cancel: { label: "OK", onClick: () => {} },
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        Toaster({
+          title: "Lỗi",
+          description: error?.message || "Không thể xóa bản nháp.",
+          type: "error",
+          cancel: { label: "OK", onClick: () => {} },
+        });
+      }
+    });
+  };
+
   return (
     <motion.div
       drag
@@ -116,7 +174,7 @@ export const PanelEditor = ({
           <DropdownMenuGroup>
             <DropdownMenuItem
               className={"hover:cursor-pointer"}
-              onClick={() => setOpenFamilyMemberForm(true)}
+              onClick={() => handleOpenFamilyMemberForm()}
             >
               <FaPlus />
               Thêm thành viên
@@ -164,6 +222,7 @@ export const PanelEditor = ({
             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
             <DropdownMenuItem
               className={"hover:cursor-pointer"}
+              disabled={draft.family.localId !== "" ? true : false}
               onClick={() => setOpenFamilyForm(true)}
             >
               <IoCreateOutline />
@@ -181,9 +240,13 @@ export const PanelEditor = ({
               )}
               Lưu
             </DropdownMenuItem>
-            <DropdownMenuItem className={"hover:cursor-pointer"}>
-              <MdOutlineCancel />
-              Hủy
+            <DropdownMenuItem
+              disabled={draft.family.localId === "" ? true : false}
+              className={"hover:cursor-pointer"}
+              onClick={() => handleDeleteAll()}
+            >
+              <LuEraser />
+              Xóa toàn bộ
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

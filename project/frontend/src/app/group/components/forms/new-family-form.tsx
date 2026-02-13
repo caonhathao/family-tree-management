@@ -24,7 +24,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { IFamilyDto } from "@/modules/family/family.dto";
 import { FamilySchema } from "@/modules/family/family.schemas";
 import { AppDispatch, RootState } from "@/store";
-import { setDraft } from "@/store/familySlide";
+import { setDraft } from "@/store/family/familySlice";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useForm } from "react-hook-form";

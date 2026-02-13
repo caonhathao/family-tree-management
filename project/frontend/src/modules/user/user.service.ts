@@ -20,7 +20,7 @@ export const UserServices = {
         method: "GET",
       },
     );
-    console.log("res at getUserDetail:", res);
+    //console.log("res at getUserDetail:", res);
     return res;
   },
 };

@@ -16,10 +16,8 @@ export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
   let isSuccess = false;
 
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseGroupFamilyDetailDto> =
-      await GroupFamilyService.createGroup(data, token);
+      await GroupFamilyService.createGroup(data);
     if (res.success) {
       isSuccess = true;
     } else
@@ -40,10 +38,8 @@ export async function updateGroupFamilyAction(
 ) {
   let isSuccess = false;
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<IUpdateGroupFamilyDto> =
-      await GroupFamilyService.updateGroup(groupId, data, token);
+      await GroupFamilyService.updateGroup(groupId, data);
     if (res.success) {
       isSuccess = true;
     } else return { error: res.message || "error" };
@@ -61,7 +57,7 @@ export async function joinGroupAcion(tokenCode: string) {
     const cookieStore = await cookies();
     const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<IResponseJoinGroupDto> =
-      await GroupFamilyService.joinGroup(tokenCode, token);
+      await GroupFamilyService.joinGroup(tokenCode);
     if (res.success) {
       return res.data;
     } else return { error: res.message || "error" };
@@ -72,10 +68,8 @@ export async function joinGroupAcion(tokenCode: string) {
 
 export async function getAllGroupAction() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseGroupFamiliesDto[]> =
-      await GroupFamilyService.getAll(token);
+      await GroupFamilyService.getAll();
     // console.log(res);
     if (res.success) {
       return res.data;
@@ -87,10 +81,8 @@ export async function getAllGroupAction() {
 
 export async function getDetailGroupAction(groupId: string) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseGroupFamilyDetailDto> =
-      await GroupFamilyService.getDetail(groupId, token);
+      await GroupFamilyService.getDetail(groupId);
     if (res.success) {
       return res.data;
     } else return { error: res.message || "error" };

@@ -377,7 +377,6 @@ export class AuthService {
   async logout(userId: string, token: string) {
     try {
       return await this.prisma.$transaction(async (tx) => {
-        // 1. Kiểm tra user (Bước này có thể bỏ qua nếu Guard đã làm)
         const user = await tx.user.findUnique({ where: { id: userId } });
         if (!user) throw new NotFoundException(Exception.NOT_EXIST);
 

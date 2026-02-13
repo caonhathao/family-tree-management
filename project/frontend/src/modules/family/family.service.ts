@@ -6,11 +6,7 @@ import { EnvConfig } from "@/lib/env/env-config.lib";
 import { IFamilyDto } from "./family.dto";
 
 export const FamilyService = {
-  syncFamily: async (
-    groupId: string,
-    data: IDraftFamilyData,
-    token: string | undefined,
-  ) => {
+  syncFamily: async (groupId: string, data: IDraftFamilyData) => {
     const result = await fetchWithAuth(
       EnvConfig.serverDomain + apiClient.family.syncFamily(groupId),
       {
@@ -24,14 +20,13 @@ export const FamilyService = {
     return result;
   },
 
-  getFamily: async (groupId: string, token: string | undefined) => {
+  getFamily: async (groupId: string) => {
     const result = await fetchWithAuth(
       EnvConfig.serverDomain + apiClient.family.getFamily(groupId),
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       },
     );
@@ -58,19 +53,15 @@ export const FamilyService = {
   },
 
   deleteFamily: async (familyId: string, groupId: string) => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-
     const result = await fetchWithAuth(
-      apiClient.family.deleteFamily(familyId, groupId),
+      EnvConfig.serverDomain + apiClient.family.deleteFamily(familyId, groupId),
       {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       },
     );
-    return result.json();
+    return result;
   },
 };

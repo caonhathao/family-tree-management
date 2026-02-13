@@ -12,10 +12,8 @@ export async function SyncFamilyAction(
   data: IDraftFamilyData,
 ) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<ResponseCreateFamilyDto> =
-      await FamilyService.syncFamily(groupId, data, token);
+      await FamilyService.syncFamily(groupId, data);
     //console.log(res)
     if (res.success) {
       return res.data;
@@ -30,10 +28,8 @@ export async function SyncFamilyAction(
 
 export async function GetFamilyData(groupId: string) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
     const res: ResponseDataBase<IDraftFamilyData> =
-      await FamilyService.getFamily(groupId, token);
+      await FamilyService.getFamily(groupId);
 
     if (res.success) return res.data;
     else
@@ -60,21 +56,16 @@ export async function UpdatefamilyInfo(groupId: string, data: IFamilyDto) {
 }
 
 export async function DeleteFamilyAction(familyId: string, groupId: string) {
-  let isSuccess = false;
-
   try {
     const res: ResponseDataBase<ResponseCreateFamilyDto> =
       await FamilyService.deleteFamily(familyId, groupId);
     if (res.success) {
-      isSuccess = true;
+      return res.data;
     } else
       return {
         error: res.message || "error",
       };
   } catch (err: unknown) {
     return handleError(err);
-  }
-  if (isSuccess) {
-    revalidatePath(`/family`);
   }
 }

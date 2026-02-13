@@ -99,7 +99,7 @@ export const FamilyInfoDrawer = ({
       | { success: boolean; error: string }
       | IResponseCreateInviteDto
       | { err: string } = await CreateInviteLinkAction(payload);
-    console.log(res);
+    //console.log(res);
     if (res && "error" in res) {
       Toaster({
         title: "Lỗi",
@@ -113,7 +113,7 @@ export const FamilyInfoDrawer = ({
 
   const handleRemoveMember = async (memberId: string) => {
     const res = await RemoveFromGroupAction(data.id, memberId);
-    console.log(res);
+    // console.log(res);
   };
 
   return (

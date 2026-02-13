@@ -144,7 +144,7 @@ export class FamilyService {
 
         return {
           family,
-          member: allMembers.map((m) => ({ ...m, localId: m.id })),
+          members: allMembers.map((m) => ({ ...m, localId: m.id })),
           relationships: savedRelations,
         };
       });
@@ -211,7 +211,7 @@ export class FamilyService {
         };
       }
       return {
-        member: [],
+        members: [],
         relationships: [],
         family: {
           localId: '',
@@ -249,6 +249,25 @@ export class FamilyService {
       return family;
     } catch (err) {
       console.error('err at update family info service:', err);
+      throw err;
+    }
+  }
+
+  async deleteFamilyData(userId: string, groupId: string, familyId: string) {
+    try {
+      const family = await this.prisma.$transaction(async (tx) => {
+        //delete family
+        const deletedFamily = await tx.family.delete({
+          where: { id: familyId, groupFamilyId: groupId },
+          select: {
+            id: true,
+          },
+        });
+        return deletedFamily;
+      });
+      return family;
+    } catch (err) {
+      console.error('err at delete family data service:', err);
       throw err;
     }
   }

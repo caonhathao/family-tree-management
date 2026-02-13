@@ -26,7 +26,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
       "Unauthorized và Middleware không thể cứu. Chuyển hướng login.",
     );
     // Lưu ý: redirect() ném ra một error đặc biệt, đừng bọc nó trong try-catch vô tội vạ
-    redirect("/login");
+    redirect("/auth?mode=login");
   }
 
   // 4. Parse dữ liệu an toàn
