@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import isEqual from "lodash.isequal";
 import { SyncFamilyAction } from "@/modules/family/family.actions";
 import { RootState } from "@/store";
-import { syncSuccess } from "./familySlide";
+import { syncSuccess } from "./familySlice";
 export const saveFamilyDraft = createAsyncThunk(
   "family/save",
   async (groupId: string, { getState, dispatch }) => {

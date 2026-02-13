@@ -25,7 +25,7 @@ import { IRelationshipDto } from "@/modules/relationships/relationship.dto";
 import dagre from "@dagrejs/dagre";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
-import { setDraft, setOrigin } from "@/store/familySlide";
+import { setDraft, setOrigin } from "@/store/family/familySlice";
 import isEqual from "lodash.isequal";
 
 const nodeTypes = {
@@ -225,7 +225,10 @@ export const GroupContentPage = ({
   }, [draft]);
 
   return (
-    <div ref={constrainRef} className="relative h-[calc(100vh-3.5rem)] w-full overflow-hidden">
+    <div
+      ref={constrainRef}
+      className={"relative h-[calc(100vh-3.5rem)] w-full overflow-hidden"}
+    >
       <PanelEditor
         constraintsRef={constrainRef}
         setOpenFamilyForm={setOpenFamilyForm}
@@ -238,7 +241,7 @@ export const GroupContentPage = ({
         setNodesDraggable={setNodesDraggable}
         groupId={group.id}
       />
-      <div className="fixed top-20 right-5 z-50">
+      <div className={"fixed top-20 right-5 z-50"}>
         <FamilyInfoDrawer data={group} />
       </div>
       {openFamilyMemberForm && (

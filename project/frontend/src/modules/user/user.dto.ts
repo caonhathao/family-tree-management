@@ -16,7 +16,7 @@ export interface ResponseUpdateUserDto {
   avatar: string | null;
   biography: string;
 }
-export interface ResponseGetUserDto {
+export interface IResponseGetUserDto {
   id: string;
   email: string;
   userProfile: {
