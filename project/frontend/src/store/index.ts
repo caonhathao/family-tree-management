@@ -1,12 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
-import familySlice from "@/store/familySlide";
+import familySlice from "./family/familySlice";
+import userSlice from "./user/userSlice";
 
 export const store = configureStore({
   reducer: {
     family: familySlice,
+    user: userSlice,
   },
 });
 
-// Đây là dòng quan trọng để fix lỗi "not found"
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

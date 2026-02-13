@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ResponseGetUserDto } from "@/modules/user/user.dto";
 import { IoIosArrowDown } from "react-icons/io";
 import { motion } from "framer-motion";
 import { IoPersonOutline } from "react-icons/io5";
@@ -19,16 +18,15 @@ import { startTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 import { logoutAction } from "@/modules/auth/auth.actions";
 import { Toaster } from "@/components/shared/toast";
-import { IErrorResponse } from "@/types/base.types";
-export const UserMenu = ({
-  data,
-  className,
-}: {
-  data: ResponseGetUserDto | IErrorResponse | null;
-  className?: string;
-}) => {
+import { AppDispatch, RootState } from "@/store";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { clearProfile } from "@/store/user/userSlice";
+export const UserMenu = ({ className }: { className?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const { profile } = useSelector((state: RootState) => state.user);
   const handleLogOut = () => {
     startTransition(async () => {
       const result = await logoutAction();
@@ -38,7 +36,9 @@ export const UserMenu = ({
           description: result.error,
           type: "error",
         });
+      } else {
       }
+      dispatch(clearProfile());
     });
   };
   //console.log(data);
@@ -46,7 +46,7 @@ export const UserMenu = ({
     <div className={className}>
       <Avatar>
         <AvatarImage
-          src={data && "userProfile" in data ? data.userProfile.avatar : ""}
+          src={profile ? profile.userProfile.avatar : ""}
           alt={"@shadcn"}
           className={"grayscale"}
         />
@@ -69,7 +69,7 @@ export const UserMenu = ({
             </motion.div>
           </Button>
         </DropdownMenuTrigger>
-        {data && "userProfile" in data ? (
+        {profile ? (
           <DropdownMenuContent>
             <DropdownMenuGroup>
               <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
