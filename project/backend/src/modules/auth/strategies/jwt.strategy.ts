@@ -1,18 +1,16 @@
-//Verify the validity of the JWT in the requests sent from the frontend after a successful login.
-// src/modules/auth/strategies/at.strategy.ts
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload } from '../types/jwt-payload.type';
-import { EnvConfigService } from 'src/common/config/env/env-config.service';
 import { Request } from 'express';
+import { EnvConfigService } from 'src/common/config/env/env-config.service';
 
 @Injectable()
 export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(envConfig: EnvConfigService) {
+  constructor(envConfigService: EnvConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: envConfig.jwtAccessKey,
+      secretOrKey: envConfigService.jwtAccessKey,
     });
   }
 
@@ -23,10 +21,10 @@ export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
 @Injectable()
 export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
-  constructor(envConfig: EnvConfigService) {
+  constructor(envConfigService: EnvConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: envConfig.jwtRefreshKey,
+      secretOrKey: envConfigService.jwtRefreshKey,
       passReqToCallback: true,
     });
   }
