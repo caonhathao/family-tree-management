@@ -57,7 +57,7 @@ export class InviteService {
     });
 
     if (invite) {
-      const inviteLink = `${this.envConfig.clientDomain}/invite?token=${invite.token}`;
+      const inviteLink = `/invite?token=${invite.token}`;
 
       return { inviteLink: inviteLink };
     }

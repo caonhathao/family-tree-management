@@ -102,13 +102,6 @@ export class EnvConfigService {
       ''
     );
   }
-  get serverDomain(): string {
-    return (
-      this.configService?.get<string>('domain.serverDomain') ||
-      process.env.SERVER_DOMAIN ||
-      ''
-    );
-  }
   get clientDomain(): string {
     return (
       this.configService?.get<string>('domain.clientDomain') ||
@@ -139,7 +132,6 @@ export class EnvConfigService {
       cloudinaryApiSecret: this.cloudinaryApiSecret,
       cloudinaryUrl: this.cloudinaryUrl,
       cloudinaryName: this.cloudinaryName,
-      serverDomain: this.serverDomain,
       clientDomain: this.clientDomain,
       googleClientId: this.googleClientId,
     };

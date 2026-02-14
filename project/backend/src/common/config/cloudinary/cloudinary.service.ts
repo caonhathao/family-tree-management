@@ -6,10 +6,18 @@ import {
 } from 'cloudinary';
 import { Readable } from 'node:stream';
 import { Exception } from 'src/common/messages/messages.response';
+import { EnvConfigService } from '../env/env-config.service';
 
 @Injectable()
 export class CloudinaryService {
-  constructor() {}
+  constructor(private readonly envConfig: EnvConfigService) {
+    cloudinary.config({
+      secure: true,
+      cloud_name: envConfig.cloudinaryName,
+      api_key: envConfig.cloudinaryApiKey,
+      api_secret: envConfig.cloudinaryApiSecret,
+    });
+  }
 
   async uploadFile(
     file: Express.Multer.File,
