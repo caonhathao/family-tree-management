@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  SERVER_DOMAIN: z.string().url("Invalid server domain"),
+  NEXT_PUBLIC_SERVER_DOMAIN: z.string().url("Invalid server domain"),
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
@@ -20,7 +20,7 @@ if (!envServer.success) {
 const envData = envServer.data;
 
 export const EnvConfig = {
-  serverDomain: envData.SERVER_DOMAIN,
+  serverDomain: envData.NEXT_PUBLIC_SERVER_DOMAIN,
   nodeValue: envData.NODE_ENV,
   accessTokenExpireIn: envData.ACCESS_TOKEN_EXPIRES_IN,
   refreshTokenExpireIn: envData.REFRESH_TOKEN_EXPIRES_IN,

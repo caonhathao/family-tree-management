@@ -26,7 +26,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private envCofig: EnvConfigService,
+    private envConfig: EnvConfigService,
   ) {}
 
   async register(
@@ -83,7 +83,7 @@ export class AuthService {
         data: {
           userId: newUser.id,
           token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+          expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
           userAgent: userAgent,
           ipAddress: ipAddress,
         },
@@ -156,12 +156,12 @@ export class AuthService {
         },
         update: {
           token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+          expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
         },
         create: {
           userId: user.id,
           token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+          expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
           userAgent: userAgent,
           ipAddress: ipAddress,
         },
@@ -186,10 +186,10 @@ export class AuthService {
     { userAgent, ipAddress }: { userAgent: string; ipAddress: string },
   ) {
     try {
-      const client = new OAuth2Client(this.envCofig.googleClientId);
+      const client = new OAuth2Client(this.envConfig.googleClientId);
       const ticket = await client.verifyIdToken({
         idToken: token.token,
-        audience: this.envCofig.googleClientId,
+        audience: this.envConfig.googleClientId,
       });
 
       const payload: TokenPayload | undefined = ticket.getPayload();
@@ -230,12 +230,12 @@ export class AuthService {
           },
           update: {
             token: tokens.refreshToken,
-            expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+            expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
           },
           create: {
             userId: user.id,
             token: tokens.refreshToken,
-            expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+            expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
             userAgent: userAgent,
             ipAddress: ipAddress,
           },
@@ -285,7 +285,7 @@ export class AuthService {
             data: {
               userId: newUser.id,
               token: tokens.refreshToken,
-              expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+              expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
               userAgent: userAgent,
               ipAddress: ipAddress,
             },
@@ -345,7 +345,7 @@ export class AuthService {
         where: { id: currentSession.id },
         data: {
           token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + this.envCofig.refreshExpires),
+          expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
         },
       });
 
@@ -400,15 +400,15 @@ export class AuthService {
       this.jwtService.signAsync(
         { payload },
         {
-          secret: this.envCofig.jwtAccessKey,
-          expiresIn: this.envCofig.accessExpires,
+          secret: this.envConfig.jwtAccessKey,
+          expiresIn: this.envConfig.accessExpires,
         },
       ),
       this.jwtService.signAsync(
         { payload },
         {
-          secret: this.envCofig.jwtRefreshKey,
-          expiresIn: this.envCofig.refreshExpires,
+          secret: this.envConfig.jwtRefreshKey,
+          expiresIn: this.envConfig.refreshExpires,
         },
       ),
     ]);

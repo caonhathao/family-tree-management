@@ -4,20 +4,12 @@ import {
   UploadApiErrorResponse,
   UploadApiResponse,
 } from 'cloudinary';
-import { EnvConfigService } from '../env/env-config.service';
 import { Readable } from 'node:stream';
 import { Exception } from 'src/common/messages/messages.response';
 
 @Injectable()
 export class CloudinaryService {
-  constructor(private envConfig: EnvConfigService) {
-    cloudinary.config({
-      secure: true,
-      cloud_name: this.envConfig.cloudinaryName,
-      api_key: this.envConfig.cloudinaryApiKey,
-      api_secret: this.envConfig.cloudinaryApiSecret,
-    });
-  }
+  constructor() {}
 
   async uploadFile(
     file: Express.Multer.File,

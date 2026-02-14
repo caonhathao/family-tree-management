@@ -6,7 +6,6 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { envValidationSchema } from './common/config/env/env';
 import config from './common/config/env/config';
-import { EnvConfigService } from './common/config/env/env-config.service';
 import { FamilyModule } from './modules/family/family.module';
 import { EnvConfigModule } from './common/config/env/env-config.module';
 
@@ -24,12 +23,12 @@ import { PassportModule } from '@nestjs/passport';
     ConfigModule.forRoot({
       isGlobal: true,
       expandVariables: true,
-      envFilePath: '.env',
+      envFilePath: ['.env.local', '.env'],
       load: [config],
       validationSchema: envValidationSchema,
     }),
-    ScheduleModule.forRoot(),
     EnvConfigModule,
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     FamilyModule,
@@ -42,7 +41,7 @@ import { PassportModule } from '@nestjs/passport';
     PassportModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EnvConfigService],
-  exports: [EnvConfigService],
+  providers: [AppService],
+  exports: [],
 })
 export class AppModule {}

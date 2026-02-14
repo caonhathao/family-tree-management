@@ -23,4 +23,7 @@ export default () => ({
     serverDomain: process.env.SERVER_DOMAIN,
     clientDomain: process.env.CLIENT_DOMAIN,
   },
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID,
+  },
 });
