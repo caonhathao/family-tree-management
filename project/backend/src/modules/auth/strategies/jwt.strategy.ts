@@ -10,7 +10,10 @@ export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(envConfigService: EnvConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: envConfigService.jwtAccessKey,
+      secretOrKey:
+        envConfigService.jwtAccessKey ||
+        process.env.JWT_ACCESS_SECRET_KEY ||
+        '',
     });
   }
 
@@ -24,7 +27,10 @@ export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(envConfigService: EnvConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: envConfigService.jwtRefreshKey,
+      secretOrKey:
+        envConfigService.jwtRefreshKey ||
+        process.env.JWT_REFRESH_SECRET_KEY ||
+        '',
       passReqToCallback: true,
     });
   }

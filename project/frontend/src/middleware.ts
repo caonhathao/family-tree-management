@@ -43,7 +43,9 @@ export async function middleware(request: NextRequest) {
     } catch (error) {
       console.error("Middleware Refresh Error:", error);
       // Nếu refresh lỗi, xóa sạch cookie và đá về login
-      const response = NextResponse.redirect(new URL("/", request.url));
+      const response = NextResponse.redirect(
+        new URL("/auth?mode=login", request.url),
+      );
       response.cookies.delete("access_token");
       response.cookies.delete("refresh_token");
       return response;

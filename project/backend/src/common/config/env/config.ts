@@ -20,7 +20,6 @@ export default () => ({
     url: process.env.CLOUDINARY_URL,
   },
   domain: {
-    serverDomain: process.env.SERVER_DOMAIN,
     clientDomain: process.env.CLIENT_DOMAIN,
   },
   google: {

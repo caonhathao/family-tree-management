@@ -107,6 +107,11 @@ export const FamilyInfoDrawer = ({
         type: "error",
       });
     } else if (res && "inviteLink" in res) {
+      Toaster({
+        title: "Thành công",
+        description: "Tạo thành công",
+        type: "success",
+      });
       handleCopy(res.inviteLink);
     }
   };

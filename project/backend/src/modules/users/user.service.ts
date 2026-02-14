@@ -10,17 +10,17 @@ import { Exception } from 'src/common/messages/messages.response';
 import * as bcrypt from 'bcrypt';
 import { UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 import { CloudinaryService } from 'src/common/config/cloudinary/cloudinary.service';
-import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { JsonValue } from '@prisma/client/runtime/client';
 import { isUUID } from 'class-validator';
+import { EnvConfigService } from 'src/common/config/env/env-config.service';
 
 @Injectable()
 export class UserService {
   constructor(
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
-    private configService: ConfigService,
+    private envConfig: EnvConfigService,
   ) {}
 
   async update(
@@ -79,7 +79,7 @@ export class UserService {
       const upload: UploadApiResponse | UploadApiErrorResponse =
         await this.cloudinaryService.uploadFile(
           file,
-          this.configService.get<string>('cloudinary.folderUser'),
+          this.envConfig.folderUserName,
         );
       if ('secure_url' in upload && upload.secure_url) {
         profileUpdate.avatar = upload.secure_url as string;
