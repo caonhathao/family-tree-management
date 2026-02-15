@@ -17,6 +17,7 @@ import { InviteModule } from './modules/invite/invite.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TaskModule } from './schedule/task-schedule.module';
 import { PassportModule } from '@nestjs/passport';
+import { HealthCheckModule } from './modules/health-check/health-check.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { PassportModule } from '@nestjs/passport';
     InviteModule,
     TaskModule,
     PassportModule,
+    HealthCheckModule,
   ],
   controllers: [AppController],
   providers: [AppService],
