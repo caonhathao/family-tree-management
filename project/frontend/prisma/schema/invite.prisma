@@ -1,0 +1,13 @@
+model Invite {
+    id        String      @id @default(uuid()) @db.Uuid()
+    token     String      @unique
+    groupId   String      @db.Uuid()
+    group     GroupFamily @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    senderId  String      @db.Uuid()
+    sender    User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+    expiresAt DateTime
+    createdAt DateTime    @default(now())
+
+    @@index([token])
+    @@map("invite")
+}

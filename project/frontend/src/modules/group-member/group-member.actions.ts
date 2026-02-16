@@ -5,9 +5,8 @@ import {
   UpdateGroupMemberDto,
 } from "./group-member.dto";
 import { GroupMemberService } from "./group-member.service";
-import { ResponseDataBase } from "@/types/base.types";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 
 export async function UpdateGroupMemberRoleAction(
   groupId: string,
@@ -15,13 +14,18 @@ export async function UpdateGroupMemberRoleAction(
 ) {
   let isSuccess = false;
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-    const res: ResponseDataBase<ResponseUpdateGroupMemberDto> =
-      await GroupMemberService.updateRole(groupId, data, token);
-    if (res.success) {
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await GroupMemberService.updateRole(userId, groupId, data as any);
+    if (res) {
       isSuccess = true;
-    } else return { err: res.message || "error" };
+    } else {
+      return { err: "Failed to update role" };
+    }
   } catch (err) {
     return handleError(err);
   }
@@ -36,13 +40,18 @@ export async function UpdateGroupMemberLeaderAction(
 ) {
   let isSuccess = false;
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-    const res: ResponseDataBase<ResponseUpdateGroupMemberDto> =
-      await GroupMemberService.changeLeader(groupId, data, token);
-    if (res.success) {
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await GroupMemberService.changeLeader(userId, groupId, data as any);
+    if (res) {
       isSuccess = true;
-    } else return { err: res.message || "error" };
+    } else {
+      return { err: "Failed to change leader" };
+    }
   } catch (err) {
     return handleError(err);
   }
@@ -57,13 +66,22 @@ export async function DeleteGroupMemberAction(
 ) {
   let isSuccess = false;
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-    const res: ResponseDataBase<ResponseUpdateGroupMemberDto> =
-      await GroupMemberService.deleteGroupMember(groupId, memberId, token);
-    if (res.success) {
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await GroupMemberService.deleteGroupMember(
+      userId,
+      groupId,
+      memberId,
+    );
+    if (res) {
       isSuccess = true;
-    } else return { err: res.message || "error" };
+    } else {
+      return { err: "Failed to delete member" };
+    }
   } catch (err) {
     return handleError(err);
   }
@@ -75,16 +93,18 @@ export async function DeleteGroupMemberAction(
 export async function RemoveFromGroupAction(groupId: string, memberId: string) {
   let isSuccess = false;
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-    const res = await GroupMemberService.removeFromGroup(
-      groupId,
-      memberId,
-      token,
-    );
-    if (res.success) {
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await GroupMemberService.removeMember(userId, groupId, memberId);
+    if (res) {
       isSuccess = true;
-    } else return { err: res.message || "error" };
+    } else {
+      return { err: "Failed to remove from group" };
+    }
   } catch (err) {
     return handleError(err);
   }

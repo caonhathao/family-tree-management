@@ -1,0 +1,30 @@
+model Album {
+    id          String   @id @default(uuid()) @db.Uuid
+    familyId    String   @db.Uuid
+    family      Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+    title       String
+    description String
+    createdBy   String   @db.Uuid
+    creator     User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+    photos      Photo[]
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    @@index([familyId])
+    @@map("album")
+}
+
+model Photo {
+    id           String  @id @default(uuid()) @db.Uuid
+    albumId      String  @db.Uuid
+    album        Album   @relation(fields: [albumId], references: [id], onDelete: Cascade)
+    imageUrl     String
+    takenAt      String
+    locationName String
+    description  String?
+
+    createdAt DateTime @default(now())
+
+    @@index([albumId])
+    @@map("photo")
+}

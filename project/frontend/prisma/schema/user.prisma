@@ -1,0 +1,58 @@
+//explain about role:
+//owner: the user who the owner of family
+//editor: the user who can edit the family tree
+//viewer: the user who only view the get notification about any change from family tree
+// all roles can get notification but only 2 roles (owner and editor) can edit graph
+
+model User {
+    id            String         @id @default(uuid()) @db.Uuid
+    email         String         @unique
+    emailVerified Boolean        @default(false)
+    createdAt     DateTime       @default(now())
+    updated       DateTime       @updatedAt
+    account       Account?
+    sessions      Session[]
+    userProfile   UserProfile?
+    families      Family[]
+    albums        Album[]
+    events        Event[]
+    activityLogs  ActivityLog[]
+    notifications Notification[]
+    groupMembers  GroupMember[]
+    invites       Invite[]
+
+    @@index([email])
+    @@map("user")
+}
+
+//storing sign in infomation and token
+model Account {
+    id        String   @id @default(uuid()) @db.Uuid
+    userId    String   @unique @db.Uuid
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    // accessToken           String?
+    // refreshToken          String?
+    // idToken               String?
+    // accessTokenExpiresAt  DateTime?
+    // refreshTokenExpiresAt DateTime?
+    password  String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@map("account")
+}
+
+model UserProfile {
+    id          String    @id @default(uuid()) @db.Uuid
+    userId      String    @unique @db.Uuid
+    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    fullName    String
+    dateOfBirth DateTime?
+    avatar      String?
+    biography   Json?
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    @@map("user_profile")
+}

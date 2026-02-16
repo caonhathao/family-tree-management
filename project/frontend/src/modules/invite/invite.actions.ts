@@ -1,16 +1,19 @@
 "use server";
-import { ResponseDataBase } from "@/types/base.types";
-import { ICreateInviteDto, IResponseCreateInviteDto } from "./invite.dto";
+import { ICreateInviteDto } from "./invite.dto";
 import { InviteService } from "./invite.service";
 import { handleError } from "@/lib/utils.lib";
+import { headers } from "next/headers";
 
 export async function CreateInviteLinkAction(data: ICreateInviteDto) {
   try {
-    const res: ResponseDataBase<IResponseCreateInviteDto> =
-      await InviteService.createInviteLink(data);
-    if (res.success) {
-      return res.data;
-    } else return { err: res.message || "error" };
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await InviteService.createInviteLink(userId, data);
+    return res;
   } catch (err) {
     return handleError(err);
   }

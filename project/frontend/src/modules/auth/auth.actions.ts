@@ -1,42 +1,48 @@
 "use server";
 
-import { AuthService } from "@/modules/auth/auth.service";
 import { redirect } from "next/navigation";
 import { RegisterDto, LoginBaseDto, IAuthResponseDto } from "./auth.dto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { handleError } from "@/lib/utils.lib";
-import { IErrorResponse, ResponseDataBase } from "@/types/base.types";
 import { revalidatePath } from "next/cache";
+import { AuthService } from "./auth.service";
+import { GoogleLoginDto } from "@/dto/google-login.dto";
+import { jwtDecode } from "jwt-decode";
 
 export async function registerAction(data: RegisterDto) {
   let isSuccess = false;
 
   try {
-    const res = await AuthService.register(data);
-    console.log("register:,", res.data);
-    if (res.success) {
+    const headerList = await headers();
+    const ipAddress = headerList.get("x-forwarded-for") || "unknown";
+    const userAgent = headerList.get("user-agent") || "unknown";
+    const res: IAuthResponseDto | null | undefined = await AuthService.register(
+      data,
+      {
+        ipAddress,
+        userAgent,
+      },
+    );
+    if (res) {
       isSuccess = true;
       const cookieStore = await cookies();
       //storing tokens authentication
-      cookieStore.set("access_token", res.data.tokens.accessToken, {
+      cookieStore.set("access_token", res.tokens.accessToken, {
         httpOnly: true,
         secure: EnvConfig.nodeValue === "production",
         sameSite: "lax",
         path: "/",
         maxAge: EnvConfig.accessTokenExpireIn,
       });
-      cookieStore.set("refresh_token", res.data.tokens.refreshToken, {
+      cookieStore.set("refresh_token", res.tokens.refreshToken, {
         httpOnly: true,
         secure: EnvConfig.nodeValue === "production",
         sameSite: "lax",
         path: "/",
         maxAge: EnvConfig.refreshTokenExpireIn,
       });
-    } else
-      return {
-        error: res.message || "error",
-      };
+    }
   } catch (err: unknown) {
     return handleError(err);
   }
@@ -49,31 +55,33 @@ export async function loginBaseAction(data: LoginBaseDto) {
   let isSuccess = false;
 
   try {
-    const res: ResponseDataBase<IAuthResponseDto> =
-      await AuthService.loginBase(data);
-    //console.log("action:", res);
-    if (res.success) {
+    const headerList = await headers();
+    const ipAddress = headerList.get("x-forwarded-for") || "unknown";
+    const userAgent = headerList.get("user-agent") || "unknown";
+    const res: IAuthResponseDto | null | undefined =
+      await AuthService.loginBase(data, {
+        ipAddress,
+        userAgent,
+      });
+    if (res) {
       isSuccess = true;
       const cookieStore = await cookies();
       //storing tokens authentication
-      cookieStore.set("access_token", res.data.tokens.accessToken, {
+      cookieStore.set("access_token", res.tokens.accessToken, {
         httpOnly: true,
         secure: EnvConfig.nodeValue === "production",
         sameSite: "lax",
         path: "/",
         maxAge: EnvConfig.accessTokenExpireIn,
       });
-      cookieStore.set("refresh_token", res.data.tokens.refreshToken, {
+      cookieStore.set("refresh_token", res.tokens.refreshToken, {
         httpOnly: true,
         secure: EnvConfig.nodeValue === "production",
         sameSite: "lax",
         path: "/",
         maxAge: EnvConfig.refreshTokenExpireIn,
       });
-    } else
-      return {
-        error: res.message || "error",
-      };
+    }
   } catch (err: unknown) {
     return handleError(err);
   }
@@ -82,33 +90,37 @@ export async function loginBaseAction(data: LoginBaseDto) {
   }
 }
 
-export async function loginGoogleAction(token: string) {
+export async function loginGoogleAction(token: GoogleLoginDto) {
   let isSuccess = false;
 
   try {
-    const res = await AuthService.loginGoogle(token);
-    if (res.success) {
+    const headerList = await headers();
+    const ipAddress = headerList.get("x-forwarded-for") || "unknown";
+    const userAgent = headerList.get("user-agent") || "unknown";
+    const res: IAuthResponseDto | null | undefined =
+      await AuthService.loginGoogle(token, {
+        ipAddress,
+        userAgent,
+      });
+    if (res) {
       isSuccess = true;
       const cookieStore = await cookies();
 
-      cookieStore.set("access_token", res.data.user.tokens.accessToken, {
+      cookieStore.set("access_token", res.tokens.accessToken, {
         httpOnly: true,
         secure: EnvConfig.nodeValue === "production",
         sameSite: "lax",
         path: "/",
         maxAge: EnvConfig.accessTokenExpireIn,
       });
-      cookieStore.set("refresh_token", res.data.user.tokens.refreshToken, {
+      cookieStore.set("refresh_token", res.tokens.refreshToken, {
         httpOnly: true,
         secure: EnvConfig.nodeValue === "production",
         sameSite: "lax",
         path: "/",
         maxAge: EnvConfig.refreshTokenExpireIn,
       });
-    } else
-      return {
-        error: res.message || "error",
-      };
+    }
   } catch (err) {
     return handleError(err);
   }
@@ -118,39 +130,72 @@ export async function loginGoogleAction(token: string) {
 }
 
 export async function logoutAction() {
+  const cookieStore = await cookies();
+  const headerList = await headers();
+
+  // 1. Lấy userId từ Header (đã được Proxy/Middleware giải mã hoặc refresh hộ)
+  const userId = headerList.get("X-User-Id");
+
+  // 2. Lấy refreshToken để xóa chính xác session đó trong DB
+  const refreshToken = cookieStore.get("refresh_token")?.value;
+
   try {
-    await AuthService.logout();
+    if (userId && refreshToken) {
+      // Gọi service để xóa session trong Database
+      await AuthService.logout(userId, refreshToken);
+    }
   } catch (err: unknown) {
-    console.log("error at logout action", err);
-    return handleError(err);
-  } finally {
-    const cookieStore = await cookies();
-    cookieStore.delete("access_token");
-    cookieStore.delete("refresh_token");
-    revalidatePath("/");
+    console.error("error at logout action", err);
   }
+
+  // 3. Xóa sạch dấu vết ở trình duyệt cho dù DB có lỗi hay không
+  cookieStore.delete("access_token");
+  cookieStore.delete("refresh_token");
+
+  // Ép trang web render lại để cập nhật trạng thái UI (ẩn avatar, hiện nút login)
+  revalidatePath("/");
+  redirect("/auth?mode=login");
 }
 
 export async function refreshAction() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("refresh_token")?.value;
-    const res: ResponseDataBase<IAuthResponseDto> =
-      await AuthService.refresh(token);
-    if (res.success) {
-      cookieStore.set("access_token", res.data.tokens.accessToken, {
+
+    if (!token) throw new Error("No refresh token found");
+
+    // 1. Giải mã token để lấy userId (chỉ decode, verify sẽ do Service làm)
+    const payload = jwtDecode(token); // Bạn dùng jose hoặc thư viện decode
+    const userId = payload?.sub;
+
+    if (!userId) throw new Error("Invalid token payload");
+
+    // 2. Gọi Service với ĐẦY ĐỦ 2 tham số
+    const res = await AuthService.refresh(userId, token);
+
+    // Vì Service của bạn trả về raw object {user, tokens},
+    // ta sẽ xử lý kết quả trực tiếp ở đây
+    if (res.tokens) {
+      const cookieOptions = {
+        httpOnly: true,
+        secure: EnvConfig.nodeValue === "production",
+        sameSite: "lax" as const,
         path: "/",
+      };
+
+      cookieStore.set("access_token", res.tokens.accessToken, {
+        ...cookieOptions,
+        maxAge: EnvConfig.accessTokenExpireIn,
       });
-      cookieStore.set("refresh_token", res.data.tokens.refreshToken, {
-        path: "/",
+
+      cookieStore.set("refresh_token", res.tokens.refreshToken, {
+        ...cookieOptions,
+        maxAge: EnvConfig.refreshTokenExpireIn,
       });
-      return undefined;
-    } else
-      return {
-        success: false,
-        error: res.message || "error",
-      } as IErrorResponse;
-  } catch (err) {
+
+      return { success: true };
+    }
+  } catch (err: unknown) {
     return handleError(err);
   }
 }
