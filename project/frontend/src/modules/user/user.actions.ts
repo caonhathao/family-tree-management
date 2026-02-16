@@ -1,18 +1,30 @@
 "use server";
-import { ResponseDataBase } from "@/types/base.types";
 import { ResponseUpdateUserDto } from "./user.dto";
-import { UserServices } from "./user.service";
+import { UserService } from "./user.service";
 import { handleError } from "@/lib/utils.lib";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 export async function UpdateUserAction(userId: string, data: FormData) {
   let isSuccess = false;
   try {
-    const res: ResponseDataBase<ResponseUpdateUserDto> =
-      await UserServices.updateUser(userId, data);
-    if (res.success) {
+    const headerList = await headers();
+    const currentUserId = headerList.get("X-User-Id");
+    if (!currentUserId) {
+      throw new Error("Unauthorized");
+    }
+
+    const formDataObj: Record<string, string> = {};
+    data.forEach((value, key) => {
+      formDataObj[key] = value.toString();
+    });
+
+    const res = await UserService.updateUser(userId, currentUserId, formDataObj as any);
+    if (res) {
       isSuccess = true;
-    } else return { err: res.message || "error" };
+    } else {
+      return { err: "Update failed" };
+    }
   } catch (err) {
     return handleError(err);
   }
@@ -20,13 +32,17 @@ export async function UpdateUserAction(userId: string, data: FormData) {
     revalidatePath("/user");
   }
 }
+
 export async function getUserDetail(userId: string) {
   try {
-    const res = await UserServices.getUserDetail(userId);
-    // console.log("res at getUserDetail:", res);
-    if (res.success) {
-      return res.data;
-    } else return { err: res.message || "error" };
+    const headerList = await headers();
+    const currentUserId = headerList.get("X-User-Id");
+    if (!currentUserId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await UserService.getUserDetail(userId, currentUserId);
+    return res;
   } catch (err) {
     return handleError(err);
   }

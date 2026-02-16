@@ -1,5 +1,4 @@
 "use server";
-import { ResponseDataBase } from "@/types/base.types";
 import {
   CreateGroupFamilyDto,
   ResponseGroupFamiliesDto,
@@ -10,20 +9,24 @@ import {
 import { GroupFamilyService } from "./group-family.service";
 import { handleError } from "@/lib/utils.lib";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 
 export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
   let isSuccess = false;
 
   try {
-    const res: ResponseDataBase<ResponseGroupFamilyDetailDto> =
-      await GroupFamilyService.createGroup(data);
-    if (res.success) {
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await GroupFamilyService.createGroup(userId, data as any);
+    if (res) {
       isSuccess = true;
-    } else
-      return {
-        error: res.message || "error",
-      };
+    } else {
+      return { error: "Failed to create group" };
+    }
   } catch (err: unknown) {
     return handleError(err);
   }
@@ -38,11 +41,18 @@ export async function updateGroupFamilyAction(
 ) {
   let isSuccess = false;
   try {
-    const res: ResponseDataBase<IUpdateGroupFamilyDto> =
-      await GroupFamilyService.updateGroup(groupId, data);
-    if (res.success) {
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await GroupFamilyService.updateGroup(userId, groupId, data);
+    if (res) {
       isSuccess = true;
-    } else return { error: res.message || "error" };
+    } else {
+      return { error: "Failed to update group" };
+    }
   } catch (err) {
     return handleError(err);
   }
@@ -54,13 +64,17 @@ export async function updateGroupFamilyAction(
 
 export async function joinGroupAcion(tokenCode: string) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("access_token")?.value;
-    const res: ResponseDataBase<IResponseJoinGroupDto> =
-      await GroupFamilyService.joinGroup(tokenCode);
-    if (res.success) {
-      return res.data;
-    } else return { error: res.message || "error" };
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await GroupFamilyService.joinGroup(tokenCode, userId);
+    if (res) {
+      revalidatePath("/groups");
+    }
+    return res;
   } catch (err) {
     return handleError(err);
   }
@@ -68,12 +82,14 @@ export async function joinGroupAcion(tokenCode: string) {
 
 export async function getAllGroupAction() {
   try {
-    const res: ResponseDataBase<ResponseGroupFamiliesDto[]> =
-      await GroupFamilyService.getAll();
-    // console.log(res);
-    if (res.success) {
-      return res.data;
-    } else return { error: res.message || "error" };
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await GroupFamilyService.getAll(userId);
+    return res;
   } catch (err) {
     return handleError(err);
   }
@@ -81,11 +97,14 @@ export async function getAllGroupAction() {
 
 export async function getDetailGroupAction(groupId: string) {
   try {
-    const res: ResponseDataBase<ResponseGroupFamilyDetailDto> =
-      await GroupFamilyService.getDetail(groupId);
-    if (res.success) {
-      return res.data;
-    } else return { error: res.message || "error" };
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await GroupFamilyService.getDetail(userId, groupId);
+    return res;
   } catch (err) {
     return handleError(err);
   }

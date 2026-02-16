@@ -1,0 +1,30 @@
+enum TARGET_TYPE {
+    ALBUM
+    FAMILY
+    EVENT_FAMILY
+    EVENT_SELF
+    USER
+}
+
+enum ACTION_TYPE {
+    UPDATE
+    DELETE
+    NEW
+}
+
+model ActivityLog {
+    id        String      @id @default(uuid()) @db.Uuid
+    familyId  String      @db.Uuid
+    family    Family      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+    userId    String      @db.Uuid
+    user      User        @relation(fields: [userId], references: [id], onDelete: NoAction)
+    action    ACTION_TYPE
+    targetId  String      @db.Uuid
+    target    TARGET_TYPE
+    content   String
+    createdAt DateTime    @default(now())
+
+    @@index([familyId])
+    @@index([userId])
+    @@map("activity_log")
+}

@@ -1,0 +1,79 @@
+enum LINEAGE_TYPE {
+    PATRIARCHAL
+    MATRIARCHAL
+    OTHER
+}
+
+model Family {
+    id            String         @id @default(uuid()) @db.Uuid
+    name          String
+    description   String
+    lineageType   LINEAGE_TYPE   @default(PATRIARCHAL)
+    ownerId       String         @db.Uuid
+    owner         User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+    familyMembers FamilyMember[]
+    relationships Relationship[]
+    albums        Album[]
+    events        Event[]
+    activityLogs  ActivityLog[]
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
+    groupFamilyId String         @unique @db.Uuid()
+    groupFamily   GroupFamily    @relation(fields: [groupFamilyId], references: [id], onDelete: Cascade)
+
+    @@index([ownerId])
+    @@map("family")
+}
+
+enum GENDER {
+    MALE
+    FEMALE
+    OTHER
+}
+
+model FamilyMember {
+    id                String         @id @default(uuid()) @db.Uuid()
+    familyId          String         @db.Uuid
+    family            Family         @relation(fields: [familyId], references: [id], onDelete: Cascade)
+    fullName          String
+    gender            GENDER
+    dateOfBirth       DateTime?
+    dateOfDeath       DateTime?
+    isAlive           Boolean        @default(true)
+    avatarUrl         String?
+    biography         Json?
+    generation        Int
+    createdAt         DateTime       @default(now())
+    updatedAt         DateTime       @updatedAt
+    relationshipsFrom Relationship[] @relation("FromMemberRelation")
+    relationshipsTo   Relationship[] @relation("ToMemberRelation")
+    positionX         Float?
+    positionY         Float?
+
+    @@index([familyId])
+    @@index([fullName])
+    @@map("family_member")
+}
+
+enum TYPE_RELATIONSHIP {
+    PARENT
+    SPOUSE
+    CHILD
+}
+
+model Relationship {
+    id           String            @id @default(uuid()) @db.Uuid()
+    familyId     String            @db.Uuid
+    family       Family            @relation(fields: [familyId], references: [id], onDelete: Cascade)
+    fromMemberId String            @db.Uuid
+    fromMember   FamilyMember      @relation("FromMemberRelation", fields: [fromMemberId], references: [id], onDelete: Cascade)
+    toMemberId   String            @db.Uuid
+    toMember     FamilyMember      @relation("ToMemberRelation", fields: [toMemberId], references: [id], onDelete: Cascade)
+    type         TYPE_RELATIONSHIP
+    createdAt    DateTime          @default(now())
+    updatedAt    DateTime          @updatedAt
+
+    @@unique([fromMemberId, toMemberId, type])
+    @@index([familyId])
+    @@map("relationship")
+}

@@ -14,7 +14,7 @@ export default async function InvitePage({
   const res = await joinGroupAcion(token);
   console.log(res);
 
-  if ("error" in res) return <div>{res.error}</div>;
+  if (!res || "error" in res) return <div>{res?.error || "Failed to join group"}</div>;
   else
     return (
       <Suspense fallback={<LoaderModule />}>
