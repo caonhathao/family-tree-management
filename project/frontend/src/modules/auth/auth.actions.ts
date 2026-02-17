@@ -144,7 +144,6 @@ export async function logoutAction() {
       // Gọi service để xóa session trong Database
       await AuthService.logout(userId, refreshToken);
     }
-    return undefined;
   } catch (err: unknown) {
     console.error("error at logout action", err);
     return handleError(err);
@@ -153,10 +152,6 @@ export async function logoutAction() {
   // 3. Xóa sạch dấu vết ở trình duyệt cho dù DB có lỗi hay không
   cookieStore.delete("access_token");
   cookieStore.delete("refresh_token");
-
-  // Ép trang web render lại để cập nhật trạng thái UI (ẩn avatar, hiện nút login)
-  revalidatePath("/");
-  redirect("/auth?mode=login");
 }
 
 export async function refreshAction() {

@@ -167,7 +167,7 @@ export const GroupContentPage = ({
     });
     dispatch(setDraft({ ...draft, members: updatedMembers }));
 
-    console.log("Sơ đồ đã được cập nhật tọa độ vào Draft!");
+    //console.log("Sơ đồ đã được cập nhật tọa độ vào Draft!");
   };
 
   const onNodeDragStop = (event: React.MouseEvent, node: Node) => {
@@ -193,10 +193,10 @@ export const GroupContentPage = ({
     }
   }, [draft, setNodes, setEdges]);
 
-  useEffect(() => {
-    console.log("draft: ", draft);
-    console.log("family: ", family);
-  }, [draft, family]);
+  // useEffect(() => {
+  //   console.log("draft: ", draft);
+  //   console.log("family: ", family);
+  // }, [draft, family]);
 
   useEffect(() => {
     if (family) {

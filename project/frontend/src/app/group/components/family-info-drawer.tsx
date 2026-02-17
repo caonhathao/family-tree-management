@@ -40,7 +40,6 @@ import { RootState } from "@/store";
 import { IErrorResponse } from "@/types/base.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import isEqual from "lodash.isequal";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { BsThreeDotsVertical } from "react-icons/bs";
@@ -60,7 +59,6 @@ export const FamilyInfoDrawer = ({
   const amILeader = data.groupMembers.some(
     (m) => m.member.userProfile.userId === profile.id && m.isLeader,
   );
-  const route = useRouter();
 
   const {
     handleSubmit,
@@ -154,14 +152,12 @@ export const FamilyInfoDrawer = ({
         description: res.error as string,
         type: "error",
       });
-    } else {
-      route.push("/group");
     }
   };
 
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
+  // useEffect(() => {
+  //   console.log(data);
+  // }, [data]);
 
   return (
     <Drawer direction={"right"}>

@@ -45,7 +45,6 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     e?.preventDefault();
     startTransition(async () => {
       const result = await registerAction(values);
-      console.log(result);
       if (result?.error) {
         Toaster({
           title: "Đăng kí thất bại",
