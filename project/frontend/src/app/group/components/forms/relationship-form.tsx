@@ -106,21 +106,35 @@ const RelationshipForm = ({
     }
 
     // Check the validity of the clan for the PARENT relationship
-    const sourceMember = draft.members.find(
+    // 1. Tìm thông tin cả 2 thành viên để so sánh
+    const memberA = draft.members.find(
       (m) => m.localId === values.fromMemberId,
     );
+    const memberB = draft.members.find((m) => m.localId === values.toMemberId);
+
+    if (!memberA || !memberB) return;
+
+    // 2. Xác định ai là cấp trên (Parent) dựa vào Generation
+    // Giả sử generation thấp hơn là đời cha chú (ví dụ: Gen 1 là cha Gen 2)
+    const parentMember =
+      memberA.generation <= memberB.generation ? memberA : memberB;
+
     const lineage = draft.family.lineageType;
 
+    // 3. Logic kiểm tra hệ tộc chuẩn hóa
     if (values.type === "PARENT" && lineage !== "OTHER") {
+      // Chuẩn hóa giới tính về chữ hoa để so sánh chính xác
+      const parentGender = parentMember.gender?.toUpperCase();
+
       const isPatrilinealError =
-        lineage === "PATRIARCHAL" && sourceMember?.gender !== "MALE";
+        lineage === "PATRIARCHAL" && parentGender !== "MALE";
       const isMatrilinealError =
-        lineage === "MATRIARCHAL" && sourceMember?.gender !== "FEMALE";
+        lineage === "MATRIARCHAL" && parentGender !== "FEMALE";
 
       if (isPatrilinealError || isMatrilinealError) {
         Toaster({
           title: "Sai hệ tộc",
-          description: `Theo ${lineage === "PATRIARCHAL" ? "Phụ hệ" : "Mẫu hệ"}, người kết nối phải là ${lineage === "PATRIARCHAL" ? "Nam" : "Nữ"}.`,
+          description: `Theo ${lineage === "PATRIARCHAL" ? "Phụ hệ" : "Mẫu hệ"}, người kết nối đời trên phải là ${lineage === "PATRIARCHAL" ? "Nam" : "Nữ"}. (Đang check: ${parentMember.fullName})`,
           type: "error",
         });
         return;

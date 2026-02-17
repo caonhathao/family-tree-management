@@ -1,3 +1,5 @@
+import { IErrorResponse } from "@/types/base.types";
+
 export function handleError(err: unknown) {
   let errorMessage = "error";
 
@@ -8,5 +10,5 @@ export function handleError(err: unknown) {
   return {
     success: false,
     error: errorMessage,
-  };
+  } as IErrorResponse;
 }

@@ -8,7 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import { ResponseGroupFamiliesDto } from "@/modules/group-family/group-family.dto";
+import { IResponseGroupFamiliesDto } from "@/modules/group-family/group-family.dto";
 import logo from "../../../../public/img/family-tree-logo.png";
 import { IoIosArrowForward, IoMdHome } from "react-icons/io";
 import {
@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 export const SideBarClient = ({
   data,
 }: {
-  data: ResponseGroupFamiliesDto[];
+  data: IResponseGroupFamiliesDto[];
 }) => {
   const router = useRouter();
   const getColorFromName = (name: string) => {

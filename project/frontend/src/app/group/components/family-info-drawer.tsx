@@ -1,3 +1,4 @@
+"use client";
 import { Toaster } from "@/components/shared/toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Field } from "@/components/ui/field";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { updateGroupFamilyAction } from "@/modules/group-family/group-family.actions";
+import {
+  quitGroupAction,
+  updateGroupFamilyAction,
+} from "@/modules/group-family/group-family.actions";
 import {
   IUpdateGroupFamilyDto,
   ResponseGroupFamilyDetailDto,
@@ -32,8 +36,12 @@ import {
   ICreateInviteDto,
   IResponseCreateInviteDto,
 } from "@/modules/invite/invite.dto";
+import { RootState } from "@/store";
+import { IErrorResponse } from "@/types/base.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import isEqual from "lodash.isequal";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { CiLogout } from "react-icons/ci";
@@ -41,12 +49,19 @@ import { IoMdKey } from "react-icons/io";
 import { IoSwapVertical } from "react-icons/io5";
 import { MdOutlineInfo } from "react-icons/md";
 import { TbEdit } from "react-icons/tb";
+import { useSelector } from "react-redux";
 
 export const FamilyInfoDrawer = ({
   data,
 }: {
   data: ResponseGroupFamilyDetailDto;
 }) => {
+  const { profile } = useSelector((state: RootState) => state.user);
+  const amILeader = data.groupMembers.some(
+    (m) => m.member.userProfile.userId === profile.id && m.isLeader,
+  );
+  const route = useRouter();
+
   const {
     handleSubmit,
     control,
@@ -112,14 +127,41 @@ export const FamilyInfoDrawer = ({
         description: "Tạo thành công",
         type: "success",
       });
-      handleCopy(res.inviteLink);
+      handleCopy(window.location.origin + res.inviteLink);
     }
   };
 
   const handleRemoveMember = async (memberId: string) => {
-    const res = await RemoveFromGroupAction(data.id, memberId);
-    // console.log(res);
+    const res: IErrorResponse | undefined = await RemoveFromGroupAction(
+      data.id,
+      memberId,
+    );
+    if (res !== undefined) {
+      Toaster({
+        title: "Lỗi",
+        description:
+          (res.error as string) || "Không thể xóa thành viên khỏi nhóm",
+        type: "error",
+      });
+    }
   };
+
+  const handleQuitGroup = async () => {
+    const res: IErrorResponse | undefined = await quitGroupAction(data.id);
+    if (res?.error) {
+      Toaster({
+        title: "Lỗi",
+        description: res.error as string,
+        type: "error",
+      });
+    } else {
+      route.push("/group");
+    }
+  };
+
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
 
   return (
     <Drawer direction={"right"}>
@@ -247,23 +289,33 @@ export const FamilyInfoDrawer = ({
                   </DropdownMenuTrigger>
                   <DropdownMenuGroup>
                     <DropdownMenuContent>
-                      <DropdownMenuItem
-                        className={"hover:cursor-pointer"}
-                        onClick={() =>
-                          handleRemoveMember(item.member.userProfile.userId)
-                        }
-                      >
-                        <CiLogout />
-                        Rời nhóm
-                      </DropdownMenuItem>
+                      {/* dont show this option for leader */}
+                      {amILeader && !item.isLeader ? (
+                        <DropdownMenuItem
+                          className={"hover:cursor-pointer"}
+                          onClick={() =>
+                            handleRemoveMember(item.member.userProfile.userId)
+                          }
+                        >
+                          <CiLogout />
+                          Xóa khỏi nhóm
+                        </DropdownMenuItem>
+                      ) : null}
                       <DropdownMenuItem className={"hover:cursor-pointer"}>
                         <MdOutlineInfo />
                         Thông tin
                       </DropdownMenuItem>
-                      <DropdownMenuItem className={"hover:cursor-pointer"}>
-                        <IoSwapVertical />
-                        Đổi vai trò
-                      </DropdownMenuItem>
+                      {!item.isLeader ? (
+                        <DropdownMenuItem
+                          disabled={
+                            item.member.userProfile.userId === profile.id
+                          }
+                          className={"hover:cursor-pointer"}
+                        >
+                          <IoSwapVertical />
+                          Đổi vai trò
+                        </DropdownMenuItem>
+                      ) : null}
                     </DropdownMenuContent>
                   </DropdownMenuGroup>
                 </DropdownMenu>
@@ -279,8 +331,18 @@ export const FamilyInfoDrawer = ({
           >
             Tạo lời mời
           </Button>
+          <Button
+            type={"button"}
+            variant={"destructive"}
+            className={"hover:cursor-pointer"}
+            onClick={() => handleQuitGroup()}
+          >
+            Rời khỏi nhóm
+          </Button>
           <DrawerClose asChild>
-            <Button variant={"outline"}>Thoát</Button>
+            <Button variant={"outline"} className={"hover:cursor-pointer"}>
+              Thoát
+            </Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>

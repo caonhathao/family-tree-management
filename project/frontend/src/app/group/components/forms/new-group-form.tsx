@@ -42,7 +42,7 @@ const NewGroupForm = ({ className }: { className?: string }) => {
     defaultValues: {
       name: "",
       description: "",
-      role: "",
+      role: undefined,
     },
   });
 

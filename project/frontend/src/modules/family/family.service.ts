@@ -7,6 +7,7 @@ import {
   IRelationshipDto,
 } from "@/dto/family.dto";
 import { GENDER, LINEAGE_TYPE, TYPE_RELATIONSHIP } from "@prisma/client";
+import { IDraftFamilyData } from "@/types/draft.types";
 
 export const FamilyService = {
   deleteFamily: async (groupId: string, familyId: string) => {
@@ -104,7 +105,7 @@ export const FamilyService = {
             ...family,
             localId: family.id,
           },
-        };
+        } as unknown as IDraftFamilyData;
       }
       return {
         members: [],
@@ -113,8 +114,9 @@ export const FamilyService = {
           localId: "",
           name: "",
           description: "",
+          lineageType: "PATRIARCHAL",
         },
-      };
+      } as IDraftFamilyData;
     } catch (err) {
       console.error("err at get family data service:", err);
       throw err;
@@ -165,7 +167,7 @@ export const FamilyService = {
               dateOfBirth: m.dateOfBirth ? new Date(m.dateOfBirth) : undefined,
               dateOfDeath: m.dateOfDeath ? new Date(m.dateOfDeath) : undefined,
               isAlive: m.isAlive,
-              biography: m.biography as any,
+              biography: m.biography as unknown as IBiographyContent,
               generation: m.generation,
               positionX: m.positionX,
               positionY: m.positionY,
@@ -190,7 +192,7 @@ export const FamilyService = {
               dateOfBirth: m.dateOfBirth ? new Date(m.dateOfBirth) : undefined,
               dateOfDeath: m.dateOfDeath ? new Date(m.dateOfDeath) : undefined,
               isAlive: m.isAlive,
-              biography: m.biography as any,
+              biography: m.biography as unknown as IBiographyContent,
               generation: m.generation,
               positionX: m.positionX,
               positionY: m.positionY,
@@ -206,8 +208,12 @@ export const FamilyService = {
             dateOfDeath: savedMember.dateOfDeath ?? undefined,
             isAlive: savedMember.isAlive,
             biography: savedMember.biography as unknown as IBiographyContent,
-            positionX: savedMember.positionX ? savedMember.positionX : undefined,
-            positionY: savedMember.positionY ? savedMember.positionY : undefined,
+            positionX: savedMember.positionX
+              ? savedMember.positionX
+              : undefined,
+            positionY: savedMember.positionY
+              ? savedMember.positionY
+              : undefined,
           });
         }
 
