@@ -20,7 +20,7 @@ export async function HeaderServer() {
     user = await getUserFromToken(token);
   }
 
-  console.log("user at header server:", user);
+  // console.log("user at header server:", user);
 
   return <HeaderClient user={user} />;
 }

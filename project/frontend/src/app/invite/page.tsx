@@ -15,14 +15,10 @@ export default async function InvitePage({
   const { token } = await searchParams;
   const res: IResponseJoinGroupDto | IErrorResponse | null =
     await joinGroupAcion(token);
-  console.log(res);
 
-  if (!res || "error" in res)
-    return <div>{res?.error || "Failed to join group"}</div>;
-  else
-    return (
-      <Suspense fallback={<LoaderModule />}>
-        <InviteContent data={res} />
-      </Suspense>
-    );
+  return (
+    <Suspense fallback={<LoaderModule />}>
+      <InviteContent data={res} />
+    </Suspense>
+  );
 }

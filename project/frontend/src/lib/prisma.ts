@@ -9,7 +9,7 @@ const adapter = new PrismaPg(pool);
 const prismaClientSingleton = () => {
   return new PrismaClient({
     adapter,
-    log: ["query"],
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 };
 

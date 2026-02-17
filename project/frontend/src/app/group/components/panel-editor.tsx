@@ -28,7 +28,7 @@ import { BiDetail } from "react-icons/bi";
 import { FaPlus, FaRegSave, FaSort } from "react-icons/fa";
 import { IoCreateOutline, IoLink } from "react-icons/io5";
 import { LuLayoutPanelTop, LuGripVertical, LuEraser } from "react-icons/lu";
-import { MdOutlineCancel, MdOutlineGrid4X4 } from "react-icons/md";
+import { MdOutlineGrid4X4 } from "react-icons/md";
 import { RiDragMoveFill } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -110,7 +110,6 @@ export const PanelEditor = ({
     startTransition(async () => {
       try {
         const result = await dispatch(deleteFamily(groupId)).unwrap();
-        console.log(result);
 
         Toaster({
           title: "Thành công",

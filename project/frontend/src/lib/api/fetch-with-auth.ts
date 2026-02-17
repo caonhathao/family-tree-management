@@ -16,7 +16,6 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   }
 
   const res = await fetch(url, { ...options, headers });
-  console.log(res);
 
   if (res.status === 401) {
     console.log("Unauthorized: Both access and refresh tokens are invalid");

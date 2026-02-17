@@ -67,8 +67,6 @@ export async function RemoveFromGroupAction(groupId: string, memberId: string) {
       throw new Error("Unauthorized");
     }
 
-    console.log(userId, groupId, memberId);
-
     const res: number = await GroupMemberService.removeMember(
       userId,
       groupId,

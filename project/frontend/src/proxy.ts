@@ -4,6 +4,7 @@ import { AuthService } from "./modules/auth/auth.service";
 import { JwtPayload } from "./types/base.types";
 
 const publicRoutes = [
+  "/",
   "/auth",
   "/api/auth/login-base",
   "/api/auth/register",
@@ -36,14 +37,15 @@ export async function proxy(req: NextRequest) {
   const refreshToken = req.cookies.get("refresh_token")?.value;
 
   let userId: string | null = null;
+  let finalResponse: NextResponse | null = null; // Biến lưu trữ response có cookie
 
-  // BƯỚC 1: Kiểm tra Access Token hiện có
+  // BƯỚC 1: Kiểm tra Access Token
   if (accessToken) {
     const payload = await verifyAndGetPayload(accessToken, JWT_ACCESS_KEY);
     userId = payload?.payload.sub || null;
   }
 
-  // BƯỚC 2: Silent Refresh - Nếu Access Token hỏng nhưng còn Refresh Token
+  // BƯỚC 2: Silent Refresh
   if (!userId && refreshToken) {
     const refreshPayload = await verifyAndGetPayload(
       refreshToken,
@@ -53,27 +55,15 @@ export async function proxy(req: NextRequest) {
 
     if (rUserId) {
       try {
-        // GỌI TRỰC TIẾP SERVICE (Logic Prisma/JWT bạn đã viết)
         const result = await AuthService.refresh(rUserId, refreshToken);
-
         if (result && result.tokens) {
           userId = result.user.id;
 
-          // Tạo Header mới để tiêm userId vào request hiện tại
-          const requestHeaders = new Headers(req.headers);
-          requestHeaders.set("X-User-Id", userId);
+          // Tạo response và SET COOKIE
+          finalResponse = pathname.startsWith("/auth")
+            ? NextResponse.redirect(new URL("/", req.url))
+            : NextResponse.next();
 
-          // Tạo Response
-          let response = NextResponse.next({
-            request: { headers: requestHeaders },
-          });
-
-          // Nếu đang ở trang auth mà refresh thành công -> Redirect về Home
-          if (pathname.startsWith("/auth")) {
-            response = NextResponse.redirect(new URL("/", req.url));
-          }
-
-          // SET COOKIE MỚI (Để trình duyệt lưu cho lần sau)
           const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
@@ -81,53 +71,42 @@ export async function proxy(req: NextRequest) {
             path: "/",
           };
 
-          response.cookies.set("access_token", result.tokens.accessToken, {
+          finalResponse.cookies.set("access_token", result.tokens.accessToken, {
             ...cookieOptions,
             maxAge: 15 * 60,
           });
-          response.cookies.set("refresh_token", result.tokens.refreshToken, {
-            ...cookieOptions,
-            maxAge: 7 * 24 * 60 * 60,
-          });
-
-          console.log(`>>> [Middleware] Silent Refresh success: ${userId}`);
-          return response;
+          finalResponse.cookies.set(
+            "refresh_token",
+            result.tokens.refreshToken,
+            {
+              ...cookieOptions,
+              maxAge: 7 * 24 * 60 * 60,
+            },
+          );
         }
       } catch (error) {
-        console.error(">>> [Middleware] Refresh failed:", error);
-        // Refresh thất bại (token lậu/hết hạn DB) -> sẽ trôi xuống phần Redirect Login
+        console.error("Refresh failed:", error);
       }
     }
   }
 
-  // BƯỚC 3: Xử lý Redirect dựa trên trạng thái Login (userId)
-
-  // 3.1. Nếu đã Login
+  // BƯỚC 3: Xử lý dựa trên userId
   if (userId) {
-    // Không cho vào trang /auth nữa
     if (pathname.startsWith("/auth")) {
       return NextResponse.redirect(new URL("/", req.url));
     }
 
-    // Tiêm userId vào Header cho các request hợp lệ
-    const requestHeaders = new Headers(req.headers);
-    requestHeaders.set("X-User-Id", userId);
-    return NextResponse.next({
-      request: { headers: requestHeaders },
-    });
+    // Nếu đã có finalResponse (vừa refresh xong), dùng nó. Nếu chưa, tạo mới.
+    const response = finalResponse || NextResponse.next();
+    response.headers.set("X-User-Id", userId);
+    return response;
   }
 
-  // 3.2. Nếu chưa Login (userId === null)
-  if (isPublicRoute(pathname)) {
-    return NextResponse.next();
-  }
-
-  // Nếu là API mà không có quyền -> 401
-  if (pathname.startsWith("/api")) {
+  // BƯỚC 4: Chưa Login
+  if (isPublicRoute(pathname)) return NextResponse.next();
+  if (pathname.startsWith("/api"))
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
 
-  // Nếu là trang UI -> Redirect về login
   return NextResponse.redirect(new URL("/auth?mode=login", req.url));
 }
 

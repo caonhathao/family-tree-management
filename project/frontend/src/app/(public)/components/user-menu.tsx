@@ -14,7 +14,7 @@ import {
 import { IoIosArrowDown } from "react-icons/io";
 import { motion } from "framer-motion";
 import { IoPersonOutline } from "react-icons/io5";
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { logoutAction } from "@/modules/auth/auth.actions";
 import { Toaster } from "@/components/shared/toast";
@@ -38,12 +38,14 @@ export const UserMenu = ({ className }: { className?: string }) => {
           description: result.error,
           type: "error",
         });
-      } else {
-        dispatch(clearProfile());
       }
+      dispatch(clearProfile);
+      window.location.href = "/auth?mode=login";
     });
   };
-  //console.log(data);
+  // useEffect(() => {
+  //   console.log(profile);
+  // }, [profile]);
   return (
     <div className={className}>
       <Avatar>
