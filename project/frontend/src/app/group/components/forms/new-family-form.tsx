@@ -77,6 +77,7 @@ const NewFamilyForm = ({
         name: values.name,
         description: values.description,
         localId: values.localId,
+        lineageType: values.lineageType,
       },
     };
     dispatch(setDraft(updatedDraft));

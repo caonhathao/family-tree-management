@@ -53,7 +53,7 @@ export const InviteService = {
       },
     });
 
-    const inviteLink = `${process.env.CLIENT_DOMAIN}/invite?token=${inviteToken}`;
+    const inviteLink = `/invite?token=${inviteToken}`;
     return { inviteLink: inviteLink };
   },
 };

@@ -171,12 +171,9 @@ const logout = async (userId: string, token: string) => {
 
 const refresh = async (userId: string, refreshToken: string) => {
   try {
-    const sessions = await prisma.session.findMany({
-      where: { userId: userId },
+    const currentSession = await prisma.session.findFirst({
+      where: { token: refreshToken },
     });
-
-    const currentSession = sessions.find((s) => s.token === refreshToken);
-
     if (!currentSession) {
       await prisma.session.deleteMany({ where: { userId } });
       throw new Error("Security warning: Invalid session");

@@ -144,8 +144,10 @@ export async function logoutAction() {
       // Gọi service để xóa session trong Database
       await AuthService.logout(userId, refreshToken);
     }
+    return undefined;
   } catch (err: unknown) {
     console.error("error at logout action", err);
+    return handleError(err);
   }
 
   // 3. Xóa sạch dấu vết ở trình duyệt cho dù DB có lỗi hay không

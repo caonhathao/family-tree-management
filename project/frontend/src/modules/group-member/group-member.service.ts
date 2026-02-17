@@ -3,29 +3,40 @@ import { UpdateGroupMemberDto } from "@/dto/update-group-member.dto";
 import { USER_ROLE } from "@prisma/client";
 
 export const GroupMemberService = {
-  removeMember: async (
-    userId: string,
-    groupId: string,
-    memberId: string,
-  ) => {
+  removeMember: async (userId: string, groupId: string, memberId: string) => {
     try {
+      //check validation
+      //role in group
       const members = await prisma.groupMember.findMany({
         where: {
           groupId: groupId,
           memberId: { in: [userId, memberId] },
         },
+        select: {
+          id: true,
+          memberId: true,
+          groupId: true,
+          role: true,
+        },
       });
+
+      const requesterRole = members.find(
+        (member) => member.memberId === memberId,
+      )?.role;
+
+      if (requesterRole === "VIEWER") throw new Error("Permission denied");
 
       if (members.length < 2) {
         throw new Error("Requester or member not found in group");
       }
 
-      return await prisma.groupMember.deleteMany({
+      const { count } = await prisma.groupMember.deleteMany({
         where: {
           groupId: groupId,
           memberId: memberId,
         },
       });
+      return count as number;
     } catch (err) {
       console.log("remove member service", err);
       throw err;
@@ -131,7 +142,7 @@ export const GroupMemberService = {
           },
         },
         data: {
-          role: data.role as any,
+          role: data.role,
         },
         select: {
           id: true,
@@ -143,55 +154,6 @@ export const GroupMemberService = {
       });
     } catch (err) {
       console.log("group member service failed: ", err);
-      throw err;
-    }
-  },
-
-  deleteGroupMember: async (
-    userId: string,
-    groupId: string,
-    memberId: string,
-  ) => {
-    try {
-      const requester = await prisma.groupMember.findFirst({
-        where: {
-          groupId,
-          memberId: userId,
-        },
-      });
-
-      if (!requester) {
-        throw new Error("Requester not found in group");
-      }
-
-      if (!requester.isLeader && requester.role !== USER_ROLE.OWNER) {
-        throw new Error("Permission denied");
-      }
-
-      return await prisma.groupMember.delete({
-        where: {
-          memberId_groupId: {
-            groupId,
-            memberId,
-          },
-        },
-      });
-    } catch (err) {
-      console.log("delete group member service failed: ", err);
-      throw err;
-    }
-  },
-
-  removeFromGroup: async (groupId: string, memberId: string) => {
-    try {
-      return await prisma.groupMember.deleteMany({
-        where: {
-          groupId: groupId,
-          memberId: memberId,
-        },
-      });
-    } catch (err) {
-      console.log("remove from group service failed: ", err);
       throw err;
     }
   },

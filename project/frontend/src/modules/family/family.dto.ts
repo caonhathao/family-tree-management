@@ -1,8 +1,10 @@
+import { LINEAGE_TYPE } from "@prisma/client";
+
 export interface IFamilyDto {
   localId: string;
   name: string;
   description?: string;
-  lineageType: string;
+  lineageType: LINEAGE_TYPE;
 }
 export interface ResponseCreateFamilyDto {
   family: {

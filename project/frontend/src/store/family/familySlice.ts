@@ -1,5 +1,6 @@
 import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import { IDraftFamilyData } from "@/types/draft.types";
+import { LINEAGE_TYPE } from "@prisma/client";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface FamilyState {
@@ -11,12 +12,12 @@ const initialState: FamilyState = {
   draft: {
     members: [],
     relationships: [],
-    family: { localId: "", name: "", lineageType: "" },
+    family: { localId: "", name: "", lineageType: LINEAGE_TYPE.PATRIARCHAL },
   },
   origin: {
     members: [],
     relationships: [],
-    family: { localId: "", name: "", lineageType: "" },
+    family: { localId: "", name: "", lineageType: LINEAGE_TYPE.PATRIARCHAL },
   },
 };
 

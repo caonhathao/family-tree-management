@@ -1,10 +1,11 @@
 "use server";
 import { IFamilyDto } from "./family.dto";
-import { FamilyService } from "./family.service";
 import { handleError } from "@/lib/utils.lib";
 import { revalidatePath } from "next/cache";
 import { IDraftFamilyData } from "@/types/draft.types";
 import { headers } from "next/headers";
+import { FamilyService } from "./family.service";
+import { FamilyDto } from "@/dto/family.dto";
 
 export async function SyncFamilyAction(
   groupId: string,
@@ -16,7 +17,11 @@ export async function SyncFamilyAction(
     if (!userId) {
       throw new Error("Unauthorized");
     }
-    const res = await FamilyService.syncFamily(userId, groupId, data as any);
+    const res = await FamilyService.syncFamily(
+      userId,
+      groupId,
+      data as FamilyDto,
+    );
     return res;
   } catch (err: unknown) {
     return handleError(err);
@@ -25,7 +30,7 @@ export async function SyncFamilyAction(
 
 export async function GetFamilyData(groupId: string) {
   try {
-    const res = await FamilyService.getFamily(groupId);
+    const res: IDraftFamilyData = await FamilyService.getFamily(groupId);
     return res;
   } catch (err: unknown) {
     return handleError(err);
@@ -34,7 +39,7 @@ export async function GetFamilyData(groupId: string) {
 
 export async function UpdatefamilyInfo(groupId: string, data: IFamilyDto) {
   try {
-    const res = await FamilyService.updateFamily(groupId, data as any);
+    const res = await FamilyService.updateFamily(groupId, data);
     if (res) {
       revalidatePath(`/group/${groupId}`);
     }

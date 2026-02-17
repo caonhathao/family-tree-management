@@ -2,6 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { CreateGroupFamilyDto } from "@/dto/create-group-family.dto";
 import { USER_ROLE } from "@prisma/client";
 import { UpdateGroupFamilyDto } from "@/dto/update-group-family.dto";
+import {
+  IResponseGroupFamiliesDto,
+  IResponseJoinGroupDto,
+  ResponseGroupFamilyDetailDto,
+} from "./group-family.dto";
 
 export const GroupFamilyService = {
   joinGroup: async (token: string, getterId: string) => {
@@ -86,7 +91,7 @@ export const GroupFamilyService = {
     if (!newMember) {
       throw new Error("Could not create member");
     }
-    return newMember;
+    return newMember as IResponseJoinGroupDto;
   },
 
   getAll: async (userId: string) => {
@@ -105,7 +110,7 @@ export const GroupFamilyService = {
         updatedAt: true,
       },
     });
-    return groups;
+    return groups as IResponseGroupFamiliesDto[];
   },
 
   getDetail: async (userId: string, groupId: string) => {
@@ -154,10 +159,14 @@ export const GroupFamilyService = {
       throw new Error("Group not found");
     }
 
-    return group;
+    return group as ResponseGroupFamilyDetailDto;
   },
 
-  updateGroup: async (userId: string, groupId: string, data: UpdateGroupFamilyDto) => {
+  updateGroup: async (
+    userId: string,
+    groupId: string,
+    data: UpdateGroupFamilyDto,
+  ) => {
     const groupMember = await prisma.groupMember.findFirst({
       where: {
         memberId: userId,
@@ -205,7 +214,7 @@ export const GroupFamilyService = {
         data: {
           groupId: newGroup.id,
           memberId: userId,
-          role: data.role as any || USER_ROLE.OWNER,
+          role: data.role || USER_ROLE.OWNER,
           isLeader: true,
         },
       });
@@ -213,6 +222,48 @@ export const GroupFamilyService = {
       return newGroup;
     } catch (err) {
       console.log("err at create group family service:", err);
+      throw err;
+    }
+  },
+
+  quitGroup: async (userId: string, groupId: string) => {
+    try {
+      //check validation
+      //check userId (requester) is in the group (groupId) or not
+      const member = await prisma.groupMember.findFirst({
+        where: {
+          memberId: userId,
+          groupId: groupId,
+        },
+        select: {
+          id: true,
+          role: true,
+          isLeader: true,
+        },
+      });
+      if (!member) {
+        throw new Error("User is not in the group");
+      }
+
+      if (member.isLeader) throw new Error("User is the leader of the group");
+      if (member.role !== USER_ROLE.VIEWER)
+        throw new Error("User has the special role in the group");
+
+      const res = await prisma.groupMember.delete({
+        where: {
+          memberId_groupId: {
+            memberId: userId,
+            groupId: groupId,
+          },
+        },
+        select: {
+          id: true,
+          memberId: true,
+        },
+      });
+      return res;
+    } catch (err: unknown) {
+      console.log("error at quit group service:", err);
       throw err;
     }
   },

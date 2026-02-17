@@ -1,15 +1,13 @@
 "use server";
 import {
   CreateGroupFamilyDto,
-  ResponseGroupFamiliesDto,
-  ResponseGroupFamilyDetailDto,
-  IResponseJoinGroupDto,
   IUpdateGroupFamilyDto,
 } from "./group-family.dto";
-import { GroupFamilyService } from "./group-family.service";
 import { handleError } from "@/lib/utils.lib";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { GroupFamilyService } from "./group-family.service";
+import { redirect } from "next/navigation";
 
 export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
   let isSuccess = false;
@@ -21,7 +19,7 @@ export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
       throw new Error("Unauthorized");
     }
 
-    const res = await GroupFamilyService.createGroup(userId, data as any);
+    const res = await GroupFamilyService.createGroup(userId, data);
     if (res) {
       isSuccess = true;
     } else {
@@ -71,9 +69,6 @@ export async function joinGroupAcion(tokenCode: string) {
     }
 
     const res = await GroupFamilyService.joinGroup(tokenCode, userId);
-    if (res) {
-      revalidatePath("/groups");
-    }
     return res;
   } catch (err) {
     return handleError(err);
@@ -107,5 +102,27 @@ export async function getDetailGroupAction(groupId: string) {
     return res;
   } catch (err) {
     return handleError(err);
+  }
+}
+
+export async function quitGroupAction(groupId: string) {
+  let isSuccess = false;
+  try {
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const res = await GroupFamilyService.quitGroup(userId, groupId);
+    if (res) {
+      isSuccess = true;
+    }
+  } catch (err) {
+    return handleError(err);
+  }
+  if (isSuccess) {
+    revalidatePath("/group");
+    redirect("/group");
   }
 }
