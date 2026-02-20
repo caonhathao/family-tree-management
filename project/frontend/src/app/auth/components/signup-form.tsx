@@ -13,9 +13,9 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RegisterDto } from "@/modules/auth/auth.dto";
+import { IRegisterDto } from "@/modules/auth/auth.dto";
 import { registerAction } from "@/modules/auth/auth.actions";
-import { RegisterSchema } from "@/modules/auth/auth.schemas";
+import { RegisterSchema } from "@/modules/auth/auth.client-schemas";
 import { Toaster } from "@/components/shared/toast";
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
@@ -30,7 +30,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterDto>({
+  } = useForm<IRegisterDto>({
     resolver: zodResolver(RegisterSchema),
     defaultValues: {
       fullName: "",
@@ -40,7 +40,7 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     },
   });
 
-  const onSubmit = (values: RegisterDto, e?: React.BaseSyntheticEvent) => {
+  const onSubmit = (values: IRegisterDto, e?: React.BaseSyntheticEvent) => {
     // console.log(values);
     e?.preventDefault();
     startTransition(async () => {

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { UpdateUserDto } from "@/dto/update-user.dto";
 import { Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
+import { UpdateUserDto } from "./user.service-validator";
 
 export const UserService = {
   updateUser: async (
@@ -25,6 +25,7 @@ export const UserService = {
           data.biography,
         ) as Prisma.InputJsonValue;
       } catch (e) {
+        console.log("Biography format is invalid JSON: ", e);
         throw new Error("Biography format is invalid JSON");
       }
     }

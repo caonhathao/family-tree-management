@@ -1,12 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { CreateGroupFamilyDto } from "@/dto/create-group-family.dto";
 import { USER_ROLE } from "@prisma/client";
-import { UpdateGroupFamilyDto } from "@/dto/update-group-family.dto";
 import {
   IResponseGroupFamiliesDto,
   IResponseJoinGroupDto,
   ResponseGroupFamilyDetailDto,
 } from "./group-family.dto";
+import {
+  CreateGroupFamilyDto,
+  UpdateGroupFamilyDto,
+} from "./group-family.service-validator";
 
 export const GroupFamilyService = {
   joinGroup: async (token: string, getterId: string) => {

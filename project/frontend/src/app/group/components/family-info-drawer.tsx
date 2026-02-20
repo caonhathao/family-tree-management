@@ -29,7 +29,7 @@ import {
   IUpdateGroupFamilyDto,
   ResponseGroupFamilyDetailDto,
 } from "@/modules/group-family/group-family.dto";
-import { UpdateGroupFamilySchema } from "@/modules/group-family/group-family.schemas";
+import { UpdateGroupFamilySchema } from "@/modules/group-family/group-family.client-schemas";
 import { RemoveFromGroupAction } from "@/modules/group-member/group-member.actions";
 import { CreateInviteLinkAction } from "@/modules/invite/invite.actions";
 import {

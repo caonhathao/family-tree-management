@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { createGroupFamilyAction } from "@/modules/group-family/group-family.actions";
 import { CreateGroupFamilyDto } from "@/modules/group-family/group-family.dto";
-import { CreateGroupFamilySchema } from "@/modules/group-family/group-family.schemas";
+import { CreateGroupFamilySchema } from "@/modules/group-family/group-family.client-schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";

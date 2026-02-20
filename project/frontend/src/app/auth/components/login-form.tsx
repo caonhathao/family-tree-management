@@ -13,8 +13,8 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ShowHideButton } from "@/components/shared/show-hide-button";
 import { loginBaseAction } from "@/modules/auth/auth.actions";
-import { LoginBaseDto } from "@/modules/auth/auth.dto";
-import { LoginSchema } from "@/modules/auth/auth.schemas";
+import { ILoginBaseDto } from "@/modules/auth/auth.dto";
+import { LoginSchema } from "@/modules/auth/auth.client-schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Toaster } from "@/components/shared/toast";
@@ -36,7 +36,7 @@ export function LoginForm({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginBaseDto>({
+  } = useForm<ILoginBaseDto>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
       email: "",
@@ -44,7 +44,7 @@ export function LoginForm({
     },
   });
 
-  const onSubmit = (values: LoginBaseDto, e?: React.BaseSyntheticEvent) => {
+  const onSubmit = (values: ILoginBaseDto, e?: React.BaseSyntheticEvent) => {
     e?.preventDefault();
 
     startTransition(async () => {

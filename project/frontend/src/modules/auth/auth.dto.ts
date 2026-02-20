@@ -1,4 +1,4 @@
-export interface UserType {
+export interface IUserType {
   id: string;
   email: string;
   userProfile: {
@@ -8,21 +8,25 @@ export interface UserType {
 }
 
 export interface IAuthResponseDto {
-  user: UserType;
+  user: IUserType;
   tokens: {
     accessToken: string;
     refreshToken: string;
   };
 }
 
-export interface RegisterDto {
+export interface IRegisterDto {
   email: string;
   password: string;
   confirmPassword: string;
   fullName: string;
 }
 
-export interface LoginBaseDto {
+export interface ILoginBaseDto {
   email: string;
   password: string;
+}
+
+export interface IGoogleLoginDto {
+  token: string;
 }

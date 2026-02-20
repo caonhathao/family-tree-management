@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { IDraftFamilyData } from "@/types/draft.types";
 import { headers } from "next/headers";
 import { FamilyService } from "./family.service";
-import { FamilyDto } from "@/dto/family.dto";
+import { FamilyDto } from "./family.service-validator";
 
 export async function SyncFamilyAction(
   groupId: string,

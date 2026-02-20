@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { UpdateGroupMemberDto } from "@/dto/update-group-member.dto";
 import { USER_ROLE } from "@prisma/client";
+import { UpdateGroupMemberDto } from "./group-member.service-validator";
 
 export const GroupMemberService = {
   removeMember: async (userId: string, groupId: string, memberId: string) => {
