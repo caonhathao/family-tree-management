@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { IFamilyDto } from "@/modules/family/family.dto";
-import { FamilySchema } from "@/modules/family/family.schemas";
+import { FamilySchema } from "@/modules/family/family.client-schemas";
 import { AppDispatch, RootState } from "@/store";
 import { setDraft } from "@/store/family/familySlice";
 

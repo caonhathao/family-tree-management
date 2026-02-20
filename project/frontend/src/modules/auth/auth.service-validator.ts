@@ -10,5 +10,15 @@ export const RegisterDto = z.object({
     .min(2, { message: InvalidMessageResponse.NAME_MIN })
     .max(100, { message: InvalidMessageResponse.NAME_MAX }),
 });
-
 export type RegisterDto = z.infer<typeof RegisterDto>;
+
+export const LoginBaseDto = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+export type LoginBaseDto = z.infer<typeof LoginBaseDto>;
+
+export const GoogleLoginDto = z.object({
+  token: z.string(),
+});
+export type GoogleLoginDto = z.infer<typeof GoogleLoginDto>;

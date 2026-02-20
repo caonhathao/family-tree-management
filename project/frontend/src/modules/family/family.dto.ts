@@ -6,7 +6,7 @@ export interface IFamilyDto {
   description?: string;
   lineageType: LINEAGE_TYPE;
 }
-export interface ResponseCreateFamilyDto {
+export interface IResponseCreateFamilyDto {
   family: {
     id: string;
     name: string;
@@ -19,14 +19,14 @@ export interface ResponseCreateFamilyDto {
   };
 }
 
-export interface UpdateFamilyDto {
+export interface IUpdateFamilyDto {
   id: string;
   name: string | undefined;
   description: string | undefined;
   ownerId: string | undefined;
 }
 
-export interface ResponseUpdateFamilyDto {
+export interface IResponseUpdateFamilyDto {
   id: string;
   name: string;
   description: string;
@@ -39,7 +39,7 @@ export interface ResponseUpdateFamilyDto {
   };
 }
 
-export interface ResponseFamilyDto {
+export interface IResponseFamilyDto {
   id: true;
   name: true;
   description: true;

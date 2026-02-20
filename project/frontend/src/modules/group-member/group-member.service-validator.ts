@@ -1,6 +1,5 @@
-
-import { z } from 'zod';
-import { USER_ROLE } from '@prisma/client';
+import { z } from "zod";
+import { USER_ROLE } from "@prisma/client";
 
 export const UpdateGroupMemberDtoSchema = z.object({
   id: z.string().uuid(),

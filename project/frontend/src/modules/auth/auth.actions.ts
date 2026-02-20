@@ -1,16 +1,20 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { RegisterDto, LoginBaseDto, IAuthResponseDto } from "./auth.dto";
+import {
+  IRegisterDto,
+  ILoginBaseDto,
+  IAuthResponseDto,
+  IGoogleLoginDto,
+} from "./auth.dto";
 import { cookies, headers } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { handleError } from "@/lib/utils.lib";
-import { revalidatePath } from "next/cache";
 import { AuthService } from "./auth.service";
-import { GoogleLoginDto } from "@/dto/google-login.dto";
+
 import { jwtDecode } from "jwt-decode";
 
-export async function registerAction(data: RegisterDto) {
+export async function registerAction(data: IRegisterDto) {
   let isSuccess = false;
 
   try {
@@ -51,7 +55,7 @@ export async function registerAction(data: RegisterDto) {
   }
 }
 
-export async function loginBaseAction(data: LoginBaseDto) {
+export async function loginBaseAction(data: ILoginBaseDto) {
   let isSuccess = false;
 
   try {
@@ -90,7 +94,7 @@ export async function loginBaseAction(data: LoginBaseDto) {
   }
 }
 
-export async function loginGoogleAction(token: GoogleLoginDto) {
+export async function loginGoogleAction(token: IGoogleLoginDto) {
   let isSuccess = false;
 
   try {

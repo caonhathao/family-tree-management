@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { CreateInviteDto } from "@/dto/create-invite.dto";
+import { CreateInviteDto } from "./invite.service-validator";
 
 export const InviteService = {
   createInviteLink: async (userId: string, data: CreateInviteDto) => {

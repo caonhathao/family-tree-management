@@ -1,12 +1,14 @@
 import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
-import { LoginBaseDto } from "@/dto/login.dto";
-import { RegisterDto } from "@/dto/register.dto";
-import { GoogleLoginDto } from "@/dto/google-login.dto";
 import { OAuth2Client, TokenPayload } from "google-auth-library";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { prisma } from "@/lib/prisma";
 import { IAuthResponseDto } from "./auth.dto";
+import {
+  GoogleLoginDto,
+  LoginBaseDto,
+  RegisterDto,
+} from "./auth.service-validator";
 
 const getTokens = (payload: Record<string, string>) => {
   const accessToken = jwt.sign({ payload }, EnvConfig.jwtAccessSecret, {

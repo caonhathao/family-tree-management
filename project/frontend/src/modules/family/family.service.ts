@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/prisma";
+import { GENDER, LINEAGE_TYPE, TYPE_RELATIONSHIP } from "@prisma/client";
+import { IDraftFamilyData } from "@/types/draft.types";
 import {
   FamilyDto,
   IBiographyContent,
   IFamilyDto,
   IFamilyMemberDto,
   IRelationshipDto,
-} from "@/dto/family.dto";
-import { GENDER, LINEAGE_TYPE, TYPE_RELATIONSHIP } from "@prisma/client";
-import { IDraftFamilyData } from "@/types/draft.types";
+} from "./family.service-validator";
 
 export const FamilyService = {
   deleteFamily: async (groupId: string, familyId: string) => {

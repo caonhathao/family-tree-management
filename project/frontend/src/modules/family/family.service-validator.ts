@@ -1,6 +1,5 @@
-
-import { z } from 'zod';
-import { GENDER, LINEAGE_TYPE, TYPE_RELATIONSHIP } from '@prisma/client';
+import { z } from "zod";
+import { GENDER, LINEAGE_TYPE, TYPE_RELATIONSHIP } from "@prisma/client";
 
 export const BiographyContentSchema = z.object({
   education_level: z.string(),
