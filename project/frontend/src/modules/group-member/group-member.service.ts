@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { USER_ROLE } from "@prisma/client";
+import { MEMBER_ROLE } from "@prisma/client";
 import { UpdateGroupMemberDto } from "./group-member.service-validator";
 
 export const GroupMemberService = {
@@ -83,7 +83,7 @@ export const GroupMemberService = {
           },
           data: {
             isLeader: false,
-            role: USER_ROLE.VIEWER,
+            role: MEMBER_ROLE.VIEWER,
           },
         });
         const newLeader = await tx.groupMember.update({
@@ -95,7 +95,7 @@ export const GroupMemberService = {
           },
           data: {
             isLeader: true,
-            role: USER_ROLE.OWNER,
+            role: MEMBER_ROLE.OWNER,
           },
           select: {
             id: true,

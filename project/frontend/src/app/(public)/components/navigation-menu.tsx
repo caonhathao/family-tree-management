@@ -12,7 +12,6 @@ export const Navigation = ({ className }: { className?: string }) => {
   return (
     <div className={className}>
       <div className={"relative w-12 h-12 overflow-hidden rounded-full border"}>
-        {" "}
         <Image
           src={logo}
           fill
@@ -23,14 +22,6 @@ export const Navigation = ({ className }: { className?: string }) => {
       </div>
       <NavigationMenu>
         <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuLink
-              className={navigationMenuTriggerStyle()}
-              href={"/"}
-            >
-              Giới thiệu
-            </NavigationMenuLink>
-          </NavigationMenuItem>
           <NavigationMenuItem>
             <NavigationMenuLink
               className={navigationMenuTriggerStyle()}
@@ -50,9 +41,9 @@ export const Navigation = ({ className }: { className?: string }) => {
           <NavigationMenuItem>
             <NavigationMenuLink
               className={navigationMenuTriggerStyle()}
-              href={"/feedback"}
+              href={"/faq"}
             >
-              Phản hồi
+              FAQ
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>

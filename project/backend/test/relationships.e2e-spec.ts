@@ -4,7 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { PrismaService } from '../prisma/prisma.service';
-import { USER_ROLE, GENDER, TYPE_RELATIONSHIP } from '@prisma/client';
+import { MEMBER_ROLE, GENDER, TYPE_RELATIONSHIP } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import { Server } from 'http';
 

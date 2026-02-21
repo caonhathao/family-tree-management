@@ -3,7 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../prisma/prisma.service';
-import { USER_ROLE } from '@prisma/client';
+import { MEMBER_ROLE } from '@prisma/client';
 
 /**
  * E2E Tests for Group Family Module
@@ -169,7 +169,7 @@ describe('Group Family E2E Tests', () => {
 
       expect(groupMember).toBeDefined();
       if (groupMember) {
-        expect(groupMember.role).toBe(USER_ROLE.OWNER);
+        expect(groupMember.role).toBe(MEMBER_ROLE.OWNER);
         expect(groupMember.isLeader).toBe(true);
       }
     });
@@ -505,7 +505,7 @@ describe('Group Family E2E Tests', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.groupId).toBe(testGroup.id);
       expect(response.body.data.memberId).toBeDefined();
-      expect(response.body.data.role).toBe(USER_ROLE.VIEWER);
+      expect(response.body.data.role).toBe(MEMBER_ROLE.VIEWER);
       expect(response.body.data.isLeader).toBe(false);
 
       // Verify membership in database
@@ -520,7 +520,7 @@ describe('Group Family E2E Tests', () => {
 
       expect(membership).toBeDefined();
       if (membership) {
-        expect(membership.role).toBe(USER_ROLE.VIEWER);
+        expect(membership.role).toBe(MEMBER_ROLE.VIEWER);
         expect(membership.isLeader).toBe(false);
       }
     });

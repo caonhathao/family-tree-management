@@ -1,9 +1,9 @@
-import { USER_ROLE } from "@prisma/client";
+import { MEMBER_ROLE } from "@prisma/client";
 
 export interface CreateGroupFamilyDto {
   name: string;
   description: string;
-  role: USER_ROLE;
+  role: MEMBER_ROLE;
 }
 
 export interface IUpdateGroupFamilyDto {
@@ -26,7 +26,7 @@ export interface ResponseGroupFamilyDetailDto {
         userId: string;
       };
     };
-    role: USER_ROLE;
+    role: MEMBER_ROLE;
     isLeader: boolean;
   }[];
 }

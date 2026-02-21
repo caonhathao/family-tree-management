@@ -1,4 +1,4 @@
-enum USER_ROLE {
+enum MEMBER_ROLE {
     OWNER
     EDITOR
     VIEWER
@@ -21,7 +21,7 @@ model GroupFamily {
 
 model GroupMember {
     id        String      @id @default(uuid()) @db.Uuid()
-    role      USER_ROLE   @default(OWNER)
+    role      MEMBER_ROLE @default(OWNER)
     groupId   String      @db.Uuid()
     group     GroupFamily @relation(fields: [groupId], references: [id], onDelete: Cascade)
     memberId  String      @db.Uuid()

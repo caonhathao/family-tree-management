@@ -1,8 +1,8 @@
-import { USER_ROLE } from "@prisma/client";
+import { MEMBER_ROLE } from "@prisma/client";
 
 export interface UpdateGroupMemberDto {
   id: string;
-  role?: USER_ROLE | undefined;
+  role?: MEMBER_ROLE | undefined;
 }
 
 export interface ResponseUpdateGroupMemberDto {
