@@ -3,7 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../prisma/prisma.service';
-import { USER_ROLE } from '@prisma/client';
+import { MEMBER_ROLE } from '@prisma/client';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 
 /**
@@ -98,7 +98,7 @@ describe('Group Member Management E2E Tests', () => {
   const addMemberToGroup = async (
     group: any,
     user: any,
-    role: USER_ROLE = USER_ROLE.VIEWER,
+    role: MEMBER_ROLE = MEMBER_ROLE.VIEWER,
   ) => {
     // Check if member already exists (auto-created when group is created)
     const existingMember = await prisma.groupMember.findUnique({
@@ -159,7 +159,7 @@ describe('Group Member Management E2E Tests', () => {
       },
       data: {
         isLeader: true,
-        role: USER_ROLE.OWNER,
+        role: MEMBER_ROLE.OWNER,
       },
     });
 
@@ -194,7 +194,7 @@ describe('Group Member Management E2E Tests', () => {
 
     if (memberIndex !== -1) {
       testMembers[memberIndex].isLeader = true;
-      testMembers[memberIndex].role = USER_ROLE.OWNER;
+      testMembers[memberIndex].role = MEMBER_ROLE.OWNER;
     }
   };
 
@@ -297,14 +297,14 @@ describe('Group Member Management E2E Tests', () => {
       testGroup = await createTestGroup(leader);
 
       // Add members to group
-      await addMemberToGroup(testGroup, leader, USER_ROLE.OWNER);
+      await addMemberToGroup(testGroup, leader, MEMBER_ROLE.OWNER);
       await setGroupLeader(testGroup, leader);
       memberToUpdate = await addMemberToGroup(
         testGroup,
         editorUser,
-        USER_ROLE.EDITOR,
+        MEMBER_ROLE.EDITOR,
       );
-      await addMemberToGroup(testGroup, viewerUser, USER_ROLE.VIEWER);
+      await addMemberToGroup(testGroup, viewerUser, MEMBER_ROLE.VIEWER);
     });
 
     it('should allow leader to update member role', async () => {
@@ -313,12 +313,12 @@ describe('Group Member Management E2E Tests', () => {
         .set('Authorization', `Bearer ${leader.accessToken}`)
         .send({
           id: editorUser.id,
-          role: USER_ROLE.VIEWER,
+          role: MEMBER_ROLE.VIEWER,
         })
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.role).toBe(USER_ROLE.VIEWER);
+      expect(response.body.data.role).toBe(MEMBER_ROLE.VIEWER);
       expect(response.body.data.memberId).toBe(editorUser.id);
       expect(response.body.data.groupId).toBe(testGroup.id);
       expect(response.body.data.isLeader).toBe(false); // Should preserve leader status
@@ -330,7 +330,7 @@ describe('Group Member Management E2E Tests', () => {
         .set('Authorization', `Bearer ${editorUser.accessToken}`)
         .send({
           id: viewerUser.id,
-          role: USER_ROLE.EDITOR,
+          role: MEMBER_ROLE.EDITOR,
         })
         .expect(403);
 
@@ -343,7 +343,7 @@ describe('Group Member Management E2E Tests', () => {
         .patch(`/api/group-member/${testGroup.id}`)
         .send({
           id: editorUser.id,
-          role: USER_ROLE.VIEWER,
+          role: MEMBER_ROLE.VIEWER,
         })
         .expect(401);
 
@@ -357,7 +357,7 @@ describe('Group Member Management E2E Tests', () => {
         .set('Authorization', `Bearer ${leader.accessToken}`)
         .send({
           id: generateValidUUID(), // Non-existent user ID
-          role: USER_ROLE.EDITOR,
+          role: MEMBER_ROLE.EDITOR,
         })
         .expect(404);
 
@@ -371,7 +371,7 @@ describe('Group Member Management E2E Tests', () => {
         .set('Authorization', `Bearer ${leader.accessToken}`)
         .send({
           id: generateInvalidUUID(),
-          role: USER_ROLE.EDITOR,
+          role: MEMBER_ROLE.EDITOR,
         })
         .expect(400);
 
@@ -410,10 +410,10 @@ describe('Group Member Management E2E Tests', () => {
       testGroup = await createTestGroup(currentLeader);
 
       // Add members to group
-      await addMemberToGroup(testGroup, currentLeader, USER_ROLE.OWNER);
+      await addMemberToGroup(testGroup, currentLeader, MEMBER_ROLE.OWNER);
       await setGroupLeader(testGroup, currentLeader);
-      await addMemberToGroup(testGroup, newLeader, USER_ROLE.EDITOR);
-      await addMemberToGroup(testGroup, regularMember, USER_ROLE.VIEWER);
+      await addMemberToGroup(testGroup, newLeader, MEMBER_ROLE.EDITOR);
+      await addMemberToGroup(testGroup, regularMember, MEMBER_ROLE.VIEWER);
     });
 
     it('should transfer leadership successfully', async () => {
@@ -427,7 +427,7 @@ describe('Group Member Management E2E Tests', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.memberId).toBe(newLeader.id);
-      expect(response.body.data.role).toBe(USER_ROLE.OWNER);
+      expect(response.body.data.role).toBe(MEMBER_ROLE.OWNER);
       expect(response.body.data.isLeader).toBe(true);
 
       // Verify database state
@@ -452,9 +452,9 @@ describe('Group Member Management E2E Tests', () => {
       expect(oldLeaderRecord).not.toBeNull();
       expect(newLeaderRecord).not.toBeNull();
       expect(oldLeaderRecord!.isLeader).toBe(false);
-      expect(oldLeaderRecord!.role).toBe(USER_ROLE.VIEWER);
+      expect(oldLeaderRecord!.role).toBe(MEMBER_ROLE.VIEWER);
       expect(newLeaderRecord!.isLeader).toBe(true);
-      expect(newLeaderRecord!.role).toBe(USER_ROLE.OWNER);
+      expect(newLeaderRecord!.role).toBe(MEMBER_ROLE.OWNER);
     });
 
     it('should reject leadership transfer from non-leader', async () => {
@@ -515,7 +515,7 @@ describe('Group Member Management E2E Tests', () => {
         .set('Authorization', `Bearer ${currentLeader.accessToken}`)
         .send({
           id: regularMember.id,
-          role: USER_ROLE.EDITOR,
+          role: MEMBER_ROLE.EDITOR,
         })
         .expect(403);
 
@@ -554,10 +554,10 @@ describe('Group Member Management E2E Tests', () => {
       testGroup = await createTestGroup(leader);
 
       // Add members to group
-      await addMemberToGroup(testGroup, leader, USER_ROLE.OWNER);
+      await addMemberToGroup(testGroup, leader, MEMBER_ROLE.OWNER);
       await setGroupLeader(testGroup, leader);
-      await addMemberToGroup(testGroup, memberToRemove, USER_ROLE.EDITOR);
-      await addMemberToGroup(testGroup, regularMember, USER_ROLE.VIEWER);
+      await addMemberToGroup(testGroup, memberToRemove, MEMBER_ROLE.EDITOR);
+      await addMemberToGroup(testGroup, regularMember, MEMBER_ROLE.VIEWER);
     });
 
     it('should allow leader to remove member', async () => {
@@ -664,9 +664,9 @@ describe('Group Member Management E2E Tests', () => {
       testGroup = await createTestGroup(leader);
 
       // Add members to group
-      await addMemberToGroup(testGroup, leader, USER_ROLE.OWNER);
+      await addMemberToGroup(testGroup, leader, MEMBER_ROLE.OWNER);
       await setGroupLeader(testGroup, leader);
-      await addMemberToGroup(testGroup, member, USER_ROLE.EDITOR);
+      await addMemberToGroup(testGroup, member, MEMBER_ROLE.EDITOR);
     });
 
     it('should prevent duplicate group memberships', async () => {
@@ -676,7 +676,7 @@ describe('Group Member Management E2E Tests', () => {
           data: {
             groupId: testGroup.id,
             memberId: member.id,
-            role: USER_ROLE.VIEWER,
+            role: MEMBER_ROLE.VIEWER,
           },
         });
         fail('Expected database constraint violation');
@@ -691,7 +691,7 @@ describe('Group Member Management E2E Tests', () => {
         .set('Authorization', `Bearer ${leader.accessToken}`)
         .send({
           id: 'not-a-uuid',
-          role: USER_ROLE.VIEWER,
+          role: MEMBER_ROLE.VIEWER,
         })
         .expect(400);
 
@@ -730,10 +730,10 @@ describe('Group Member Management E2E Tests', () => {
       testGroup = await createTestGroup(leader);
 
       // Add members to group
-      await addMemberToGroup(testGroup, leader, USER_ROLE.OWNER);
+      await addMemberToGroup(testGroup, leader, MEMBER_ROLE.OWNER);
       await setGroupLeader(testGroup, leader);
-      await addMemberToGroup(testGroup, member1, USER_ROLE.EDITOR);
-      await addMemberToGroup(testGroup, member2, USER_ROLE.VIEWER);
+      await addMemberToGroup(testGroup, member1, MEMBER_ROLE.EDITOR);
+      await addMemberToGroup(testGroup, member2, MEMBER_ROLE.VIEWER);
     });
 
     it('should preserve data structure in API responses', async () => {
@@ -742,7 +742,7 @@ describe('Group Member Management E2E Tests', () => {
         .set('Authorization', `Bearer ${leader.accessToken}`)
         .send({
           id: member1.id,
-          role: USER_ROLE.VIEWER,
+          role: MEMBER_ROLE.VIEWER,
         })
         .expect(200);
 
@@ -765,8 +765,8 @@ describe('Group Member Management E2E Tests', () => {
       // Validate values
       expect(data.memberId).toBe(member1.id);
       expect(data.groupId).toBe(testGroup.id);
-      expect(data.role).toBe(USER_ROLE.VIEWER);
-      expect(Object.values(USER_ROLE)).toContain(data.role);
+      expect(data.role).toBe(MEMBER_ROLE.VIEWER);
+      expect(Object.values(MEMBER_ROLE)).toContain(data.role);
     });
 
     it('should maintain database consistency during leadership transfer', async () => {
@@ -803,9 +803,9 @@ describe('Group Member Management E2E Tests', () => {
       expect(oldLeader).toBeDefined();
       expect(newLeader).toBeDefined();
       expect(oldLeader!.isLeader).toBe(false);
-      expect(oldLeader!.role).toBe(USER_ROLE.VIEWER);
+      expect(oldLeader!.role).toBe(MEMBER_ROLE.VIEWER);
       expect(newLeader!.isLeader).toBe(true);
-      expect(newLeader!.role).toBe(USER_ROLE.OWNER);
+      expect(newLeader!.role).toBe(MEMBER_ROLE.OWNER);
     });
   });
 
@@ -822,7 +822,7 @@ describe('Group Member Management E2E Tests', () => {
 
       testGroup = await createTestGroup(leader);
 
-      await addMemberToGroup(testGroup, leader, USER_ROLE.OWNER);
+      await addMemberToGroup(testGroup, leader, MEMBER_ROLE.OWNER);
       await setGroupLeader(testGroup, leader);
     });
 
@@ -842,7 +842,7 @@ describe('Group Member Management E2E Tests', () => {
         .patch(`/api/group-member/${testGroup.id}`)
         .set('Authorization', `Bearer ${leader.accessToken}`)
         .send({
-          role: USER_ROLE.EDITOR,
+          role: MEMBER_ROLE.EDITOR,
         })
         .expect(400);
 
@@ -856,7 +856,7 @@ describe('Group Member Management E2E Tests', () => {
         .set('Authorization', `Bearer ${leader.accessToken}`)
         .send({
           id: '',
-          role: USER_ROLE.EDITOR,
+          role: MEMBER_ROLE.EDITOR,
         })
         .expect(400);
 

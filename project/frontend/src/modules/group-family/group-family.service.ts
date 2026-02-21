@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { USER_ROLE } from "@prisma/client";
+import { MEMBER_ROLE } from "@prisma/client";
 import {
   IResponseGroupFamiliesDto,
   IResponseJoinGroupDto,
@@ -79,7 +79,7 @@ export const GroupFamilyService = {
       data: {
         groupId: invite.groupId,
         memberId: getterId,
-        role: USER_ROLE.VIEWER,
+        role: MEMBER_ROLE.VIEWER,
         isLeader: false,
       },
       select: {
@@ -216,7 +216,7 @@ export const GroupFamilyService = {
         data: {
           groupId: newGroup.id,
           memberId: userId,
-          role: data.role || USER_ROLE.OWNER,
+          role: data.role || MEMBER_ROLE.OWNER,
           isLeader: true,
         },
       });
@@ -248,7 +248,7 @@ export const GroupFamilyService = {
       }
 
       if (member.isLeader) throw new Error("User is the leader of the group");
-      if (member.role !== USER_ROLE.VIEWER)
+      if (member.role !== MEMBER_ROLE.VIEWER)
         throw new Error("User has the special role in the group");
 
       const res = await prisma.groupMember.delete({

@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { USER_ROLE } from '@prisma/client';
+import { MEMBER_ROLE } from '@prisma/client';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { Exception } from '../messages/messages.response';
 import { JwtRequest } from 'src/modules/auth/types/jwt-payload.type';
@@ -26,7 +26,7 @@ export class RolesGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // 1. Lấy danh sách Role yêu cầu từ Decorator @Roles()
-    const requiredRoles = this.reflector.getAllAndOverride<USER_ROLE[]>(
+    const requiredRoles = this.reflector.getAllAndOverride<MEMBER_ROLE[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
     );

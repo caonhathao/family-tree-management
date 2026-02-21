@@ -1,4 +1,4 @@
-import { USER_ROLE } from '@prisma/client';
+import { MEMBER_ROLE } from '@prisma/client';
 import { IsEmail, IsEnum, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -35,11 +35,11 @@ export class UserDto {
 
   @ApiProperty({
     description: 'User role',
-    enum: USER_ROLE,
+    enum: MEMBER_ROLE,
     example: 'USER',
   })
-  @IsEnum(USER_ROLE)
-  role: USER_ROLE;
+  @IsEnum(MEMBER_ROLE)
+  role: MEMBER_ROLE;
 
   @ApiProperty({
     description: 'User profile information',

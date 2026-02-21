@@ -8,7 +8,7 @@ import {
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateGroupMemberDto } from './dto/update-group-member.dto';
 import { Exception } from 'src/common/messages/messages.response';
-import { USER_ROLE } from '@prisma/client';
+import { MEMBER_ROLE } from '@prisma/client';
 import { isUUID } from 'class-validator';
 
 @Injectable()
@@ -104,7 +104,7 @@ export class GroupMemberService {
           },
           data: {
             isLeader: false,
-            role: USER_ROLE.VIEWER,
+            role: MEMBER_ROLE.VIEWER,
           },
         });
         const newLeader = await tx.groupMember.update({
@@ -116,7 +116,7 @@ export class GroupMemberService {
           },
           data: {
             isLeader: true,
-            role: USER_ROLE.OWNER,
+            role: MEMBER_ROLE.OWNER,
           },
           select: {
             id: true,

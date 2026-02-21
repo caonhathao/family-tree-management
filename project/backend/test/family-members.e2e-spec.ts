@@ -4,7 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { PrismaService } from '../prisma/prisma.service';
-import { USER_ROLE } from '@prisma/client';
+import { MEMBER_ROLE } from '@prisma/client';
 import {
   generateRandomUser,
   generateRandomFamily,
@@ -619,7 +619,7 @@ describe('Family Members (e2e)', () => {
       data: {
         memberId: viewerId,
         groupId: groupRes.data.id,
-        role: USER_ROLE.VIEWER,
+        role: MEMBER_ROLE.VIEWER,
       },
     });
 
@@ -779,7 +779,7 @@ describe('Family Members (e2e)', () => {
       data: {
         memberId: editorId,
         groupId: groupRes.data.id,
-        role: USER_ROLE.EDITOR,
+        role: MEMBER_ROLE.EDITOR,
       },
     });
 

@@ -9,7 +9,7 @@ import { Exception } from 'src/common/messages/messages.response';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateGroupFamilyDto } from './dto/update-group-family.dto';
 import { CreateGroupFamilyDto } from './dto/create-group-family.dto';
-import { USER_ROLE } from '@prisma/client';
+import { MEMBER_ROLE } from '@prisma/client';
 import { isUUID } from 'class-validator';
 
 @Injectable()
@@ -31,7 +31,7 @@ export class GroupFamilyService {
         data: {
           groupId: newGroup.id,
           memberId: userId,
-          role: data.role || USER_ROLE.OWNER,
+          role: data.role || MEMBER_ROLE.OWNER,
           isLeader: true,
         },
       });
@@ -250,7 +250,7 @@ export class GroupFamilyService {
       data: {
         groupId: invite.groupId,
         memberId: getterId,
-        role: USER_ROLE.VIEWER,
+        role: MEMBER_ROLE.VIEWER,
         isLeader: false,
       },
       select: {
