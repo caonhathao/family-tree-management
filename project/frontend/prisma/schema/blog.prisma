@@ -2,6 +2,8 @@ model Blog {
     id        String      @id @default(uuid()) @db.Uuid
     userId    String      @db.Uuid
     user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    title     String      @db.Text
+    slug      String      @unique @db.Text
     content   String      @db.Text
     createdAt DateTime    @default(now())
     updatedAt DateTime    @updatedAt

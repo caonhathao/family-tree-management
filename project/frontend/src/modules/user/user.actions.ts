@@ -1,7 +1,6 @@
 "use server";
-import { ResponseUpdateUserDto } from "./user.dto";
 import { UserService } from "./user.service";
-import { handleError } from "@/lib/utils.lib";
+import { handleError } from "@/lib/util/utils.lib";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
@@ -19,7 +18,12 @@ export async function UpdateUserAction(userId: string, data: FormData) {
       formDataObj[key] = value.toString();
     });
 
-    const res = await UserService.updateUser(userId, currentUserId, formDataObj as any);
+    const res = await UserService.updateUser(
+      userId,
+      currentUserId,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      formDataObj as any,
+    );
     if (res) {
       isSuccess = true;
     } else {
@@ -33,7 +37,7 @@ export async function UpdateUserAction(userId: string, data: FormData) {
   }
 }
 
-export async function getUserDetail(userId: string) {
+export async function getUserDetail(type: string, userId?: string) {
   try {
     const headerList = await headers();
     const currentUserId = headerList.get("X-User-Id");
@@ -41,7 +45,7 @@ export async function getUserDetail(userId: string) {
       throw new Error("Unauthorized");
     }
 
-    const res = await UserService.getUserDetail(userId, currentUserId);
+    const res = await UserService.getUserDetail(type, currentUserId, userId);
     return res;
   } catch (err) {
     return handleError(err);

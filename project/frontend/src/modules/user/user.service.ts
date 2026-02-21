@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { UpdateUserDto } from "./user.service-validator";
+import z from "zod";
+import { Exception } from "@/lib/messages/response.messages";
+import { IResponseGetUserDto } from "./user.dto";
 
 export const UserService = {
   updateUser: async (
@@ -105,24 +108,56 @@ export const UserService = {
     }
   },
 
-  getUserDetail: async (targetId: string, userId: string) => {
-    if (targetId !== userId) {
-      throw new Error("User not found");
-    }
-    return await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        userProfile: {
+  getUserDetail: async (type: string, userId: string, targetId?: string) => {
+    try {
+      const uuidSchema = z.string().uuid();
+      if (uuidSchema.safeParse(userId).success === false) {
+        throw new Error(Exception.ID_INVALID);
+      }
+
+      if (type === "self") {
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
           select: {
-            fullName: true,
-            avatar: true,
-            dateOfBirth: true,
-            biography: true,
+            id: true,
+            email: true,
+            userProfile: {
+              select: {
+                fullName: true,
+                avatar: true,
+                dateOfBirth: true,
+                biography: true,
+              },
+            },
           },
-        },
-      },
-    });
+        });
+        return user as IResponseGetUserDto;
+      } else if (type === "target" && targetId) {
+        if (uuidSchema.safeParse(targetId).success === false) {
+          throw new Error(Exception.ID_INVALID);
+        }
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            email: true,
+            userProfile: {
+              select: {
+                fullName: true,
+                avatar: true,
+                dateOfBirth: true,
+                biography: true,
+              },
+            },
+          },
+        });
+        return user as IResponseGetUserDto;
+      } else {
+        throw new Error(Exception.BAD_REQUEST);
+      }
+    } catch (err: unknown) {
+      console.log("error at get user detail service:", err);
+      throw err;
+    }
   },
 };

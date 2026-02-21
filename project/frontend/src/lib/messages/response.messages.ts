@@ -20,6 +20,7 @@ export const InvalidMessageResponse = {
   SESSION_BAD_ACCESS: "t_session_bad_access",
   FIELD_EMPTY: "t_field_empty",
   LINEAGE_TYPE_INVALID: "t_lineage_type_invalid",
+  CONTENT_EMPTY: "t_content_empty",
 } as const;
 
 export type InvalidMessage =

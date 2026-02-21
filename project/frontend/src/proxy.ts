@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { AuthService } from "./modules/auth/auth.service";
 import { JwtPayload } from "./types/base.types";
+import { IAuthResponseDto } from "./modules/auth/auth.dto";
 
 const publicRoutes = [
   "/",
@@ -42,20 +43,21 @@ export async function proxy(req: NextRequest) {
   // BƯỚC 1: Kiểm tra Access Token
   if (accessToken) {
     const payload = await verifyAndGetPayload(accessToken, JWT_ACCESS_KEY);
-    userId = payload?.payload.sub || null;
+    userId = payload?.payload.id || null;
   }
 
   // BƯỚC 2: Silent Refresh
+  let result: IAuthResponseDto | null = null;
   if (!userId && refreshToken) {
     const refreshPayload = await verifyAndGetPayload(
       refreshToken,
       JWT_REFRESH_KEY,
     );
-    const rUserId = refreshPayload?.payload.sub as string;
+    const rUserId = refreshPayload?.payload.id as string;
 
     if (rUserId) {
       try {
-        const result = await AuthService.refresh(rUserId, refreshToken);
+        result = await AuthService.refresh(rUserId, refreshToken);
         if (result && result.tokens) {
           userId = result.user.id;
 
@@ -96,9 +98,36 @@ export async function proxy(req: NextRequest) {
       return NextResponse.redirect(new URL("/", req.url));
     }
 
-    // Nếu đã có finalResponse (vừa refresh xong), dùng nó. Nếu chưa, tạo mới.
-    const response = finalResponse || NextResponse.next();
-    response.headers.set("X-User-Id", userId);
+    // 1. Tạo bản sao của request headers hiện tại
+    const requestHeaders = new Headers(req.headers);
+
+    // 2. Nhét dữ liệu mới vào Request Headers (Dành cho Server Component đọc)
+    requestHeaders.set("x-user-id", userId);
+    if (finalResponse && result) {
+      // Nếu vừa refresh, lấy token từ result của BƯỚC 2
+      requestHeaders.set("x-access-token", result.tokens.accessToken);
+    }
+
+    // 3. Khởi tạo response từ NextResponse.next kèm theo request headers mới
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+
+    // 4. QUAN TRỌNG: Nếu có finalResponse (có set-cookie), phải copy cookie sang response mới
+    if (finalResponse) {
+      finalResponse.cookies.getAll().forEach((cookie) => {
+        response.cookies.set(cookie.name, cookie.value, {
+          path: "/",
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: cookie.name === "access_token" ? 15 * 60 : 7 * 24 * 60 * 60,
+        });
+      });
+    }
+
     return response;
   }
 

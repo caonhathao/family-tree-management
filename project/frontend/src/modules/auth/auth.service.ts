@@ -7,8 +7,9 @@ import { IAuthResponseDto } from "./auth.dto";
 import {
   GoogleLoginDto,
   LoginBaseDto,
-  RegisterDto,
+  RegisterServiceDto,
 } from "./auth.service-validator";
+import z from "zod";
 
 const getTokens = (payload: Record<string, string>) => {
   const accessToken = jwt.sign({ payload }, EnvConfig.jwtAccessSecret, {
@@ -44,7 +45,7 @@ const loginGoogle = async (
       },
       select: {
         id: true,
-        email: true,
+        role: true,
         userProfile: {
           select: {
             fullName: true,
@@ -58,8 +59,8 @@ const loginGoogle = async (
     //if not, register account
     if (user) {
       const payload = {
-        sub: user.id,
-        email: user.email,
+        id: user.id,
+        role: user.role,
       };
       const tokens = getTokens(payload);
       const safeUserAgent = userAgent || "unknown";
@@ -85,7 +86,7 @@ const loginGoogle = async (
       return {
         user: {
           id: user.id,
-          email: user.email,
+          role: user.role,
           userProfile: user.userProfile,
         },
         tokens,
@@ -103,7 +104,7 @@ const loginGoogle = async (
         },
         select: {
           id: true,
-          email: true,
+          role: true,
           userProfile: {
             select: {
               fullName: true,
@@ -117,8 +118,8 @@ const loginGoogle = async (
         throw new Error("can not create new user profile");
       } else {
         const payload = {
-          sub: newUser.id,
-          email: newUser.email,
+          id: newUser.id,
+          role: newUser.role,
         };
         const tokens = getTokens(payload);
 
@@ -135,7 +136,7 @@ const loginGoogle = async (
         return {
           user: {
             id: newUser.id,
-            email: newUser.email,
+            role: newUser.role,
             userProfile: newUser.userProfile,
           },
           tokens,
@@ -172,7 +173,13 @@ const logout = async (userId: string, token: string) => {
 };
 
 const refresh = async (userId: string, refreshToken: string) => {
+  const uuidSchema = z.string().uuid();
   try {
+    const checkId = uuidSchema.safeParse(userId);
+    if (!checkId.success) {
+      throw new Error("Invalid token");
+    }
+
     const currentSession = await prisma.session.findFirst({
       where: { token: refreshToken },
     });
@@ -192,7 +199,13 @@ const refresh = async (userId: string, refreshToken: string) => {
       },
       select: {
         id: true,
-        email: true,
+        role: true,
+        userProfile: {
+          select: {
+            avatar: true,
+            fullName: true,
+          },
+        },
       },
     });
 
@@ -200,7 +213,7 @@ const refresh = async (userId: string, refreshToken: string) => {
       throw new Error("User not found");
     }
 
-    const tokens = getTokens({ sub: user.id, email: user.email! });
+    const tokens = getTokens({ id: user.id, role: user.role });
 
     await prisma.session.update({
       where: { id: currentSession.id },
@@ -210,7 +223,14 @@ const refresh = async (userId: string, refreshToken: string) => {
       },
     });
 
-    return { user, tokens };
+    return {
+      user: {
+        id: user.id,
+        role: user.role,
+        userProfile: user.userProfile,
+      },
+      tokens,
+    } as IAuthResponseDto;
   } catch (err) {
     console.error("error at refresh service:", err);
     throw err;
@@ -218,7 +238,7 @@ const refresh = async (userId: string, refreshToken: string) => {
 };
 
 const register = async (
-  data: RegisterDto,
+  data: RegisterServiceDto,
   metadata: { ipAddress: string; userAgent: string },
 ) => {
   const email = await prisma.user.findFirst({
@@ -248,7 +268,7 @@ const register = async (
     },
     select: {
       id: true,
-      email: true,
+      role: true,
       userProfile: {
         select: {
           fullName: true,
@@ -262,8 +282,8 @@ const register = async (
     throw new Error("Can not create new user profile");
   } else {
     const payload = {
-      sub: newUser.id,
-      email: newUser.email,
+      id: newUser.id,
+      role: newUser.role,
     };
     const tokens = getTokens(payload);
 
@@ -280,7 +300,7 @@ const register = async (
     return {
       user: {
         id: newUser.id,
-        email: newUser.email,
+        role: newUser.role,
         userProfile: newUser.userProfile,
       },
       tokens,
@@ -300,6 +320,7 @@ const loginBase = async (
       select: {
         id: true,
         email: true,
+        role: true,
         account: {
           select: { password: true },
         },
@@ -330,7 +351,7 @@ const loginBase = async (
       }
     }
 
-    const payload = { sub: user.id, email: user.email };
+    const payload = { id: user.id, role: user.role };
     const tokens = getTokens(payload);
 
     const safeUserAgent = userAgent || "unknown";
@@ -357,7 +378,7 @@ const loginBase = async (
     return {
       user: {
         id: user.id,
-        email: user.email,
+        role: user.role,
         userProfile: user.userProfile,
       },
       tokens,

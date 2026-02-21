@@ -3,7 +3,7 @@ import {
   CreateGroupFamilyDto,
   IUpdateGroupFamilyDto,
 } from "./group-family.dto";
-import { handleError } from "@/lib/utils.lib";
+import { handleError } from "@/lib/util/utils.lib";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { GroupFamilyService } from "./group-family.service";

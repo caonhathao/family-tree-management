@@ -1,29 +1,21 @@
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { RiPencilFill } from "react-icons/ri";
+import { getBlogAction } from "@/modules/blog/blog.action";
+import { cookies } from "next/headers";
+import FeatureEditor from "./FeatureEditor";
+import { getRoleFromToken } from "@/lib/middleware/auth.lib";
 
-const FeaturesPage = () => {
-  return (
-    <div className={"relative"}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant={"outline"}
-            size={"icon"}
-            className={"fixed right-2 top-20 hover:cursor-pointer"}
-          >
-            <RiPencilFill />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side={"left"}>
-          <p>Sửa bài viết</p>
-        </TooltipContent>
-      </Tooltip>
-    </div>
-  );
-};
-export default FeaturesPage;
+export default async function FeaturesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ part: string }>;
+}) {
+  const { part } = await searchParams;
+  const slug = part || "introduction"; // Default to 'introduction' if no part is specified
+
+  const blog = await getBlogAction(slug);
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+
+  const user = await getRoleFromToken(token);
+
+  return <FeatureEditor blog={blog} user={user} />;
+}
