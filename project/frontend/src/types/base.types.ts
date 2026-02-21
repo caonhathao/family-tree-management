@@ -1,3 +1,5 @@
+import { USER_ROLE } from "@prisma/client";
+
 export interface ResponseDataBase<T> {
   data: T;
   message: string;
@@ -11,8 +13,8 @@ export interface IErrorResponse {
 
 export interface JwtPayload {
   payload: {
-    sub: string;
-    email: string;
+    id: string;
+    role: USER_ROLE;
   };
   exp: number;
   iat: number;

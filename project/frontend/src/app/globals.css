@@ -128,6 +128,23 @@
   stroke: #2563eb;
 }
 
+.read-only-editor .codex-editor__redactor {
+  padding-bottom: 0 !important;
+}
+
+.read-only-editor .ce-block__content,
+.read-only-editor .ce-toolbar__content {
+  max-width: none;
+}
+
+.read-only-editor .ce-toolbar__actions {
+  display: none;
+}
+
+.read-only-editor .ce-block:first-child {
+  padding-top: 0;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

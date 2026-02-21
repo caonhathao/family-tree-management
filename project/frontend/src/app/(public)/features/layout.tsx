@@ -1,4 +1,4 @@
-import FeatureMenu from "./components/feature-menu";
+import { FeatureMenu } from "./components/feature-menu";
 
 const FeaturesLayout = ({ children }: { children: React.ReactNode }) => {
   return (

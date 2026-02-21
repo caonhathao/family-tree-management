@@ -1,6 +1,8 @@
+import { USER_ROLE } from "@prisma/client";
+
 export interface IUserType {
   id: string;
-  email: string;
+  role: USER_ROLE;
   userProfile: {
     fullName: string;
     avatar: string | undefined;

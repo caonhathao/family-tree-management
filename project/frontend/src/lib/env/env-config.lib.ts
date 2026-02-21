@@ -17,6 +17,7 @@ const envSchema = z.object({
   MAX_FILE_SIZE: z.coerce.number().positive(),
   FOLDER_ALBUM: z.string().nonempty({ message: "FOLDER_ALBUM is required" }),
   FOLDER_USER: z.string().nonempty({ message: "FOLDER_USER is required" }),
+  FOLDER_BLOG: z.string().nonempty({ message: "FOLDER_BLOG is required" }),
   FOLDER_FAMILY: z.string().nonempty({ message: "FOLDER_FAMILY is required" }),
   CLOUDINARY_NAME: z
     .string()
@@ -57,6 +58,7 @@ export const EnvConfig = {
   jwtRefreshSecret: envData.JWT_REFRESH_SECRET_KEY,
   maxFileSize: envData.MAX_FILE_SIZE,
   folderAlbum: envData.FOLDER_ALBUM,
+  FolderBlog: envData.FOLDER_BLOG,
   folderUser: envData.FOLDER_USER,
   folderFamily: envData.FOLDER_FAMILY,
   cloudinaryName: envData.CLOUDINARY_NAME,

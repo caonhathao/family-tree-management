@@ -1,5 +1,5 @@
 "use server";
-import { handleError } from "@/lib/utils.lib";
+import { handleError } from "@/lib/util/utils.lib";
 import { UpdateGroupMemberDto } from "./group-member.dto";
 import { GroupMemberService } from "./group-member.service";
 import { revalidatePath } from "next/cache";

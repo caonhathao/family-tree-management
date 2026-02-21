@@ -9,7 +9,7 @@ import {
 } from "./auth.dto";
 import { cookies, headers } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
-import { handleError } from "@/lib/utils.lib";
+import { handleError } from "@/lib/util/utils.lib";
 import { AuthService } from "./auth.service";
 
 import { jwtDecode } from "jwt-decode";
