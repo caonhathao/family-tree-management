@@ -11,6 +11,11 @@ export interface IErrorResponse {
   error: string;
 }
 
+export interface ISuccessResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface JwtPayload {
   id: string;
   role: USER_ROLE;

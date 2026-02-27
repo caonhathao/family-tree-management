@@ -6,6 +6,7 @@ import { IAuthResponseDto } from "./modules/auth/auth.dto";
 
 const publicRoutes = [
   "/",
+  "/features",
   "/auth",
   "/api/auth/login-base",
   "/api/auth/register",
@@ -17,7 +18,8 @@ const JWT_ACCESS_KEY = process.env.JWT_ACCESS_SECRET_KEY || "";
 const JWT_REFRESH_KEY = process.env.JWT_REFRESH_SECRET_KEY || "";
 
 function isPublicRoute(pathname: string): boolean {
-  return publicRoutes.some((route) => pathname.startsWith(route));
+  if (publicRoutes.includes(pathname)) return true;
+  return false;
 }
 
 async function verifyAndGetPayload(token: string, secret: string) {

@@ -73,12 +73,16 @@ const loginGoogle = async (
         },
         update: {
           token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn),
+          expiresAt: new Date(
+            Date.now() + EnvConfig.refreshTokenExpireIn * 1000,
+          ),
         },
         create: {
           userId: user.id,
           token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn),
+          expiresAt: new Date(
+            Date.now() + EnvConfig.refreshTokenExpireIn * 1000,
+          ),
           userAgent: userAgent,
           ipAddress: ipAddress,
         },
@@ -127,7 +131,9 @@ const loginGoogle = async (
           data: {
             userId: newUser.id,
             token: tokens.refreshToken,
-            expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn),
+            expiresAt: new Date(
+              Date.now() + EnvConfig.refreshTokenExpireIn * 1000,
+            ),
             userAgent: userAgent,
             ipAddress: ipAddress,
           },
@@ -188,6 +194,7 @@ const refresh = async (
     const currentSession = await prisma.session.findFirst({
       where: { token: refreshToken },
     });
+    console.log(currentSession);
     if (!currentSession) {
       await prisma.session.deleteMany({ where: { userId } });
       throw new Error("Security warning: Invalid session");
@@ -224,12 +231,12 @@ const refresh = async (
       where: { id: currentSession.id },
       update: {
         token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn),
+        expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn * 1000),
       },
       create: {
         userId: user.id,
         token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn),
+        expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn * 1000),
         userAgent: metadata.userAgent,
         ipAddress: metadata.ipAddress,
       },
@@ -303,7 +310,7 @@ const register = async (
       data: {
         userId: newUser.id,
         token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn),
+        expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn * 1000),
         userAgent: metadata.userAgent,
         ipAddress: metadata.ipAddress,
       },
@@ -376,12 +383,12 @@ const loginBase = async (
       },
       update: {
         token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn),
+        expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn * 1000),
       },
       create: {
         userId: user.id,
         token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn),
+        expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn * 1000),
         userAgent: userAgent,
         ipAddress: ipAddress,
       },

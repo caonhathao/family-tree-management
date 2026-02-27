@@ -19,11 +19,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Toaster } from "@/components/shared/toast";
 import { LoaderModule } from "@/components/shared/loader-module";
+import { IErrorResponse, ISuccessResponse } from "@/types/base.types";
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+interface LoginFormProps extends React.ComponentProps<"div"> {
+  callback?: string;
+}
+export function LoginForm({ className, callback, ...props }: LoginFormProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const router = useRouter();
 
@@ -48,15 +49,33 @@ export function LoginForm({
     e?.preventDefault();
 
     startTransition(async () => {
-      const result = await loginBaseAction(values);
+      const result: ISuccessResponse | IErrorResponse | undefined =
+        await loginBaseAction(values);
       // console.log(result);
 
-      if (result?.error) {
-        Toaster({
-          title: "Đăng nhập thất bại",
-          description: result.error,
-          type: "error",
-        });
+      if (result) {
+        if (result.success == false && "error" in result) {
+          Toaster({
+            title: "Đăng nhập thất bại",
+            description: result.error,
+            type: "error",
+            cancel: {
+              label: "OK",
+              onClick: () => {},
+            },
+          });
+        } else if (result.success == true && "message" in result) {
+          Toaster({
+            title: "Đăng nhập thành công",
+            description: result.message,
+            type: "success",
+            cancel: {
+              label: "OK",
+              onClick: () => {},
+            },
+          });
+          router.push(callback || "/");
+        }
       }
     });
   };
