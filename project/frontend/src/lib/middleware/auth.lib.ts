@@ -2,23 +2,14 @@ import { cache } from "react";
 import { jwtDecode } from "jwt-decode";
 import { prisma } from "@/lib/prisma";
 import { IResponseGetUserDto } from "@/modules/user/user.dto";
-import { USER_ROLE } from "@prisma/client";
-
-interface JwtTokenPayload {
-  payload: {
-    id: string;
-    role: USER_ROLE;
-  };
-  iat?: number;
-  exp?: number;
-}
+import { JwtPayload } from "@/types/base.types";
 
 export const getUserFromToken = cache(async (token: string | undefined) => {
   if (!token || token.length === 0) return null;
 
   try {
-    const payload: JwtTokenPayload = jwtDecode(token);
-    const userId = payload.payload?.id;
+    const payload: JwtPayload = jwtDecode(token);
+    const userId = payload?.id;
 
     if (!userId) return null;
 
@@ -33,8 +24,8 @@ export const getRoleFromToken = cache(async (token: string | undefined) => {
   if (!token || token.length === 0) return null;
 
   try {
-    const payload: JwtTokenPayload = jwtDecode(token);
-    const role = payload.payload;
+    const payload: JwtPayload = jwtDecode(token);
+    const role = payload;
 
     if (!role) return null;
 
@@ -73,7 +64,7 @@ export const getUserFromUserId = cache(async (userId: string) => {
       userProfile: {
         fullName: user.userProfile?.fullName || "",
         avatar: user.userProfile?.avatar || "",
-        dateOfBirth: user.userProfile?.dateOfBirth || new Date(),
+        dateOfBirth: user.userProfile?.dateOfBirth,
         biography:
           typeof user.userProfile?.biography === "string"
             ? user.userProfile.biography

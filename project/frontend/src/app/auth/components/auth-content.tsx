@@ -10,12 +10,14 @@ const AuthContent = () => {
   const searchParams = useSearchParams();
 
   const mode = searchParams.get("mode") || "login";
+  const callBack = searchParams.get("callbackUrl") || "/";
   const isLogin = mode === "login";
 
   const router = useRouter();
 
-  const navigateToHome = () => {
-    router.push("/");
+  const navigateToUrl = () => {
+    router.push(callBack);
+    router.refresh();
   };
 
   const variantSlideAnimation = createSlideVariants();
@@ -30,7 +32,7 @@ const AuthContent = () => {
           variant={"outline"}
           size={"default"}
           className={"flex flex-row gap-2 hover:cursor-pointer"}
-          onClick={() => navigateToHome()}
+          onClick={() => navigateToUrl()}
         >
           <IoIosArrowBack />
           Quay lại

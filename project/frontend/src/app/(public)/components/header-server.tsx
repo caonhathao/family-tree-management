@@ -18,13 +18,13 @@ export async function HeaderServer() {
 
   if (userIdFromHeader) {
     user = await getUserFromUserId(userIdFromHeader);
-    console.log("user at server:", user);
+    //console.log("user at server:", user);
   } else if (token) {
     user = await getUserFromToken(token);
-    console.log("user at cookie:", user);
+    //console.log("user at cookie:", user);
   } else user = await getUserDetail("self");
 
-  console.log("user at header server:", user);
+  //console.log("user at header server:", user);
 
   return <HeaderClient user={user} />;
 }

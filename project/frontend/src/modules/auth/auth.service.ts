@@ -12,10 +12,10 @@ import {
 import z from "zod";
 
 const getTokens = (payload: Record<string, string>) => {
-  const accessToken = jwt.sign({ payload }, EnvConfig.jwtAccessSecret, {
+  const accessToken = jwt.sign(payload, EnvConfig.jwtAccessSecret, {
     expiresIn: EnvConfig.accessTokenExpireIn,
   });
-  const refreshToken = jwt.sign({ payload }, EnvConfig.jwtRefreshSecret, {
+  const refreshToken = jwt.sign(payload, EnvConfig.jwtRefreshSecret, {
     expiresIn: EnvConfig.refreshTokenExpireIn,
   });
 
@@ -172,7 +172,11 @@ const logout = async (userId: string, token: string) => {
   }
 };
 
-const refresh = async (userId: string, refreshToken: string) => {
+const refresh = async (
+  userId: string,
+  refreshToken: string,
+  metadata: { ipAddress: string; userAgent: string },
+) => {
   const uuidSchema = z.string().uuid();
   try {
     const checkId = uuidSchema.safeParse(userId);
@@ -180,6 +184,7 @@ const refresh = async (userId: string, refreshToken: string) => {
       throw new Error("Invalid token");
     }
 
+    console.log(refreshToken);
     const currentSession = await prisma.session.findFirst({
       where: { token: refreshToken },
     });
@@ -215,11 +220,18 @@ const refresh = async (userId: string, refreshToken: string) => {
 
     const tokens = getTokens({ id: user.id, role: user.role });
 
-    await prisma.session.update({
+    await prisma.session.upsert({
       where: { id: currentSession.id },
-      data: {
+      update: {
         token: tokens.refreshToken,
         expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn),
+      },
+      create: {
+        userId: user.id,
+        token: tokens.refreshToken,
+        expiresAt: new Date(Date.now() + EnvConfig.refreshTokenExpireIn),
+        userAgent: metadata.userAgent,
+        ipAddress: metadata.ipAddress,
       },
     });
 

@@ -12,10 +12,8 @@ export interface IErrorResponse {
 }
 
 export interface JwtPayload {
-  payload: {
-    id: string;
-    role: USER_ROLE;
-  };
+  id: string;
+  role: USER_ROLE;
   exp: number;
   iat: number;
 }

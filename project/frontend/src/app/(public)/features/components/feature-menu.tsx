@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 
 const features = [
   { slug: "build-flow", name: "Dựng sơ đồ" },
@@ -12,7 +11,6 @@ const features = [
 ];
 
 export function FeatureMenu() {
-  const router = useRouter();
   return (
     <nav className={"flex flex-col gap-2 p-2 border-r-2 border-gray-200"}>
       <p className={"font-semibold text-lg"}>Tính năng chính</p>
@@ -32,7 +30,9 @@ export function FeatureMenu() {
               className={
                 "hover:cursor-pointer w-full flex justify-start hover:bg-white hover:shadow-md hover:border transition-shadow duration-200"
               }
-              onClick={() => router.push(`/features?part=${feature.slug}`)}
+              onClick={() =>
+                window.location.assign(`/features?part=${feature.slug}`)
+              }
             >
               {feature.name}
             </Button>

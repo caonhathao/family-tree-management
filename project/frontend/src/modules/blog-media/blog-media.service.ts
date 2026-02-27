@@ -6,6 +6,7 @@ import { EnvConfig } from "@/lib/env/env-config.lib";
 import { Exception } from "@/lib/messages/response.messages";
 import { prisma } from "@/lib/prisma";
 import { BLOG_MEDIA_TYPE } from "@prisma/client";
+import { IBlogMediaDto } from "./blog.dto";
 
 const uploadBlogMedia = async (type: string, file?: File) => {
   if (!file) throw new Error(Exception.FILE_MISSING);
@@ -24,7 +25,7 @@ const uploadBlogMedia = async (type: string, file?: File) => {
       type: true,
     },
   });
-  return newBlogMedia;
+  return newBlogMedia as IBlogMediaDto;
 };
 
 const cleanupOrphanedMedia = async () => {

@@ -1,11 +1,13 @@
 import { configureStore, combineReducers, Action } from "@reduxjs/toolkit";
 import familySlice from "./family/familySlice";
 import userSlice from "./user/userSlice";
+import blogSlice from "./blog/blogSlice";
 
 // 1. Gộp các slice lại thành một appReducer
 const appReducer = combineReducers({
   family: familySlice,
   user: userSlice,
+  blog: blogSlice,
 });
 
 // 2. Tạo một Root Reducer để bắt chặn action "LOGOUT"

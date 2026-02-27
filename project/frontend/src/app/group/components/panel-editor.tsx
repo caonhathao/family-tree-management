@@ -31,6 +31,7 @@ import { LuLayoutPanelTop, LuGripVertical, LuEraser } from "react-icons/lu";
 import { MdOutlineGrid4X4 } from "react-icons/md";
 import { RiDragMoveFill } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
 
 interface IPanelEditorProps {
   groupId: string;
@@ -63,6 +64,7 @@ export const PanelEditor = ({
   const dispatch = useDispatch<AppDispatch>();
   const { draft, origin } = useSelector((state: RootState) => state.family);
   const isDirty = !isEqual(draft, origin);
+  const router = useRouter();
   const startDrag = (e: React.PointerEvent) => {
     controls.start(e);
   };
@@ -83,6 +85,15 @@ export const PanelEditor = ({
         });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
+        if (
+          error?.message === "Unauthorized" ||
+          error?.message?.includes("401")
+        ) {
+          const callbackUrl = encodeURIComponent(window.location.href);
+          router.push(`/auth?mode=login&callbackUrl=${callbackUrl}`);
+          return;
+        }
+
         Toaster({
           title: "Lỗi",
           description: error?.message || "Không thể lưu bản nháp.",
