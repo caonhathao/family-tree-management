@@ -13,11 +13,9 @@ import { handleError } from "@/lib/util/utils.lib";
 import { AuthService } from "./auth.service";
 
 import { jwtDecode } from "jwt-decode";
-import { JwtPayload } from "@/types/base.types";
+import { ISuccessResponse, JwtPayload } from "@/types/base.types";
 
 export async function registerAction(data: IRegisterDto) {
-  let isSuccess = false;
-
   try {
     const headerList = await headers();
     const ipAddress = headerList.get("x-forwarded-for") || "unknown";
@@ -30,7 +28,6 @@ export async function registerAction(data: IRegisterDto) {
       },
     );
     if (res) {
-      isSuccess = true;
       const cookieStore = await cookies();
       //storing tokens authentication
       cookieStore.set("access_token", res.tokens.accessToken, {
@@ -47,18 +44,17 @@ export async function registerAction(data: IRegisterDto) {
         path: "/",
         maxAge: EnvConfig.refreshTokenExpireIn,
       });
+      return {
+        success: true,
+        message: "Register successfully",
+      } as ISuccessResponse;
     }
   } catch (err: unknown) {
     return handleError(err);
   }
-  if (isSuccess) {
-    redirect("/");
-  }
 }
 
 export async function loginBaseAction(data: ILoginBaseDto) {
-  let isSuccess = false;
-
   try {
     const headerList = await headers();
     const ipAddress = headerList.get("x-forwarded-for") || "unknown";
@@ -69,7 +65,6 @@ export async function loginBaseAction(data: ILoginBaseDto) {
         userAgent,
       });
     if (res) {
-      isSuccess = true;
       const cookieStore = await cookies();
       //storing tokens authentication
       cookieStore.set("access_token", res.tokens.accessToken, {
@@ -86,12 +81,13 @@ export async function loginBaseAction(data: ILoginBaseDto) {
         path: "/",
         maxAge: EnvConfig.refreshTokenExpireIn,
       });
+      return {
+        success: true,
+        message: "Login successfully",
+      } as ISuccessResponse;
     }
   } catch (err: unknown) {
     return handleError(err);
-  }
-  if (isSuccess) {
-    redirect("/");
   }
 }
 

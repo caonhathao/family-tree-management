@@ -17,8 +17,13 @@ import { IRegisterDto } from "@/modules/auth/auth.dto";
 import { registerAction } from "@/modules/auth/auth.actions";
 import { RegisterSchema } from "@/modules/auth/auth.client-schemas";
 import { Toaster } from "@/components/shared/toast";
+import { IErrorResponse, ISuccessResponse } from "@/types/base.types";
+import { cn } from "@/lib/util/utils";
 
-export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
+interface SignupFormProps extends React.ComponentProps<typeof Card> {
+  callback?: string;
+}
+export function SignupForm({ className, callback, ...props }: SignupFormProps) {
   const router = useRouter();
   const navigateToLogin = () => {
     router.push("/auth?mode=login");
@@ -44,19 +49,37 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     // console.log(values);
     e?.preventDefault();
     startTransition(async () => {
-      const result = await registerAction(values);
-      if (result?.error) {
-        Toaster({
-          title: "Đăng kí thất bại",
-          description: result.error,
-          type: "error",
-        });
+      const result: ISuccessResponse | IErrorResponse | undefined =
+        await registerAction(values);
+      if (result) {
+        if (result.success == false && "error" in result) {
+          Toaster({
+            title: "Đăng kí thất bại",
+            description: result.error,
+            type: "error",
+            cancel: {
+              label: "OK",
+              onClick: () => {},
+            },
+          });
+        } else if (result.success == true && "message" in result) {
+          Toaster({
+            title: "Đăng kí thành công",
+            description: result.message,
+            type: "success",
+            cancel: {
+              label: "OK",
+              onClick: () => {},
+            },
+          });
+          router.push(callback || "/");
+        }
       }
     });
   };
 
   return (
-    <Card {...props} className={"border-none shadow-none"}>
+    <Card {...props} className={cn("border-none shadow-none", className)}>
       <CardHeader>
         <CardTitle>Tạo tài khoản</CardTitle>
         <CardDescription>

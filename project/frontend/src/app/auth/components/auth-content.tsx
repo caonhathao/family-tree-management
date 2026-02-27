@@ -15,8 +15,8 @@ const AuthContent = () => {
 
   const router = useRouter();
 
-  const navigateToUrl = () => {
-    router.push(callBack);
+  const navigateToHome = () => {
+    router.push("/");
     router.refresh();
   };
 
@@ -32,7 +32,7 @@ const AuthContent = () => {
           variant={"outline"}
           size={"default"}
           className={"flex flex-row gap-2 hover:cursor-pointer"}
-          onClick={() => navigateToUrl()}
+          onClick={() => navigateToHome()}
         >
           <IoIosArrowBack />
           Quay lại
@@ -70,7 +70,11 @@ const AuthContent = () => {
           >
             {/* be default, sign form will be in the left side of container */}
             <div className={"w-1/2"}>
-              {isLogin ? <LoginForm /> : <SignupForm />}
+              {isLogin ? (
+                <LoginForm callback={decodeURIComponent(callBack)} />
+              ) : (
+                <SignupForm />
+              )}
             </div>
             <motion.div
               layout
