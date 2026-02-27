@@ -22,7 +22,7 @@ export interface IResponseGetUserDto {
   userProfile: {
     fullName: string;
     avatar: string;
-    dateOfBirth: Date;
+    dateOfBirth: Date | undefined | null;
     biography: string;
   };
 }

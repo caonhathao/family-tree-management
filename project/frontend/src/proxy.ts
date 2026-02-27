@@ -37,13 +37,16 @@ export async function proxy(req: NextRequest) {
   const accessToken = req.cookies.get("access_token")?.value;
   const refreshToken = req.cookies.get("refresh_token")?.value;
 
+  const userAgent = req.headers.get("user-agent") || "unknown";
+  const userIp = req.headers.get("x-forwarded-for") || "unknown";
+
   let userId: string | null = null;
   let finalResponse: NextResponse | null = null; // Biến lưu trữ response có cookie
 
   // BƯỚC 1: Kiểm tra Access Token
   if (accessToken) {
     const payload = await verifyAndGetPayload(accessToken, JWT_ACCESS_KEY);
-    userId = payload?.payload.id || null;
+    userId = payload?.id || null;
   }
 
   // BƯỚC 2: Silent Refresh
@@ -53,11 +56,14 @@ export async function proxy(req: NextRequest) {
       refreshToken,
       JWT_REFRESH_KEY,
     );
-    const rUserId = refreshPayload?.payload.id as string;
+    const rUserId = refreshPayload?.id as string;
 
     if (rUserId) {
       try {
-        result = await AuthService.refresh(rUserId, refreshToken);
+        result = await AuthService.refresh(rUserId, refreshToken, {
+          userAgent,
+          ipAddress: userIp,
+        });
         if (result && result.tokens) {
           userId = result.user.id;
 
@@ -133,10 +139,19 @@ export async function proxy(req: NextRequest) {
 
   // BƯỚC 4: Chưa Login
   if (isPublicRoute(pathname)) return NextResponse.next();
-  if (pathname.startsWith("/api"))
+  if (pathname.startsWith("/api")) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
 
-  return NextResponse.redirect(new URL("/auth?mode=login", req.url));
+  // Lấy toàn bộ URL bao gồm cả query params hiện tại (nếu có)
+  const callbackUrl = encodeURIComponent(
+    req.nextUrl.pathname + req.nextUrl.search,
+  );
+
+  // Redirect kèm theo callbackUrl
+  return NextResponse.redirect(
+    new URL(`/auth?mode=login&callbackUrl=${callbackUrl}`, req.url),
+  );
 }
 
 export const config = {

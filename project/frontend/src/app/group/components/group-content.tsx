@@ -29,7 +29,7 @@ import { setDraft, setOrigin } from "@/store/family/familySlice";
 import isEqual from "lodash.isequal";
 
 const nodeTypes = {
-  familyNode: FamilyMemberNode, // Đăng ký 'familyNode'
+  familyNode: FamilyMemberNode,
 };
 
 export const GroupContentPage = ({

@@ -9,7 +9,7 @@ export default async function FeaturesPage({
   searchParams: Promise<{ part: string }>;
 }) {
   const { part } = await searchParams;
-  const slug = part || "introduction"; // Default to 'introduction' if no part is specified
+  const slug = part || "";
 
   const blog = await getBlogAction(slug);
   const cookieStore = await cookies();
@@ -17,5 +17,5 @@ export default async function FeaturesPage({
 
   const user = await getRoleFromToken(token);
 
-  return <FeatureEditor blog={blog} user={user} />;
+  return <FeatureEditor blog={blog} user={user} slug={slug} />;
 }

@@ -1,31 +1,33 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { IBlogDetailDto } from "@/modules/blog/blog.dto";
+import { IBlogDto } from "@/modules/blog/blog.dto";
 import { IErrorResponse } from "@/types/base.types";
+import { LoaderModule } from "@/components/shared/loader-module";
 
-// ĐÂY LÀ PHẦN QUAN TRỌNG NHẤT
-const EditorJSComponent = dynamic(
-  () => import("./FeatureEditorInternal"), // Đường dẫn tới file bạn vừa tạo ở Bước 1
-  {
-    ssr: false, // Tắt render ở server
-    loading: () => (
-      <div
-        className={
-          "w-full h-64 flex items-center justify-center animate-pulse bg-gray-50 rounded-lg"
-        }
-      >
-        <p className={"text-gray-400"}>Đang tải bộ soạn thảo...</p>
-      </div>
-    ),
-  },
-);
+const EditorJSComponent = dynamic(() => import("./FeatureEditorInternal"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className={
+        "w-full h-64 flex items-center justify-center animate-pulse rounded-lg"
+      }
+    >
+      <LoaderModule />
+    </div>
+  ),
+});
 
 interface FeatureEditorProps {
-  blog: IBlogDetailDto | IErrorResponse;
+  blog: IBlogDto | IErrorResponse;
   user: { id: string; role: string } | null;
+  slug: string;
 }
 
-export default function FeatureEditor({ blog, user }: FeatureEditorProps) {
-  return <EditorJSComponent blog={blog} user={user} />;
+export default function FeatureEditor({
+  blog,
+  user,
+  slug,
+}: FeatureEditorProps) {
+  return <EditorJSComponent blog={blog} user={user} slug={slug} />;
 }

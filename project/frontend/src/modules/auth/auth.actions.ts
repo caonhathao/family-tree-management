@@ -13,6 +13,7 @@ import { handleError } from "@/lib/util/utils.lib";
 import { AuthService } from "./auth.service";
 
 import { jwtDecode } from "jwt-decode";
+import { JwtPayload } from "@/types/base.types";
 
 export async function registerAction(data: IRegisterDto) {
   let isSuccess = false;
@@ -166,13 +167,18 @@ export async function refreshAction() {
     if (!token) throw new Error("No refresh token found");
 
     // 1. Giải mã token để lấy userId (chỉ decode, verify sẽ do Service làm)
-    const payload = jwtDecode(token); // Bạn dùng jose hoặc thư viện decode
-    const userId = payload?.sub;
+    const payload: JwtPayload = jwtDecode(token); // Bạn dùng jose hoặc thư viện decode
+    const userId = payload?.id;
 
     if (!userId) throw new Error("Invalid token payload");
+    const headerList = await headers();
 
-    // 2. Gọi Service với ĐẦY ĐỦ 2 tham số
-    const res = await AuthService.refresh(userId, token);
+    const ipAddress = headerList.get("x-forwarded-for") || "unknown";
+    const userAgent = headerList.get("user-agent") || "unknown";
+    const res = await AuthService.refresh(userId, token, {
+      ipAddress,
+      userAgent,
+    });
 
     // Vì Service của bạn trả về raw object {user, tokens},
     // ta sẽ xử lý kết quả trực tiếp ở đây
