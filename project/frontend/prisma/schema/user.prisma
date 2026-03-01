@@ -45,6 +45,12 @@ model Account {
     @@map("account")
 }
 
+enum GENDERS {
+    MALE
+    FEMALE
+    UNKNOWN
+}
+
 model UserProfile {
     id          String    @id @default(uuid()) @db.Uuid
     userId      String    @unique @db.Uuid
@@ -53,6 +59,7 @@ model UserProfile {
     dateOfBirth DateTime?
     avatar      String?
     biography   Json?
+    gender      GENDERS   @default(UNKNOWN)
     createdAt   DateTime  @default(now())
     updatedAt   DateTime  @updatedAt
 

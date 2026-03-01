@@ -7,7 +7,9 @@ import { IAuthResponseDto } from "./modules/auth/auth.dto";
 const publicRoutes = [
   "/",
   "/features",
+  "/tutorials",
   "/auth",
+  "/faq",
   "/api/auth/login-base",
   "/api/auth/register",
   "/api/auth/refresh",

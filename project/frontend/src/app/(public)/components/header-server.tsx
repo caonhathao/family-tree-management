@@ -1,10 +1,10 @@
 "use server";
 import { getUserFromToken, getUserFromUserId } from "@/lib/middleware/auth.lib";
-import { IResponseGetUserDto } from "@/modules/user/user.dto";
 import { cookies, headers } from "next/headers";
 import { IErrorResponse } from "@/types/base.types";
 import HeaderClient from "./header-client";
-import { getUserDetail } from "@/modules/user/user.actions";
+import { IUserSession } from "@/types/auth.types";
+import { getUserSessionAction } from "@/modules/auth/auth.actions";
 
 export async function HeaderServer() {
   const cookieStore = await cookies();
@@ -14,7 +14,7 @@ export async function HeaderServer() {
   const token =
     headersStore.get("x-access-token") ||
     cookieStore.get("access_token")?.value;
-  let user: IResponseGetUserDto | IErrorResponse | null = null;
+  let user: IUserSession | IErrorResponse | null = null;
 
   if (userIdFromHeader) {
     user = await getUserFromUserId(userIdFromHeader);
@@ -22,7 +22,7 @@ export async function HeaderServer() {
   } else if (token) {
     user = await getUserFromToken(token);
     //console.log("user at cookie:", user);
-  } else user = await getUserDetail("self");
+  } else user = await getUserSessionAction();
 
   //console.log("user at header server:", user);
 

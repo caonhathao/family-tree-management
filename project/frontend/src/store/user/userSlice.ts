@@ -1,9 +1,9 @@
-import { IResponseGetUserDto } from "@/modules/user/user.dto";
+import { IResponseUserDto } from "@/modules/user/user.dto";
 import { createSlice } from "@reduxjs/toolkit";
 
 //storing user's profile
 interface UserState {
-  profile: IResponseGetUserDto;
+  profile: IResponseUserDto;
 }
 
 const initialState: UserState = {
@@ -15,12 +15,13 @@ const initialState: UserState = {
       biography: "",
       dateOfBirth: new Date(),
       fullName: "",
+      gender: "UNKNOWN",
     },
   },
 };
 
 const userSlide = createSlice({
-  name: "userProfile",
+  name: "user",
   initialState,
   reducers: {
     setProfile: (state, action) => {

@@ -2,18 +2,33 @@
 
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 const features = [
   { slug: "build-flow", name: "Dựng sơ đồ" },
   { slug: "group-family", name: "Nhóm gia đình" },
-  { slug: "group-members", name: "Thành viên gia đình" },
+  { slug: "storage", name: "Lưu trữ" },
   { slug: "events", name: "Sự kiện" },
 ];
 
 export function FeatureMenu() {
+  const router = useRouter();
   return (
-    <nav className={"flex flex-col gap-2 p-2 border-r-2 border-gray-200"}>
-      <p className={"font-semibold text-lg"}>Tính năng chính</p>
+    <nav
+      className={
+        "flex flex-col justify-start items-start gap-2 p-2 border-r-2 border-gray-200"
+      }
+    >
+      <Button
+        variant={"link"}
+        className={"font-semibold text-lg hover:cursor-pointer px-0"}
+        onClick={() => router.push("/features")}
+      >
+        Giới thiệu
+      </Button>
+      <p className={"font-semibold text-lg hover:cursor-default"}>
+        Tính năng chính
+      </p>
       <ul className={"pl-3"}>
         {features.map((feature) => (
           <motion.li
