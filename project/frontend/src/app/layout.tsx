@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster as SonnerToaster } from "sonner";
 import ReduxProvider from "@/components/providers/redux-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +32,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReduxProvider>
-          <TooltipProvider>{children}</TooltipProvider>
+          <TooltipProvider>
+            {children}
+            <SpeedInsights />
+          </TooltipProvider>
         </ReduxProvider>
         <SonnerToaster richColors />
       </body>

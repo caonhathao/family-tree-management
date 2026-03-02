@@ -18,7 +18,7 @@ import { registerAction } from "@/modules/auth/auth.actions";
 import { RegisterSchema } from "@/modules/auth/auth.client-schemas";
 import { Toaster } from "@/components/shared/toast";
 import { IErrorResponse, ISuccessResponse } from "@/types/base.types";
-import { cn } from "@/lib/util/utils";
+import { cn } from "@/lib/utils";
 
 interface SignupFormProps extends React.ComponentProps<typeof Card> {
   callback?: string;

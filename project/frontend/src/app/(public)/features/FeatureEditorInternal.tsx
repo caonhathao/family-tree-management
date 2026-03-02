@@ -32,6 +32,7 @@ import {
 import { saveBlogDraft } from "@/store/blog/blogThunk";
 import { useRouter } from "next/navigation";
 import { IBlogMediaDto } from "@/modules/blog-media/blog.dto";
+import { safeJsonParse } from "../../../lib/util/utils.lib";
 
 interface FeatureEditorProps {
   blog: IBlogDto | IErrorResponse;
@@ -51,7 +52,7 @@ export default function FeatureEditorInternal({
   const [data, setData] = useState<OutputData>(() => {
     if (blog && "content" in blog && typeof blog.content === "string") {
       try {
-        return JSON.parse(blog.content);
+        return safeJsonParse(blog.content);
       } catch (e) {
         console.error("Failed to parse blog content", e);
       }
@@ -157,11 +158,17 @@ export default function FeatureEditorInternal({
     if (ejInstance.current) {
       ejInstance.current.readOnly.toggle(true);
       setIsReadOnly(true);
-      const originData = JSON.parse(blogs[slug].origin.content) as OutputData;
+      try {
+        const originData = safeJsonParse(
+          blogs[slug].origin.content,
+        ) as OutputData;
 
-      setData(originData);
-      dispatch(syncSuccess(blogs[slug].origin));
-      ejInstance.current.render(originData);
+        setData(originData);
+        dispatch(syncSuccess(blogs[slug].origin));
+        ejInstance.current.render(originData);
+      } catch (e) {
+        console.error("error when parsing json: ", e);
+      }
     }
   };
 
@@ -217,53 +224,128 @@ export default function FeatureEditorInternal({
     }
   };
   return (
-    <div className={"prose lg:prose-xl max-w-full px-2"}>
-      <div className={"flex justify-between items-center mb-4"}>
+    <div className={"prose lg:prose-xl max-w-full px-6"}>
+      <div className={"flex justify-between items-center"}>
         {isAdmin && (
           <div className={"fixed top-20 right-5"}>
-            {isReadOnly ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
+            {slug.length !== 0 ? (
+              isReadOnly ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      size={"icon"}
+                      onClick={handleEdit}
+                      className={"hover:cursor-pointer"}
+                    >
+                      <FaPen />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side={"left"}>Sửa bài viết</TooltipContent>
+                </Tooltip>
+              ) : (
+                <div
+                  className={"flex flex-row justify-between items-center gap-2"}
+                >
                   <Button
                     variant={"outline"}
-                    size={"icon"}
-                    onClick={handleEdit}
+                    onClick={handleSave}
                     className={"hover:cursor-pointer"}
                   >
-                    <FaPen />
+                    Lưu
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent side={"left"}>Sửa bài viết</TooltipContent>
-              </Tooltip>
-            ) : (
-              <div
-                className={"flex flex-row justify-between items-center gap-2"}
-              >
-                <Button
-                  variant={"outline"}
-                  onClick={handleSave}
-                  className={"hover:cursor-pointer"}
-                >
-                  Lưu
-                </Button>
-                <Button
-                  variant={"secondary"}
-                  onClick={handleCancel}
-                  className={"hover:cursor-pointer"}
-                >
-                  Hủy
-                </Button>
-              </div>
-            )}
+                  <Button
+                    variant={"secondary"}
+                    onClick={handleCancel}
+                    className={"hover:cursor-pointer"}
+                  >
+                    Hủy
+                  </Button>
+                </div>
+              )
+            ) : null}
           </div>
         )}
       </div>
+      {slug.length === 0 ? (
+        <div
+          className={
+            "w-full h-full flex flex-col justify-start items-start gap-3"
+          }
+        >
+          <div>
+            <div className={"font-semibold text-2xl"}>Giới thiệu</div>
+            <p>Chào mừng bạn đến với trang khám phá tính năng.</p>
+            <p>
+              Dự án này này được ra đời nhằm mục đích số hóa gia phả gia đình,
+              đồng thời giúp người dùng dễ dàng hình dung được thứ bậc của mình
+              trong đại gia đình.
+            </p>
+            <p>
+              Các tính năng hiện đang được mở rộng và phát triển, nhằm giúp
+              người dùng đem lại trải nghiệm tốt nhất khi sử dụng dịch vụ.
+            </p>
+            Các dịch vụ (tính năng) chính, bao gồm:
+            <ul>
+              <li>
+                Dựng sơ đồ: Cho phép người dùng tự do tạo và kết nối người thân
+                trong gia đình, nhằm tạo thành 1 cây phả hệ hoàn chỉnh với các
+                cấp bậc và mối quan hệ rõ ràng.
+                <Button
+                  variant={"link"}
+                  className={"hover:cursor-pointer"}
+                  onClick={() => router.push("/features?part=build-flow")}
+                >
+                  Xem thêm
+                </Button>
+              </li>
+              <li>
+                Nhóm gia đình: Cho phép người dùng tạo nhóm và mời thành viên
+                tham gia.
+                <Button
+                  variant={"link"}
+                  className={"hover:cursor-pointer"}
+                  onClick={() => router.push("/features?part=group-family")}
+                >
+                  Xem thêm
+                </Button>
+              </li>
+              <li>
+                Lưu trữ: Cho phép lưu trữ hình ảnh, video,.. của gia đình{" "}
+                <strong className={"text-sm"}>(đang lên kế hoạch)</strong>
+                <Button
+                  variant={"link"}
+                  className={"hover:cursor-pointer"}
+                  onClick={() => router.push("/features?part=storage")}
+                >
+                  Xem thêm
+                </Button>
+              </li>
+              <li>
+                Sự kiện: Hỗ trợ thông báo sự kiện gia đình,..
+                <strong className={"text-sm"}>(đang lên kế hoạch)</strong>
+                <Button
+                  variant={"link"}
+                  className={"hover:cursor-pointer"}
+                  onClick={() => router.push("/features?part=event")}
+                >
+                  Xem thêm
+                </Button>
+              </li>
+            </ul>
+            <p className={"text-sm"}>
+              Dự án vẫn đang trong quá trình phát triển, vì vậy khó tránh khỏi
+              sai sót, rất mong các bạn thông cảm.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div
         id={EDITOR_HOLDER_ID}
         className={`${
           isReadOnly
-            ? "read-only-editor px-6 py-3"
+            ? "read-only-editor px-6 py-3 w-full h-full"
             : "rounded-lg border bg-card p-6 shadow-sm"
         }`}
       />

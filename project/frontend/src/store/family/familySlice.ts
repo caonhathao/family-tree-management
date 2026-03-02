@@ -1,3 +1,4 @@
+import { safeJsonParse } from "@/lib/util/utils.lib";
 import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import { IDraftFamilyData } from "@/types/draft.types";
 import { LINEAGE_TYPE } from "@prisma/client";
@@ -38,12 +39,12 @@ const familySlice = createSlice({
       state.origin = initialState.origin;
     },
     setOrigin: (state, action) => {
-      const data = JSON.parse(JSON.stringify(action.payload));
+      const data = safeJsonParse(JSON.stringify(action.payload));
       state.origin = data;
       state.draft = data;
     },
     syncSuccess: (state) => {
-      state.origin = JSON.parse(JSON.stringify(state.draft));
+      state.origin = safeJsonParse(JSON.stringify(state.draft));
     },
   },
 });

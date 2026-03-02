@@ -10,6 +10,9 @@ import {
   RegisterServiceDto,
 } from "./auth.service-validator";
 import z from "zod";
+import { validate as isUUID } from "uuid";
+import { validator } from "../_common/validator";
+import { IUserSession } from "@/types/auth.types";
 
 const getTokens = (payload: Record<string, string>) => {
   const accessToken = jwt.sign(payload, EnvConfig.jwtAccessSecret, {
@@ -190,11 +193,11 @@ const refresh = async (
       throw new Error("Invalid token");
     }
 
-    console.log(refreshToken);
+    //console.log(refreshToken);
     const currentSession = await prisma.session.findFirst({
       where: { token: refreshToken },
     });
-    console.log(currentSession);
+    //console.log(currentSession);
     if (!currentSession) {
       await prisma.session.deleteMany({ where: { userId } });
       throw new Error("Security warning: Invalid session");
@@ -408,10 +411,37 @@ const loginBase = async (
   }
 };
 
+const getUserSession = async ({ userId }: { userId: string }) => {
+  try {
+    //check validation
+    const user = await validator(userId, (id) =>
+      prisma.user.findUnique({
+        where: { id },
+        select: {
+          userProfile: {
+            select: {
+              fullName: true,
+              avatar: true,
+            },
+          },
+        },
+      }),
+    );
+    return {
+      fullName: user?.userProfile?.fullName ?? "",
+      avatar: user?.userProfile?.avatar ?? "",
+    } as IUserSession;
+  } catch (err) {
+    console.log("error at get user session service:", err);
+    throw err;
+  }
+};
+
 export const AuthService = {
   loginGoogle,
   logout,
   refresh,
   register,
   loginBase,
+  getUserSession,
 };
