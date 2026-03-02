@@ -1,6 +1,5 @@
 "use client";
-import { AppDispatch, RootState } from "@/store";
-import { useSelector } from "react-redux";
+import { AppDispatch } from "@/store";
 import unknownImage from "../../../public/img/unknow.png";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -10,10 +9,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
 import { UpdateUserForm } from "./components/forms/update-user";
 import { useEffect, useMemo } from "react";
-import { IResponseUserDto, IUserInfoDto } from "@/modules/user/user.dto";
+import { IResponseUserDto } from "@/modules/user/user.dto";
 import { IErrorResponse } from "@/types/base.types";
 import { useDispatch } from "react-redux";
 import { setProfile } from "@/store/user/userSlice";
@@ -25,7 +23,21 @@ const ProfileContent = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   useEffect(() => {
-    if (data && !("error" in data)) dispatch(setProfile(data as IUserInfoDto));
+    if (data && !("error" in data)) {
+      const serializableProfile = {
+        ...data,
+        userProfile: {
+          ...data.userProfile,
+          // Chuyển đối tượng Date thành chuỗi "2004-07-22T17:00:00.000Z"
+          dateOfBirth:
+            data.userProfile.dateOfBirth instanceof Date
+              ? data.userProfile.dateOfBirth.toISOString()
+              : data.userProfile.dateOfBirth,
+        },
+      };
+
+      dispatch(setProfile(serializableProfile));
+    }
   }, [data, dispatch]);
 
   const avatar = useMemo(() => {
@@ -40,7 +52,7 @@ const ProfileContent = ({
     <div className={"w-full h-full p-3"}>
       <div
         className={
-          "w-full h-full flex flex-row justify-center items-center gap-3"
+          "w-full h-full flex flex-row justify-center items-start gap-3"
         }
       >
         <div className={"w-[40%] flex justify-end"}>
@@ -61,7 +73,7 @@ const ProfileContent = ({
           </div>
         </div>
         <div className={"w-[60%] h-full flex flex-col items-start"}>
-          <UpdateUserForm className={"w-[50%]"} />
+          <UpdateUserForm className={"w-[60%]"} />
         </div>
       </div>
     </div>

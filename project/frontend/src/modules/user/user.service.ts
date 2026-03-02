@@ -34,9 +34,7 @@ export const UserService = {
     if (data.fullName) profileUpdate.fullName = data.fullName;
     if (data.biography) {
       try {
-        profileUpdate.biography = safeJsonParse(
-          data.biography,
-        ) as Prisma.InputJsonValue;
+        profileUpdate.biography = data.biography;
       } catch (e) {
         console.log("Biography format is invalid JSON: ", e);
         throw new Error("Biography format is invalid JSON");

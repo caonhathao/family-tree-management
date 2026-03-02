@@ -58,7 +58,7 @@ model UserProfile {
     fullName    String
     dateOfBirth DateTime?
     avatar      String?
-    biography   Json?
+    biography   String?
     gender      GENDERS   @default(UNKNOWN)
     createdAt   DateTime  @default(now())
     updatedAt   DateTime  @updatedAt

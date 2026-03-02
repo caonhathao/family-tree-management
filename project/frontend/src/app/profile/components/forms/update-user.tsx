@@ -24,6 +24,8 @@ import { useDispatch } from "react-redux";
 import z from "zod";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import BioUserGroup from "./bio-user";
+import { safeJsonParse } from "@/lib/util/utils.lib";
 
 export const UpdateUserForm = ({ className }: { className: string }) => {
   const { profile } = useSelector((state: RootState) => state.user);
@@ -48,17 +50,27 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
       ? new Date(profile.userProfile.dateOfBirth)
       : undefined,
   );
-  const [bio, setBio] = useState<Record<string, string>>({});
+  const [bio, setBio] = useState<Record<string, string>[]>(
+    safeJsonParse(profile.userProfile.biography) || [],
+  );
   const [open, setOpen] = useState<boolean>(false);
   const dispatch = useDispatch<AppDispatch>();
 
   const onSubmit = (values: UserFormValues, e?: React.BaseSyntheticEvent) => {
     e?.preventDefault();
     console.log(values);
+
+    const payload: IUserInfoDto = {
+      fullName: values.fullName,
+      dateOfBirth: date?.toString() || "",
+      biography: JSON.stringify(bio) || "",
+    };
+
+    //prepare data before update
     startTransition(async () => {
       const res: IResponseUserDto | IErrorResponse = await UpdateUserInfoAction(
         profile.id,
-        values as IUserInfoDto,
+        payload,
       );
 
       if (res && "error" in res) {
@@ -81,8 +93,20 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
             onClick: () => {},
           },
         });
+        const serializableProfile = {
+          ...res,
+          userProfile: {
+            ...res.userProfile,
+            // Chuyển đối tượng Date thành chuỗi "2004-07-22T17:00:00.000Z"
+            dateOfBirth:
+              res.userProfile.dateOfBirth instanceof Date
+                ? res.userProfile.dateOfBirth.toISOString()
+                : res.userProfile.dateOfBirth,
+          },
+        };
+
+        dispatch(setProfile(serializableProfile));
       }
-      dispatch(setProfile(res as IResponseUserDto));
     });
   };
   useEffect(() => {
@@ -93,12 +117,17 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
     }
   }, [profile, reset]);
 
+  useEffect(() => {
+    console.log(bio);
+    console.log(profile);
+  }, [bio, profile]);
+
   if (!profile) return <LoaderModule />;
 
   return (
     <div className={className}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldGroup>
+      <form onSubmit={handleSubmit(onSubmit)} className={"flex flex-col gap-1"}>
+        <FieldGroup className={"flex flex-row gap-1"}>
           <Field>
             <FieldLabel htmlFor={"fullName"}>Tên của bạn là:</FieldLabel>
             <Input
@@ -143,6 +172,24 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
             </Popover>
           </Field>
         </FieldGroup>
+        <BioUserGroup bio={bio} setBio={setBio} />
+        <div className={"flex flex-row gap-1"}>
+          <Button
+            type={"button"}
+            variant={"destructive"}
+            className={"hover:cursor-pointer"}
+            onClick={() => reset()}
+          >
+            Hủy bỏ
+          </Button>
+          <Button
+            type={"submit"}
+            variant={"outline"}
+            className={"hover:cursor-pointer"}
+          >
+            Cập nhật
+          </Button>
+        </div>
       </form>
     </div>
   );
