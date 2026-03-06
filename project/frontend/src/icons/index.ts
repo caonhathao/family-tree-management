@@ -81,5 +81,12 @@ export const io5 = Ionicons;
 export type IoniconsIcons = IconType;
 
 // -------------------------
+// VS Code Icons
+// -------------------------
+import * as VSC from "react-icons/vsc";
+export const vsc = VSC;
+export type VSCodeIcons = IconType;
+
+// -------------------------
 // ✅ Xuất type chung (tuỳ chọn)
 export type AppIcon = IconType;

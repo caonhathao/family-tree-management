@@ -5,7 +5,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import { dataProps } from "./sidebar-profile";
+import { dataProps } from "@/types/base.types";
 import { useRouter } from "next/navigation";
 
 export const SidebarGroupContent = ({ data }: { data: dataProps }) => {

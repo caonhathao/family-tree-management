@@ -211,7 +211,7 @@ export async function getUserSessionAction() {
       throw new Error("Unauthorized");
     }
     const res = await AuthService.getUserSession({ userId: currentUserId });
-    console.log(res);
+    //console.log(res);
     return res;
   } catch (err) {
     return handleError(err);

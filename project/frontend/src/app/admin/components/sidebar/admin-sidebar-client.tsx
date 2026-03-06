@@ -1,9 +1,9 @@
 "use client";
 import {
-  DropdownMenu,
+  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu,
 } from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
@@ -11,55 +11,55 @@ import {
   SidebarMenu,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import { IUserSession } from "@/types/auth.types";
+import { dataProps, IErrorResponse } from "@/types/base.types";
+import { useMemo } from "react";
 import { IoIosArrowForward, IoMdHome } from "react-icons/io";
-import { MdOutlineFeedback, MdOutlinePeopleAlt } from "react-icons/md";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IoPersonOutline } from "react-icons/io5";
-import { RiDeleteBin2Line, RiLockPasswordLine } from "react-icons/ri";
-import { SidebarGroupContent } from "../../../../components/custom/sidebar-group";
-import { CiBoxList } from "react-icons/ci";
-import { TiCloudStorageOutline } from "react-icons/ti";
+import unknow from "../../../../../public/img/unknow.png";
 import { BiSupport } from "react-icons/bi";
+import { CiBoxList } from "react-icons/ci";
+import { RiQuillPenAiLine } from "react-icons/ri";
+import { VscFeedback } from "react-icons/vsc";
+import { SidebarGroupContent } from "@/components/custom/sidebar-group";
+import { MdOutlineSpaceDashboard } from "react-icons/md";
 import { useRouter } from "next/navigation";
-import { dataProps } from "@/types/base.types";
 
 const data: Record<string, dataProps> = {
   general: {
-    title: "Chung",
+    title: "Tổng quan",
     content: [
-      { icon: IoPersonOutline, title: "Thông tin cá nhân", url: "/profile" },
-      { icon: RiLockPasswordLine, title: "Bảo mật", url: "/security" },
+      { icon: MdOutlineSpaceDashboard, title: "Tổng quan", url: "/admin" },
     ],
   },
-  group: {
-    title: "Nhóm",
+  user: {
+    title: "Người dùng",
     content: [
       {
-        icon: MdOutlinePeopleAlt,
+        icon: CiBoxList,
         title: "Danh sách",
-        url: "/group",
+        url: "/admin/users",
+      },
+      {
+        icon: VscFeedback,
+        title: "Phản hồi",
+        url: "/admin/user_feedbacks",
+      },
+    ],
+  },
+  blog: {
+    title: "Bài viết",
+    content: [
+      {
+        icon: RiQuillPenAiLine,
+        title: "Soạn thảo",
+        url: "/admin/blog_draft",
       },
       {
         icon: CiBoxList,
-        title: "Lời mời",
-        url: "/invite-list",
-      },
-    ],
-  },
-  storage: {
-    title: "Lưu trữ",
-    content: [
-      {
-        icon: TiCloudStorageOutline,
-        title: "Kho lưu trữ",
-        url: "/storage",
-      },
-      {
-        icon: RiDeleteBin2Line,
-        title: "Thùng rác",
-        url: "/trash",
+        title: "Danh sách",
+        url: "/admin/blogs",
       },
     ],
   },
@@ -69,20 +69,34 @@ const data: Record<string, dataProps> = {
       {
         icon: BiSupport,
         title: "Hỗ trợ",
-        url: "/support",
-      },
-      {
-        icon: MdOutlineFeedback,
-        title: "Phản hồi",
-        url: "/feadback",
+        url: "/admin/supports",
       },
     ],
   },
 };
 
-export const SideBarProfile = () => {
-  const { profile } = useSelector((state: RootState) => state.user);
+export const AdminSidebarClient = ({
+  session,
+}: {
+  session: IUserSession | IErrorResponse | null;
+}) => {
   const router = useRouter();
+  const isLogin = !!session && !("error" in session);
+
+  const avatar = useMemo(() => {
+    if (isLogin && session.avatar) {
+      return session.avatar;
+    }
+    return unknow.src;
+  }, [session, isLogin]);
+
+  const name = useMemo(() => {
+    if (isLogin && session.fullName) {
+      return session.fullName;
+    }
+    return "admin";
+  }, [session, isLogin]);
+
   return (
     <Sidebar collapsible={"icon"}>
       <SidebarHeader>
@@ -102,11 +116,7 @@ export const SideBarProfile = () => {
                 >
                   <Avatar>
                     <AvatarImage
-                      src={
-                        profile && profile.id !== ""
-                          ? profile.userProfile.avatar
-                          : ""
-                      }
+                      src={avatar}
                       alt={"@shadcn"}
                       className={"grayscale"}
                     />
@@ -119,9 +129,7 @@ export const SideBarProfile = () => {
                   className={"font-bold group-data-[collapsible=icon]:hidden"}
                 >
                   Xin chào,
-                  {profile && profile.id !== ""
-                    ? profile.userProfile.fullName
-                    : "bạn"}
+                  {name}
                 </div>
                 <IoIosArrowForward />
               </SidebarMenuButton>
@@ -138,9 +146,9 @@ export const SideBarProfile = () => {
           </DropdownMenu>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarGroupContent data={data.general} />
-      <SidebarGroupContent data={data.group} />
-      <SidebarGroupContent data={data.storage} />
+      <SidebarGroupContent data={data.genetal} />
+      <SidebarGroupContent data={data.user} />
+      <SidebarGroupContent data={data.blog} />
       <SidebarGroupContent data={data.support} />
     </Sidebar>
   );
