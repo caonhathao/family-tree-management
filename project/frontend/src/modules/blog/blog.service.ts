@@ -2,7 +2,7 @@ import { Exception } from "@/lib/messages/response.messages";
 import { BlogUpdateServiceDto } from "./blog.service-validator";
 import { prisma } from "@/lib/prisma";
 import { OutputBlockData, OutputData } from "@editorjs/editorjs";
-import { IBlogDto } from "./blog.dto";
+import { IBlogDto, IBlogsDto } from "./blog.dto";
 import { safeJsonParse } from "@/lib/util/utils.lib";
 
 const extractMediaUrls = (data: OutputData): string[] => {
@@ -144,7 +144,28 @@ const getBlog = async (slug: string) => {
   }
 };
 
+const getBlogs = async () => {
+  try {
+    //add validation later
+    const blog = await prisma.blog.findMany({
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return blog as IBlogsDto[];
+  } catch (err: unknown) {
+    console.log("error at get blogs service:", err);
+    throw err;
+  }
+};
+
 export const BlogService = {
   updateBlog,
   getBlog,
+  getBlogs,
 };

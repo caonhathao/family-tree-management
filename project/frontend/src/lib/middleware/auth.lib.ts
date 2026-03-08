@@ -1,7 +1,6 @@
 import { cache } from "react";
 import { jwtDecode } from "jwt-decode";
 import { prisma } from "@/lib/prisma";
-import { IResponseUserDto } from "@/modules/user/user.dto";
 import { JwtPayload } from "@/types/base.types";
 import { IUserSession } from "@/types/auth.types";
 

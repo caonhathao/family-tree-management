@@ -128,8 +128,7 @@ export const AdminSidebarClient = ({
                 <div
                   className={"font-bold group-data-[collapsible=icon]:hidden"}
                 >
-                  Xin chào,
-                  {name}
+                  Xin chào, {name}
                 </div>
                 <IoIosArrowForward />
               </SidebarMenuButton>
@@ -141,6 +140,13 @@ export const AdminSidebarClient = ({
               >
                 <IoMdHome />
                 Về trang chủ
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className={"hover:cursor-pointer"}
+                onClick={() => router.push("/")}
+              >
+                <IoMdHome />
+                Đăng xuất
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

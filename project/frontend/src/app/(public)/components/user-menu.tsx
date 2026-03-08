@@ -14,15 +14,13 @@ import {
 import { IoIosArrowDown } from "react-icons/io";
 import { motion } from "framer-motion";
 import { IoPersonOutline } from "react-icons/io5";
-import { startTransition, useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { logoutAction } from "@/modules/auth/auth.actions";
-import { Toaster } from "@/components/shared/toast";
 import { AppDispatch } from "@/store";
 import { useDispatch } from "react-redux";
-import { clearProfile } from "@/store/user/userSlice";
 import { IErrorResponse } from "@/types/base.types";
 import { IUserSession } from "@/types/auth.types";
+import { handleLogOut } from "@/lib/middleware/auth-client-lib";
 export const UserMenu = ({
   session,
   className,
@@ -33,21 +31,7 @@ export const UserMenu = ({
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const handleLogOut = () => {
-    startTransition(async () => {
-      const result: IErrorResponse | undefined = await logoutAction();
-      //console.log(result);
-      if (result?.error) {
-        Toaster({
-          title: "Đăng xuất thất bại",
-          description: result.error,
-          type: "error",
-        });
-      }
-      dispatch(clearProfile);
-      window.location.href = "/auth?mode=login";
-    });
-  };
+  const [isPending, startTransition] = useTransition();
 
   const isLogin = !!session && !("error" in session);
 
@@ -102,10 +86,16 @@ export const UserMenu = ({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
+              disabled={isPending}
               className={"hover:cursor-pointer"}
-              onClick={() => handleLogOut()}
+              onClick={() =>
+                handleLogOut({
+                  dispatch: dispatch,
+                  startTransition: startTransition,
+                })
+              }
             >
-              Đăng xuất
+              {isPending ? "Đang đăng xuất..." : "Đăng xuất"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         ) : (
