@@ -54,7 +54,7 @@ const data: Record<string, dataProps> = {
       {
         icon: RiQuillPenAiLine,
         title: "Soạn thảo",
-        url: "/admin/blog_draft",
+        url: "/admin/blog_editor",
       },
       {
         icon: CiBoxList,

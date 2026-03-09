@@ -13,7 +13,7 @@ const publicRoutes = [
   "/admin/users",
   "/admin/user_feedbacks",
   "/admin/blogs",
-  "/admin/blog_draft",
+  "/admin/blog_editor",
   "/admin/supports",
   "/auth",
   "/faq",

@@ -3,7 +3,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AdminSidebarServer } from "./components/sidebar/admin-sidebar-server";
+import { AdminSidebarServer } from "./_components/sidebar/admin-sidebar-server";
 import { Separator } from "@/components/ui/separator";
 
 const AdminLayout = ({
@@ -21,7 +21,7 @@ const AdminLayout = ({
           >
             <SidebarTrigger className={"-ml-1 hover:cursor-pointer"} />
             <Separator orientation={"vertical"} className={"mr-2 h-4"} />
-            <div className={""}>Quản lý gia phả</div>
+            <div className={""}>Quản lý - Hỗ trợ</div>
           </header>
           <main className={"max-h-screen overflow-hidden"}>{children}</main>
         </SidebarInset>

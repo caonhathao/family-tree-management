@@ -16,8 +16,7 @@ const AuthContent = () => {
   const router = useRouter();
 
   const navigateToHome = () => {
-    router.push("/");
-    router.refresh();
+    router.back();
   };
 
   const variantSlideAnimation = createSlideVariants();
