@@ -17,7 +17,7 @@ export interface IResponseUserDto {
   userProfile: {
     fullName: string;
     avatar: string;
-    dateOfBirth: Date | undefined | null;
+    dateOfBirth: string;
     biography: string;
     gender: GENDERS;
   };

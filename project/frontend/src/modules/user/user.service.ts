@@ -1,10 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { UpdateUserInfoDto } from "./user.service-validator";
-import z from "zod";
 import { Exception } from "@/lib/messages/response.messages";
 import { IResponseUserDto } from "./user.dto";
-import { safeJsonParse } from "@/lib/util/utils.lib";
 import { validate as isUUID } from "uuid";
 import { validator } from "../_common/validator";
 
@@ -70,7 +68,17 @@ export const UserService = {
         };
       });
 
-      return result as IResponseUserDto;
+      const userData = {
+        ...result,
+        userProfile: {
+          ...result.userProfile,
+          dateOfBirth:
+            result.userProfile?.dateOfBirth instanceof Date
+              ? result.userProfile.dateOfBirth.toISOString()
+              : result.userProfile?.dateOfBirth,
+        },
+      };
+      return userData as IResponseUserDto;
     } catch (err) {
       console.log("transaction failed at update user: ", err);
       throw err;
@@ -79,69 +87,68 @@ export const UserService = {
 
   getUserDetail: async (type: string, userId: string, targetId?: string) => {
     try {
-      const user = validator(userId, (id) =>
-        prisma.user.findUnique({
-          where: { id },
-          select: {
-            userProfile: {
-              select: {
-                fullName: true,
-                avatar: true,
-              },
-            },
-          },
-        }),
-      );
-
       if (type === "self") {
-        const user = await prisma.user.findUnique({
-          where: { id: userId },
-          select: {
-            id: true,
-            email: true,
-            userProfile: {
-              select: {
-                fullName: true,
-                avatar: true,
-                dateOfBirth: true,
-                biography: true,
-                gender: true,
-              },
-            },
-          },
-        });
-        return user as IResponseUserDto;
-      } else if (type === "target" && targetId) {
-        const target = validator(targetId, (id) =>
+        const user = await validator(userId, (id) =>
           prisma.user.findUnique({
             where: { id },
             select: {
+              id: true,
+              email: true,
               userProfile: {
                 select: {
                   fullName: true,
                   avatar: true,
+                  dateOfBirth: true,
+                  biography: true,
+                  gender: true,
                 },
               },
             },
           }),
         );
-        const user = await prisma.user.findUnique({
-          where: { id: targetId },
-          select: {
-            id: true,
-            email: true,
-            userProfile: {
-              select: {
-                fullName: true,
-                avatar: true,
-                dateOfBirth: true,
-                biography: true,
-                gender: true,
+        if (!user) throw new Error(Exception.NOT_EXIST);
+        const userData = {
+          ...user,
+          userProfile: {
+            ...user.userProfile,
+            dateOfBirth:
+              user.userProfile?.dateOfBirth instanceof Date
+                ? user.userProfile.dateOfBirth.toISOString()
+                : user.userProfile?.dateOfBirth,
+          },
+        };
+        return userData as IResponseUserDto;
+      } else if (type === "target" && targetId) {
+        const target = await validator(targetId, (id) =>
+          prisma.user.findUnique({
+            where: { id },
+            select: {
+              id: true,
+              email: true,
+              userProfile: {
+                select: {
+                  fullName: true,
+                  avatar: true,
+                  dateOfBirth: true,
+                  biography: true,
+                  gender: true,
+                },
               },
             },
+          }),
+        );
+        if (!target) throw new Error(Exception.NOT_EXIST);
+        const targetData = {
+          ...target,
+          userProfile: {
+            ...target.userProfile,
+            dateOfBirth:
+              target.userProfile?.dateOfBirth instanceof Date
+                ? target.userProfile.dateOfBirth.toISOString()
+                : target.userProfile?.dateOfBirth,
           },
-        });
-        return user as IResponseUserDto;
+        };
+        return targetData as IResponseUserDto;
       } else {
         console.log(type);
         throw new Error(Exception.BAD_REQUEST);

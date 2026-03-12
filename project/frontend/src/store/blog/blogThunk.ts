@@ -7,19 +7,16 @@ import { syncSuccess } from "./blogSlice";
 export const saveBlogDraft = createAsyncThunk(
   "blog/save",
   async (slug: string, { getState, dispatch, rejectWithValue }) => {
+    console.log(slug);
     const state = getState() as RootState;
     const blogEntry = state.blog.blogs[slug];
 
-    // 1. Kiểm tra xem blog có tồn tại không
     if (!blogEntry) return rejectWithValue("Blog không tồn tại");
 
     const { draft, origin, isModified } = blogEntry;
 
-    // 2. So sánh dữ liệu (Sử dụng flag isModified đã tính ở Reducer hoặc isEqual)
-    // Nếu không có thay đổi thì thoát sớm để tiết kiệm tài nguyên mạng
     if (!isModified || isEqual(draft, origin)) {
-      //console.log("Không có thay đổi, không cần lưu.");
-      return;
+      return false;
     }
 
     const result = await updateBlogAction(draft);

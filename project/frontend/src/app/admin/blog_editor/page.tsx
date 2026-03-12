@@ -9,8 +9,9 @@ export default async function FeaturesPage({
 }) {
   const { part } = await searchParams;
   const slug = part || "";
+  //console.log("slug:", slug);
 
   const blog = await getBlogAction(slug);
 
-  return <FeatureEditor blog={blog} slug={slug} />;
+  return <FeatureEditor key={slug} blog={blog} slug={slug} />;
 }

@@ -8,13 +8,6 @@ const publicRoutes = [
   "/",
   "/features",
   "/tutorials",
-  "/admin",
-  "/admin/dashboard",
-  "/admin/users",
-  "/admin/user_feedbacks",
-  "/admin/blogs",
-  "/admin/blog_editor",
-  "/admin/supports",
   "/auth",
   "/faq",
   "/api/auth/login-base",
@@ -22,7 +15,18 @@ const publicRoutes = [
   "/api/auth/refresh",
   "/api/auth/login-google",
 ];
-
+const roleRights = {
+  ADMIN: [
+    "/admin",
+    "/admin/dashboard",
+    "/admin/users",
+    "/admin/user_feedbacks",
+    "/admin/blogs",
+    "/admin/blog_editor",
+    "/admin/supports",
+  ],
+  USER: ["/profile"],
+};
 const JWT_ACCESS_KEY = process.env.JWT_ACCESS_SECRET_KEY || "";
 const JWT_REFRESH_KEY = process.env.JWT_REFRESH_SECRET_KEY || "";
 
@@ -52,12 +56,14 @@ export async function proxy(req: NextRequest) {
   const userIp = req.headers.get("x-forwarded-for") || "unknown";
 
   let userId: string | null = null;
-  let finalResponse: NextResponse | null = null; // Biến lưu trữ response có cookie
+  let userRole: string | null = null;
+  let finalResponse: NextResponse | null = null;
 
   // BƯỚC 1: Kiểm tra Access Token
   if (accessToken) {
     const payload = await verifyAndGetPayload(accessToken, JWT_ACCESS_KEY);
     userId = payload?.id || null;
+    userRole = payload?.role || null;
   }
 
   // BƯỚC 2: Silent Refresh
@@ -75,10 +81,11 @@ export async function proxy(req: NextRequest) {
           userAgent,
           ipAddress: userIp,
         });
+
         if (result && result.tokens) {
           userId = result.user.id;
+          userRole = result.user.role; // QUAN TRỌNG: Cập nhật role mới vào đây [cite: 17, 49]
 
-          // Tạo response và SET COOKIE
           finalResponse = pathname.startsWith("/auth")
             ? NextResponse.redirect(new URL("/", req.url))
             : NextResponse.next();
@@ -109,57 +116,53 @@ export async function proxy(req: NextRequest) {
     }
   }
 
-  // BƯỚC 3: Xử lý dựa trên userId
+  // BƯỚC 3: Kiểm tra quyền truy cập (RBAC)
   if (userId) {
+    // Kiểm tra các route Admin [cite: 4, 25, 26]
+    const isAdminRoute =
+      pathname.startsWith("/admin") ||
+      roleRights.ADMIN.some((route) => pathname.startsWith(route));
+
+    if (isAdminRoute && userRole !== "ADMIN") {
+      return NextResponse.redirect(new URL("/403", req.url));
+    }
+
     if (pathname.startsWith("/auth")) {
       return NextResponse.redirect(new URL("/", req.url));
     }
 
-    // 1. Tạo bản sao của request headers hiện tại
     const requestHeaders = new Headers(req.headers);
-
-    // 2. Nhét dữ liệu mới vào Request Headers (Dành cho Server Component đọc)
     requestHeaders.set("x-user-id", userId);
-    if (finalResponse && result) {
-      // Nếu vừa refresh, lấy token từ result của BƯỚC 2
+    requestHeaders.set("x-user-role", userRole || "");
+
+    if (result) {
       requestHeaders.set("x-access-token", result.tokens.accessToken);
     }
 
-    // 3. Khởi tạo response từ NextResponse.next kèm theo request headers mới
     const response = NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
+      request: { headers: requestHeaders },
     });
 
-    // 4. QUAN TRỌNG: Nếu có finalResponse (có set-cookie), phải copy cookie sang response mới
+    // Cập nhật Cookie mới cho trình duyệt (Nếu có refresh thành công)
     if (finalResponse) {
-      finalResponse.cookies.getAll().forEach((cookie) => {
-        response.cookies.set(cookie.name, cookie.value, {
-          path: "/",
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: cookie.name === "access_token" ? 15 * 60 : 7 * 24 * 60 * 60,
-        });
-      });
+      const setCookie = finalResponse.headers.get("set-cookie");
+      if (setCookie) {
+        response.headers.set("set-cookie", setCookie);
+      }
     }
 
     return response;
   }
 
-  // BƯỚC 4: Chưa Login
+  // BƯỚC 4: Xử lý Public Routes / Chưa Login
   if (isPublicRoute(pathname)) return NextResponse.next();
   if (pathname.startsWith("/api")) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  // Lấy toàn bộ URL bao gồm cả query params hiện tại (nếu có)
   const callbackUrl = encodeURIComponent(
     req.nextUrl.pathname + req.nextUrl.search,
   );
-
-  // Redirect kèm theo callbackUrl
   return NextResponse.redirect(
     new URL(`/auth?mode=login&callbackUrl=${callbackUrl}`, req.url),
   );

@@ -29,10 +29,7 @@ const ProfileContent = ({
         userProfile: {
           ...data.userProfile,
           // Chuyển đối tượng Date thành chuỗi "2004-07-22T17:00:00.000Z"
-          dateOfBirth:
-            data.userProfile.dateOfBirth instanceof Date
-              ? data.userProfile.dateOfBirth.toISOString()
-              : data.userProfile.dateOfBirth,
+          dateOfBirth: data.userProfile.dateOfBirth,
         },
       };
 

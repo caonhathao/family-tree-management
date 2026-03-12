@@ -199,7 +199,7 @@ const refresh = async (
     });
     //console.log(currentSession);
     if (!currentSession) {
-      await prisma.session.deleteMany({ where: { userId } });
+      // await prisma.session.deleteMany({ where: { userId } });
       throw new Error("Security warning: Invalid session");
     }
 

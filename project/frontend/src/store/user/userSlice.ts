@@ -13,7 +13,7 @@ const initialState: UserState = {
     userProfile: {
       avatar: "",
       biography: "",
-      dateOfBirth: new Date(),
+      dateOfBirth: "",
       fullName: "",
       gender: "UNKNOWN",
     },

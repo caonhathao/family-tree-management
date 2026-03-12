@@ -15,6 +15,13 @@ interface BlogState {
 
 const safeSlug = ["build-flow", "group-family", "group-members", "events"];
 
+const createEmptyBlog = (slug: string): IBlogDto => ({
+  id: "",
+  slug: slug,
+  title: "",
+  content: "",
+});
+
 const blogSlice = createSlice({
   name: "blog",
   initialState: { blogs: {} } as BlogState,
@@ -29,13 +36,7 @@ const blogSlice = createSlice({
             isModified: false,
           };
         } else {
-          const emptyBlog: IBlogDto = {
-            id: "",
-            slug: slug,
-            title: "",
-            content: "",
-          };
-
+          const emptyBlog = createEmptyBlog(slug);
           state.blogs[slug] = {
             origin: emptyBlog,
             draft: emptyBlog,
@@ -49,7 +50,15 @@ const blogSlice = createSlice({
       action: PayloadAction<{ slug: string; data: string }>,
     ) => {
       const { slug, data } = action.payload;
-      if (state.blogs[slug]) {
+
+      if (!state.blogs[slug]) {
+        const emptyBlog = createEmptyBlog(slug);
+        state.blogs[slug] = {
+          origin: emptyBlog,
+          draft: { ...emptyBlog, content: data },
+          isModified: true,
+        };
+      } else {
         state.blogs[slug].draft.content = data;
         state.blogs[slug].isModified =
           state.blogs[slug].draft.content !== state.blogs[slug].origin.content;

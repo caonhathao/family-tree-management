@@ -97,11 +97,7 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
           ...res,
           userProfile: {
             ...res.userProfile,
-            // Chuyển đối tượng Date thành chuỗi "2004-07-22T17:00:00.000Z"
-            dateOfBirth:
-              res.userProfile.dateOfBirth instanceof Date
-                ? res.userProfile.dateOfBirth.toISOString()
-                : res.userProfile.dateOfBirth,
+            dateOfBirth: res.userProfile.dateOfBirth,
           },
         };
 

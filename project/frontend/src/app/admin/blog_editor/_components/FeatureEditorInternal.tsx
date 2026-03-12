@@ -44,6 +44,9 @@ import {
 } from "@/components/ui/tooltip";
 import { FaCheck } from "react-icons/fa6";
 import { FaPen } from "react-icons/fa";
+import z from "zod";
+import { Controller, FieldErrors, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface FeatureEditorProps {
   blog: IBlogDto | IErrorResponse;
@@ -71,6 +74,10 @@ const defaultSlug = [
   },
 ];
 
+const formSchema = z.object({
+  newSlug: z.string().min(1, "Vui lòng nhập slug"),
+});
+
 export default function FeatureEditorInternal({
   blog,
   slug,
@@ -84,21 +91,24 @@ export default function FeatureEditorInternal({
         console.error("Failed to parse blog content", e);
       }
     }
-
-    // return the default of editor data if blog is empty
     return {
       time: Date.now(),
       blocks: [],
       version: "2.28.2",
     };
   });
-  const [otherBlog, setOtherBlog] = useState<string>("");
-  const [showInput, setShowInput] = useState<boolean>(false);
   const { blogs } = useSelector((state: RootState) => state.blog);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
   const ejInstance = useRef<EditorJS | null>(null);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      newSlug: "others",
+    },
+  });
 
   const initEditor = useCallback(() => {
     if (ejInstance.current) {
@@ -110,13 +120,15 @@ export default function FeatureEditorInternal({
       data,
       onChange: async () => {
         const currentContent = await editor.save();
-        // Dispatch cập nhật bản draft trong Redux
-        dispatch(
-          updateDraft({
-            slug,
-            data: JSON.stringify(currentContent),
-          }),
-        );
+        if (currentContent) {
+          // Dispatch cập nhật bản draft trong Redux
+          dispatch(
+            updateDraft({
+              slug: slug,
+              data: JSON.stringify(currentContent),
+            }),
+          );
+        }
       },
       readOnly: isReadOnly,
       tools: {
@@ -141,9 +153,6 @@ export default function FeatureEditorInternal({
                 } else {
                   throw new Error("Failed to upload image");
                 }
-                return {
-                  success: 0,
-                };
               },
             },
           },
@@ -172,10 +181,11 @@ export default function FeatureEditorInternal({
   }, [blog, dispatch, initEditor]);
 
   useEffect(() => {
-    // console.log("blog:", blog);
-    // console.log("data", data);
-    console.log(otherBlog);
-  }, [blog, data, otherBlog]);
+    console.log("blog:", blog);
+    console.log("data", data);
+    // console.log(otherBlog);
+    // console.log(slug);
+  }, [blog, data, slug]);
 
   const handleEdit = () => {
     if (ejInstance.current) {
@@ -193,10 +203,17 @@ export default function FeatureEditorInternal({
           blogs[slug].origin.content,
         ) as OutputData;
 
-        setData(originData);
-        dispatch(syncSuccess(blogs[slug].origin));
-        ejInstance.current.render(originData);
+        if (originData) {
+          setData(originData);
+          dispatch(syncSuccess(blogs[slug].origin));
+          ejInstance.current.render(originData);
+        }
       } catch (e) {
+        setData({
+          time: Date.now(),
+          blocks: [],
+          version: "2.28.2",
+        });
         console.error("error when parsing json: ", e);
       }
     }
@@ -205,47 +222,41 @@ export default function FeatureEditorInternal({
   const handleSave = async () => {
     if (ejInstance.current) {
       const savedData = await ejInstance.current.save();
+      //console.log(savedData);
       //we get the header from saveData and slog from searchParams
-
-      //update the existed blog
-      if (blog && "id" in blog && typeof blog.id === "string") {
-        const res: IErrorResponse | IBlogDto | undefined = await dispatch(
-          saveBlogDraft(slug),
-        ).unwrap();
-        if (res && "id" in res && res.id?.length !== 0) {
-          setData(savedData);
-          ejInstance.current.readOnly.toggle(true);
-          setIsReadOnly(true);
-          Toaster({
-            title: "Hành động thành công",
-            description: "Blog đã được lưu thành công",
-            type: "success",
-            cancel: { label: "OK", onClick: () => {} },
-          });
-          dispatch(syncSuccess(res));
-        } else if (res && "error" in res) {
-          if (res.error === "Unauthorized") {
-            const callbackUrl = encodeURIComponent(window.location.href);
-            router.push(`/auth?mode=login&callbackUrl=${callbackUrl}`);
-            return;
-          }
-
-          Toaster({
-            title: "Hành động thất bại",
-            description: "Failed to save blog: " + res.error,
-            type: "error",
-            cancel: { label: "OK", onClick: () => {} },
-          });
+      const res: IErrorResponse | IBlogDto | boolean | undefined =
+        await dispatch(saveBlogDraft(slug)).unwrap();
+      if (res && "id" in res && res.id?.length !== 0) {
+        setData(savedData);
+        ejInstance.current.readOnly.toggle(true);
+        setIsReadOnly(true);
+        Toaster({
+          title: "Hành động thành công",
+          description: "Blog đã được lưu thành công",
+          type: "success",
+          cancel: { label: "OK", onClick: () => {} },
+        });
+        dispatch(syncSuccess(res));
+      } else if (res && "error" in res) {
+        if (res.error === "Unauthorized") {
+          const callbackUrl = encodeURIComponent(window.location.href);
+          router.push(`/auth?mode=login&callbackUrl=${callbackUrl}`);
+          return;
         }
+
+        Toaster({
+          title: "Hành động thất bại",
+          description: "Failed to save blog: " + res.error,
+          type: "error",
+          cancel: { label: "OK", onClick: () => {} },
+        });
+      } else if (res === false)
         Toaster({
           title: "Hành động thất bại",
           description: "Không có gì thay đổi",
           type: "warning",
           cancel: { label: "OK", onClick: () => {} },
         });
-      } else {
-        //storing new blog
-      }
     } else {
       Toaster({
         title: "Hành động thất bại",
@@ -255,22 +266,32 @@ export default function FeatureEditorInternal({
       });
     }
   };
+
+  const handleConfirmNewSlug = (data: z.infer<typeof formSchema>) => {
+    router.push(`/admin/blog_editor?part=${data.newSlug}`);
+  };
+
+  const onInvalid = (errors: FieldErrors<z.infer<typeof formSchema>>) => {
+    if (errors.newSlug) {
+      Toaster({
+        title: "Slug không hợp lệ",
+        description: errors.newSlug.message || "Vui lòng kiểm tra lại slug",
+        type: "error",
+        cancel: { label: "OK", onClick: () => {} },
+      });
+    }
+  };
+
   return (
     <div className={"prose lg:prose-xl max-w-full p-6 flex flex-col gap-2"}>
       <div className={"w-full flex justify-start items-center gap-2"}>
         {isReadOnly ? (
           <div className={"flex flex-row justify-between items-center gap-2"}>
             <Select
-              value={otherBlog}
+              value={slug}
               onValueChange={(value) => {
-                if (value === "others") {
-                  setOtherBlog(value);
-                  setShowInput(true);
-                } else {
-                  setShowInput(false);
-                  setOtherBlog(value);
-                  router.push(`/admin/blog_editor?path=${value}`);
-                }
+                setIsReadOnly(true);
+                router.push(`/admin/blog_editor?part=${value}`);
               }}
             >
               <SelectTrigger className={"hover:cursor-pointer"}>
@@ -299,39 +320,45 @@ export default function FeatureEditorInternal({
                 </SelectGroup>
               </SelectContent>
             </Select>
-            {showInput ? (
-              <div className={"flex flex-row gap-2"}>
-                <Field>
-                  <Input
-                    id={"other"}
-                    autoComplete={"off"}
-                    placeholder={"Slug của bài viết"}
-                    value={otherBlog}
-                    onChange={(e) => setOtherBlog(e.target.value)}
-                  />
-                </Field>
+            {slug === "others" ? (
+              <form
+                onSubmit={form.handleSubmit(handleConfirmNewSlug, onInvalid)}
+                className={"flex flex-row gap-2"}
+              >
+                <Controller
+                  name={"newSlug"}
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <Input
+                        {...field}
+                        id={"other"}
+                        autoComplete={"off"}
+                        placeholder={"Slug của bài viết"}
+                      />
+                    </Field>
+                  )}
+                />
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant={"outline"}
                       size={"icon"}
-                      disabled={otherBlog === "others" ? true : false}
+                      type={"submit"}
                       className={"hover:cursor-pointer"}
-                      onClick={() => handleEdit()}
                     >
                       <FaCheck />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Xác nhận slug mới</TooltipContent>
                 </Tooltip>
-              </div>
+              </form>
             ) : (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant={"outline"}
                     size={"icon"}
-                    disabled={otherBlog === "others" ? true : false}
                     className={"hover:cursor-pointer"}
                     onClick={() => handleEdit()}
                   >
@@ -346,7 +373,7 @@ export default function FeatureEditorInternal({
           <div className={"flex flex-row justify-between items-center gap-2"}>
             <Button
               variant={"outline"}
-              onClick={handleSave}
+              onClick={() => handleSave()}
               className={"hover:cursor-pointer"}
             >
               Lưu
