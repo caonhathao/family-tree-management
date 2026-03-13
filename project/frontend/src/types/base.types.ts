@@ -7,6 +7,16 @@ export interface ResponseDataBase<T> {
   success: boolean;
 }
 
+export interface IPaginationBase<T> {
+  data: T;
+  pagination: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+  };
+}
+
 export interface IErrorResponse {
   success: boolean;
   error: string;

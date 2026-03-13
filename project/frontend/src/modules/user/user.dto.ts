@@ -22,3 +22,13 @@ export interface IResponseUserDto {
     gender: GENDERS;
   };
 }
+
+export interface IUserList {
+  id: string;
+  email: string;
+  userProfile?: {
+    fullName: string;
+    avatar: string;
+  };
+  createdAt: Date;
+}

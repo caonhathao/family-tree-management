@@ -1,6 +1,6 @@
 "use client";
 
-import { IBlogDto } from "@/modules/blog/blog.dto";
+import { IBlogDto, IBlogsDto } from "@/modules/blog/blog.dto";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { uploadBlogMediaAction } from "@/modules/blog-media/blog-media.action";
 
@@ -51,28 +51,29 @@ import { zodResolver } from "@hookform/resolvers/zod";
 interface FeatureEditorProps {
   blog: IBlogDto | IErrorResponse;
   slug: string;
+  list: IBlogsDto[] | IErrorResponse;
 }
 
 const EDITOR_HOLDER_ID = "editorjs";
 
-const defaultSlug = [
-  {
-    key: "build-flow",
-    title: "Tính năng - Dựng sơ đồ",
-  },
-  {
-    key: "group-family",
-    title: "Tính năng - Nhóm gia đình",
-  },
-  {
-    key: "storage",
-    title: "Tính năng - Lưu trữ",
-  },
-  {
-    key: "events",
-    title: "Tính năng - Sự kiện",
-  },
-];
+// const defaultSlug = [
+//   {
+//     key: "build-flow",
+//     title: "Tính năng - Dựng sơ đồ",
+//   },
+//   {
+//     key: "group-family",
+//     title: "Tính năng - Nhóm gia đình",
+//   },
+//   {
+//     key: "storage",
+//     title: "Tính năng - Lưu trữ",
+//   },
+//   {
+//     key: "events",
+//     title: "Tính năng - Sự kiện",
+//   },
+// ];
 
 const formSchema = z.object({
   newSlug: z.string().min(1, "Vui lòng nhập slug"),
@@ -81,6 +82,7 @@ const formSchema = z.object({
 export default function FeatureEditorInternal({
   blog,
   slug,
+  list,
 }: FeatureEditorProps) {
   const [isReadOnly, setIsReadOnly] = useState(true);
   const [data, setData] = useState<OutputData>(() => {
@@ -306,17 +308,19 @@ export default function FeatureEditorInternal({
                   >
                     Khác
                   </SelectItem>
-                  {defaultSlug.map((item) => {
-                    return (
-                      <SelectItem
-                        key={item.key}
-                        value={item.key}
-                        className={"hover:cursor-pointer"}
-                      >
-                        {item.title}
-                      </SelectItem>
-                    );
-                  })}
+                  {list && "error" in list
+                    ? null
+                    : list.map((item) => {
+                        return (
+                          <SelectItem
+                            key={item.id}
+                            value={item.slug}
+                            className={"hover:cursor-pointer"}
+                          >
+                            {item.title}
+                          </SelectItem>
+                        );
+                      })}
                 </SelectGroup>
               </SelectContent>
             </Select>

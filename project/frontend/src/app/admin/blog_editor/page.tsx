@@ -1,5 +1,5 @@
 "use server";
-import { getBlogAction } from "@/modules/blog/blog.action";
+import { getBlogAction, getBlogsAction } from "@/modules/blog/blog.action";
 import FeatureEditor from "./_components/FeatureEditor";
 
 export default async function FeaturesPage({
@@ -12,6 +12,7 @@ export default async function FeaturesPage({
   //console.log("slug:", slug);
 
   const blog = await getBlogAction(slug);
+  const blogList = await getBlogsAction();
 
-  return <FeatureEditor key={slug} blog={blog} slug={slug} />;
+  return <FeatureEditor key={slug} blog={blog} slug={slug} list={blogList} />;
 }

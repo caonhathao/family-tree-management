@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { UpdateUserInfoDto } from "./user.service-validator";
 import { Exception } from "@/lib/messages/response.messages";
-import { IResponseUserDto } from "./user.dto";
+import { IResponseUserDto, IUserList } from "./user.dto";
 import { validate as isUUID } from "uuid";
 import { validator } from "../_common/validator";
 
@@ -157,5 +157,67 @@ export const UserService = {
       console.log("error at get user detail service:", err);
       throw err;
     }
+  },
+
+  getAllUser: async (
+    userId: string,
+    page?: number,
+    limit?: number,
+    filter?: string,
+    filterType?: string,
+  ) => {
+    const user = await validator(userId, (id) =>
+      prisma.user.findUnique({
+        where: { id },
+        select: { id: true, email: true, role: true },
+      }),
+    );
+    if (!user) throw new Error(Exception.NOT_EXIST);
+    if (user.role !== "ADMIN") throw new Error(Exception.PEMRISSION);
+
+    const whereClause: Prisma.UserWhereInput = {};
+    if (filter && filterType) {
+      if (filterType === "id") {
+        if (!isUUID(filter)) throw new Error(Exception.ID_INVALID);
+        whereClause.id = filter;
+      }
+      if (filterType === "email") {
+        whereClause.email = { contains: filter, mode: "insensitive" };
+      }
+    }
+
+    const currentPage = page && page > 0 ? page : 1;
+    const pageSize = limit && limit > 0 ? limit : 10;
+    const skip = (currentPage - 1) * pageSize;
+
+    const [totalCount, listUser] = await prisma.$transaction([
+      prisma.user.count({ where: whereClause }),
+      prisma.user.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          email: true,
+          userProfile: {
+            select: { fullName: true, avatar: true },
+          },
+          createdAt: true,
+        },
+        skip: skip,
+        take: pageSize,
+        orderBy: { id: "asc" },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      data: listUser as IUserList[],
+      pagination: {
+        totalItems: totalCount,
+        totalPages: totalPages,
+        currentPage: currentPage,
+        pageSize: pageSize,
+      },
+    };
   },
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { IBlogDto } from "@/modules/blog/blog.dto";
+import { IBlogDto, IBlogsDto } from "@/modules/blog/blog.dto";
 import { IErrorResponse } from "@/types/base.types";
 import { LoaderModule } from "@/components/shared/loader-module";
 
@@ -21,8 +21,13 @@ const EditorJSComponent = dynamic(() => import("./FeatureEditorInternal"), {
 interface FeatureEditorProps {
   blog: IBlogDto | IErrorResponse;
   slug: string;
+  list: IBlogsDto[] | IErrorResponse;
 }
 
-export default function FeatureEditor({ blog, slug }: FeatureEditorProps) {
-  return <EditorJSComponent blog={blog} slug={slug} />;
+export default function FeatureEditor({
+  blog,
+  slug,
+  list,
+}: FeatureEditorProps) {
+  return <EditorJSComponent blog={blog} slug={slug} list={list} />;
 }

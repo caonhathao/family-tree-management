@@ -2,8 +2,9 @@
 import { UserService } from "./user.service";
 import { handleError } from "@/lib/util/utils.lib";
 import { headers } from "next/headers";
-import { IResponseUserDto, IUserInfoDto } from "./user.dto";
+import { IResponseUserDto, IUserInfoDto, IUserList } from "./user.dto";
 import { cache } from "react";
+import { IPaginationBase } from "@/types/base.types";
 
 export async function UpdateUserInfoAction(userId: string, data: IUserInfoDto) {
   try {
@@ -37,6 +38,33 @@ export const getUserDetailAction = cache(
 
       const res = await UserService.getUserDetail(type, currentUserId, userId);
       return res;
+    } catch (err) {
+      return handleError(err);
+    }
+  },
+);
+
+export const getUserListAction = cache(
+  async (
+    page?: number,
+    limit?: number,
+    filterType?: string,
+    filter?: string,
+  ) => {
+    try {
+      const headerList = await headers();
+      const currentUserId = headerList.get("X-User-Id");
+      if (!currentUserId) {
+        throw new Error("Unauthorized");
+      }
+      const res = await UserService.getAllUser(
+        currentUserId,
+        page,
+        limit,
+        filterType,
+        filter,
+      );
+      return res as IPaginationBase<IUserList[]>;
     } catch (err) {
       return handleError(err);
     }
