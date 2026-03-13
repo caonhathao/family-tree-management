@@ -1,7 +1,7 @@
 "use server";
 import { getUserListAction } from "@/modules/user/user.actions";
 import { columns } from "./_components/columns";
-import { DataTable } from "./_components/data-table";
+import { UserContentPage } from "./page-content";
 
 export default async function UserPage({
   searchParams,
@@ -24,7 +24,7 @@ export default async function UserPage({
   console.log(data);
   if (data && "error" in data) return <div>Có lỗi xảy ra</div>;
   return (
-    <DataTable
+    <UserContentPage
       columns={columns}
       data={data.data}
       pagination={data.pagination}

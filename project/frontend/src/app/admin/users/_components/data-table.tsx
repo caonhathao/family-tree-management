@@ -78,7 +78,7 @@ export function DataTable<TData, TValue>({
   };
 
   return (
-    <div className={"p-2"}>
+    <div className={"w-full p-2"}>
       <div className={"overflow-hidden rounded-md border"}>
         <Table>
           <TableHeader>
