@@ -61,8 +61,8 @@ export const getUserListAction = cache(
         currentUserId,
         page,
         limit,
-        filterType,
         filter,
+        filterType,
       );
       return res as IPaginationBase<IUserList[]>;
     } catch (err) {

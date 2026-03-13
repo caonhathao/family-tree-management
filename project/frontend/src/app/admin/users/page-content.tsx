@@ -24,7 +24,7 @@ export function UserContentPage<TData, TValue>({
     >
       <SearchBar
         placeholder={"Nhập từ khóa ở đây"}
-        keyQueryList={["Email", "Tên"]}
+        keyQueryList={["id", "email"]}
       />
       <DataTable columns={columns} data={data} pagination={pagination} />
     </div>
