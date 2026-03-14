@@ -4,7 +4,7 @@ const Footer = () => {
   return (
     <div
       className={
-        "w-full h-fit px-2 py-1 flex flex-row justify-between items-center bg-gray-200 text-xs font-semibold"
+        "w-full h-fit px-2 py-1 flex flex-row justify-between items-center bg-background text-xs font-semibold"
       }
     >
       <div>Established 2026 - 2026</div>

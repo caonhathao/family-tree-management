@@ -31,7 +31,7 @@ const HomePage = () => {
       <ScrollToTop />
       <ScrollSection
         className={
-          "h-[80vh] w-[75%] bg-blue-50 flex flex-row items-center justify-between gap-3 rounded-lg shadow-2xl p-3"
+          "h-[80vh] w-[75%] bg-section-1 flex flex-row items-center justify-between gap-3 rounded-lg shadow-2xl p-3"
         }
       >
         <motion.div
@@ -127,7 +127,7 @@ const HomePage = () => {
 
       <ScrollSection
         className={
-          "h-[80vh] w-[75%] bg-green-50 flex flex-row-reverse items-center justify-between gap-3 rounded-lg shadow-2xl p-3"
+          "h-[80vh] w-[75%] bg-section-2 flex flex-row-reverse items-center justify-between gap-3 rounded-lg shadow-2xl p-3"
         }
       >
         <motion.div
@@ -203,7 +203,7 @@ const HomePage = () => {
 
       <ScrollSection
         className={
-          "h-[80vh] w-[75%] bg-blue-50 flex flex-row items-center justify-between gap-3 rounded-lg shadow-2xl p-3"
+          "h-[80vh] w-[75%] bg-section-1 flex flex-row items-center justify-between gap-3 rounded-lg shadow-2xl p-3"
         }
       >
         <motion.div

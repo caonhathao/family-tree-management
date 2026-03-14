@@ -5,6 +5,7 @@ import { Toaster as SonnerToaster } from "sonner";
 import ReduxProvider from "@/components/providers/redux-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ThemeProvider } from "next-themes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,16 +28,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang={"en"}>
+    <html lang={"en"} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ReduxProvider>
-          <TooltipProvider>
-            {children}
-            <SpeedInsights />
-          </TooltipProvider>
-        </ReduxProvider>
+        <ThemeProvider
+          attribute={"class"}
+          defaultTheme={"system"}
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ReduxProvider>
+            <TooltipProvider>
+              {children}
+              <SpeedInsights />
+            </TooltipProvider>
+          </ReduxProvider>
+        </ThemeProvider>
+
         <SonnerToaster richColors />
       </body>
     </html>
