@@ -17,7 +17,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -26,23 +25,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  MdKeyboardArrowRight,
-  MdKeyboardDoubleArrowRight,
-  MdOutlineKeyboardArrowLeft,
-  MdOutlineKeyboardDoubleArrowLeft,
-} from "react-icons/md";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Pagination } from "../../_components/pagination";
 
+export interface IPagination {
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+}
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  pagination?: {
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    pageSize: number;
-  };
+  pagination?: IPagination;
 }
 
 export function DataTable<TData, TValue>({
@@ -129,6 +124,7 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
+      {/* footer of table */}
       <div className={"flex items-center justify-between px-4 pt-2"}>
         <div className={"text-muted-foreground hidden flex-1 text-sm lg:flex"}>
           Đã chọn {table.getFilteredSelectedRowModel().rows.length} của{" "}
@@ -169,7 +165,6 @@ export function DataTable<TData, TValue>({
               </SelectContent>
             </Select>
           </div>
-          {/* FIX 3: Added Optional Chaining (?.) for safety */}
           <div
             className={
               "flex w-fit items-center justify-center text-sm font-medium"
@@ -178,64 +173,7 @@ export function DataTable<TData, TValue>({
             trang {pagination?.currentPage || 0} của{" "}
             {pagination?.totalPages || 0}
           </div>
-          <div className={"ml-auto flex items-center gap-2 lg:ml-0"}>
-            <Button
-              variant={"outline"}
-              className={"hidden h-8 w-8 p-0 lg:flex hover:cursor-pointer"}
-              onClick={() => {
-                table.setPageIndex(0);
-              }}
-              disabled={pagination ? pagination?.currentPage - 1 <= 0 : true}
-            >
-              <span className={"sr-only"}>Go to first page</span>
-
-              <MdOutlineKeyboardArrowLeft />
-            </Button>
-            <Button
-              variant={"outline"}
-              className={"size-8 hover:cursor-pointer"}
-              size={"icon"}
-              onClick={() => {
-                table.previousPage();
-              }}
-              disabled={pagination ? pagination?.currentPage - 1 <= 0 : true}
-            >
-              <span className={"sr-only"}>Go to previous page</span>
-              <MdOutlineKeyboardDoubleArrowLeft />
-            </Button>
-            <Button
-              variant={"outline"}
-              className={"size-8 hover:cursor-pointer"}
-              size={"icon"}
-              onClick={() => {
-                table.nextPage();
-              }}
-              disabled={
-                pagination
-                  ? pagination.currentPage + 1 > pagination.totalPages
-                  : true
-              }
-            >
-              <span className={"sr-only"}>Go to next page</span>
-              <MdKeyboardArrowRight />
-            </Button>
-            <Button
-              variant={"outline"}
-              className={"hidden size-8 lg:flex hover:cursor-pointer"}
-              size={"icon"}
-              onClick={() => {
-                table.setPageIndex(table.getPageCount() - 1);
-              }}
-              disabled={
-                pagination
-                  ? pagination.currentPage + 1 > pagination.totalPages
-                  : true
-              }
-            >
-              <span className={"sr-only"}>Go to last page</span>
-              <MdKeyboardDoubleArrowRight />
-            </Button>
-          </div>
+          <Pagination table={table} pagination={pagination} />
         </div>
       </div>
     </div>
