@@ -1,32 +1,38 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import * as bcrypt from "bcrypt";
-import { UpdateUserDto } from "./user.service-validator";
-import z from "zod";
+import { UpdateUserInfoDto } from "./user.service-validator";
 import { Exception } from "@/lib/messages/response.messages";
-import { IResponseGetUserDto } from "./user.dto";
+import { IResponseUserDto, IUserList } from "./user.dto";
+import { validate as isUUID } from "uuid";
+import { validator } from "../_common/validator";
 
 export const UserService = {
-  updateUser: async (
+  updateUserInfo: async (
     targetId: string,
     userId: string,
-    data: UpdateUserDto,
-    file?: File,
+    data: UpdateUserInfoDto,
   ) => {
+    if (!isUUID(targetId) || !isUUID(userId)) {
+      throw new Error(Exception.ID_INVALID);
+    }
+
+    const target = await prisma.user.findUnique({
+      where: { id: targetId },
+      select: { id: true, email: true },
+    });
+
     if (targetId !== userId) {
       throw new Error("Permission denied");
     }
 
+    if (!target) throw new Error(Exception.NOT_EXIST);
+
     const profileUpdate: Prisma.UserProfileUpdateInput = {};
-    const userUpdate: Prisma.UserUpdateInput = {};
-    const accountUpdate: Prisma.AccountUpdateInput = {};
 
     if (data.fullName) profileUpdate.fullName = data.fullName;
     if (data.biography) {
       try {
-        profileUpdate.biography = JSON.parse(
-          data.biography,
-        ) as Prisma.InputJsonValue;
+        profileUpdate.biography = data.biography;
       } catch (e) {
         console.log("Biography format is invalid JSON: ", e);
         throw new Error("Biography format is invalid JSON");
@@ -41,25 +47,6 @@ export const UserService = {
       }
     }
 
-    if (data.email && data.email.trim() !== "") {
-      const isEmailTaken = await prisma.user.findUnique({
-        where: {
-          email: data.email,
-        },
-      });
-      if (!isEmailTaken) {
-        userUpdate.email = data.email;
-      }
-    }
-
-    if (data.password && data.password.trim() !== "") {
-      accountUpdate.password = await bcrypt.hash(data.password, 10);
-    }
-
-    if (file) {
-      console.log("File upload is not implemented yet.");
-    }
-
     try {
       const result = await prisma.$transaction(async (tx) => {
         const userProfileResult = await tx.userProfile.update({
@@ -70,38 +57,28 @@ export const UserService = {
             avatar: true,
             biography: true,
             dateOfBirth: true,
+            gender: true,
           },
         });
 
-        let userResult: { email: string } | null;
-        if (Object.keys(userUpdate).length > 0) {
-          userResult = await tx.user.update({
-            where: { id: targetId },
-            data: userUpdate,
-            select: { email: true },
-          });
-        } else {
-          userResult = await tx.user.findUnique({
-            where: { id: targetId },
-            select: { email: true },
-          });
-        }
-
-        if (Object.keys(accountUpdate).length > 0) {
-          await tx.account.update({
-            where: { userId: targetId },
-            data: accountUpdate,
-          });
-        }
-
         return {
           id: targetId,
-          email: userResult?.email,
+          email: target.email,
           userProfile: userProfileResult,
         };
       });
 
-      return result;
+      const userData = {
+        ...result,
+        userProfile: {
+          ...result.userProfile,
+          dateOfBirth:
+            result.userProfile?.dateOfBirth instanceof Date
+              ? result.userProfile.dateOfBirth.toISOString()
+              : result.userProfile?.dateOfBirth,
+        },
+      };
+      return userData as IResponseUserDto;
     } catch (err) {
       console.log("transaction failed at update user: ", err);
       throw err;
@@ -110,54 +87,137 @@ export const UserService = {
 
   getUserDetail: async (type: string, userId: string, targetId?: string) => {
     try {
-      const uuidSchema = z.string().uuid();
-      if (uuidSchema.safeParse(userId).success === false) {
-        throw new Error(Exception.ID_INVALID);
-      }
-
       if (type === "self") {
-        const user = await prisma.user.findUnique({
-          where: { id: userId },
-          select: {
-            id: true,
-            email: true,
-            userProfile: {
-              select: {
-                fullName: true,
-                avatar: true,
-                dateOfBirth: true,
-                biography: true,
+        const user = await validator(userId, (id) =>
+          prisma.user.findUnique({
+            where: { id },
+            select: {
+              id: true,
+              email: true,
+              userProfile: {
+                select: {
+                  fullName: true,
+                  avatar: true,
+                  dateOfBirth: true,
+                  biography: true,
+                  gender: true,
+                },
               },
             },
+          }),
+        );
+        if (!user) throw new Error(Exception.NOT_EXIST);
+        const userData = {
+          ...user,
+          userProfile: {
+            ...user.userProfile,
+            dateOfBirth:
+              user.userProfile?.dateOfBirth instanceof Date
+                ? user.userProfile.dateOfBirth.toISOString()
+                : user.userProfile?.dateOfBirth,
           },
-        });
-        return user as IResponseGetUserDto;
+        };
+        return userData as IResponseUserDto;
       } else if (type === "target" && targetId) {
-        if (uuidSchema.safeParse(targetId).success === false) {
-          throw new Error(Exception.ID_INVALID);
-        }
-        const user = await prisma.user.findUnique({
-          where: { id: userId },
-          select: {
-            id: true,
-            email: true,
-            userProfile: {
-              select: {
-                fullName: true,
-                avatar: true,
-                dateOfBirth: true,
-                biography: true,
+        const target = await validator(targetId, (id) =>
+          prisma.user.findUnique({
+            where: { id },
+            select: {
+              id: true,
+              email: true,
+              userProfile: {
+                select: {
+                  fullName: true,
+                  avatar: true,
+                  dateOfBirth: true,
+                  biography: true,
+                  gender: true,
+                },
               },
             },
+          }),
+        );
+        if (!target) throw new Error(Exception.NOT_EXIST);
+        const targetData = {
+          ...target,
+          userProfile: {
+            ...target.userProfile,
+            dateOfBirth:
+              target.userProfile?.dateOfBirth instanceof Date
+                ? target.userProfile.dateOfBirth.toISOString()
+                : target.userProfile?.dateOfBirth,
           },
-        });
-        return user as IResponseGetUserDto;
+        };
+        return targetData as IResponseUserDto;
       } else {
+        console.log(type);
         throw new Error(Exception.BAD_REQUEST);
       }
     } catch (err: unknown) {
       console.log("error at get user detail service:", err);
       throw err;
     }
+  },
+
+  getAllUser: async (
+    userId: string,
+    page?: number,
+    limit?: number,
+    filter?: string,
+    filterType?: string,
+  ) => {
+    const user = await validator(userId, (id) =>
+      prisma.user.findUnique({
+        where: { id },
+        select: { id: true, email: true, role: true },
+      }),
+    );
+    if (!user) throw new Error(Exception.NOT_EXIST);
+    if (user.role !== "ADMIN") throw new Error(Exception.PEMRISSION);
+
+    const whereClause: Prisma.UserWhereInput = {};
+    if (filter && filterType) {
+      if (filterType === "id") {
+        if (!isUUID(filter)) throw new Error(Exception.ID_INVALID);
+        whereClause.id = filter;
+      }
+      if (filterType === "email") {
+        whereClause.email = { contains: filter, mode: "insensitive" };
+      }
+    }
+
+    const currentPage = page && page > 0 ? page : 1;
+    const pageSize = limit && limit > 0 ? limit : 10;
+    const skip = (currentPage - 1) * pageSize;
+
+    const [totalCount, listUser] = await prisma.$transaction([
+      prisma.user.count({ where: whereClause }),
+      prisma.user.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          email: true,
+          userProfile: {
+            select: { fullName: true, avatar: true },
+          },
+          createdAt: true,
+        },
+        skip: skip,
+        take: pageSize,
+        orderBy: { id: "asc" },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      data: listUser as IUserList[],
+      pagination: {
+        totalItems: totalCount,
+        totalPages: totalPages,
+        currentPage: currentPage,
+        pageSize: pageSize,
+      },
+    };
   },
 };

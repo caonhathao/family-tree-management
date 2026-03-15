@@ -14,46 +14,37 @@ import {
 import { IoIosArrowDown } from "react-icons/io";
 import { motion } from "framer-motion";
 import { IoPersonOutline } from "react-icons/io5";
-import { startTransition, useEffect, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { logoutAction } from "@/modules/auth/auth.actions";
-import { Toaster } from "@/components/shared/toast";
-import { AppDispatch, RootState } from "@/store";
-import { useSelector } from "react-redux";
+import { AppDispatch } from "@/store";
 import { useDispatch } from "react-redux";
-import { clearProfile } from "@/store/user/userSlice";
 import { IErrorResponse } from "@/types/base.types";
-export const UserMenu = ({ className }: { className?: string }) => {
+import { IUserSession } from "@/types/auth.types";
+import { handleLogOut } from "@/lib/middleware/auth-client-lib";
+export const UserMenu = ({
+  session,
+  className,
+}: {
+  session: IUserSession | IErrorResponse | null;
+  className?: string;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { profile } = useSelector((state: RootState) => state.user);
-  const handleLogOut = () => {
-    startTransition(async () => {
-      const result: IErrorResponse | undefined = await logoutAction();
-      //console.log(result);
-      if (result?.error) {
-        Toaster({
-          title: "Đăng xuất thất bại",
-          description: result.error,
-          type: "error",
-        });
-      }
-      dispatch(clearProfile);
-      window.location.href = "/auth?mode=login";
-    });
-  };
-  // useEffect(() => {
-  //   console.log(profile);
-  // }, [profile]);
+  const [isPending, startTransition] = useTransition();
+
+  const isLogin = !!session && !("error" in session);
+
+  const avatar = useMemo(() => {
+    if (isLogin && session?.avatar) {
+      return session.avatar;
+    }
+    return "";
+  }, [session, isLogin]);
   return (
     <div className={className}>
       <Avatar>
-        <AvatarImage
-          src={profile && profile.id !== "" ? profile.userProfile.avatar : ""}
-          alt={"@shadcn"}
-          className={"grayscale"}
-        />
+        <AvatarImage src={avatar} alt={"@shadcn"} className={"grayscale"} />
         <AvatarFallback>
           <IoPersonOutline />
         </AvatarFallback>
@@ -73,11 +64,14 @@ export const UserMenu = ({ className }: { className?: string }) => {
             </motion.div>
           </Button>
         </DropdownMenuTrigger>
-        {profile && profile.id !== "" ? (
+        {isLogin ? (
           <DropdownMenuContent>
             <DropdownMenuGroup>
               <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
-              <DropdownMenuItem className={"hover:cursor-pointer"}>
+              <DropdownMenuItem
+                className={"hover:cursor-pointer"}
+                onClick={() => router.push("/profile")}
+              >
                 Hồ sơ
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -92,10 +86,16 @@ export const UserMenu = ({ className }: { className?: string }) => {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
+              disabled={isPending}
               className={"hover:cursor-pointer"}
-              onClick={() => handleLogOut()}
+              onClick={() =>
+                handleLogOut({
+                  dispatch: dispatch,
+                  startTransition: startTransition,
+                })
+              }
             >
-              Đăng xuất
+              {isPending ? "Đang đăng xuất..." : "Đăng xuất"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         ) : (

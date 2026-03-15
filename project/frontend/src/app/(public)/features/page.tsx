@@ -1,7 +1,5 @@
 import { getBlogAction } from "@/modules/blog/blog.action";
-import { cookies } from "next/headers";
-import FeatureEditor from "./FeatureEditor";
-import { getRoleFromToken } from "@/lib/middleware/auth.lib";
+import FeatureEditor from "./components/feature-base";
 
 export default async function FeaturesPage({
   searchParams,
@@ -12,10 +10,6 @@ export default async function FeaturesPage({
   const slug = part || "";
 
   const blog = await getBlogAction(slug);
-  const cookieStore = await cookies();
-  const token = cookieStore.get("access_token")?.value;
 
-  const user = await getRoleFromToken(token);
-
-  return <FeatureEditor blog={blog} user={user} slug={slug} />;
+  return <FeatureEditor blog={blog} slug={slug} />;
 }

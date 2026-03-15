@@ -1,11 +1,14 @@
 import { z } from "zod";
 
-export const UpdateUserDtoSchema = z.object({
-  email: z.string().email().optional(),
-  password: z.string().optional(),
+export const UpdateUserInfoDtoSchema = z.object({
   fullName: z.string().optional(),
   dateOfBirth: z.string().optional(),
   biography: z.string().optional(),
 });
+export type UpdateUserInfoDto = z.infer<typeof UpdateUserInfoDtoSchema>;
 
-export type UpdateUserDto = z.infer<typeof UpdateUserDtoSchema>;
+export const UpdateUserSecurityDtoSchema = z.object({
+  email: z.string().email().optional(),
+  password: z.string().optional(),
+});
+export type UpdateUserSecurityDto = z.infer<typeof UpdateUserSecurityDtoSchema>;

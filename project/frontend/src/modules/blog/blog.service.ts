@@ -2,7 +2,10 @@ import { Exception } from "@/lib/messages/response.messages";
 import { BlogUpdateServiceDto } from "./blog.service-validator";
 import { prisma } from "@/lib/prisma";
 import { OutputBlockData, OutputData } from "@editorjs/editorjs";
-import { IBlogDto } from "./blog.dto";
+import { IBlogDto, IBlogList } from "./blog.dto";
+import { safeJsonParse } from "@/lib/util/utils.lib";
+import { validator } from "../_common/validator";
+import { Prisma } from "@prisma/client";
 
 const extractMediaUrls = (data: OutputData): string[] => {
   const urls: string[] = [];
@@ -37,11 +40,11 @@ const updateBlog = async (data: BlogUpdateServiceDto, userId: string) => {
     //check if blog exist
     const blog = await prisma.blog.findUnique({
       where: { slug: data.slug },
-      select: { id: true },
+      select: { id: true, slug: true, content: true },
     });
 
-    const content = JSON.parse(data.content);
-
+    //get title of content
+    const content = safeJsonParse(data.content);
     const headerBlock = content.blocks.find(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (block: OutputBlockData<string, any>) => block.type === "header",
@@ -49,8 +52,10 @@ const updateBlog = async (data: BlogUpdateServiceDto, userId: string) => {
     const extractedTitle = headerBlock
       ? headerBlock.data.text
       : "Tiêu đề mặc định";
+
+    //if the blog data is null, create new
     if (!blog) {
-      const mediaUrls = extractMediaUrls(JSON.parse(data.content as string));
+      const mediaUrls = extractMediaUrls(safeJsonParse(data.content as string));
       const result = await prisma.$transaction(async (tx) => {
         const newBlog = await tx.blog.create({
           data: {
@@ -74,7 +79,8 @@ const updateBlog = async (data: BlogUpdateServiceDto, userId: string) => {
       });
       return result as IBlogDto;
     } else {
-      const mediaUrls = extractMediaUrls(JSON.parse(data.content as string));
+      const mediaUrls = extractMediaUrls(safeJsonParse(data.content as string));
+      console.log(mediaUrls);
 
       const result = await prisma.$transaction(async (tx) => {
         const updatedBlog = await tx.blog.update({
@@ -87,19 +93,27 @@ const updateBlog = async (data: BlogUpdateServiceDto, userId: string) => {
           select: { id: true, title: true, slug: true, content: true },
         });
 
-        if (mediaUrls.length > 0) {
-          await tx.blogMedia.updateMany({
-            where: {
-              url: {
-                in: mediaUrls,
-              },
-            },
+        await Promise.all([
+          tx.blogMedia.updateMany({
+            where: { url: { in: mediaUrls } },
             data: {
               isUsed: true,
               blogId: updatedBlog.id,
             },
-          });
-        }
+          }),
+
+          tx.blogMedia.updateMany({
+            where: {
+              blogId: updatedBlog.id,
+              url: { notIn: mediaUrls },
+            },
+            data: {
+              isUsed: false,
+              blogId: null,
+            },
+          }),
+        ]);
+
         return updatedBlog;
       });
 
@@ -132,7 +146,72 @@ const getBlog = async (slug: string) => {
   }
 };
 
+const getBlogs = async (
+  userId: string,
+  page?: number,
+  limit?: number,
+  filter?: string,
+  filterType?: string,
+) => {
+  try {
+    const user = await validator(userId, (id) =>
+      prisma.user.findUnique({
+        where: { id },
+        select: { id: true, email: true, role: true },
+      }),
+    );
+    if (!user) throw new Error(Exception.NOT_EXIST);
+    if (user.role !== "ADMIN") throw new Error(Exception.PEMRISSION);
+
+    const whereClause: Prisma.BlogWhereInput = {};
+    if (filter && filterType) {
+      if (filterType === "slug") {
+        whereClause.slug = { contains: filter, mode: "insensitive" };
+      }
+      if (filterType === "title") {
+        whereClause.title = { contains: filter, mode: "insensitive" };
+      }
+    }
+
+    const currentPage = page && page > 0 ? page : 1;
+    const pageSize = limit && limit > 0 ? limit : 10;
+    const skip = (currentPage - 1) * pageSize;
+    const [totalCount, blogs] = await prisma.$transaction([
+      prisma.blog.count({ where: whereClause }),
+      prisma.blog.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        skip: skip,
+        take: pageSize,
+        orderBy: { id: "asc" },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      data: blogs as IBlogList[],
+      pagination: {
+        totalItems: totalCount,
+        totalPages: totalPages,
+        currentPage: currentPage,
+        pageSize: pageSize,
+      },
+    };
+  } catch (err: unknown) {
+    console.log("error at get blogs service:", err);
+    throw err;
+  }
+};
+
 export const BlogService = {
   updateBlog,
   getBlog,
+  getBlogs,
 };

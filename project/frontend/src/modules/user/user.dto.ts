@@ -1,28 +1,34 @@
-export interface UpdateUserDto {
-  email?: string;
-  password?: string;
+import { GENDERS } from "@prisma/client";
+
+export interface IUserInfoDto {
   fullName?: string;
   dateOfBirth?: string;
-  biography?: {
-    educationLevel: string;
-    currentJob: string;
-    introduction: string;
-  };
+  biography?: string;
 }
 
-export interface ResponseUpdateUserDto {
-  fullName: string;
-  dateOfBirth: Date | null;
-  avatar: string | null;
-  biography: string;
+export interface IUserSecuityDto {
+  email?: string;
+  password?: string;
 }
-export interface IResponseGetUserDto {
+
+export interface IResponseUserDto {
   id: string;
   email: string;
   userProfile: {
     fullName: string;
     avatar: string;
-    dateOfBirth: Date | undefined | null;
+    dateOfBirth: string;
     biography: string;
+    gender: GENDERS;
   };
+}
+
+export interface IUserList {
+  id: string;
+  email: string;
+  userProfile?: {
+    fullName: string;
+    avatar: string;
+  };
+  createdAt: Date;
 }

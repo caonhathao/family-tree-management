@@ -1,0 +1,27 @@
+"use server";
+import { getUserListAction } from "@/modules/user/user.actions";
+import { columns } from "./_components/columns";
+import { UserContentPage } from "./page-content";
+
+export default async function UserPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    page: string;
+    limit: string;
+    filterType: string;
+    filter: string;
+  }>;
+}) {
+  const { page, limit, filterType, filter } = await searchParams;
+
+  const data = await getUserListAction(
+    Number(page),
+    Number(limit),
+    filterType,
+    filter,
+  );
+  //console.log(data);
+
+  return <UserContentPage columns={columns} data={data} />;
+}

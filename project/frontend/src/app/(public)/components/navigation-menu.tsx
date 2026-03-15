@@ -8,10 +8,17 @@ import {
 } from "@/components/ui/navigation-menu";
 import Image from "next/image";
 import logo from "../../../../public/img/family-tree-logo.png";
+import { useRouter } from "next/navigation";
 export const Navigation = ({ className }: { className?: string }) => {
+  const router = useRouter();
   return (
     <div className={className}>
-      <div className={"relative w-12 h-12 overflow-hidden rounded-full border"}>
+      <div
+        className={
+          "relative w-12 h-12 overflow-hidden rounded-full border hover:cursor-pointer"
+        }
+        onClick={() => router.push("/")}
+      >
         <Image
           src={logo}
           fill

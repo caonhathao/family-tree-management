@@ -1,8 +1,8 @@
 import { cache } from "react";
 import { jwtDecode } from "jwt-decode";
 import { prisma } from "@/lib/prisma";
-import { IResponseGetUserDto } from "@/modules/user/user.dto";
 import { JwtPayload } from "@/types/base.types";
+import { IUserSession } from "@/types/auth.types";
 
 export const getUserFromToken = cache(async (token: string | undefined) => {
   if (!token || token.length === 0) return null;
@@ -44,13 +44,9 @@ export const getUserFromUserId = cache(async (userId: string) => {
       where: { id: userId },
       select: {
         id: true,
-        email: true,
         userProfile: {
           select: {
             fullName: true,
-            avatar: true,
-            dateOfBirth: true,
-            biography: true,
           },
         },
       },
@@ -58,21 +54,11 @@ export const getUserFromUserId = cache(async (userId: string) => {
 
     if (!user) return null;
 
-    const response: IResponseGetUserDto = {
-      id: user.id,
-      email: user.email,
-      userProfile: {
-        fullName: user.userProfile?.fullName || "",
-        avatar: user.userProfile?.avatar || "",
-        dateOfBirth: user.userProfile?.dateOfBirth,
-        biography:
-          typeof user.userProfile?.biography === "string"
-            ? user.userProfile.biography
-            : JSON.stringify(user.userProfile?.biography || {}),
-      },
+    const res: IUserSession = {
+      fullName: user.userProfile?.fullName ?? "",
     };
 
-    return response;
+    return res;
   } catch (error) {
     console.error("Error getting user from userId:", error);
     return null;

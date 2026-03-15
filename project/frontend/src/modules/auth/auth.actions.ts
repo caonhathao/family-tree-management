@@ -202,3 +202,18 @@ export async function refreshAction() {
     return handleError(err);
   }
 }
+
+export async function getUserSessionAction() {
+  try {
+    const headerList = await headers();
+    const currentUserId = headerList.get("X-User-Id");
+    if (!currentUserId) {
+      throw new Error("Unauthorized");
+    }
+    const res = await AuthService.getUserSession({ userId: currentUserId });
+    //console.log(res);
+    return res;
+  } catch (err) {
+    return handleError(err);
+  }
+}
