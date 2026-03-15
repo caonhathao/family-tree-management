@@ -64,7 +64,9 @@ export const columns: ColumnDef<IUserList>[] = [
     header: () => <div className={"w-32 text-left"}>Ngày tạo</div>,
     cell: ({ row }) => (
       <div className={"w-full text-left"}>
-        {row.original.createdAt.toISOString()}
+        {row.original.createdAt.toLocaleString("vi-VN", {
+          timeZone: "Asia/Ho_Chi_Minh",
+        })}
       </div>
     ),
   },

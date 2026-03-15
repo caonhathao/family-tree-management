@@ -14,7 +14,7 @@ import Embed from "@editorjs/embed";
 import Marker from "@editorjs/marker";
 import ImageTool from "@editorjs/image";
 import { Toaster } from "@/components/shared/toast";
-import { IErrorResponse } from "@/types/base.types";
+import { IErrorResponse, IPaginationBase } from "@/types/base.types";
 import { Button } from "@/components/ui/button";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
@@ -51,7 +51,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 interface FeatureEditorProps {
   blog: IBlogDto | IErrorResponse;
   slug: string;
-  list: IBlogsDto[] | IErrorResponse;
+  list: IPaginationBase<IBlogsDto[]> | IErrorResponse;
 }
 
 const EDITOR_HOLDER_ID = "editorjs";
@@ -310,7 +310,7 @@ export default function FeatureEditorInternal({
                   </SelectItem>
                   {list && "error" in list
                     ? null
-                    : list.map((item) => {
+                    : list.data.map((item) => {
                         return (
                           <SelectItem
                             key={item.id}

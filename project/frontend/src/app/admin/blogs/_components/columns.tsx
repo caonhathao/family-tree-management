@@ -40,19 +40,43 @@ export const columns: ColumnDef<IBlogsDto>[] = [
   },
   {
     accessorKey: "slug",
-    header: "Slug",
+    header: () => <div className={"w-32 text-left"}>Slug</div>,
+    cell: ({ row }) => (
+      <div className={"w-32 text-left overflow-hidden"}>
+        {row.original.slug}
+      </div>
+    ),
   },
   {
     accessorKey: "title",
-    header: "Tiêu đề",
+    header: () => <div className={"w-44 text-left"}>Tiêu đề</div>,
+    cell: ({ row }) => (
+      <div className={"w-full text-left overflow-hidden"}>
+        {row.original.slug}
+      </div>
+    ),
   },
   {
     accessorKey: "createdAt",
-    header: "Ngày tạo ",
+    header: () => <div className={"w-32 text-left"}>Ngày tạo</div>,
+    cell: ({ row }) => (
+      <div className={"w-32 text-left"}>
+        {row.original.createdAt.toLocaleString("vi-VN", {
+          timeZone: "Asia/Ho_Chi_Minh",
+        })}
+      </div>
+    ),
   },
   {
     accessorKey: "updatedAt",
-    header: "Ngày cập nhật",
+    header: () => <div className={"w-32 text-left"}>Ngày cập nhật</div>,
+    cell: ({ row }) => (
+      <div className={"w-32 text-left"}>
+        {row.original.createdAt.toLocaleString("vi-VN", {
+          timeZone: "Asia/Ho_Chi_Minh",
+        })}
+      </div>
+    ),
   },
   {
     id: "actions",

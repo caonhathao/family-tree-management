@@ -11,3 +11,11 @@ export interface IBlogsDto {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface IBlogList {
+  id: string;
+  title: string;
+  slug: string;
+  createdAt: Date;
+  updatedAt: Date;
+}

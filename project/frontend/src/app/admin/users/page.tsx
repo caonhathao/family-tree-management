@@ -21,13 +21,7 @@ export default async function UserPage({
     filterType,
     filter,
   );
-  console.log(data);
-  if (data && "error" in data) return <div>Có lỗi xảy ra</div>;
-  return (
-    <UserContentPage
-      columns={columns}
-      data={data.data}
-      pagination={data.pagination}
-    />
-  );
+  //console.log(data);
+
+  return <UserContentPage columns={columns} data={data} />;
 }

@@ -2,8 +2,10 @@ import { Exception } from "@/lib/messages/response.messages";
 import { BlogUpdateServiceDto } from "./blog.service-validator";
 import { prisma } from "@/lib/prisma";
 import { OutputBlockData, OutputData } from "@editorjs/editorjs";
-import { IBlogDto, IBlogsDto } from "./blog.dto";
+import { IBlogDto, IBlogList } from "./blog.dto";
 import { safeJsonParse } from "@/lib/util/utils.lib";
+import { validator } from "../_common/validator";
+import { Prisma } from "@prisma/client";
 
 const extractMediaUrls = (data: OutputData): string[] => {
   const urls: string[] = [];
@@ -144,20 +146,64 @@ const getBlog = async (slug: string) => {
   }
 };
 
-const getBlogs = async () => {
+const getBlogs = async (
+  userId: string,
+  page?: number,
+  limit?: number,
+  filter?: string,
+  filterType?: string,
+) => {
   try {
-    //add validation later
-    const blog = await prisma.blog.findMany({
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const user = await validator(userId, (id) =>
+      prisma.user.findUnique({
+        where: { id },
+        select: { id: true, email: true, role: true },
+      }),
+    );
+    if (!user) throw new Error(Exception.NOT_EXIST);
+    if (user.role !== "ADMIN") throw new Error(Exception.PEMRISSION);
 
-    return blog as IBlogsDto[];
+    const whereClause: Prisma.BlogWhereInput = {};
+    if (filter && filterType) {
+      if (filterType === "slug") {
+        whereClause.slug = { contains: filter, mode: "insensitive" };
+      }
+      if (filterType === "title") {
+        whereClause.title = { contains: filter, mode: "insensitive" };
+      }
+    }
+
+    const currentPage = page && page > 0 ? page : 1;
+    const pageSize = limit && limit > 0 ? limit : 10;
+    const skip = (currentPage - 1) * pageSize;
+    const [totalCount, blogs] = await prisma.$transaction([
+      prisma.blog.count({ where: whereClause }),
+      prisma.blog.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        skip: skip,
+        take: pageSize,
+        orderBy: { id: "asc" },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      data: blogs as IBlogList[],
+      pagination: {
+        totalItems: totalCount,
+        totalPages: totalPages,
+        currentPage: currentPage,
+        pageSize: pageSize,
+      },
+    };
   } catch (err: unknown) {
     console.log("error at get blogs service:", err);
     throw err;

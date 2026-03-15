@@ -10,7 +10,7 @@ export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: IPaginationBase<TData[]> | IErrorResponse;
 }
-export function UserContentPage<TData, TValue>({
+export function BlogContentPage<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
@@ -31,7 +31,7 @@ export function UserContentPage<TData, TValue>({
     >
       <SearchBar
         placeholder={"Nhập từ khóa ở đây"}
-        keyQueryList={["id", "email"]}
+        keyQueryList={["slug", "title"]}
       />
       {data && "error" in data ? null : (
         <DataTable

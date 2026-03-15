@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import {
   MdOutlineKeyboardArrowLeft,
@@ -5,18 +6,26 @@ import {
   MdKeyboardArrowRight,
   MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
-import { IPagination } from "../users/_components/data-table";
-import { Table } from "@tanstack/react-table";
-
-interface IPaginationProps<TData> {
-  table: Table<TData>;
-  pagination?: IPagination;
-}
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { IPaginationProps } from "./footer-table";
 
 export function Pagination<TData>({
   table,
   pagination,
 }: IPaginationProps<TData>) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const handleChangePage = (newRows: number, page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set("limit", newRows.toString());
+    params.set("page", page.toString());
+
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   return (
     <div className={"ml-auto flex items-center gap-2 lg:ml-0"}>
       <Button
@@ -24,6 +33,7 @@ export function Pagination<TData>({
         className={"hidden h-8 w-8 p-0 lg:flex hover:cursor-pointer"}
         onClick={() => {
           table.setPageIndex(0);
+          handleChangePage(10, 1);
         }}
         disabled={pagination ? pagination?.currentPage - 1 <= 0 : true}
       >
@@ -37,6 +47,7 @@ export function Pagination<TData>({
         size={"icon"}
         onClick={() => {
           table.previousPage();
+          handleChangePage(10, (pagination?.currentPage ?? 1) - 1);
         }}
         disabled={pagination ? pagination?.currentPage - 1 <= 0 : true}
       >
@@ -49,6 +60,7 @@ export function Pagination<TData>({
         size={"icon"}
         onClick={() => {
           table.nextPage();
+          handleChangePage(10, (pagination?.currentPage ?? 1) + 1);
         }}
         disabled={
           pagination ? pagination.currentPage + 1 > pagination.totalPages : true
@@ -63,6 +75,7 @@ export function Pagination<TData>({
         size={"icon"}
         onClick={() => {
           table.setPageIndex(table.getPageCount() - 1);
+          handleChangePage(10, pagination?.totalPages ?? 1);
         }}
         disabled={
           pagination ? pagination.currentPage + 1 > pagination.totalPages : true

@@ -12,7 +12,7 @@ export default async function FeaturesPage({
   //console.log("slug:", slug);
 
   const blog = await getBlogAction(slug);
-  const blogList = await getBlogsAction();
+  const blogList = await getBlogsAction(1, 100);
 
   return <FeatureEditor key={slug} blog={blog} slug={slug} list={blogList} />;
 }

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/input-group";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { Controller, Form, useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { IoFilterOutline } from "react-icons/io5";
 import { RiResetRightLine } from "react-icons/ri";
 import { z } from "zod";
@@ -55,6 +55,8 @@ const SearchBar = ({ placeholder, keyQueryList }: SearchProps) => {
 
     params.set("page", "1");
     params.set("limit", "10");
+    params.delete("filterType");
+    params.delete("filter");
 
     router.push(`${pathname}?${params.toString()}`);
   };
