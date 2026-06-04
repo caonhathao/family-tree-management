@@ -25,7 +25,7 @@ import z from "zod";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import BioUserGroup from "./bio-user";
-import { safeJsonParse } from "@/lib/util/utils.lib";
+import { safeJsonParse } from "@/lib/utils/funcs.utils";
 
 export const UpdateUserForm = ({ className }: { className: string }) => {
   const { profile } = useSelector((state: RootState) => state.user);

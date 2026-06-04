@@ -19,15 +19,14 @@ import { RegisterSchema } from "@/modules/auth/auth.client-schemas";
 import { Toaster } from "@/components/shared/toast";
 import { IErrorResponse, ISuccessResponse } from "@/types/base.types";
 import { cn } from "@/lib/utils";
+import { navigateTo } from "@/lib/utils/navigate.utils";
 
 interface SignupFormProps extends React.ComponentProps<typeof Card> {
   callback?: string;
 }
 export function SignupForm({ className, callback, ...props }: SignupFormProps) {
   const router = useRouter();
-  const navigateToLogin = () => {
-    router.push("/auth?mode=login");
-  };
+
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -184,7 +183,12 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
                     type={"button"}
                     variant={"link"}
                     className={"hover:cursor-pointer p-1"}
-                    onClick={() => navigateToLogin()}
+                    onClick={() =>
+                      navigateTo({
+                        router: router,
+                        action: () => router.push("/auth?mode=login"),
+                      })
+                    }
                   >
                     Đăng nhập ngay
                   </Button>

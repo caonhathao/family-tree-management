@@ -3,7 +3,7 @@ import { BlogUpdateServiceDto } from "./blog.service-validator";
 import { prisma } from "@/lib/prisma";
 import { OutputBlockData, OutputData } from "@editorjs/editorjs";
 import { IBlogDto, IBlogList } from "./blog.dto";
-import { safeJsonParse } from "@/lib/util/utils.lib";
+import { safeJsonParse } from "@/lib/utils/funcs.utils";
 import { validator } from "../_common/validator";
 import { Prisma } from "@prisma/client";
 

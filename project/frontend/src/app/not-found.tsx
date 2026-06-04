@@ -5,12 +5,11 @@ import { useRouter } from "next/navigation";
 import { IoIosArrowBack, IoIosInformationCircleOutline } from "react-icons/io";
 import Image from "next/image";
 import notFound from "../../public/img/404.png";
+import { navigateTo } from "@/lib/utils/navigate.utils";
 
 const NotFoundPage = () => {
   const router = useRouter();
-  const navigateBack = () => {
-    router.back();
-  };
+
   return (
     <div className={"w-screen flex flex-col gap-3 justify-start items-center"}>
       {/* header */}
@@ -19,7 +18,12 @@ const NotFoundPage = () => {
           variant={"outline"}
           size={"default"}
           className={"flex flex-row gap-2 hover:cursor-pointer"}
-          onClick={() => navigateBack()}
+          onClick={() =>
+            navigateTo({
+              router: router,
+              action: () => router.back(),
+            })
+          }
         >
           <IoIosArrowBack />
           Quay lại

@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import { Toaster } from "@/components/shared/toast";
 import { LoaderModule } from "@/components/shared/loader-module";
 import { IErrorResponse, ISuccessResponse } from "@/types/base.types";
+import { navigateTo } from "@/lib/utils/navigate.utils";
 
 interface LoginFormProps extends React.ComponentProps<"div"> {
   callback?: string;
@@ -28,9 +29,6 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const router = useRouter();
 
-  const navigateToRegister = () => {
-    router.push("/auth?mode=register");
-  };
   const [isPending, startTransition] = useTransition();
 
   const {
@@ -163,7 +161,12 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
                     type={"button"}
                     variant={"link"}
                     className={"hover:cursor-pointer p-1"}
-                    onClick={() => navigateToRegister()}
+                    onClick={() =>
+                      navigateTo({
+                        router: router,
+                        action: () => router.push("/auth?mode=register"),
+                      })
+                    }
                   >
                     Đăng kí ngay
                   </Button>

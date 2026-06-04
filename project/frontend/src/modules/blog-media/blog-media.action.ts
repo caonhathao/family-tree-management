@@ -1,5 +1,5 @@
 "use server";
-import { handleError } from "@/lib/util/utils.lib";
+import { handleError } from "@/lib/utils/funcs.utils";
 import { BlogMediaService } from "./blog-media.service";
 
 export async function uploadBlogMediaAction(type: string, file?: File) {

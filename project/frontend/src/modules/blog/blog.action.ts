@@ -1,5 +1,5 @@
 "use server";
-import { handleError } from "@/lib/util/utils.lib";
+import { handleError } from "@/lib/utils/funcs.utils";
 import { IBlogDto, IBlogsDto } from "./blog.dto";
 import { BlogService } from "./blog.service";
 import { headers } from "next/headers";

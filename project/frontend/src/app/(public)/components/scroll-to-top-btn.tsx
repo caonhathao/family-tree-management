@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoMdArrowRoundUp } from "react-icons/io";
 import { Button } from "@/components/ui/button";
-import { createScrollToTopVariants } from "@/configs/animation.config";
+import { createScrollToTopVariants } from "@/configs/animation/hook.animi";
 
 const ScrollToTop = () => {
   const [isVisible, setIsVisible] = useState(false);
