@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { IResponseGroupFamiliesDto } from "@/modules/group-family/group-family.dto";
-import logo from "../../../../public/img/family-tree-logo.png";
+import logo from "../../../../../public/img/family-tree-logo.png";
 import { IoIosArrowForward, IoMdHome } from "react-icons/io";
 import {
   DropdownMenu,
