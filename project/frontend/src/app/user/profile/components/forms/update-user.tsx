@@ -16,16 +16,14 @@ import { AppDispatch, RootState } from "@/store";
 import { setProfile } from "@/store/user/userSlice";
 import { IErrorResponse } from "@/types/base.types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import z from "zod";
-import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import BioUserGroup from "./bio-user";
-import { safeJsonParse } from "@/lib/util/utils.lib";
+import { safeJsonParse } from "@/lib/utils/funcs.utils";
 
 export const UpdateUserForm = ({ className }: { className: string }) => {
   const { profile } = useSelector((state: RootState) => state.user);
@@ -122,8 +120,8 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
 
   return (
     <div className={className}>
-      <form onSubmit={handleSubmit(onSubmit)} className={"flex flex-col gap-1"}>
-        <FieldGroup className={"flex flex-row gap-1"}>
+      <form onSubmit={handleSubmit(onSubmit)} className={"flex flex-col gap-5"}>
+        <FieldGroup className={"flex flex-row gap-5"}>
           <Field>
             <FieldLabel htmlFor={"fullName"}>Tên của bạn là:</FieldLabel>
             <Input
@@ -169,7 +167,7 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
           </Field>
         </FieldGroup>
         <BioUserGroup bio={bio} setBio={setBio} />
-        <div className={"flex flex-row gap-1"}>
+        <div className={"flex flex-row gap-5"}>
           <Button
             type={"button"}
             variant={"destructive"}

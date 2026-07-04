@@ -18,19 +18,23 @@ import { RootState } from "@/store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IoPersonOutline } from "react-icons/io5";
 import { RiDeleteBin2Line, RiLockPasswordLine } from "react-icons/ri";
-import { SidebarGroupContent } from "../../../../components/custom/sidebar-group";
 import { CiBoxList } from "react-icons/ci";
 import { TiCloudStorageOutline } from "react-icons/ti";
 import { BiSupport } from "react-icons/bi";
 import { useRouter } from "next/navigation";
 import { dataProps } from "@/types/base.types";
+import { SidebarGroupContent } from "@/components/custom/sidebar-group";
 
 const data: Record<string, dataProps> = {
   general: {
     title: "Chung",
     content: [
-      { icon: IoPersonOutline, title: "Thông tin cá nhân", url: "/profile" },
-      { icon: RiLockPasswordLine, title: "Bảo mật", url: "/security" },
+      {
+        icon: IoPersonOutline,
+        title: "Thông tin cá nhân",
+        url: "/user/profile",
+      },
+      { icon: RiLockPasswordLine, title: "Bảo mật", url: "/user/security" },
     ],
   },
   group: {
@@ -39,12 +43,12 @@ const data: Record<string, dataProps> = {
       {
         icon: MdOutlinePeopleAlt,
         title: "Danh sách",
-        url: "/group",
+        url: "/user/group",
       },
       {
         icon: CiBoxList,
         title: "Lời mời",
-        url: "/invite-list",
+        url: "/user/invite-list",
       },
     ],
   },
@@ -54,12 +58,12 @@ const data: Record<string, dataProps> = {
       {
         icon: TiCloudStorageOutline,
         title: "Kho lưu trữ",
-        url: "/storage",
+        url: "/user/storage",
       },
       {
         icon: RiDeleteBin2Line,
         title: "Thùng rác",
-        url: "/trash",
+        url: "/user/trash",
       },
     ],
   },
@@ -69,12 +73,12 @@ const data: Record<string, dataProps> = {
       {
         icon: BiSupport,
         title: "Hỗ trợ",
-        url: "/support",
+        url: "/user/support",
       },
       {
         icon: MdOutlineFeedback,
         title: "Phản hồi",
-        url: "/feadback",
+        url: "/user/feadback",
       },
     ],
   },

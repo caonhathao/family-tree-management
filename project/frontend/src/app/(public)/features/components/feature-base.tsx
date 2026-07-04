@@ -5,7 +5,7 @@ import { IBlogDto } from "@/modules/blog/blog.dto";
 import { IErrorResponse } from "@/types/base.types";
 import { LoaderModule } from "@/components/shared/loader-module";
 
-const EditorJSComponent = dynamic(() => import("./feature-content"), {
+const EditorJSComponent = dynamic(() => import("./feature-editor-internal"), {
   ssr: false,
   loading: () => (
     <div

@@ -4,7 +4,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { SideBarProfile } from "./components/sidebar/sidebar-profile";
+import { SideBarProfile } from "./_components/sidebar/sidebar-profile";
 
 const ProfileLayout = ({
   children,
@@ -21,7 +21,7 @@ const ProfileLayout = ({
           >
             <SidebarTrigger className={"-ml-1 hover:cursor-pointer"} />
             <Separator orientation={"vertical"} className={"mr-2 h-4"} />
-            <div className={""}>Quản lý gia phả</div>
+            <div className={""}>Hồ sơ cá nhân</div>
           </header>
           <main className={"max-h-screen overflow-hidden"}>{children}</main>
         </SidebarInset>

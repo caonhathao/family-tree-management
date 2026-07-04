@@ -17,6 +17,8 @@ const initialState: UserState = {
       fullName: "",
       gender: "UNKNOWN",
     },
+    groups: 0,
+    invites: 0,
   },
 };
 

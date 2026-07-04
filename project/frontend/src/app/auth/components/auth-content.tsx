@@ -4,7 +4,10 @@ import { motion } from "framer-motion";
 import { LoginForm } from "@/app/auth/components/login-form";
 import { SignupForm } from "@/app/auth/components/signup-form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createSlideVariants, scrollConfig } from "@/configs/animation.config";
+
+import { navigateTo } from "@/lib/utils/navigate.utils";
+import { scrollConfig } from "@/configs/animation/configs.anim";
+import { createSlideVariants } from "@/configs/animation/hook.animi";
 
 const AuthContent = () => {
   const searchParams = useSearchParams();
@@ -14,10 +17,6 @@ const AuthContent = () => {
   const isLogin = mode === "login";
 
   const router = useRouter();
-
-  const navigateToHome = () => {
-    router.back();
-  };
 
   const variantSlideAnimation = createSlideVariants();
 
@@ -31,7 +30,12 @@ const AuthContent = () => {
           variant={"outline"}
           size={"default"}
           className={"flex flex-row gap-2 hover:cursor-pointer"}
-          onClick={() => navigateToHome()}
+          onClick={() =>
+            navigateTo({
+              router: router,
+              action: () => router.back(),
+            })
+          }
         >
           <IoIosArrowBack />
           Quay lại

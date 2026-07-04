@@ -70,7 +70,7 @@ export const UserMenu = ({
               <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
               <DropdownMenuItem
                 className={"hover:cursor-pointer"}
-                onClick={() => router.push("/profile")}
+                onClick={() => router.push("/user/profile")}
               >
                 Hồ sơ
               </DropdownMenuItem>

@@ -26,7 +26,7 @@ import {
 import { saveBlogDraft } from "@/store/blog/blogThunk";
 import { useRouter } from "next/navigation";
 import { IBlogMediaDto } from "@/modules/blog-media/blog.dto";
-import { safeJsonParse } from "../../../../lib/util/utils.lib";
+import { safeJsonParse } from "../../../../lib/utils/funcs.utils";
 import {
   Select,
   SelectContent,

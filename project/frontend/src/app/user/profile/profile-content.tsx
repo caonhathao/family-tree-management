@@ -1,7 +1,7 @@
 "use client";
 import { AppDispatch } from "@/store";
-import unknownImage from "../../../public/img/unknow.png";
 import Image from "next/image";
+import unknownImage from "../../../../public/img/unknow.png";
 import { Button } from "@/components/ui/button";
 import { FaExchangeAlt } from "react-icons/fa";
 import {
@@ -15,6 +15,8 @@ import { IResponseUserDto } from "@/modules/user/user.dto";
 import { IErrorResponse } from "@/types/base.types";
 import { useDispatch } from "react-redux";
 import { setProfile } from "@/store/user/userSlice";
+import { useRouter } from "next/navigation";
+import { navigateTo } from "@/lib/utils/navigate.utils";
 
 const ProfileContent = ({
   data,
@@ -28,7 +30,6 @@ const ProfileContent = ({
         ...data,
         userProfile: {
           ...data.userProfile,
-          // Chuyển đối tượng Date thành chuỗi "2004-07-22T17:00:00.000Z"
           dateOfBirth: data.userProfile.dateOfBirth,
         },
       };
@@ -45,20 +46,22 @@ const ProfileContent = ({
     }
   }, [data]);
 
+  const availableData = useMemo(() => {
+    if (data && !("error" in data)) {
+      return data;
+    }
+  }, [data]);
+  const router = useRouter();
   return (
-    <div className={"w-full h-full p-3"}>
-      <div
-        className={
-          "w-full h-full flex flex-row justify-center items-start gap-3"
-        }
-      >
-        <div className={"w-[40%] flex justify-end"}>
+    <div className={"w-full h-full p-5 flex flex-row gap-3"}>
+      <div className={"w-[50%] flex flex-row justify-center items-start gap-5"}>
+        <div className={"w-fit flex justify-center items-center"}>
           <div className={"rounded-lg border w-fit p-0.5 relative"}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant={"outline"}
-                  size={"icon-lg"}
+                  size={"icon-sm"}
                   className={"absolute top-0 right-0 hover:cursor-pointer"}
                 >
                   <FaExchangeAlt />
@@ -66,11 +69,41 @@ const ProfileContent = ({
               </TooltipTrigger>
               <TooltipContent>Đổi ảnh</TooltipContent>
             </Tooltip>
-            <Image src={avatar} width={200} height={200} alt={"avatar"} />
+            <Image src={avatar} width={100} height={100} alt={"avatar"} />
           </div>
         </div>
-        <div className={"w-[60%] h-full flex flex-col items-start"}>
-          <UpdateUserForm className={"w-[60%]"} />
+        <div className={"w-full h-full flex flex-col items-start"}>
+          <UpdateUserForm className={"w-full border rounded-lg p-3 shadow"} />
+        </div>
+      </div>
+      <div className={"w-[50%] flex flex-col gap-3"}>
+        {/* Showing some infomation about groups, invites, chats,... */}
+        <div className={"border shadow rounded-lg p-3 flex flex-col"}>
+          <strong>Thông tin chung</strong>
+
+          <div>
+            Số nhóm hiện có: {availableData?.groups}
+            <Button
+              variant={"link"}
+              size={"sm"}
+              className={"hover:cursor-pointer"}
+              onClick={() =>
+                navigateTo({
+                  router: router,
+                  url: "/user/groups",
+                })
+              }
+            >
+              Xem chi tiết
+            </Button>
+          </div>
+          <p>Số lời mời hiện có: {availableData?.invites}</p>
+          <p>Số cuộc trò chuyện hiện có: (in progress)</p>
+        </div>
+        <div className={"border shadow rounded-lg p-3"}>
+          <p>
+            <strong>Dung lượng lưu trữ</strong>
+          </p>
         </div>
       </div>
     </div>

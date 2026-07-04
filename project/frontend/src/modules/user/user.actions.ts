@@ -1,6 +1,6 @@
 "use server";
 import { UserService } from "./user.service";
-import { handleError } from "@/lib/util/utils.lib";
+import { handleError } from "@/lib/utils/funcs.utils";
 import { headers } from "next/headers";
 import { IResponseUserDto, IUserInfoDto, IUserList } from "./user.dto";
 import { cache } from "react";

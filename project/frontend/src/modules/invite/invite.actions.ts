@@ -1,7 +1,7 @@
 "use server";
 import { ICreateInviteDto } from "./invite.dto";
 import { InviteService } from "./invite.service";
-import { handleError } from "@/lib/util/utils.lib";
+import { handleError } from "@/lib/utils/funcs.utils";
 import { headers } from "next/headers";
 
 export async function CreateInviteLinkAction(data: ICreateInviteDto) {

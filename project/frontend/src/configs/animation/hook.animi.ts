@@ -1,32 +1,5 @@
 import { Variants } from "framer-motion";
 
-export const fadeVariants = {
-  hidden: {
-    opacity: 0,
-    y: 20,
-    filter: "blur(5px)",
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: {
-      duration: 0.8,
-      ease: "easeOut",
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: -20,
-    transition: { duration: 0.5 },
-  },
-};
-
-export const scrollConfig = {
-  amount: 0.6, // Scroll đến 30% section thì mới hiện
-  once: false, // true: chỉ hiện 1 lần; false: scroll lên/xuống đều chạy lại hiệu ứng
-};
-
 interface AnimationProps {
   distance?: number;
   blur?: number;

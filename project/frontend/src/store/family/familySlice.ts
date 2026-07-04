@@ -1,4 +1,4 @@
-import { safeJsonParse } from "@/lib/util/utils.lib";
+import { safeJsonParse } from "@/lib/utils/funcs.utils";
 import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import { IDraftFamilyData } from "@/types/draft.types";
 import { LINEAGE_TYPE } from "@prisma/client";

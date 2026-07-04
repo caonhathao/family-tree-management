@@ -1,6 +1,6 @@
 "use server";
 import { IFamilyDto } from "./family.dto";
-import { handleError } from "@/lib/util/utils.lib";
+import { handleError } from "@/lib/utils/funcs.utils";
 import { revalidatePath } from "next/cache";
 import { IDraftFamilyData } from "@/types/draft.types";
 import { headers } from "next/headers";
