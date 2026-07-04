@@ -21,6 +21,8 @@ export interface IResponseUserDto {
     biography: string;
     gender: GENDERS;
   };
+  groups: number;
+  invites: number;
 }
 
 export interface IUserList {

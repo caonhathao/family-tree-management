@@ -10,23 +10,24 @@ enum USER_ROLE {
 }
 
 model User {
-    id            String         @id @default(uuid()) @db.Uuid
-    email         String         @unique
-    emailVerified Boolean        @default(false)
-    createdAt     DateTime       @default(now())
-    updatedAt     DateTime       @updatedAt
-    role          USER_ROLE      @default(USER)
-    account       Account?
-    sessions      Session[]
-    userProfile   UserProfile?
-    families      Family[]
-    albums        Album[]
-    events        Event[]
-    activityLogs  ActivityLog[]
-    notifications Notification[]
-    groupMembers  GroupMember[]
-    invites       Invite[]
-    blogs         Blog[]
+    id              String         @id @default(uuid()) @db.Uuid
+    email           String         @unique
+    emailVerified   Boolean        @default(false)
+    createdAt       DateTime       @default(now())
+    updatedAt       DateTime       @updatedAt
+    role            USER_ROLE      @default(USER)
+    account         Account?
+    sessions        Session[]
+    userProfile     UserProfile?
+    families        Family[]
+    albums          Album[]
+    events          Event[]
+    activityLogs    ActivityLog[]
+    notifications   Notification[]
+    groupMembers    GroupMember[]
+    sentInvites     Invite[]       @relation("SentInvites")
+    receivedInvites Invite[]       @relation("ReceivedInvites")
+    blogs           Blog[]
 
     @@index([email])
     @@map("user")

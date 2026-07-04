@@ -107,6 +107,26 @@ export const UserService = {
           }),
         );
         if (!user) throw new Error(Exception.NOT_EXIST);
+
+        const [groups, invites] = await prisma.$transaction([
+          prisma.groupFamily.count({
+            where: {
+              groupMembers: {
+                some: {
+                  memberId: userId,
+                },
+              },
+            },
+          }),
+          prisma.invite.count({
+            where: {
+              targetId: userId,
+              expiresAt: {
+                gt: new Date(),
+              },
+            },
+          }),
+        ]);
         const userData = {
           ...user,
           userProfile: {
@@ -116,6 +136,8 @@ export const UserService = {
                 ? user.userProfile.dateOfBirth.toISOString()
                 : user.userProfile?.dateOfBirth,
           },
+          groups: groups,
+          invites: invites,
         };
         return userData as IResponseUserDto;
       } else if (type === "target" && targetId) {
