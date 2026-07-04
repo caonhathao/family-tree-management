@@ -1,0 +1,156 @@
+import { motion } from "framer-motion";
+import ScrollToTop from "../scroll-to-top-btn";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import logo from "../../../../../public/img/family-tree-logo.webp";
+import {
+  fadeInUpVariants,
+  staggerContainerVariants,
+} from "@/configs/animation/variants.amin";
+import { Button } from "@/components/ui/button";
+import { navigateTo } from "@/lib/utils/navigate.utils";
+
+const features = [
+  "Sơ đồ gia phả thông minh, trực quan.",
+  "Số hóa tiểu sử và ký ức dòng họ.",
+  "Lưu trữ hình ảnh,video gia đình",
+  "Tự động nhắc nhở ngày giỗ, ngày lễ.",
+  "Bảo mật và phân quyền riêng tư tuyệt đối.",
+];
+
+const sectionContent = [
+  {
+    title: "Gìn giữ hồn cốt gia đình – Nối dài sợi dây huyết thống",
+    desc: "Gia đình không chỉ là hiện tại, mà còn là một dòng chảy bất tận từ quá khứ đến tương lai. Hệ thống của chúng tôi không chỉ là một công cụ quản lý, mà là nơi lưu giữ những câu chuyện, những gương mặt và những giá trị đạo đức mà ông cha đã dày công xây dựng. Với giao diện trực quan và thân thiện với người dùng, chúng tôi giúp bạn số hóa gia phả, để thế hệ mai sau luôn biết mình đến từ đâu.",
+    features: [],
+    quote:
+      "Các vua Hùng đã có công dựng nước \n Bác cháu ta phảicùng nhau giữ lấy nước",
+    author: "Bác Hồ",
+    hasButton: false,
+    buttonContent: "",
+    href: "",
+  },
+  {
+    title: "Cách chúng tôi giúp bạn kết nối cội nguồn",
+    desc: "",
+    features: features,
+    quote: "",
+    author: "",
+    hasButton: true,
+    buttonContent: "Xem thêm",
+    href: "/features",
+  },
+  {
+    title: "Bắt đầu hành trình của bạn với chúng tôi",
+    desc: "Tạo nhóm cho gia đình bạn, mời người thân tham gia và cùng nhau tìm hiểu, xây dựng gia phả số thật sống động đi nào!",
+    features: [],
+    quote: "",
+    author: "",
+    hasButton: true,
+    buttonContent: "Tạo nhóm ngay",
+    href: "/group",
+  },
+];
+
+const HomeSections = () => {
+  const router = useRouter();
+  return (
+    <>
+      <ScrollToTop />
+      {sectionContent.map((item, index) => (
+        <motion.section
+          key={"home section - " + index}
+          className={`w-full ${index % 2 == 0 ? "bg-section-1" : ""} flex flex-col justify-center items-center shadow gap-3 px-1 py-10 `}
+          variants={staggerContainerVariants}
+          initial={"offscreen"}
+          whileInView={"onscreen"}
+          viewport={{
+            once: true,
+            amount: 0.2,
+          }}
+        >
+          {/* display iamge */}
+          <motion.div
+            variants={fadeInUpVariants}
+            className={"relative  h-60 aspect-square"}
+          >
+            <Image
+              loading={"eager"}
+              src={logo.src}
+              fill
+              sizes={"(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 30vw"}
+              priority
+              alt={"family=tree-logo"}
+              className={"object-cover transition-opacity duration-300"}
+            />
+          </motion.div>
+          {/* display content  */}
+          <motion.div
+            className={
+              "w-full gap-3 flex flex-col justify-center items-center px-2 py-5"
+            }
+            variants={staggerContainerVariants}
+          >
+            <motion.p
+              variants={fadeInUpVariants}
+              className={"text-2xl font-semibold text-center"}
+            >
+              {item.title}
+            </motion.p>
+            {item.desc != "" ? (
+              <motion.p className={"p-3"} variants={fadeInUpVariants}>
+                {item.desc}
+              </motion.p>
+            ) : null}
+            {item.author != "" ? (
+              <motion.div
+                className={"italic w-full flex flex-col justify-end items-end"}
+                variants={fadeInUpVariants}
+              >
+                <p className={"text-center px-3"}>{item.quote}</p>
+                <p className={"px-3"}>{item.author}</p>
+              </motion.div>
+            ) : null}
+            {item.features.length != 0
+              ? features.map((feature, featureIndex) => (
+                  <motion.ol
+                    key={"feature - " + featureIndex}
+                    className={
+                      "list-decimal list-inside space-y-4 text-lg w-full flex justify-start items-start"
+                    }
+                    variants={fadeInUpVariants}
+                  >
+                    <li
+                      key={featureIndex}
+                      className={
+                        "p-4 bg-white rounded-lg shadow-sm border-l-2 border-green-500 hover:shadow-md transition-shadow"
+                      }
+                    >
+                      <span className={"font-medium text-gray-800"}>
+                        {feature}
+                      </span>
+                    </li>
+                  </motion.ol>
+                ))
+              : null}
+            {item.hasButton == true ? (
+              <Button
+                variant={"link"}
+                className={"hover:cursor-pointer"}
+                onClick={() =>
+                  navigateTo({
+                    router: router,
+                    url: "/features",
+                  })
+                }
+              >
+                {item.buttonContent}
+              </Button>
+            ) : null}
+          </motion.div>
+        </motion.section>
+      ))}
+    </>
+  );
+};
+export default HomeSections;

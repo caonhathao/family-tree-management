@@ -45,21 +45,21 @@ export const LoaderModule = ({
         <motion.span
           variants={dotVariants as Variants}
           className={
-            "absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-600 rounded-full"
+            "absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-primary rounded-full"
           }
         />
         {/* Dấu chấm 2 */}
         <motion.span
           variants={dotVariants as Variants}
           className={
-            "absolute bottom-0 left-0 w-3 h-3 bg-green-500 rounded-full"
+            "absolute bottom-0 left-0 w-3 h-3 bg-chart-3 rounded-full"
           }
         />
         {/* Dấu chấm 3 */}
         <motion.span
           variants={dotVariants as Variants}
           className={
-            "absolute bottom-0 right-0 w-3 h-3 bg-amber-500 rounded-full"
+            "absolute bottom-0 right-0 w-3 h-3 bg-chart-5 rounded-full"
           }
         />
       </motion.div>

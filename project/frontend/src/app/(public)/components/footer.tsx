@@ -4,12 +4,12 @@ const Footer = () => {
   return (
     <div
       className={
-        "w-full h-fit px-2 py-1 flex flex-row justify-between items-center bg-background text-xs font-semibold"
+        "w-full h-fit px-2 py-1 flex flex-col justify-start items-start text-xs font-semibold text-muted-foreground"
       }
     >
-      <div>Established 2026 - 2026</div>
+      <p>@Copyright MYFA Project 2026</p>
       <div>
-        Copyright by:
+        Contact:
         <Button variant={"link"} className={"hover:cursor-pointer"}>
           caonhathao2372004@gmail.com
         </Button>

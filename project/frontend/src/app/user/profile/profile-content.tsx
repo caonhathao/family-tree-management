@@ -1,7 +1,7 @@
 "use client";
 import { AppDispatch } from "@/store";
 import Image from "next/image";
-import unknownImage from "../../../../public/img/unknow.png";
+import unknownImage from "../../../../public/img/unknow.webp";
 import { Button } from "@/components/ui/button";
 import { FaExchangeAlt } from "react-icons/fa";
 import {

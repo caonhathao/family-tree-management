@@ -16,7 +16,7 @@ const HeaderClient = ({
         "w-full px-3 py-2 flex flex-row justify-between items-center shadow-2xl"
       }
     >
-      <Navigation className={"w-[60%] flex justify-start items-center gap-3"} />
+      <Navigation />
       <div className={"w-fit flex flex-row justify-center items-center gap-2"}>
         <ToggleThemeButton />
         <UserMenu

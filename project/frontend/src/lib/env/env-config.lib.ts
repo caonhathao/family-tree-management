@@ -38,6 +38,7 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z
     .string()
     .nonempty({ message: "GOOGLE_CLIENT_ID is required" }),
+  SITE_URL: z.string().nonempty({ message: "SITE_URL is requires" }),
 });
 
 const envServer = envSchema.safeParse(process.env);
@@ -67,4 +68,5 @@ export const EnvConfig = {
   cloudinaryUrl: envData.CLOUDINARY_URL,
   clientDomain: envData.CLIENT_DOMAIN,
   googleClientId: envData.GOOGLE_CLIENT_ID,
+  siteUrl: envData.SITE_URL,
 } as const;

@@ -15,3 +15,6 @@ build/
 *.log
 npm-debug.log*
 .vscode
+.codegraph
+.opencode
+opencode.json

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { IoIosArrowBack, IoIosInformationCircleOutline } from "react-icons/io";
 import Image from "next/image";
-import notFound from "../../public/img/404.png";
+import notFound from "../../public/img/not-found.webp";
 import { navigateTo } from "@/lib/utils/navigate.utils";
 
 const NotFoundPage = () => {

@@ -5,9 +5,11 @@ import { motion } from "framer-motion";
 
 import ScrollToTop from "../../components/scroll-to-top-btn";
 import { Button } from "@/components/ui/button";
-import { fadeVariants } from "@/configs/animation/variants.amin";
-import { getScrollAnimation } from "@/hooks/get-scroll-anim";
 import { useRouter } from "next/navigation";
+import {
+  fadeInUpVariants,
+  staggerContainerVariants,
+} from "@/configs/animation/variants.amin";
 
 const FeatureStaticContent = () => {
   const router = useRouter();
@@ -15,22 +17,12 @@ const FeatureStaticContent = () => {
     <div className={"w-full h-full flex flex-col justify-start items-start"}>
       <ScrollToTop />
       <motion.div
-        {...getScrollAnimation({
-          direction: "left",
-          config: { amount: 0.1, once: false },
-        })}
-        variants={fadeVariants}
+        variants={staggerContainerVariants}
         className={"font-semibold text-2xl"}
       >
         Giới thiệu
       </motion.div>
-      <motion.div
-        {...getScrollAnimation({
-          direction: "left",
-          config: { ...scrollConfig, delay: 0.2 },
-        })}
-        variants={fadeVariants}
-      >
+      <motion.div variants={staggerContainerVariants}>
         <p>Chào mừng bạn đến với trang khám phá tính năng.</p>
         <p>
           Dự án này này được ra đời nhằm mục đích số hóa gia phả gia đình, đồng
@@ -42,13 +34,7 @@ const FeatureStaticContent = () => {
           dùng đem lại trải nghiệm tốt nhất khi sử dụng dịch vụ.
         </p>
       </motion.div>
-      <motion.div
-        {...getScrollAnimation({
-          direction: "left",
-          config: { ...scrollConfig, delay: 0.4 },
-        })}
-        variants={fadeVariants}
-      >
+      <motion.div variants={fadeInUpVariants}>
         Các dịch vụ chính, bao gồm:
         <ul>
           <li>
@@ -98,13 +84,7 @@ const FeatureStaticContent = () => {
           </li>
         </ul>
       </motion.div>
-      <motion.div
-        {...getScrollAnimation({
-          direction: "left",
-          config: { ...scrollConfig, delay: 0.6 },
-        })}
-        variants={fadeVariants}
-      >
+      <motion.div variants={fadeInUpVariants}>
         <p className={"text-sm"}>
           Dự án vẫn đang trong quá trình phát triển, vì vậy khó tránh khỏi sai
           sót, rất mong các bạn thông cảm.

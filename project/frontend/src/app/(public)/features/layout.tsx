@@ -1,15 +1,15 @@
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { FeatureMenu } from "./components/feature-menu";
 
 const FeaturesLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div
-      className={"w-screen h-full flex flex-row justify-between items-center"}
-    >
-      <div className={"w-[15%] h-full"}>
-        <FeatureMenu />
-      </div>
-      <main className={" w-[85%] h-full"}>{children}</main>
-    </div>
+    <SidebarProvider>
+      <FeatureMenu />
+      <main>
+        <SidebarTrigger />
+        {children}
+      </main>
+    </SidebarProvider>
   );
 };
 export default FeaturesLayout;

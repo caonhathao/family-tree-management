@@ -17,7 +17,7 @@ import { useMemo } from "react";
 import { IoIosArrowForward, IoMdHome } from "react-icons/io";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IoPersonOutline } from "react-icons/io5";
-import unknow from "../../../../../public/img/unknow.png";
+import unknow from "../../../../../public/img/unknow.webp";
 import { BiSupport } from "react-icons/bi";
 import { CiBoxList } from "react-icons/ci";
 import { RiQuillPenAiLine } from "react-icons/ri";

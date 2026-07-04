@@ -1,26 +1,27 @@
-import { Variants } from "framer-motion";
+import type { Variants } from "framer-motion";
 
-export const scrollConfig = { amount: 0.1, once: true };
-
-export const fadeVariants: Variants = {
-  hidden: {
-    opacity: 0,
-    y: 20,
-    filter: "blur(4px)",
-  },
-  visible: (custom: { delay?: number } = {}) => ({
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
+// Hiệu ứng container xuất hiện tuần tự cho các phần tử con
+export const staggerContainerVariants: Variants = {
+  offscreen: {},
+  onscreen: {
     transition: {
-      duration: 0.8,
-      ease: "easeOut",
-      delay: custom?.delay ?? 0,
+      staggerChildren: 0.15,
     },
-  }),
-  exit: {
-    opacity: 0,
+  },
+};
+
+// Hiệu ứng đi từ dưới lên (Fade In Up)
+export const fadeInUpVariants: Variants = {
+  offscreen: {
     y: 20,
-    filter: "blur(4px)",
+    opacity: 0,
+  },
+  onscreen: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      ease: "easeInOut",
+      duration: 0.8,
+    },
   },
 };

@@ -60,7 +60,7 @@ const AuthContent = () => {
           }}
           custom={{ direction: "right", delay: 0.2 }}
           variants={variantSlideAnimation}
-          className={`flex min-h-125 min-w-200 rounded-lg shadow-2xl border ${isLogin ? " border-blue-400" : "border-amber-400"}`}
+          className={`flex min-h-125 min-w-200 rounded-lg shadow-2xl border ${isLogin ? "border-primary/30" : "border-secondary/30"}`}
         >
           <motion.div
             layout
@@ -81,7 +81,7 @@ const AuthContent = () => {
             </div>
             <motion.div
               layout
-              className={`flex w-1/2 h-full flex-col items-center justify-center ${isLogin ? "bg-blue-500 text-white p-10 rounded-br-lg rounded-tr-lg" : "bg-amber-500 text-white p-10 rounded-bl-lg rounded-tl-lg"}`}
+              className={`flex w-1/2 h-full flex-col items-center justify-center ${isLogin ? "bg-primary text-primary-foreground p-10 rounded-br-lg rounded-tr-lg" : "bg-secondary text-secondary-foreground p-10 rounded-bl-lg rounded-tl-lg"}`}
             >
               <h2 className={"text-2xl font-bold"}>Chào bạn!</h2>
               <p className={"text-center mt-2"}>
