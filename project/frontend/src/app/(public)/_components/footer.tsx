@@ -4,7 +4,7 @@ const Footer = () => {
   return (
     <div
       className={
-        "w-full h-fit px-2 py-1 flex flex-col justify-start items-start text-xs font-semibold text-muted-foreground"
+        "w-full lg:w-4/5 lg:mx-auto h-fit px-2 py-1 flex flex-col justify-start items-start text-xs font-semibold text-muted-foreground"
       }
     >
       <p>@Copyright MYFA Project 2026</p>

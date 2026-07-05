@@ -65,7 +65,7 @@ export const UserMenu = ({
           </Button>
         </DropdownMenuTrigger>
         {isLogin ? (
-          <DropdownMenuContent>
+          <DropdownMenuContent className={"z-999"}>
             <DropdownMenuGroup>
               <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
               <DropdownMenuItem
@@ -99,7 +99,7 @@ export const UserMenu = ({
             </DropdownMenuItem>
           </DropdownMenuContent>
         ) : (
-          <DropdownMenuContent>
+          <DropdownMenuContent className={"z-999"}>
             <DropdownMenuItem
               className={"hover:cursor-pointer"}
               onClick={() => router.push("/auth?mode=login")}

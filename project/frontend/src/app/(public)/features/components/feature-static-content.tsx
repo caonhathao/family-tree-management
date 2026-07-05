@@ -3,7 +3,7 @@ import { scrollConfig } from "@/configs/animation/configs.anim";
 
 import { motion } from "framer-motion";
 
-import ScrollToTop from "../../components/scroll-to-top-btn";
+import ScrollToTop from "../../_components/scroll-to-top-btn";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import {

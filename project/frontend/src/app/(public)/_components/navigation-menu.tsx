@@ -16,8 +16,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LuMenu } from "react-icons/lu";
-import { boolean } from "zod";
 import { useState } from "react";
 import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 import { Button } from "@/components/ui/button";
@@ -40,6 +38,13 @@ export const Navigation = () => {
           className={"object-cover object-center"}
         />
       </div>
+      <h2
+        className={
+          "text-2xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent"
+        }
+      >
+        MYFA
+      </h2>
 
       {/* display on desktop devices */}
       <div className={"hidden md:block"}>
@@ -74,7 +79,7 @@ export const Navigation = () => {
       </div>
 
       {/* display on mobile */}
-      <div className={"md:hidden"}>
+      <div className={"relative md:hidden"}>
         <DropdownMenu onOpenChange={(open) => setIsOpen(open)}>
           <DropdownMenuTrigger
             id={"navigate-dropdown-menu"}
@@ -89,22 +94,22 @@ export const Navigation = () => {
               />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className={"w-40"} align={"start"}>
+          <DropdownMenuContent className={"w-40 z-999"} align={"start"}>
             <DropdownMenuGroup className={"flex flex-col"}>
               <DropdownMenuItem
-                className={navigationMenuTriggerStyle()}
+                className={""}
                 onClick={() => router.push("/features")}
               >
                 Tính năng
               </DropdownMenuItem>
               <DropdownMenuItem
-                className={navigationMenuTriggerStyle()}
+                className={""}
                 onClick={() => router.push("/features")}
               >
                 Hướng dẫn
               </DropdownMenuItem>
               <DropdownMenuItem
-                className={navigationMenuTriggerStyle()}
+                className={""}
                 onClick={() => router.push("/features")}
               >
                 FAQ

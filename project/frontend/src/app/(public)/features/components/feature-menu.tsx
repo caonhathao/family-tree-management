@@ -11,7 +11,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { FaDrawPolygon } from "react-icons/fa";
 import { MdEventAvailable } from "react-icons/md";
@@ -20,10 +19,10 @@ import { TiCloudStorageOutline } from "react-icons/ti";
 import { GrGroup } from "react-icons/gr";
 
 const features = [
-  { slug: "build-flow", name: "Dựng sơ đồ", icon: FaDrawPolygon },
-  { slug: "group-family", name: "Nhóm gia đình", icon: GrGroup },
-  { slug: "storage", name: "Lưu trữ", icon: TiCloudStorageOutline },
-  { slug: "events", name: "Sự kiện", icon: MdEventAvailable },
+  { slug: "build-flow", name: "Dựng sơ đồ", Icon: FaDrawPolygon },
+  { slug: "group-family", name: "Nhóm gia đình", Icon: GrGroup },
+  { slug: "storage", name: "Lưu trữ", Icon: TiCloudStorageOutline },
+  { slug: "events", name: "Sự kiện", Icon: MdEventAvailable },
 ];
 
 export function FeatureMenu() {
@@ -55,7 +54,7 @@ export function FeatureMenu() {
                     window.location.assign(`/features?part=${item.slug}`)
                   }
                 >
-                  <item.icon />
+                  <item.Icon />
                   {item.name}
                 </SidebarMenuButton>
               </SidebarMenuItem>

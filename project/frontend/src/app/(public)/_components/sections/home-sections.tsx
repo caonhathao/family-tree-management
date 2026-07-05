@@ -20,11 +20,11 @@ const features = [
 
 const sectionContent = [
   {
-    title: "Gìn giữ hồn cốt gia đình – Nối dài sợi dây huyết thống",
+    title: "Gìn giữ hồn cốt gia đình \n Nối dài sợi dây huyết thống",
     desc: "Gia đình không chỉ là hiện tại, mà còn là một dòng chảy bất tận từ quá khứ đến tương lai. Hệ thống của chúng tôi không chỉ là một công cụ quản lý, mà là nơi lưu giữ những câu chuyện, những gương mặt và những giá trị đạo đức mà ông cha đã dày công xây dựng. Với giao diện trực quan và thân thiện với người dùng, chúng tôi giúp bạn số hóa gia phả, để thế hệ mai sau luôn biết mình đến từ đâu.",
     features: [],
     quote:
-      "Các vua Hùng đã có công dựng nước \n Bác cháu ta phảicùng nhau giữ lấy nước",
+      "Các vua Hùng đã có công dựng nước \n Bác cháu ta phải cùng nhau giữ lấy nước",
     author: "Bác Hồ",
     hasButton: false,
     buttonContent: "",
@@ -59,8 +59,8 @@ const HomeSections = () => {
       <ScrollToTop />
       {sectionContent.map((item, index) => (
         <motion.section
-          key={"home section - " + index}
-          className={`w-full ${index % 2 == 0 ? "bg-section-1" : ""} flex flex-col justify-center items-center shadow gap-3 px-1 py-10 `}
+          key={"home-section-" + index}
+          className={`w-full lg:w-4/5 ${index % 2 == 0 ? "bg-section-1  md:flex-row" : " md:flex-row-reverse"} flex flex-col justify-center items-center gap-3 px-1 py-10 lg:p-10`}
           variants={staggerContainerVariants}
           initial={"offscreen"}
           whileInView={"onscreen"}
@@ -72,7 +72,7 @@ const HomeSections = () => {
           {/* display iamge */}
           <motion.div
             variants={fadeInUpVariants}
-            className={"relative  h-60 aspect-square"}
+            className={"relative  h-60 lg:h-96 aspect-square"}
           >
             <Image
               loading={"eager"}
@@ -87,45 +87,57 @@ const HomeSections = () => {
           {/* display content  */}
           <motion.div
             className={
-              "w-full gap-3 flex flex-col justify-center items-center px-2 py-5"
+              "w-full text-xl gap-3 flex flex-col justify-center items-center lg:items-start px-2 py-5"
             }
             variants={staggerContainerVariants}
           >
-            <motion.p
+            <motion.h2
               variants={fadeInUpVariants}
-              className={"text-2xl font-semibold text-center"}
+              className={
+                "text-2xl lg:text-4xl font-semibold text-center md:text-left whitespace-pre-line md:leading-7 lg:leading-11"
+              }
             >
               {item.title}
-            </motion.p>
+            </motion.h2>
             {item.desc != "" ? (
-              <motion.p className={"p-3"} variants={fadeInUpVariants}>
+              <motion.p
+                className={
+                  "lg:text-xl p-3 lg:p-0 whitespace-pre-line md:leading-7 lg:leading-11"
+                }
+                variants={fadeInUpVariants}
+              >
                 {item.desc}
               </motion.p>
             ) : null}
             {item.author != "" ? (
               <motion.div
-                className={"italic w-full flex flex-col justify-end items-end"}
+                className={
+                  "italic w-full flex flex-col justify-end items-end md:leading-7"
+                }
                 variants={fadeInUpVariants}
               >
-                <p className={"text-center px-3"}>{item.quote}</p>
+                <p className={"text-center px-3 whitespace-pre-line"}>
+                  {item.quote}
+                </p>
                 <p className={"px-3"}>{item.author}</p>
               </motion.div>
             ) : null}
             {item.features.length != 0
               ? features.map((feature, featureIndex) => (
                   <motion.ol
-                    key={"feature - " + featureIndex}
+                    key={"feature-" + featureIndex}
                     className={
-                      "list-decimal list-inside space-y-4 text-lg w-full flex justify-start items-start"
+                      "list-none list-inside space-y-4 text-lg w-full flex justify-start items-start"
                     }
                     variants={fadeInUpVariants}
                   >
                     <li
                       key={featureIndex}
                       className={
-                        "p-4 bg-white rounded-lg shadow-sm border-l-2 border-green-500 hover:shadow-md transition-shadow"
+                        "w-full p-4 bg-white rounded-lg shadow-sm border-l-2 border-green-500 hover:shadow-md transition-shadow"
                       }
                     >
+                      <span>{featureIndex + 1}. </span>
                       <span className={"font-medium text-gray-800"}>
                         {feature}
                       </span>
@@ -135,8 +147,8 @@ const HomeSections = () => {
               : null}
             {item.hasButton == true ? (
               <Button
-                variant={"link"}
-                className={"hover:cursor-pointer"}
+                variant={"default"}
+                className={"hover:cursor-pointer text-xl rounded-full p-3"}
                 onClick={() =>
                   navigateTo({
                     router: router,
