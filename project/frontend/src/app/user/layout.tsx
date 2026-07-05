@@ -13,7 +13,9 @@ const ProfileLayout = ({
 }>) => {
   return (
     <div className={"w-full h-full"}>
-      <SidebarProvider>
+      <SidebarProvider
+        style={{ "--sidebar-width": "12.5rem" } as React.CSSProperties}
+      >
         <SideBarProfile />
         <SidebarInset>
           <header
@@ -23,7 +25,7 @@ const ProfileLayout = ({
             <Separator orientation={"vertical"} className={"mr-2 h-4"} />
             <div className={""}>Hồ sơ cá nhân</div>
           </header>
-          <main className={"max-h-screen overflow-hidden"}>{children}</main>
+          <main className={"overflow-hidden"}>{children}</main>
         </SidebarInset>
       </SidebarProvider>
     </div>

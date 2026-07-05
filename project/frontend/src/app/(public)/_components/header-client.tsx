@@ -12,7 +12,7 @@ const HeaderClient = ({
   return (
     <header
       className={
-        "w-screen lg:w-4/5 md:mx-auto fixed top-0 z-999 bg-background px-5 py-2 grid grid-cols-[auto_1fr_auto] items-center shadow-2xl"
+        "w-screen lg:w-4/5 md:mx-auto fixed top-0 z-999 bg-background px-5 py-2 flex flex-row justify-between items-center shadow-2xl"
       }
     >
       <Navigation />

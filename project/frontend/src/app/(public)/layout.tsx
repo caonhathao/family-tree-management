@@ -9,7 +9,7 @@ const HomeLayout = ({
   return (
     <div
       className={
-        "relative w-full min-h-screen flex flex-col gap-6 justify-center items-center"
+        "relative w-full flex flex-col gap-6 justify-center items-center"
       }
     >
       <HeaderServer />

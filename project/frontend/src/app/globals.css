@@ -27,47 +27,52 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-destructive: var(--destructive);
 }
 
 :root {
   --radius: 0.75rem;
-  --primary: #578e45;
-  --primary-hover: #48773a;
-  --accent: #5f4217;
-  --accent-hover: #4b3311;
-  --bg-page: #f8f8f4;
-  --bg-footer: #f2eee8;
-  --bg-card: #fff;
-  --bg-popover: #fff;
+  /* Cập nhật tăng độ tương phản Light Mode */
+  --primary: #3e6b2f;
+  --primary-hover: #315425;
+  --accent: #54360b;
+  --accent-hover: #3f2807;
+  --bg-page: #ffffff;
+  --bg-footer: #f4ede2;
+  --bg-card: #ffffff;
+  --bg-popover: #ffffff;
   --bg-muted: #eef3ec;
-  --text: #171717;
-  --text-muted: #666;
-  --text-inverse: #fff;
-  --border: #e2e2de;
-  --ring: color-mix(in srgb, var(--primary) 45%, white);
-  --glass: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --shadow: 0 10px 30px rgb(0 0 0 /0.08);
+  --text: #111111;
+  --text-muted: #4b4b4b; /* Đảm bảo chuẩn WCAG AA cho văn bản nhỏ */
+  --text-inverse: #ffffff;
+  --border: #cccbc4; /* Đường viền rõ ràng hơn */
+  --ring: color-mix(in srgb, var(--primary) 50%, white);
+  --glass: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(0, 0, 0, 0.12);
+  --shadow: 0 10px 30px rgb(0 0 0 / 0.08);
+  --destructive: oklch(0.577 0.245 27.325);
 }
 
 .dark {
-  --primary: #72b95f;
-  --primary-hover: #8fd378;
-  --accent: #b68b58;
-  --accent-hover: #cea46c;
-  --bg-page: #12130f;
-  --bg-footer: #1e1b17;
-  --bg-card: #1b1d19;
-  --bg-popover: #1b1d19;
-  --bg-muted: #232620;
-  --text: #f5f5f5;
-  --text-muted: #a6a6a6;
-  --text-inverse: #101010;
-  --border: #30332d;
-  --ring: color-mix(in srgb, var(--primary) 60%, white);
-  --glass: rgba(20, 20, 20, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --shadow: 0 12px 35px rgb(0 0 0 /0.4);
+  /* Cập nhật tăng độ tương phản Dark Mode */
+  --primary: #82ce6e;
+  --primary-hover: #9eeb8a;
+  --accent: #c99c65;
+  --accent-hover: #e2b37a;
+  --bg-page: #0a0b08; /* Nền tối sâu hơn */
+  --bg-footer: #151310;
+  --bg-card: #121410;
+  --bg-popover: #121410;
+  --bg-muted: #1d211a;
+  --text: #fafafa;
+  --text-muted: #b5b5b5; /* Tăng tương phản chữ phụ trên nền tối */
+  --text-inverse: #0a0b08;
+  --border: #3e423a; /* Đường viền phân cách rõ hơn */
+  --ring: color-mix(in srgb, var(--primary) 65%, white);
+  --glass: rgba(15, 17, 13, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --shadow: 0 12px 35px rgb(0 0 0 / 0.5);
+  --destructive: oklch(0.704 0.191 22.216);
 }
 
 .react-flow__edge {

@@ -6,7 +6,7 @@ const HomePage = () => {
   return (
     <div
       className={
-        "w-full flex flex-col justify-center items-center gap-3 relative mt-32"
+        "w-full flex flex-col justify-center items-center gap-3 relative my-42"
       }
     >
       <HomeSections />

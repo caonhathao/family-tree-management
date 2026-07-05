@@ -88,7 +88,7 @@ export const SideBarProfile = () => {
   const { profile } = useSelector((state: RootState) => state.user);
   const router = useRouter();
   return (
-    <Sidebar collapsible={"icon"}>
+    <Sidebar collapsible={"icon"} className={"bg-background"}>
       <SidebarHeader>
         <SidebarMenu>
           <DropdownMenu>
