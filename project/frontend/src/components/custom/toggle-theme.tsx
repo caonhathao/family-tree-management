@@ -35,7 +35,7 @@ export const ToggleThemeButton = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        align={"end"}
+        align={"center"}
         className={"drop-shadow-md drop-shadow-secondary z-999"}
       >
         <DropdownMenuItem

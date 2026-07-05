@@ -54,6 +54,8 @@ const sectionContent = [
 
 const HomeSections = () => {
   const router = useRouter();
+  const MotionButton = motion.create(Button);
+
   return (
     <>
       <ScrollToTop />
@@ -87,7 +89,7 @@ const HomeSections = () => {
           {/* display content  */}
           <motion.div
             className={
-              "w-full text-xl gap-3 flex flex-col justify-center items-center lg:items-start px-2 py-5"
+              "w-full text-xl gap-3 flex flex-col justify-center items-center md:items-start px-2 py-5"
             }
             variants={staggerContainerVariants}
           >
@@ -127,7 +129,7 @@ const HomeSections = () => {
                   <motion.ol
                     key={"feature-" + featureIndex}
                     className={
-                      "list-none list-inside space-y-4 text-lg w-full flex justify-start items-start"
+                      "list-none list-inside space-y-4 text-lg w-4/5 flex justify-start items-start"
                     }
                     variants={fadeInUpVariants}
                   >
@@ -146,7 +148,7 @@ const HomeSections = () => {
                 ))
               : null}
             {item.hasButton == true ? (
-              <Button
+              <MotionButton
                 variant={"default"}
                 className={"hover:cursor-pointer text-xl rounded-full p-3"}
                 onClick={() =>
@@ -157,7 +159,7 @@ const HomeSections = () => {
                 }
               >
                 {item.buttonContent}
-              </Button>
+              </MotionButton>
             ) : null}
           </motion.div>
         </motion.section>
