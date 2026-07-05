@@ -21,8 +21,7 @@
   --color-muted-foreground: var(--text-muted);
   --color-border: var(--border);
   --color-ring: var(--ring);
-  --color-section-1: var(--bg-section-1);
-  --color-section-2: var(--bg-section-2);
+  --color-footer: var(--bg-footer);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -37,8 +36,7 @@
   --accent: #5f4217;
   --accent-hover: #4b3311;
   --bg-page: #f8f8f4;
-  --bg-section-1: #fff;
-  --bg-section-2: #f2eee8;
+  --bg-footer: #f2eee8;
   --bg-card: #fff;
   --bg-popover: #fff;
   --bg-muted: #eef3ec;
@@ -58,8 +56,7 @@
   --accent: #b68b58;
   --accent-hover: #cea46c;
   --bg-page: #12130f;
-  --bg-section-1: #171915;
-  --bg-section-2: #1e1b17;
+  --bg-footer: #1e1b17;
   --bg-card: #1b1d19;
   --bg-popover: #1b1d19;
   --bg-muted: #232620;
@@ -116,6 +113,10 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
   }
   body {
     @apply bg-background text-foreground antialiased;
