@@ -10,7 +10,7 @@ const EditorJSComponent = dynamic(() => import("./feature-editor-internal"), {
   loading: () => (
     <div
       className={
-        "w-full h-64 flex items-center justify-center animate-pulse rounded-lg"
+        "w-screen h-full flex items-center justify-center animate-pulse rounded-lg"
       }
     >
       <LoaderModule />

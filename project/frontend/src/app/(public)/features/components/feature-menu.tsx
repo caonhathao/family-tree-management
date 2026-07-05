@@ -17,6 +17,7 @@ import { MdEventAvailable } from "react-icons/md";
 import { RiArrowDropRightLine } from "react-icons/ri";
 import { TiCloudStorageOutline } from "react-icons/ti";
 import { GrGroup } from "react-icons/gr";
+import React from "react";
 
 const features = [
   { slug: "build-flow", name: "Dựng sơ đồ", Icon: FaDrawPolygon },
@@ -25,10 +26,10 @@ const features = [
   { slug: "events", name: "Sự kiện", Icon: MdEventAvailable },
 ];
 
-export function FeatureMenu() {
+const FeatureMenu = () => {
   const router = useRouter();
   return (
-    <Sidebar className={"bg-background"}>
+    <Sidebar className={"bg-background top-20 h-[calc(100dvh-5rem)] w-52"}>
       <SidebarHeader className={"bg-background font-bold"}>
         Danh mục
       </SidebarHeader>
@@ -64,4 +65,6 @@ export function FeatureMenu() {
       </SidebarContent>
     </Sidebar>
   );
-}
+};
+
+export default FeatureMenu;

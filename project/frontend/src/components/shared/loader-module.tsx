@@ -52,14 +52,14 @@ export const LoaderModule = ({
         <motion.span
           variants={dotVariants as Variants}
           className={
-            "absolute bottom-0 left-0 w-3 h-3 bg-chart-3 rounded-full"
+            "absolute bottom-0 left-0 w-3 h-3 bg-secondary rounded-full"
           }
         />
         {/* Dấu chấm 3 */}
         <motion.span
           variants={dotVariants as Variants}
           className={
-            "absolute bottom-0 right-0 w-3 h-3 bg-chart-5 rounded-full"
+            "absolute bottom-0 right-0 w-3 h-3 bg-muted-foreground rounded-full"
           }
         />
       </motion.div>
