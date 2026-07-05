@@ -35,8 +35,8 @@ export const ToggleThemeButton = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        align={"end"}
-        className={"drop-shadow-md drop-shadow-secondary"}
+        align={"center"}
+        className={"drop-shadow-md drop-shadow-secondary z-999"}
       >
         <DropdownMenuItem
           className={" hover:cursor-pointer"}

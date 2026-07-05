@@ -1,7 +1,40 @@
 import { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Giữ nguyên cấu hình để xử lý các gói Prisma/DB phức tạp
+  async headers() {
+    return [
+      {
+        source: "/img/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, max-age=0, s-maxage=600, stale-while-revalidate=86400",
+          },
+        ],
+        // Exclude static and image paths covered above
+      },
+    ];
+  },
+  reactCompiler: true,
   serverExternalPackages: [
     "@prisma/client",
     "@prisma/adapter-pg",
@@ -10,6 +43,8 @@ const nextConfig: NextConfig = {
     "bcrypt",
   ],
   images: {
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 2592000,
     remotePatterns: [
       { hostname: "picsum.photos", protocol: "https" },
       { hostname: "salt.tikicdn.com", protocol: "https" },

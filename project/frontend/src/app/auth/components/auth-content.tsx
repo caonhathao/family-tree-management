@@ -6,8 +6,10 @@ import { SignupForm } from "@/app/auth/components/signup-form";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { navigateTo } from "@/lib/utils/navigate.utils";
-import { scrollConfig } from "@/configs/animation/configs.anim";
-import { createSlideVariants } from "@/configs/animation/hook.animi";
+import {
+  fadeInUpVariants,
+  staggerContainerVariants,
+} from "@/configs/animation/variants.amin";
 
 const AuthContent = () => {
   const searchParams = useSearchParams();
@@ -17,8 +19,6 @@ const AuthContent = () => {
   const isLogin = mode === "login";
 
   const router = useRouter();
-
-  const variantSlideAnimation = createSlideVariants();
 
   return (
     <div className={"w-full h-full flex flex-col justify-between items-center"}>
@@ -33,7 +33,7 @@ const AuthContent = () => {
           onClick={() =>
             navigateTo({
               router: router,
-              action: () => router.back(),
+              action: () => router.push("/"),
             })
           }
         >
@@ -48,40 +48,24 @@ const AuthContent = () => {
           <IoIosInformationCircleOutline />
         </Button>
       </div>
-      <div className={"w-[80%] h-full flex justify-center items-center"}>
+      <div className={"w-full h-full flex justify-center items-center"}>
         {/* main container */}
-        <motion.div
-          initial={"hidden"}
-          whileInView={"visible"}
-          exit={"exit"}
-          viewport={{
-            once: scrollConfig.once,
-            amount: scrollConfig.amount,
-          }}
-          custom={{ direction: "right", delay: 0.2 }}
-          variants={variantSlideAnimation}
-          className={`flex min-h-125 min-w-200 rounded-lg shadow-2xl border ${isLogin ? " border-blue-400" : "border-amber-400"}`}
+        <div
+          className={`flex min-h-125 w-full shadow-2xl border ${isLogin ? "border-primary/30" : "border-secondary/30"}`}
         >
           <motion.div
-            layout
-            transition={{
-              type: "spring",
-              stiffness: 200,
-              damping: 25,
+            variants={staggerContainerVariants}
+            initial={"offscreen"}
+            whileInView={"onscreen"}
+            viewport={{
+              once: true,
+              amount: 0.2,
             }}
-            className={`w-full flex ${isLogin ? "flex-row" : "flex-row-reverse"} justify-center items-center gap-3`}
+            className={`w-full flex ${isLogin ? "flex-col" : "flex-col"} justify-center items-center gap-3`}
           >
-            {/* be default, sign form will be in the left side of container */}
-            <div className={"w-1/2"}>
-              {isLogin ? (
-                <LoginForm callback={decodeURIComponent(callBack)} />
-              ) : (
-                <SignupForm />
-              )}
-            </div>
             <motion.div
-              layout
-              className={`flex w-1/2 h-full flex-col items-center justify-center ${isLogin ? "bg-blue-500 text-white p-10 rounded-br-lg rounded-tr-lg" : "bg-amber-500 text-white p-10 rounded-bl-lg rounded-tl-lg"}`}
+              variants={fadeInUpVariants}
+              className={`flex w-full h-full flex-col items-center justify-center ${isLogin ? "bg-primary text-primary-foreground p-10 rounded-lg" : "bg-secondary text-secondary-foreground p-10 rounded-bl-lg rounded-tl-lg"}`}
             >
               <h2 className={"text-2xl font-bold"}>Chào bạn!</h2>
               <p className={"text-center mt-2"}>
@@ -90,8 +74,15 @@ const AuthContent = () => {
                   : "Bắt đầu hành trình mới cùng chúng tôi"}
               </p>
             </motion.div>
+            <motion.div className={"w-full"} variants={fadeInUpVariants}>
+              {isLogin ? (
+                <LoginForm callback={decodeURIComponent(callBack)} />
+              ) : (
+                <SignupForm />
+              )}
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

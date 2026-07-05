@@ -1,4 +1,3 @@
-"use client";
 import { IErrorResponse } from "@/types/base.types";
 import { Navigation } from "./navigation-menu";
 import { UserMenu } from "./user-menu";
@@ -13,15 +12,16 @@ const HeaderClient = ({
   return (
     <header
       className={
-        "w-full px-3 py-2 flex flex-row justify-between items-center shadow-2xl"
+        "w-screen lg:w-4/5 md:mx-auto fixed top-0 z-999 bg-background px-5 py-2 grid grid-cols-[auto_1fr_auto] items-center shadow-2xl"
       }
     >
-      <Navigation className={"w-[60%] flex justify-start items-center gap-3"} />
-      <div className={"w-fit flex flex-row justify-center items-center gap-2"}>
+      <Navigation />
+      <div />
+      <div className={"w-fit flex flex-row items-center gap-2"}>
         <ToggleThemeButton />
         <UserMenu
           session={user}
-          className={"flex flex-row gap-3 justify-end items-center"}
+          className={"flex flex-row gap-3 items-center"}
         />
       </div>
     </header>

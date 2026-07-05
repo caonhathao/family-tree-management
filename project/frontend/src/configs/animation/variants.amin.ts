@@ -1,26 +1,44 @@
-import { Variants } from "framer-motion";
+import type { Variants } from "framer-motion";
 
-export const scrollConfig = { amount: 0.1, once: true };
-
-export const fadeVariants: Variants = {
-  hidden: {
-    opacity: 0,
-    y: 20,
-    filter: "blur(4px)",
-  },
-  visible: (custom: { delay?: number } = {}) => ({
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
+// Hiệu ứng container xuất hiện tuần tự cho các phần tử con
+// Container effect appears step-by-step for all child elements
+export const staggerContainerVariants: Variants = {
+  offscreen: {},
+  onscreen: {
     transition: {
-      duration: 0.8,
-      ease: "easeOut",
-      delay: custom?.delay ?? 0,
+      staggerChildren: 0.15,
     },
-  }),
-  exit: {
-    opacity: 0,
+  },
+};
+
+export const fadeInUpVariants: Variants = {
+  offscreen: {
     y: 20,
-    filter: "blur(4px)",
+    opacity: 0,
+  },
+  onscreen: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      ease: "easeInOut",
+      duration: 0.8,
+    },
+  },
+};
+
+export const HoverButtonVarians: Variants = {
+  onHover: {
+    scale: 1.1,
+    transition: {
+      ease: "easeIn",
+      duration: 0.2,
+    },
+  },
+  offHover: {
+    scale: 1,
+    transition: {
+      ease: "easeOut",
+      duration: 0.2,
+    },
   },
 };

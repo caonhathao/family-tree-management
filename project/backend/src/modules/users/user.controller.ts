@@ -50,7 +50,7 @@ export class UserController {
         validators: [
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * maxFileSize }),
           new CustomFileExtensionValidator({
-            allowedExtensions: ['.jpg', '.jpeg', '.png'],
+            allowedExtensions: ['.jpg', '.jpeg', '.webp'],
           }),
         ],
         fileIsRequired: false,

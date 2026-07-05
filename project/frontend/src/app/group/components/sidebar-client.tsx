@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { IResponseGroupFamiliesDto } from "@/modules/group-family/group-family.dto";
-import logo from "../../../../../public/img/family-tree-logo.png";
+import logo from "../../../../public/img/family-tree-logo.webp";
 import { IoIosArrowForward, IoMdHome } from "react-icons/io";
 import {
   DropdownMenu,
@@ -30,19 +30,18 @@ export const SideBarClient = ({
 }) => {
   const router = useRouter();
   const getColorFromName = (name: string) => {
-    const colors = [
-      "#ef4444",
-      "#3b82f6",
-      "#10b981",
-      "#f59e0b",
-      "#8b5cf6",
-      "#ec4899",
+    const avatarColors = [
+      "var(--avatar-color-1)",
+      "var(--avatar-color-2)",
+      "var(--avatar-color-3)",
+      "var(--avatar-color-4)",
+      "var(--avatar-color-5)",
+      "var(--avatar-color-6)",
     ];
-    // Tính tổng mã ASCII của các ký tự trong tên
     const charCodeSum = name
       .split("")
       .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return colors[charCodeSum % colors.length];
+    return avatarColors[charCodeSum % avatarColors.length];
   };
   return (
     <Sidebar collapsible={"icon"}>
@@ -119,7 +118,7 @@ export const SideBarClient = ({
               >
                 <div
                   style={{
-                    backgroundColor: getColorFromName(item.name) + "20",
+                    backgroundColor: `color-mix(in srgb, ${getColorFromName(item.name)} 12%, transparent)`,
                     color: getColorFromName(item.name),
                     borderColor: getColorFromName(item.name),
                   }}
