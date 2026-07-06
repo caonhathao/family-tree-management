@@ -1,7 +1,7 @@
 "use client";
-import { ResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
+import { IResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
 import { FamilyInfoDrawer } from "./family-info-drawer";
-import { PanelEditor } from "./panel-editor";
+import { PanelEditor } from "./menu-editor/panel-editor";
 import { useEffect, useRef, useState } from "react";
 import NewFamilyMemberForm from "./forms/family-member-form";
 import { IDraftFamilyData } from "@/types/draft.types";
@@ -36,7 +36,7 @@ export const GroupContentPage = ({
   group,
   family,
 }: {
-  group: ResponseGroupFamilyDetailDto;
+  group: IResponseGroupFamilyDetailDto;
   family: IDraftFamilyData | null;
 }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -283,7 +283,7 @@ export const GroupContentPage = ({
           {showGrid && <Background variant={BackgroundVariant.Dots} gap={20} />}{" "}
           <Controls />
         </ReactFlow>
-      </div>{" "}
+      </div>
     </div>
   );
 };
