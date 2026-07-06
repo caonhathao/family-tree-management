@@ -86,7 +86,6 @@ export const GroupContentPage = ({
     dagreGraph.setGraph({
       rankdir: "TB",
       nodesep: 50,
-      ranksep: 80,
       ranker: "tight-tree",
     });
 

@@ -1,7 +1,7 @@
 import { getAllGroupAction } from "@/modules/group-family/group-family.actions";
 import { IResponseGroupFamiliesDto } from "@/modules/group-family/group-family.dto";
 
-export async function SideBarServer({
+export async function SidebarGroupServer({
   children,
 }: {
   children: (groups: IResponseGroupFamiliesDto[]) => React.ReactNode;

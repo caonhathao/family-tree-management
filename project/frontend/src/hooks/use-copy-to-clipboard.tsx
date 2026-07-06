@@ -1,3 +1,4 @@
+"use client";
 import { Toaster } from "@/components/shared/toast";
 import { useCallback } from "react";
 import { FaCheck } from "react-icons/fa";

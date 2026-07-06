@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createGroupFamilyAction } from "@/modules/group-family/group-family.actions";
-import { CreateGroupFamilyDto } from "@/modules/group-family/group-family.dto";
+import { ICreateGroupFamilyDto } from "@/modules/group-family/group-family.dto";
 import { CreateGroupFamilySchema } from "@/modules/group-family/group-family.client-schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, useTransition } from "react";
@@ -37,7 +37,7 @@ const NewGroupForm = ({ className }: { className?: string }) => {
     control,
     reset,
     formState: { errors },
-  } = useForm<CreateGroupFamilyDto>({
+  } = useForm<ICreateGroupFamilyDto>({
     resolver: zodResolver(CreateGroupFamilySchema),
     defaultValues: {
       name: "",
@@ -50,7 +50,7 @@ const NewGroupForm = ({ className }: { className?: string }) => {
   const [open, setOpen] = useState<boolean>(false);
 
   const onSubmit = (
-    values: CreateGroupFamilyDto,
+    values: ICreateGroupFamilyDto,
     e?: React.BaseSyntheticEvent,
   ) => {
     e?.preventDefault();
@@ -85,29 +85,31 @@ const NewGroupForm = ({ className }: { className?: string }) => {
         <div className={"w-full flex justify-center items-center"}>
           <Button
             variant={"outline"}
-            size={"sm"}
-            className={`hover:cursor-pointer w-fit ${className}`}
+            className={`hover:cursor-pointer w-fit ${className} lg:text-xl p-5 rounded-full bg-primary text-white`}
           >
             Tạo nhóm
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent className={"sm:max-w-sm"}>
+      <DialogContent className={"w-full lg:w-lg"}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Tạo nhóm mới</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className={"lg:text-2xl"}>Tạo nhóm mới</DialogTitle>
+            <DialogDescription className={"lg:text-xl"}>
               Điền thông tin nhóm vào biểu mẫu dưới đây.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
-            <Field>
-              <Label htmlFor={"name-1"}>Tên nhóm</Label>
+            <Field className={""}>
+              <Label htmlFor={"name-1"} className={"lg:text-xl"}>
+                Tên nhóm
+              </Label>
               <Input
                 id={"name-1"}
                 type={"text"}
                 required
                 {...register("name")}
+                className={""}
               />
               {errors.name && (
                 <span className={"text-xs text-red-500"}>
@@ -116,7 +118,9 @@ const NewGroupForm = ({ className }: { className?: string }) => {
               )}
             </Field>
             <Field>
-              <Label htmlFor={"username-1"}>Mô tả</Label>
+              <Label htmlFor={"username-1"} className={"lg:text-xl"}>
+                Mô tả
+              </Label>
               <Input
                 id={"username-1"}
                 type={"text"}
@@ -130,7 +134,9 @@ const NewGroupForm = ({ className }: { className?: string }) => {
               )}
             </Field>
             <Field>
-              <Label htmlFor={"username-1"}>Vai trò của bạn</Label>
+              <Label htmlFor={"username-1"} className={"lg:text-xl"}>
+                Vai trò của bạn
+              </Label>
               <Controller
                 name={"role"}
                 control={control}
@@ -146,13 +152,13 @@ const NewGroupForm = ({ className }: { className?: string }) => {
                       <SelectGroup>
                         <SelectItem
                           value={"OWNER"}
-                          className={"hover:cursor-pointer"}
+                          className={"hover:cursor-pointer lg:text-xl"}
                         >
                           Chủ gia đình
                         </SelectItem>
                         <SelectItem
                           value={"EDITOR"}
-                          className={"hover:cursor-pointer"}
+                          className={"hover:cursor-pointer lg:text-xl"}
                         >
                           Người chỉnh sửa
                         </SelectItem>
@@ -170,14 +176,17 @@ const NewGroupForm = ({ className }: { className?: string }) => {
           </FieldGroup>
           <DialogFooter className={"pt-2"}>
             <DialogClose asChild>
-              <Button variant={"outline"} className={"hover:cursor-pointer"}>
+              <Button
+                variant={"outline"}
+                className={"hover:cursor-pointer lg:text-xl"}
+              >
                 Hủy
               </Button>
             </DialogClose>
             <Button
               type={"submit"}
               disabled={isPending}
-              className={`w-fit flex justify-center items-center gap-2 ${!isPending ? "hover:cursor-pointer" : "hover:cursor-not-allowed"}`}
+              className={`w-fit flex justify-center items-center gap-2 ${!isPending ? "hover:cursor-pointer" : "hover:cursor-not-allowed"} lg:text-xl`}
             >
               {isPending ? (
                 <>

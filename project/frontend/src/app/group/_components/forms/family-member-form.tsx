@@ -1,3 +1,4 @@
+"use client";
 import { Toaster } from "@/components/shared/toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -291,31 +292,40 @@ const NewFamilyMemberForm = ({
                 )}
               </Field>
             </FieldGroup>
-            <DialogFooter className={"pt-2"}>
-              <DialogClose asChild>
-                <Button variant={"outline"} className={"hover:cursor-pointer"}>
-                  Hủy
-                </Button>
-              </DialogClose>
-              <Button
-                type={"button"}
-                variant={"destructive"}
-                disabled={currentData === null}
-                className={"hover:cursor-pointer"}
-                onClick={() =>
-                  deleteMemberFromDraft(currentData?.localId || "")
-                }
-              >
-                Xóa
-              </Button>
-              <Button
-                type={"submit"}
+            <DialogFooter>
+              <div
                 className={
-                  "w-fit flex justify-center items-center gap-2 hover:cursor-pointer"
+                  "w-full pt-3 flex flex-col justify-center items-center lg:flex-row-reverse lg:justify-between gap-1"
                 }
               >
-                Tạo
-              </Button>
+                <Button
+                  type={"submit"}
+                  className={
+                    "w-full md:w-4/5 lg:w-fit flex justify-center items-center gap-2 hover:cursor-pointer"
+                  }
+                >
+                  Tạo
+                </Button>
+                <Button
+                  type={"button"}
+                  variant={"destructive"}
+                  disabled={currentData === null}
+                  className={"w-full md:w-4/5 lg:w-fit hover:cursor-pointer"}
+                  onClick={() =>
+                    deleteMemberFromDraft(currentData?.localId || "")
+                  }
+                >
+                  Xóa
+                </Button>
+                <DialogClose asChild>
+                  <Button
+                    variant={"outline"}
+                    className={"w-full md:w-4/5 lg:w-fit hover:cursor-pointer"}
+                  >
+                    Hủy
+                  </Button>
+                </DialogClose>
+              </div>
             </DialogFooter>
           </form>
         </DialogContent>

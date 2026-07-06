@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { IoIosArrowBack, IoIosInformationCircleOutline } from "react-icons/io";
 import { motion } from "framer-motion";

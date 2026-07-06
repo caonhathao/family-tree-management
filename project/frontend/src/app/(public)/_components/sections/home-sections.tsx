@@ -1,3 +1,4 @@
+"use client";
 import { motion } from "framer-motion";
 import ScrollToTop from "../scroll-to-top-btn";
 import Image from "next/image";
