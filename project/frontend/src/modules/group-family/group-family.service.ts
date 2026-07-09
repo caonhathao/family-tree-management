@@ -3,7 +3,7 @@ import { MEMBER_ROLE } from "@prisma/client";
 import {
   IResponseGroupFamiliesDto,
   IResponseJoinGroupDto,
-  ResponseGroupFamilyDetailDto,
+  IResponseGroupFamilyDetailDto,
 } from "./group-family.dto";
 import {
   CreateGroupFamilyDto,
@@ -161,7 +161,7 @@ export const GroupFamilyService = {
       throw new Error("Group not found");
     }
 
-    return group as ResponseGroupFamilyDetailDto;
+    return group as IResponseGroupFamilyDetailDto;
   },
 
   updateGroup: async (
@@ -264,6 +264,43 @@ export const GroupFamilyService = {
         },
       });
       return res;
+    } catch (err: unknown) {
+      console.log("error at quit group service:", err);
+      throw err;
+    }
+  },
+  destroyGroup: async (userId: string, groupId: string) => {
+    try {
+      //check validation
+      //check userId (requester) is in the group (groupId) or not
+      const member = await prisma.groupMember.findFirst({
+        where: {
+          memberId: userId,
+          groupId: groupId,
+        },
+        select: {
+          id: true,
+          role: true,
+          isLeader: true,
+        },
+      });
+      if (!member) {
+        throw new Error("User is not in the group");
+      }
+
+      if (!member.isLeader) throw new Error("Permission denied!");
+      else {
+        const result = await prisma.groupFamily.delete({
+          where: {
+            id: groupId,
+          },
+          select: {
+            id: true,
+          },
+        });
+        if (!result) throw new Error("Destroy group failed");
+        else return result;
+      }
     } catch (err: unknown) {
       console.log("error at quit group service:", err);
       throw err;

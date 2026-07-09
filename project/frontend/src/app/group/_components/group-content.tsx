@@ -27,6 +27,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { setDraft, setOrigin } from "@/store/family/familySlice";
 import isEqual from "lodash.isequal";
+import FamilySettingDrawer from "./family-setting-drawer";
 
 const nodeTypes = {
   familyNode: FamilyMemberNode,
@@ -240,9 +241,11 @@ export const GroupContentPage = ({
         setNodesDraggable={setNodesDraggable}
         groupId={group.id}
       />
-      <div className={"fixed top-20 right-5 z-50"}>
+      <div className={"w-fit fixed top-20 right-5 z-50 flex flex-col gap-3"}>
         <FamilyInfoDrawer data={group} />
+        <FamilySettingDrawer data={group} />
       </div>
+
       {openFamilyMemberForm && (
         <NewFamilyMemberForm
           currentData={editingMember}

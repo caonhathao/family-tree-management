@@ -211,7 +211,11 @@ export const PanelEditor = ({
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className={"w-56"} align={"start"} side={"right"}>
+        <DropdownMenuContent
+          className={"w-56 lg:w-60"}
+          align={"start"}
+          side={"right"}
+        >
           <DropdownMenuGroup>
             <DropdownMenuLabel className={" lg:text-lg"}>
               Chung
@@ -259,6 +263,7 @@ export const PanelEditor = ({
             <DropdownMenuCheckboxItem
               checked={nodesDraggable}
               onCheckedChange={setNodesDraggable}
+              className={"hover:cursor-pointer lg:text-lg"}
             >
               <RiDragMoveFill />
               Cho phép kéo thả

@@ -4,10 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -19,15 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { quitGroupAction } from "@/modules/group-family/group-family.actions";
 import { IResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
 import { RemoveFromGroupAction } from "@/modules/group-member/group-member.actions";
-import { CreateInviteLinkAction } from "@/modules/invite/invite.actions";
-import {
-  ICreateInviteDto,
-  IResponseCreateInviteDto,
-} from "@/modules/invite/invite.dto";
 import { RootState } from "@/store";
 import { IErrorResponse } from "@/types/base.types";
 import { useState } from "react";
@@ -53,33 +44,6 @@ export const FamilyInfoDrawer = ({
   const [isUpdateInfo, setIsUpdateInfo] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
-  const handleCopy = useCopyToClipboard();
-  const handleCreateInviteLink = async () => {
-    const payload: ICreateInviteDto = {
-      groupId: data.id,
-      expiresAt: new Date(),
-    };
-    const res:
-      | { success: boolean; error: string }
-      | IResponseCreateInviteDto
-      | { err: string } = await CreateInviteLinkAction(payload);
-    //console.log(res);
-    if (res && "error" in res) {
-      Toaster({
-        title: "Lỗi",
-        description: res.error as string,
-        type: "error",
-      });
-    } else if (res && "inviteLink" in res) {
-      Toaster({
-        title: "Thành công",
-        description: "Tạo thành công",
-        type: "success",
-      });
-      handleCopy(window.location.origin + res.inviteLink);
-    }
-  };
-
   const handleRemoveMember = async (memberId: string) => {
     const res: IErrorResponse | undefined = await RemoveFromGroupAction(
       data.id,
@@ -90,17 +54,6 @@ export const FamilyInfoDrawer = ({
         title: "Lỗi",
         description:
           (res.error as string) || "Không thể xóa thành viên khỏi nhóm",
-        type: "error",
-      });
-    }
-  };
-
-  const handleQuitGroup = async () => {
-    const res: IErrorResponse | undefined = await quitGroupAction(data.id);
-    if (res?.error) {
-      Toaster({
-        title: "Lỗi",
-        description: res.error as string,
         type: "error",
       });
     }
@@ -120,10 +73,7 @@ export const FamilyInfoDrawer = ({
           setIsOpen(open);
         }}
       >
-        <DrawerTrigger
-          asChild
-          className={"fixed right-3 top-15 hover:cursor-pointer"}
-        >
+        <DrawerTrigger asChild className={"hover:cursor-pointer"}>
           <Button variant={"outline"} size={"icon-lg"}>
             <MdOutlineInfo />
           </Button>
@@ -239,28 +189,6 @@ export const FamilyInfoDrawer = ({
               </div>
             ))}
           </div>
-          <DrawerFooter>
-            <Button
-              type={"button"}
-              onClick={() => handleCreateInviteLink()}
-              className={"hover:cursor-pointer"}
-            >
-              Tạo lời mời
-            </Button>
-            <Button
-              type={"button"}
-              variant={"destructive"}
-              className={"hover:cursor-pointer"}
-              onClick={() => handleQuitGroup()}
-            >
-              Rời khỏi nhóm
-            </Button>
-            <DrawerClose asChild>
-              <Button variant={"outline"} className={"hover:cursor-pointer"}>
-                Thoát
-              </Button>
-            </DrawerClose>
-          </DrawerFooter>
         </DrawerContent>
       </Drawer>
     </>

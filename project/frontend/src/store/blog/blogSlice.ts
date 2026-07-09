@@ -20,6 +20,8 @@ const createEmptyBlog = (slug: string): IBlogDto => ({
   slug: slug,
   title: "",
   content: "",
+  createdAt: new Date(),
+  updatedAt: new Date(),
 });
 
 const blogSlice = createSlice({
