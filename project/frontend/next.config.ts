@@ -1,6 +1,22 @@
 import { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: [
+      "react-icons",
+      "@hugeicons/core-free-icons",
+      "@hugeicons/react",
+    ],
+  },
+  turbopack: {
+    rules: {
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.js",
+      },
+    },
+  },
+
   async headers() {
     return [
       {

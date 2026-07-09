@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import BioUserGroup from "./bio-user";
 import { safeJsonParse } from "@/lib/utils/funcs.utils";
 
-export const UpdateUserForm = ({ className }: { className: string }) => {
+const UpdateUserForm = ({ className }: { className: string }) => {
   const { profile } = useSelector((state: RootState) => state.user);
 
   type UserFormValues = z.input<typeof UserSchema>;
@@ -121,7 +121,11 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
   return (
     <div className={className}>
       <form onSubmit={handleSubmit(onSubmit)} className={"flex flex-col gap-5"}>
-        <FieldGroup className={"flex flex-row gap-5"}>
+        <FieldGroup
+          className={
+            "grid grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1 gap-5"
+          }
+        >
           <Field>
             <FieldLabel htmlFor={"fullName"}>Tên của bạn là:</FieldLabel>
             <Input
@@ -136,6 +140,7 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
               </span>
             )}
           </Field>
+
           <Field className={"w-full"}>
             <FieldLabel htmlFor={"date"}>Sinh nhật của bạn là:</FieldLabel>
             <Popover open={open} onOpenChange={setOpen}>
@@ -166,11 +171,49 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
             </Popover>
           </Field>
         </FieldGroup>
+        <FieldGroup
+          className={
+            "grid grid-cols-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1 gap-5"
+          }
+        >
+          <Field>
+            <FieldLabel htmlFor={"fullName"}>Tên gợi nhớ là:</FieldLabel>
+            <Input
+              id={"fullName"}
+              type={"text"}
+              required
+              {...register("fullName")}
+            />
+            {errors.fullName && (
+              <span className={"text-xs text-red-500"}>
+                {errors.fullName.message}
+              </span>
+            )}
+          </Field>
+          <Field>
+            <FieldLabel htmlFor={"fullName"}>Bạn sống ở đâu?:</FieldLabel>
+            <Input
+              id={"fullName"}
+              type={"text"}
+              required
+              {...register("fullName")}
+            />
+            {errors.fullName && (
+              <span className={"text-xs text-red-500"}>
+                {errors.fullName.message}
+              </span>
+            )}
+          </Field>
+        </FieldGroup>
         <BioUserGroup bio={bio} setBio={setBio} />
-        <div className={"flex flex-row gap-5"}>
+        <div
+          className={
+            "flex flex-row justify-center items-center lg:justify-start gap-5"
+          }
+        >
           <Button
             type={"button"}
-            variant={"destructive"}
+            variant={"outline"}
             className={"hover:cursor-pointer"}
             onClick={() => reset()}
           >
@@ -178,7 +221,7 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
           </Button>
           <Button
             type={"submit"}
-            variant={"outline"}
+            variant={"default"}
             className={"hover:cursor-pointer"}
           >
             Cập nhật
@@ -188,3 +231,4 @@ export const UpdateUserForm = ({ className }: { className: string }) => {
     </div>
   );
 };
+export default UpdateUserForm;

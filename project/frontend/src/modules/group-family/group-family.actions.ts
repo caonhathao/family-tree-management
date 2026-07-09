@@ -1,6 +1,6 @@
 "use server";
 import {
-  CreateGroupFamilyDto,
+  ICreateGroupFamilyDto,
   IUpdateGroupFamilyDto,
 } from "./group-family.dto";
 import { handleError } from "@/lib/utils/funcs.utils";
@@ -9,7 +9,7 @@ import { headers } from "next/headers";
 import { GroupFamilyService } from "./group-family.service";
 import { redirect } from "next/navigation";
 
-export async function createGroupFamilyAction(data: CreateGroupFamilyDto) {
+export async function createGroupFamilyAction(data: ICreateGroupFamilyDto) {
   let isSuccess = false;
 
   try {
@@ -115,6 +115,28 @@ export async function quitGroupAction(groupId: string) {
     }
 
     const res = await GroupFamilyService.quitGroup(userId, groupId);
+    if (res) {
+      isSuccess = true;
+    }
+  } catch (err) {
+    return handleError(err);
+  }
+  if (isSuccess) {
+    revalidatePath("/group");
+    redirect("/group");
+  }
+}
+
+export async function destroyGroupAction(groupId: string) {
+  let isSuccess = false;
+  try {
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthoried");
+    }
+
+    const res = await GroupFamilyService.destroyGroup(userId, groupId);
     if (res) {
       isSuccess = true;
     }

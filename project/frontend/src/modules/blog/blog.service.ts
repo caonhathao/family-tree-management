@@ -136,6 +136,8 @@ const getBlog = async (slug: string) => {
         title: true,
         slug: true,
         content: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 

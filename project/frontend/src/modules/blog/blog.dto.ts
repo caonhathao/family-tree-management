@@ -3,6 +3,8 @@ export interface IBlogDto {
   slug: string;
   title: string;
   content: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 export interface IBlogsDto {
   id: string;

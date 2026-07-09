@@ -5,7 +5,7 @@ import { IBlogDto, IBlogsDto } from "@/modules/blog/blog.dto";
 import { IErrorResponse, IPaginationBase } from "@/types/base.types";
 import { LoaderModule } from "@/components/shared/loader-module";
 
-const EditorJSComponent = dynamic(() => import("./FeatureEditorInternal"), {
+const FeatureEditorInternal = dynamic(() => import("./FeatureEditorInternal"), {
   ssr: false,
   loading: () => (
     <div
@@ -29,5 +29,5 @@ export default function FeatureEditor({
   slug,
   list,
 }: FeatureEditorProps) {
-  return <EditorJSComponent blog={blog} slug={slug} list={list} />;
+  return <FeatureEditorInternal blog={blog} slug={slug} list={list} />;
 }

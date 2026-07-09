@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { UpdateUserForm } from "./components/forms/update-user";
+import UpdateUserForm from "./components/forms/update-user";
 import { useEffect, useMemo } from "react";
 import { IResponseUserDto } from "@/modules/user/user.dto";
 import { IErrorResponse } from "@/types/base.types";
@@ -17,6 +17,8 @@ import { useDispatch } from "react-redux";
 import { setProfile } from "@/store/user/userSlice";
 import { useRouter } from "next/navigation";
 import { navigateTo } from "@/lib/utils/navigate.utils";
+import { Separator } from "@/components/ui/separator";
+import { FaArrowRight } from "react-icons/fa6";
 
 const ProfileContent = ({
   data,
@@ -53,57 +55,106 @@ const ProfileContent = ({
   }, [data]);
   const router = useRouter();
   return (
-    <div className={"w-full h-full p-5 flex flex-row gap-3"}>
-      <div className={"w-[50%] flex flex-row justify-center items-start gap-5"}>
-        <div className={"w-fit flex justify-center items-center"}>
-          <div className={"rounded-lg border w-fit p-0.5 relative"}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  size={"icon-sm"}
-                  className={"absolute top-0 right-0 hover:cursor-pointer"}
-                >
-                  <FaExchangeAlt />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Đổi ảnh</TooltipContent>
-            </Tooltip>
-            <Image src={avatar} width={100} height={100} alt={"avatar"} />
-          </div>
+    <div
+      className={
+        "w-full h-full flex flex-col gap-3 py-5 md:p-5 lg:px-20 lg:py-10"
+      }
+    >
+      {/* display avatar and profile */}
+      <div
+        className={
+          "w-full flex flex-col justify-center items-center md:flex-row md:items-start gap-5 py-5"
+        }
+      >
+        <div
+          className={
+            "rounded-lg h-60 lg:h-80 border aspect-square relative shadow"
+          }
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={"outline"}
+                size={"icon-sm"}
+                className={"absolute top-0 right-0 z-10 hover:cursor-pointer"}
+              >
+                <FaExchangeAlt />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Đổi ảnh</TooltipContent>
+          </Tooltip>
+          <Image
+            src={avatar}
+            sizes={"(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 30vw"}
+            fill
+            alt={"avatar"}
+            className={"rounded-lg"}
+          />
         </div>
-        <div className={"w-full h-full flex flex-col items-start"}>
-          <UpdateUserForm className={"w-full border rounded-lg p-3 shadow"} />
+        {/* display profile */}
+        <div className={"w-full flex flex-col gap-3 p-3"}>
+          <h2 className={"font-bold"}>Thông tin chung</h2>
+          <UpdateUserForm className={"w-full bg-background"} />
         </div>
       </div>
-      <div className={"w-[50%] flex flex-col gap-3"}>
-        {/* Showing some infomation about groups, invites, chats,... */}
-        <div className={"border shadow rounded-lg p-3 flex flex-col"}>
-          <strong>Thông tin chung</strong>
-
-          <div>
-            Số nhóm hiện có: {availableData?.groups}
-            <Button
-              variant={"link"}
-              size={"sm"}
-              className={"hover:cursor-pointer"}
-              onClick={() =>
-                navigateTo({
-                  router: router,
-                  url: "/user/groups",
-                })
-              }
-            >
-              Xem chi tiết
+      <Separator />
+      <div
+        className={
+          "w-full md:w-fit h-full flex flex-col items-start justify-center"
+        }
+      >
+        {/* display others */}
+        <div className={"w-full flex flex-col gap-3 py-5"}>
+          {/* Showing some infomation about groups, invites, chats,... */}
+          <div className={" p-3 flex flex-col"}>
+            <strong>Tóm tắt hoạt động</strong>
+            <div>
+              Số nhóm hiện có: {availableData?.groups}
+              <Button
+                variant={"link"}
+                size={"sm"}
+                className={"hover:cursor-pointer"}
+                onClick={() =>
+                  navigateTo({
+                    router: router,
+                    url: "/user/groups",
+                  })
+                }
+              >
+                Xem chi tiết
+              </Button>
+            </div>
+            <div>Số lời mời hiện có: {availableData?.invites}</div>
+            <div>Số cuộc trò chuyện hiện có: (in progress)</div>
+          </div>
+          <Separator />
+          <div className={" p-3 flex flex-col"}>
+            <p>
+              <strong>Dung lượng lưu trữ</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+      <Separator />
+      <div
+        className={
+          "w-full md:w-fit h-full flex flex-col items-start justify-center p-3"
+        }
+      >
+        <h2 className={"font-bold"}>Bảo mật</h2>
+        <div className={"flex flex-col justify-center items-start gap-3"}>
+          <div className={"flex flex-row justify-center items-start gap-3"}>
+            <p className={"py-1"}>Xem thêm về thông tin đăng nhập</p>
+            <Button variant={"outline"}>
+              <FaArrowRight />
             </Button>
           </div>
-          <p>Số lời mời hiện có: {availableData?.invites}</p>
-          <p>Số cuộc trò chuyện hiện có: (in progress)</p>
-        </div>
-        <div className={"border shadow rounded-lg p-3"}>
-          <p>
-            <strong>Dung lượng lưu trữ</strong>
-          </p>
+          <div className={"flex flex-row justify-center items-start gap-3"}>
+            <p className={"py-1"}>Xóa tài khoản:</p>
+            <Button variant={"destructive"}>
+              <FaArrowRight />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

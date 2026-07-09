@@ -1,6 +1,6 @@
 import { MEMBER_ROLE } from "@prisma/client";
 
-export interface CreateGroupFamilyDto {
+export interface ICreateGroupFamilyDto {
   name: string;
   description: string;
   role: MEMBER_ROLE;
@@ -11,7 +11,7 @@ export interface IUpdateGroupFamilyDto {
   description: string;
 }
 
-export interface ResponseGroupFamilyDetailDto {
+export interface IResponseGroupFamilyDetailDto {
   id: string;
   name: string;
   description: string;

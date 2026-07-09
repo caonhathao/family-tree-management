@@ -94,7 +94,7 @@ export default function FeatureEditorInternal({
       }
     }
     return {
-      time: Date.now(),
+      time: 0,
       blocks: [],
       version: "2.28.2",
     };
@@ -116,7 +116,6 @@ export default function FeatureEditorInternal({
     if (ejInstance.current) {
       return;
     }
-
     const editor = new EditorJS({
       holder: EDITOR_HOLDER_ID,
       data,

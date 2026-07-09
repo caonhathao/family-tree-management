@@ -1,7 +1,7 @@
 "use client";
-import { ResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
+import { IResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
 import { FamilyInfoDrawer } from "./family-info-drawer";
-import { PanelEditor } from "./panel-editor";
+import { PanelEditor } from "./menu-editor/panel-editor";
 import { useEffect, useRef, useState } from "react";
 import NewFamilyMemberForm from "./forms/family-member-form";
 import { IDraftFamilyData } from "@/types/draft.types";
@@ -27,6 +27,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { setDraft, setOrigin } from "@/store/family/familySlice";
 import isEqual from "lodash.isequal";
+import FamilySettingDrawer from "./family-setting-drawer";
 
 const nodeTypes = {
   familyNode: FamilyMemberNode,
@@ -36,7 +37,7 @@ export const GroupContentPage = ({
   group,
   family,
 }: {
-  group: ResponseGroupFamilyDetailDto;
+  group: IResponseGroupFamilyDetailDto;
   family: IDraftFamilyData | null;
 }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -86,7 +87,6 @@ export const GroupContentPage = ({
     dagreGraph.setGraph({
       rankdir: "TB",
       nodesep: 50,
-      ranksep: 80,
       ranker: "tight-tree",
     });
 
@@ -241,9 +241,11 @@ export const GroupContentPage = ({
         setNodesDraggable={setNodesDraggable}
         groupId={group.id}
       />
-      <div className={"fixed top-20 right-5 z-50"}>
+      <div className={"w-fit fixed top-20 right-5 z-50 flex flex-col gap-3"}>
         <FamilyInfoDrawer data={group} />
+        <FamilySettingDrawer data={group} />
       </div>
+
       {openFamilyMemberForm && (
         <NewFamilyMemberForm
           currentData={editingMember}
@@ -284,7 +286,7 @@ export const GroupContentPage = ({
           {showGrid && <Background variant={BackgroundVariant.Dots} gap={20} />}{" "}
           <Controls />
         </ReactFlow>
-      </div>{" "}
+      </div>
     </div>
   );
 };

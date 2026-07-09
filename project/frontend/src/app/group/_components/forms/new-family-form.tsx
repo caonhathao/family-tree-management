@@ -1,3 +1,4 @@
+"use client";
 import { Toaster } from "@/components/shared/toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,6 +86,7 @@ const NewFamilyForm = ({
       title: "Tạo sơ đồ thành công",
       description: "Hãy tạo thêm thành viên trong sơ đồ",
       type: "success",
+      cancel: { label: "OK", onClick: () => {} },
     });
     setOpenState(false);
     reset();

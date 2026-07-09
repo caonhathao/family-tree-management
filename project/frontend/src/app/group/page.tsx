@@ -2,7 +2,7 @@
 
 import { LoaderModule } from "@/components/shared/loader-module";
 import { Suspense } from "react";
-import { GroupContentWrapper } from "./components/group-content-wrapper";
+import { GroupContentWrapper } from "./_components/group-content-wrapper";
 
 export default async function GroupPage({
   searchParams,

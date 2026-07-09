@@ -40,7 +40,7 @@ const ScrollToTop = () => {
           animate={"visible"}
           exit={"hidden"}
           variants={variants}
-          className={"fixed bottom-20 right-3 z-50"}
+          className={"fixed bottom-20 right-3 z-9999"}
         >
           <Button
             variant={"outline"}

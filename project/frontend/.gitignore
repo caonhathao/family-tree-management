@@ -2,3 +2,4 @@
 .env*.local
 prisma/generated
 prisma/migrations
+knip.json

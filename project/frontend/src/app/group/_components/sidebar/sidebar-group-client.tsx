@@ -4,12 +4,13 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { IResponseGroupFamiliesDto } from "@/modules/group-family/group-family.dto";
-import logo from "../../../../public/img/family-tree-logo.webp";
+import logo from "../../../../../public/img/family-tree-logo.webp";
 import { IoIosArrowForward, IoMdHome } from "react-icons/io";
 import {
   DropdownMenu,
@@ -20,10 +21,10 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MdOutlineContactSupport } from "react-icons/md";
-import NewGroupForm from "./forms/new-group-form";
+import NewGroupForm from "../forms/new-group-form";
 import { cn } from "@/lib/utils";
 
-export const SideBarClient = ({
+const SidebarGroupClient = ({
   data,
 }: {
   data: IResponseGroupFamiliesDto[];
@@ -44,7 +45,7 @@ export const SideBarClient = ({
     return avatarColors[charCodeSum % avatarColors.length];
   };
   return (
-    <Sidebar collapsible={"icon"}>
+    <Sidebar collapsible={"icon"} className={"bg-background"}>
       <SidebarHeader className={"flex flex-row justify-between items-center"}>
         <SidebarMenu>
           <DropdownMenu>
@@ -69,7 +70,9 @@ export const SideBarClient = ({
                   />
                 </div>
                 <div
-                  className={"font-bold group-data-[collapsible=icon]:hidden"}
+                  className={
+                    "font-bold group-data-[collapsible=icon]:hidden lg:text-xl"
+                  }
                 >
                   Nhóm của bạn
                 </div>
@@ -78,15 +81,15 @@ export const SideBarClient = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem
-                className={"hover:cursor-pointer"}
+                className={"hover:cursor-pointer lg:text-xl gap-3"}
                 onClick={() => router.push("/")}
               >
                 <IoMdHome />
                 Về trang chủ
               </DropdownMenuItem>
               <DropdownMenuItem
-                className={"hover:cursor-pointer"}
-                onClick={() => router.push("/")}
+                className={"hover:cursor-pointer lg:text-xl gap-3"}
+                onClick={() => router.push("/tutorials")}
               >
                 <MdOutlineContactSupport />
                 Hướng dẫn
@@ -96,6 +99,9 @@ export const SideBarClient = ({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarGroup>
+        <SidebarGroupLabel className={"lg:text-lg"}>
+          Danh sách
+        </SidebarGroupLabel>
         <SidebarContent>
           {data && data.length === 0 ? (
             <div
@@ -103,7 +109,7 @@ export const SideBarClient = ({
                 "w-full flex flex-col justify-center items-center gap-3 group-data-[collapsible=icon]:hidden"
               }
             >
-              <p className={"italic"}>Không có nhóm nào</p>
+              <p className={"italic lg:text-2xl"}>Không có nhóm nào</p>
             </div>
           ) : (
             data.map((item, index) => (
@@ -123,12 +129,14 @@ export const SideBarClient = ({
                     borderColor: getColorFromName(item.name),
                   }}
                   className={
-                    "size-7 shrink-0 border rounded-lg font-bold flex items-center justify-center"
+                    "size-7 lg:size-8 shrink-0 border rounded-lg font-bold flex items-center justify-center"
                   }
                 >
                   {item.name[0]}
                 </div>
-                <div className={"group-data-[collapsible=icon]:hidden"}>
+                <div
+                  className={"group-data-[collapsible=icon]:hidden lg:text-xl"}
+                >
                   {item.name}
                 </div>
               </SidebarMenuButton>
@@ -141,3 +149,4 @@ export const SideBarClient = ({
     </Sidebar>
   );
 };
+export default SidebarGroupClient;

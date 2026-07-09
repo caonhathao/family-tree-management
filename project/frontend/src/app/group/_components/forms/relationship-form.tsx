@@ -1,3 +1,4 @@
+"use client";
 import { Toaster } from "@/components/shared/toast";
 import { Button } from "@/components/ui/button";
 import {

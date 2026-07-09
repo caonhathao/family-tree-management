@@ -1,3 +1,4 @@
+"use client";
 import { ShowHideButton } from "@/components/shared/show-hide-button";
 import { Button } from "@/components/ui/button";
 import {
