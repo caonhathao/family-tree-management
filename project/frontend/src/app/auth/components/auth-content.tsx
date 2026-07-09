@@ -51,22 +51,30 @@ const AuthContent = () => {
       </div>
       <div className={"w-full h-full flex justify-center items-center"}>
         {/* main container */}
-        <div
-          className={`flex min-h-125 w-full shadow-2xl border ${isLogin ? "border-primary/30" : "border-secondary/30"}`}
+        <motion.div
+          className={`flex min-h-125 w-full md:w-[60%] lg:w-[50%] shadow-2xl border rounded-none md:rounded-lg ${isLogin ? "border-primary/30" : "border-secondary/30"}`}
+          variants={staggerContainerVariants}
+          initial={"offscreen"}
+          whileInView={"onscreen"}
+          viewport={{
+            once: true,
+            amount: 0.2,
+          }}
         >
           <motion.div
-            variants={staggerContainerVariants}
-            initial={"offscreen"}
-            whileInView={"onscreen"}
-            viewport={{
-              once: true,
-              amount: 0.2,
-            }}
-            className={`w-full flex ${isLogin ? "flex-col" : "flex-col"} justify-center items-center gap-3`}
+            variants={fadeInUpVariants}
+            className={`w-full flex ${isLogin ? "flex-col lg:flex-row-reverse" : "flex-col lg:flex-row"} justify-center items-center gap-3`}
           >
+            {/* show greeting */}
             <motion.div
-              variants={fadeInUpVariants}
-              className={`flex w-full h-full flex-col items-center justify-center ${isLogin ? "bg-primary text-primary-foreground p-10 rounded-lg" : "bg-secondary text-secondary-foreground p-10 rounded-bl-lg rounded-tl-lg"}`}
+              layout
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className={`flex w-full h-full flex-col items-center justify-center rounded-none 
+                ${
+                  isLogin
+                    ? "bg-primary text-primary-foreground p-10 md:rounded-t-lg lg:rounded-tl-none lg:rounded-tr-lg lg:rounded-br-lg"
+                    : "bg-secondary text-secondary-foreground p-10 md:rounded-t-lg lg:rounded-tr-none lg:rounded-bl-lg"
+                }`}
             >
               <h2 className={"text-2xl font-bold"}>Chào bạn!</h2>
               <p className={"text-center mt-2"}>
@@ -75,7 +83,12 @@ const AuthContent = () => {
                   : "Bắt đầu hành trình mới cùng chúng tôi"}
               </p>
             </motion.div>
-            <motion.div className={"w-full"} variants={fadeInUpVariants}>
+            {/* show forms */}
+            <motion.div
+              className={"w-full"}
+              layout
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
               {isLogin ? (
                 <LoginForm callback={decodeURIComponent(callBack)} />
               ) : (
@@ -83,7 +96,7 @@ const AuthContent = () => {
               )}
             </motion.div>
           </motion.div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
