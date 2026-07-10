@@ -20,6 +20,7 @@
   --color-muted: var(--bg-muted);
   --color-muted-foreground: var(--text-muted);
   --color-border: var(--border);
+  --color-input: var(--border);
   --color-ring: var(--ring);
   --color-footer: var(--bg-footer);
 
@@ -46,6 +47,7 @@
   --text-muted: #4b4b4b; /* Đảm bảo chuẩn WCAG AA cho văn bản nhỏ */
   --text-inverse: #ffffff;
   --border: #cccbc4; /* Đường viền rõ ràng hơn */
+  --input: #000000;
   --ring: color-mix(in srgb, var(--primary) 50%, white);
   --glass: rgba(255, 255, 255, 0.75);
   --glass-border: rgba(0, 0, 0, 0.12);
@@ -68,6 +70,7 @@
   --text-muted: #b5b5b5; /* Tăng tương phản chữ phụ trên nền tối */
   --text-inverse: #0a0b08;
   --border: #3e423a; /* Đường viền phân cách rõ hơn */
+  --input: #3e423a;
   --ring: color-mix(in srgb, var(--primary) 65%, white);
   --glass: rgba(15, 17, 13, 0.75);
   --glass-border: rgba(255, 255, 255, 0.15);

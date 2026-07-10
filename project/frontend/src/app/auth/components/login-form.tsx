@@ -22,7 +22,9 @@ import { Toaster } from "@/components/shared/toast";
 import { LoaderModule } from "@/components/shared/loader-module";
 import { IErrorResponse, ISuccessResponse } from "@/types/base.types";
 import { navigateTo } from "@/lib/utils/navigate.utils";
-
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { loginGoogleAction } from "@/modules/auth/auth.actions";
+import { EnvConfig } from "@/lib/env/env-config.lib";
 interface LoginFormProps extends React.ComponentProps<"div"> {
   callback?: string;
 }
@@ -149,13 +151,21 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
                     "Đăng nhập"
                   )}
                 </Button>
-                <Button
-                  variant={"outline"}
-                  type={"button"}
-                  className={"hover:cursor-pointer"}
-                >
-                  Đăng nhập với Google
-                </Button>
+
+                <GoogleOAuthProvider clientId={EnvConfig.googleClientId}>
+                  <GoogleLogin
+                    onSuccess={(credentialResponse) => {
+                      startTransition(async () => {
+                        const result = await loginGoogleAction({
+                          token: credentialResponse.credential!,
+                        });
+                        // xử lý kết quả...
+                      });
+                    }}
+                    onError={() => console.log("Login Failed")}
+                  />
+                </GoogleOAuthProvider>
+
                 <FieldDescription className={"text-center"}>
                   Không có tài khoản?
                   <Button
