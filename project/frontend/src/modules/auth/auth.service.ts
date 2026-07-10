@@ -1,5 +1,4 @@
 import * as bcrypt from "bcrypt";
-import * as jwt from "jsonwebtoken";
 import { OAuth2Client, TokenPayload } from "google-auth-library";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { prisma } from "@/lib/prisma";
@@ -13,14 +12,19 @@ import z from "zod";
 import { validate as isUUID } from "uuid";
 import { validator } from "../_common/validator";
 import { IUserSession } from "@/types/auth.types";
+import { SignJWT } from "jose";
+const getTokens = async (payload: Record<string, string>) => {
+  const accessSecret = new TextEncoder().encode(EnvConfig.jwtAccessSecret);
+  const refreshSecret = new TextEncoder().encode(EnvConfig.jwtRefreshSecret);
 
-const getTokens = (payload: Record<string, string>) => {
-  const accessToken = jwt.sign(payload, EnvConfig.jwtAccessSecret, {
-    expiresIn: EnvConfig.accessTokenExpireIn,
-  });
-  const refreshToken = jwt.sign(payload, EnvConfig.jwtRefreshSecret, {
-    expiresIn: EnvConfig.refreshTokenExpireIn,
-  });
+  const accessToken = await new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime(`${EnvConfig.accessTokenExpireIn}s`)
+    .sign(accessSecret);
+  const refreshToken = await new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime(`${EnvConfig.refreshTokenExpireIn}s`)
+    .sign(refreshSecret);
 
   return { accessToken, refreshToken };
 };
@@ -65,7 +69,7 @@ const loginGoogle = async (
         id: user.id,
         role: user.role,
       };
-      const tokens = getTokens(payload);
+      const tokens = await getTokens(payload);
       const safeUserAgent = userAgent || "unknown";
       await prisma.session.upsert({
         where: {
@@ -128,7 +132,7 @@ const loginGoogle = async (
           id: newUser.id,
           role: newUser.role,
         };
-        const tokens = getTokens(payload);
+        const tokens = await getTokens(payload);
 
         await prisma.session.create({
           data: {
@@ -228,7 +232,7 @@ const refresh = async (
       throw new Error("User not found");
     }
 
-    const tokens = getTokens({ id: user.id, role: user.role });
+    const tokens = await getTokens({ id: user.id, role: user.role });
 
     await prisma.session.upsert({
       where: { id: currentSession.id },
@@ -307,7 +311,7 @@ const register = async (
       id: newUser.id,
       role: newUser.role,
     };
-    const tokens = getTokens(payload);
+    const tokens = await getTokens(payload);
 
     await prisma.session.create({
       data: {
@@ -374,7 +378,7 @@ const loginBase = async (
     }
 
     const payload = { id: user.id, role: user.role };
-    const tokens = getTokens(payload);
+    const tokens = await getTokens(payload);
 
     const safeUserAgent = userAgent || "unknown";
     await prisma.session.upsert({

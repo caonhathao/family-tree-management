@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-const envSchema = z.object({
-  // NEXT_PUBLIC_SERVER_DOMAIN: z.string().url("Invalid server domain"),
+// 1. Schema này CHỈ dùng ở phía Server
+const serverSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-
   ACCESS_TOKEN_EXPIRES_IN: z.coerce.number().positive(),
   REFRESH_TOKEN_EXPIRES_IN: z.coerce.number().positive(),
   JWT_ACCESS_SECRET_KEY: z
@@ -35,38 +34,68 @@ const envSchema = z.object({
     .string()
     .url()
     .nonempty({ message: "CLIENT_DOMAIN is required" }),
-  GOOGLE_CLIENT_ID: z
+  SITE_URL: z.string().nonempty({ message: "SITE_URL is required" }),
+  NEXT_PUBLIC_GOOGLE_CLIENT_ID: z
     .string()
-    .nonempty({ message: "GOOGLE_CLIENT_ID is required" }),
-  SITE_URL: z.string().nonempty({ message: "SITE_URL is requires" }),
+    .nonempty({ message: "NEXT_PUBLIC_GOOGLE_CLIENT_ID is required" }),
 });
 
-const envServer = envSchema.safeParse(process.env);
+// Khởi tạo object dữ liệu mặc định rỗng
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let envData: any = {};
 
-if (!envServer.success) {
-  console.error("Invalid environment variables:", envServer.error.format());
-  throw new Error("Invalid environment variables");
+// 2. Tách biệt hoàn toàn logic bằng block kiểm tra môi trường nghiêm ngặt
+if (typeof window === "undefined") {
+  // NẾU LÀ SERVER: Chạy validate toàn bộ bằng Zod
+  const envServer = serverSchema.safeParse(process.env);
+
+  if (!envServer.success) {
+    console.error(
+      "Invalid Server environment variables:",
+      envServer.error.format(),
+    );
+    throw new Error("Invalid Server environment variables");
+  }
+  envData = envServer.data;
+} else {
+  // NẾU LÀ CLIENT (TRÌNH DUYỆT): Không dùng Zod để tránh bị sập do chặn process.env
+  // Chỉ kiểm tra trực tiếp biến public của Google bằng câu lệnh if thường
+  const googleId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  if (!googleId) {
+    console.error("Missing environment variable: NEXT_PUBLIC_GOOGLE_CLIENT_ID");
+  }
 }
 
-const envData = envServer.data;
-
+// 3. Export cấu hình ra ngoài sử dụng
 export const EnvConfig = {
-  // serverDomain: envData.NEXT_PUBLIC_SERVER_DOMAIN,
-  nodeValue: envData.NODE_ENV,
-  accessTokenExpireIn: envData.ACCESS_TOKEN_EXPIRES_IN,
-  refreshTokenExpireIn: envData.REFRESH_TOKEN_EXPIRES_IN,
-  jwtAccessSecret: envData.JWT_ACCESS_SECRET_KEY,
-  jwtRefreshSecret: envData.JWT_REFRESH_SECRET_KEY,
-  maxFileSize: envData.MAX_FILE_SIZE,
-  folderAlbum: envData.FOLDER_ALBUM,
-  FolderBlog: envData.FOLDER_BLOG,
-  folderUser: envData.FOLDER_USER,
-  folderFamily: envData.FOLDER_FAMILY,
-  cloudinaryName: envData.CLOUDINARY_NAME,
-  cloudinaryApiKey: envData.CLOUDINARY_API_KEY,
-  cloudinaryApiSecret: envData.CLOUDINARY_API_SECRET,
-  cloudinaryUrl: envData.CLOUDINARY_URL,
-  clientDomain: envData.CLIENT_DOMAIN,
-  googleClientId: envData.GOOGLE_CLIENT_ID,
-  siteUrl: envData.SITE_URL,
+  nodeValue: envData.NODE_ENV || process.env.NODE_ENV || "development",
+  accessTokenExpireIn:
+    envData.ACCESS_TOKEN_EXPIRES_IN ||
+    Number(process.env.ACCESS_TOKEN_EXPIRES_IN),
+  refreshTokenExpireIn:
+    envData.REFRESH_TOKEN_EXPIRES_IN ||
+    Number(process.env.REFRESH_TOKEN_EXPIRES_IN),
+  jwtAccessSecret:
+    envData.JWT_ACCESS_SECRET_KEY || process.env.JWT_ACCESS_SECRET_KEY,
+  jwtRefreshSecret:
+    envData.JWT_REFRESH_SECRET_KEY || process.env.JWT_REFRESH_SECRET_KEY,
+  maxFileSize: envData.MAX_FILE_SIZE || Number(process.env.MAX_FILE_SIZE),
+  folderAlbum: envData.FOLDER_ALBUM || process.env.FOLDER_ALBUM,
+  FolderBlog: envData.FOLDER_BLOG || process.env.FOLDER_BLOG,
+  folderUser: envData.FOLDER_USER || process.env.FOLDER_USER,
+  folderFamily: envData.FOLDER_FAMILY || process.env.FOLDER_FAMILY,
+  cloudinaryName: envData.CLOUDINARY_NAME || process.env.CLOUDINARY_NAME,
+  cloudinaryApiKey:
+    envData.CLOUDINARY_API_KEY || process.env.CLOUDINARY_API_KEY,
+  cloudinaryApiSecret:
+    envData.CLOUDINARY_API_SECRET || process.env.CLOUDINARY_API_SECRET,
+  cloudinaryUrl: envData.CLOUDINARY_URL || process.env.CLOUDINARY_URL,
+  clientDomain: envData.CLIENT_DOMAIN || process.env.CLIENT_DOMAIN,
+  siteUrl: envData.SITE_URL || process.env.SITE_URL,
+
+  // Biến này bắt buộc viết tường minh chuỗi process.env.NEXT_PUBLIC_... ở đây
+  // để Next.js có thể inject giá trị vào client-side khi build.
+  googleClientId:
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    envData.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
 } as const;

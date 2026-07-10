@@ -12,8 +12,8 @@ import { EnvConfig } from "@/lib/env/env-config.lib";
 import { handleError } from "@/lib/utils/funcs.utils";
 import { AuthService } from "./auth.service";
 
-import { jwtDecode } from "jwt-decode";
-import { ISuccessResponse, JwtPayload } from "@/types/base.types";
+import { IJwtVerifyResult, ISuccessResponse } from "@/types/base.types";
+import { jwtVerify } from "jose";
 
 export async function registerAction(data: IRegisterDto) {
   try {
@@ -162,9 +162,11 @@ export async function refreshAction() {
 
     if (!token) throw new Error("No refresh token found");
 
-    // 1. Giải mã token để lấy userId (chỉ decode, verify sẽ do Service làm)
-    const payload: JwtPayload = jwtDecode(token); // Bạn dùng jose hoặc thư viện decode
-    const userId = payload?.id;
+    const payload: IJwtVerifyResult = await jwtVerify(
+      token,
+      new TextEncoder().encode(EnvConfig.jwtRefreshSecret),
+    );
+    const userId = payload?.payload.id;
 
     if (!userId) throw new Error("Invalid token payload");
     const headerList = await headers();

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { AuthService } from "./modules/auth/auth.service";
-import { JwtPayload } from "./types/base.types";
+import { IJwtPayload } from "./types/base.types";
 import { IAuthResponseDto } from "./modules/auth/auth.dto";
 
 const publicRoutes = [
@@ -41,7 +41,7 @@ async function verifyAndGetPayload(token: string, secret: string) {
       token,
       new TextEncoder().encode(secret),
     );
-    return payload as unknown as JwtPayload; // Trả về payload (chứa sub, email...)
+    return payload as unknown as IJwtPayload; // Trả về payload (chứa sub, email...)
   } catch {
     return null;
   }

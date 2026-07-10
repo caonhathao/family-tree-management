@@ -1,15 +1,20 @@
 import { cache } from "react";
-import { jwtDecode } from "jwt-decode";
+
 import { prisma } from "@/lib/prisma";
-import { JwtPayload } from "@/types/base.types";
+import { IJwtPayload, IJwtVerifyResult } from "@/types/base.types";
 import { IUserSession } from "@/types/auth.types";
+import { jwtVerify } from "jose";
+import { EnvConfig } from "../env/env-config.lib";
 
 export const getUserFromToken = cache(async (token: string | undefined) => {
   if (!token || token.length === 0) return null;
 
   try {
-    const payload: JwtPayload = jwtDecode(token);
-    const userId = payload?.id;
+    const payload: IJwtVerifyResult = await jwtVerify(
+      token,
+      new TextEncoder().encode(EnvConfig.jwtRefreshSecret),
+    );
+    const userId = payload?.payload.id;
 
     if (!userId) return null;
 
@@ -24,8 +29,11 @@ export const getRoleFromToken = cache(async (token: string | undefined) => {
   if (!token || token.length === 0) return null;
 
   try {
-    const payload: JwtPayload = jwtDecode(token);
-    const role = payload;
+    const payload: IJwtVerifyResult = await jwtVerify(
+      token,
+      new TextEncoder().encode(EnvConfig.jwtRefreshSecret),
+    );
+    const role = payload.payload;
 
     if (!role) return null;
 

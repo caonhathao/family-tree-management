@@ -15,12 +15,14 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IRegisterDto } from "@/modules/auth/auth.dto";
-import { registerAction } from "@/modules/auth/auth.actions";
+import { loginGoogleAction, registerAction } from "@/modules/auth/auth.actions";
 import { RegisterSchema } from "@/modules/auth/auth.client-schemas";
 import { Toaster } from "@/components/shared/toast";
 import { IErrorResponse, ISuccessResponse } from "@/types/base.types";
 import { cn } from "@/lib/utils";
 import { navigateTo } from "@/lib/utils/navigate.utils";
+import { EnvConfig } from "@/lib/env/env-config.lib";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 
 interface SignupFormProps extends React.ComponentProps<typeof Card> {
   callback?: string;
@@ -171,13 +173,19 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
                 >
                   Tạo tài khoản
                 </Button>
-                <Button
-                  variant={"outline"}
-                  type={"button"}
-                  className={"hover:cursor-pointer"}
-                >
-                  Đăng kí với Google
-                </Button>
+                <GoogleOAuthProvider clientId={EnvConfig.googleClientId}>
+                  <GoogleLogin
+                    onSuccess={(credentialResponse) => {
+                      startTransition(async () => {
+                        const result = await loginGoogleAction({
+                          token: credentialResponse.credential!,
+                        });
+                        // xử lý kết quả...
+                      });
+                    }}
+                    onError={() => console.log("Login Failed")}
+                  />
+                </GoogleOAuthProvider>
                 <FieldDescription className={"px-6 text-center "}>
                   Đã có tài khoản?
                   <Button

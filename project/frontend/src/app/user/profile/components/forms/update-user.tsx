@@ -133,6 +133,7 @@ const UpdateUserForm = ({ className }: { className: string }) => {
               type={"text"}
               required
               {...register("fullName")}
+              defaultValue={profile.userProfile.fullName}
             />
             {errors.fullName && (
               <span className={"text-xs text-red-500"}>
