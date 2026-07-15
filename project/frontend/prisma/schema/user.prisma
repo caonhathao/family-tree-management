@@ -16,8 +16,7 @@ model User {
     createdAt       DateTime       @default(now())
     updatedAt       DateTime       @updatedAt
     role            USER_ROLE      @default(USER)
-    account         Account?
-    sessions        Session[]
+    account         Account[]
     userProfile     UserProfile?
     families        Family[]
     albums          Album[]
@@ -28,6 +27,7 @@ model User {
     sentInvites     Invite[]       @relation("SentInvites")
     receivedInvites Invite[]       @relation("ReceivedInvites")
     blogs           Blog[]
+    sesstion        Session[]
 
     @@index([email])
     @@map("user")
@@ -35,13 +35,14 @@ model User {
 
 //storing sign in infomation and token
 model Account {
-    id        String          @id @default(uuid()) @db.Uuid
-    userId    String          @unique @db.Uuid
-    user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-    password  String?
-    createdAt DateTime        @default(now())
-    updatedAt DateTime        @updatedAt
-    providers AuthProvider[]
+    id           String        @id @default(uuid()) @db.Uuid
+    userId       String        @unique @db.Uuid
+    user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    password     String?
+    createdAt    DateTime      @default(now())
+    updatedAt    DateTime      @updatedAt
+    
+    authProvider AuthProvider? 
 
     @@index([userId])
     @@map("account")
