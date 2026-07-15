@@ -16,7 +16,7 @@ import { AppDispatch, RootState } from "@/store";
 import { setProfile } from "@/store/user/userSlice";
 import { IErrorResponse } from "@/types/base.types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
@@ -24,8 +24,14 @@ import z from "zod";
 import { Button } from "@/components/ui/button";
 import BioUserGroup from "./bio-user";
 import { safeJsonParse } from "@/lib/utils/funcs.utils";
+import { LuLoaderCircle } from "react-icons/lu";
 
-const UpdateUserForm = ({ className }: { className: string }) => {
+interface IUserFormProps {
+  className: string;
+  data: IResponseUserDto | null;
+}
+
+const UpdateUserForm = ({ className, data }: IUserFormProps) => {
   const { profile } = useSelector((state: RootState) => state.user);
 
   type UserFormValues = z.input<typeof UserSchema>;
@@ -43,13 +49,21 @@ const UpdateUserForm = ({ className }: { className: string }) => {
   });
 
   const [isLoading, startTransition] = useTransition();
-  const [date, setDate] = useState<Date | undefined>(
-    profile.userProfile.dateOfBirth
-      ? new Date(profile.userProfile.dateOfBirth)
-      : undefined,
+  const [dateOverride, setDateOverride] = useState<Date | undefined>(undefined);
+  const [bioOverride, setBioOverride] = useState<
+    Record<string, string>[] | null
+  >(null);
+  const date = useMemo(
+    () =>
+      dateOverride ??
+      (profile.userProfile.dateOfBirth
+        ? new Date(profile.userProfile.dateOfBirth)
+        : undefined),
+    [dateOverride, profile.userProfile.dateOfBirth],
   );
-  const [bio, setBio] = useState<Record<string, string>[]>(
-    safeJsonParse(profile.userProfile.biography) || [],
+  const bio = useMemo(
+    () => bioOverride ?? (safeJsonParse(profile.userProfile.biography) || []),
+    [bioOverride, profile.userProfile.biography],
   );
   const [open, setOpen] = useState<boolean>(false);
   const dispatch = useDispatch<AppDispatch>();
@@ -100,16 +114,19 @@ const UpdateUserForm = ({ className }: { className: string }) => {
         };
 
         dispatch(setProfile(serializableProfile));
+        setDateOverride(undefined);
+        setBioOverride(null);
       }
     });
   };
   useEffect(() => {
-    if (profile?.userProfile) {
+    if (data?.userProfile) {
       reset({
-        fullName: profile.userProfile.fullName || "",
+        fullName: data.userProfile.fullName || "",
       });
     }
-  }, [profile, reset]);
+    console.log("data at update form:", data);
+  }, [data, reset]);
 
   useEffect(() => {
     console.log(bio);
@@ -133,7 +150,7 @@ const UpdateUserForm = ({ className }: { className: string }) => {
               type={"text"}
               required
               {...register("fullName")}
-              defaultValue={profile.userProfile.fullName}
+              defaultValue={data?.userProfile.fullName}
             />
             {errors.fullName && (
               <span className={"text-xs text-red-500"}>
@@ -163,8 +180,8 @@ const UpdateUserForm = ({ className }: { className: string }) => {
                   selected={date}
                   defaultMonth={date}
                   captionLayout={"dropdown"}
-                  onSelect={(date) => {
-                    setDate(date);
+                  onSelect={(selectedDate) => {
+                    setDateOverride(selectedDate);
                     setOpen(false);
                   }}
                 />
@@ -206,7 +223,12 @@ const UpdateUserForm = ({ className }: { className: string }) => {
             )}
           </Field>
         </FieldGroup>
-        <BioUserGroup bio={bio} setBio={setBio} />
+        <BioUserGroup
+          bio={bio}
+          setBio={(action) =>
+            setBioOverride(typeof action === "function" ? action(bio) : action)
+          }
+        />
         <div
           className={
             "flex flex-row justify-center items-center lg:justify-start gap-5"
@@ -223,9 +245,14 @@ const UpdateUserForm = ({ className }: { className: string }) => {
           <Button
             type={"submit"}
             variant={"default"}
-            className={"hover:cursor-pointer"}
+            className={"hover:cursor-pointer flex flex-row gap-3"}
           >
             Cập nhật
+            {isLoading ? (
+              <div className={"animate-spin"}>
+                <LuLoaderCircle />
+              </div>
+            ) : null}
           </Button>
         </div>
       </form>
