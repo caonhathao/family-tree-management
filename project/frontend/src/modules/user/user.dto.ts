@@ -16,7 +16,9 @@ export interface IResponseUserDto {
   email: string;
   userProfile: {
     fullName: string;
+    memorableName?: string;
     avatar: string;
+    address?: string;
     dateOfBirth: string;
     biography: string;
     gender: GENDERS;

@@ -12,13 +12,12 @@ import {
 import { UpdateUserInfoAction } from "@/modules/user/user.actions";
 import { UserSchema } from "@/modules/user/user.client-schemas";
 import { IResponseUserDto, IUserInfoDto } from "@/modules/user/user.dto";
-import { AppDispatch, RootState } from "@/store";
+import { AppDispatch } from "@/store";
 import { setProfile } from "@/store/user/userSlice";
 import { IErrorResponse } from "@/types/base.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import z from "zod";
 import { Button } from "@/components/ui/button";
@@ -32,8 +31,6 @@ interface IUserFormProps {
 }
 
 const UpdateUserForm = ({ className, data }: IUserFormProps) => {
-  const { profile } = useSelector((state: RootState) => state.user);
-
   type UserFormValues = z.input<typeof UserSchema>;
   const {
     register,
@@ -44,7 +41,9 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
   } = useForm<UserFormValues>({
     resolver: zodResolver(UserSchema),
     defaultValues: {
-      fullName: profile.userProfile.fullName || "",
+      fullName: data?.userProfile.fullName || "",
+      memorableName: data?.userProfile.memorableName || "",
+      address: data?.userProfile.address || "",
     },
   });
 
@@ -53,18 +52,23 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
   const [bioOverride, setBioOverride] = useState<
     Record<string, string>[] | null
   >(null);
-  const date = useMemo(
-    () =>
+
+  const date = useMemo(() => {
+    if (!data) return undefined;
+
+    return (
       dateOverride ??
-      (profile.userProfile.dateOfBirth
-        ? new Date(profile.userProfile.dateOfBirth)
-        : undefined),
-    [dateOverride, profile.userProfile.dateOfBirth],
-  );
-  const bio = useMemo(
-    () => bioOverride ?? (safeJsonParse(profile.userProfile.biography) || []),
-    [bioOverride, profile.userProfile.biography],
-  );
+      (data.userProfile.dateOfBirth
+        ? new Date(data.userProfile.dateOfBirth)
+        : undefined)
+    );
+  }, [dateOverride, data]);
+
+  const bio = useMemo(() => {
+    if (!data) return undefined;
+    return bioOverride ?? (safeJsonParse(data.userProfile.biography) || []);
+  }, [bioOverride, data]);
+
   const [open, setOpen] = useState<boolean>(false);
   const dispatch = useDispatch<AppDispatch>();
 
@@ -80,42 +84,53 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
 
     //prepare data before update
     startTransition(async () => {
-      const res: IResponseUserDto | IErrorResponse = await UpdateUserInfoAction(
-        profile.id,
-        payload,
-      );
+      if (data) {
+        const res: IResponseUserDto | IErrorResponse =
+          await UpdateUserInfoAction(data.id, payload);
 
-      if (res && "error" in res) {
-        Toaster({
-          title: "Hành động thất bại",
-          description: res.error,
-          type: "error",
-          cancel: {
-            label: "OK",
-            onClick: () => {},
-          },
-        });
+        if (res && "error" in res) {
+          Toaster({
+            title: "Hành động thất bại",
+            description: res.error,
+            type: "error",
+            cancel: {
+              label: "OK",
+              onClick: () => {},
+            },
+          });
+        } else {
+          Toaster({
+            title: "Hành động thành công",
+            description: "Cập nhật thông tin thành công.",
+            type: "success",
+            cancel: {
+              label: "OK",
+              onClick: () => {},
+            },
+          });
+          const serializableProfile = {
+            ...res,
+            userProfile: {
+              ...res.userProfile,
+              dateOfBirth: res.userProfile.dateOfBirth,
+            },
+          };
+
+          dispatch(setProfile(serializableProfile));
+          setDateOverride(undefined);
+          setBioOverride(null);
+        }
       } else {
         Toaster({
-          title: "Hành động thành công",
-          description: "Cập nhật thông tin thành công.",
-          type: "success",
+          title: "Failed to update",
+          description: "Error has occurred! Please try again!",
           cancel: {
             label: "OK",
             onClick: () => {},
           },
+          duration: 2000,
+          type: "error",
         });
-        const serializableProfile = {
-          ...res,
-          userProfile: {
-            ...res.userProfile,
-            dateOfBirth: res.userProfile.dateOfBirth,
-          },
-        };
-
-        dispatch(setProfile(serializableProfile));
-        setDateOverride(undefined);
-        setBioOverride(null);
       }
     });
   };
@@ -130,10 +145,9 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
 
   useEffect(() => {
     console.log(bio);
-    console.log(profile);
-  }, [bio, profile]);
+  }, [bio]);
 
-  if (!profile) return <LoaderModule />;
+  if (!data) return <LoaderModule />;
 
   return (
     <div className={className}>
@@ -195,30 +209,30 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
           }
         >
           <Field>
-            <FieldLabel htmlFor={"fullName"}>Tên gợi nhớ là:</FieldLabel>
+            <FieldLabel htmlFor={"memorableName"}>Tên gợi nhớ là:</FieldLabel>
             <Input
-              id={"fullName"}
+              id={"memorableName"}
               type={"text"}
               required
-              {...register("fullName")}
+              {...register("memorableName")}
             />
-            {errors.fullName && (
+            {errors.memorableName && (
               <span className={"text-xs text-red-500"}>
-                {errors.fullName.message}
+                {errors.memorableName.message}
               </span>
             )}
           </Field>
           <Field>
-            <FieldLabel htmlFor={"fullName"}>Bạn sống ở đâu?:</FieldLabel>
+            <FieldLabel htmlFor={"address"}>Bạn sống ở đâu?:</FieldLabel>
             <Input
-              id={"fullName"}
+              id={"address"}
               type={"text"}
               required
-              {...register("fullName")}
+              {...register("address")}
             />
-            {errors.fullName && (
+            {errors.address && (
               <span className={"text-xs text-red-500"}>
-                {errors.fullName.message}
+                {errors.address.message}
               </span>
             )}
           </Field>

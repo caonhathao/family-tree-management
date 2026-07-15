@@ -112,7 +112,7 @@ export const SideBarProfile = () => {
                           : ""
                       }
                       alt={"@shadcn"}
-                      className={"grayscale"}
+                      className={""}
                     />
                     <AvatarFallback>
                       <IoPersonOutline />
@@ -122,10 +122,7 @@ export const SideBarProfile = () => {
                 <div
                   className={"font-bold group-data-[collapsible=icon]:hidden"}
                 >
-                  Xin chào,
-                  {profile && profile.id !== ""
-                    ? profile.userProfile.fullName
-                    : "bạn"}
+                  Xin chào
                 </div>
                 <IoIosArrowForward />
               </SidebarMenuButton>

@@ -53,16 +53,18 @@ enum GENDERS {
 }
 
 model UserProfile {
-    id          String    @id @default(uuid()) @db.Uuid
-    userId      String    @unique @db.Uuid
-    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-    fullName    String
-    dateOfBirth DateTime?
-    avatar      String?
-    biography   String?
-    gender      GENDERS   @default(UNKNOWN)
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
+    id            String    @id @default(uuid()) @db.Uuid
+    userId        String    @unique @db.Uuid
+    user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    fullName      String
+    memorableName String?
+    address       String?
+    dateOfBirth   DateTime?
+    avatar        String?
+    biography     String?
+    gender        GENDERS   @default(UNKNOWN)
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
 
     @@map("user_profile")
 }

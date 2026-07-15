@@ -97,7 +97,9 @@ export const UserService = {
               userProfile: {
                 select: {
                   fullName: true,
+                  memorableName: true,
                   avatar: true,
+                  address: true,
                   dateOfBirth: true,
                   biography: true,
                   gender: true,
@@ -150,7 +152,9 @@ export const UserService = {
               userProfile: {
                 select: {
                   fullName: true,
+                  memorableName: true,
                   avatar: true,
+                  address: true,
                   dateOfBirth: true,
                   biography: true,
                   gender: true,
