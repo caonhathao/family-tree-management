@@ -63,7 +63,6 @@ const loginGoogle = async (
     });
 
     //if user is eixist, generate new token and session
-    //if not, register account
     if (user) {
       const payload = {
         id: user.id,
@@ -71,6 +70,8 @@ const loginGoogle = async (
       };
       const tokens = await getTokens(payload);
       const safeUserAgent = userAgent || "unknown";
+
+      //create or overwrite session
       await prisma.session.upsert({
         where: {
           userId_userAgent: {
@@ -94,6 +95,9 @@ const loginGoogle = async (
           ipAddress: ipAddress,
         },
       });
+      //create auth log
+      //
+
       return {
         user: {
           id: user.id,
