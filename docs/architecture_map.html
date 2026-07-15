@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Free Management — Architecture Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .tree-node { transition: all 0.2s ease; cursor: pointer; }
+        .tree-node:hover { transform: translateX(4px); }
+        .tree-node.highlighted { background: rgba(99, 102, 241, 0.15); border-left-color: #6366f1; }
+        .tree-node.dimmed { opacity: 0.3; }
+        /* Flow diagram styles */
+        .flow-step {
+            transition: all 0.2s ease;
+        }
+        .flow-step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 24px;
+            color: #9ca3af;
+        }
+        .flow-arrow::after {
+            content: '';
+            width: 2px;
+            height: 16px;
+            background: #d1d5db;
+        }
+        .flow-arrow-right::after {
+            width: 24px;
+            height: 2px;
+        }
+        .tab-btn { transition: all 0.2s ease; }
+        .tab-btn.active { background: #6366f1; color: white; }
+        .tab-btn:not(.active):hover { background: #e0e7ff; }
+        .model-card { transition: all 0.2s ease; cursor: pointer; }
+        .model-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .model-card.highlighted { box-shadow: 0 0 0 3px rgba(99,102,241,0.5); }
+        .model-card.dimmed { opacity: 0.25; transform: scale(0.97); }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .suspended-banner { background: repeating-linear-gradient(45deg, #fef3c7, #fef3c7 10px, #fde68a 10px, #fde68a 20px); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+
+<!-- Header -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+        <h1 class="text-2xl font-bold text-gray-900">Architecture Map</h1>
+        <p class="text-sm text-gray-500 mt-1">Family Free Management — Interactive Module &amp; Schema Relation Explorer</p>
+    </div>
+</header>
+
+<!-- Tab Navigation -->
+<div class="bg-white border-b border-gray-200 sticky top-[73px] z-30">
+    <div class="max-w-7xl mx-auto px-4">
+        <nav class="flex gap-1 py-2" role="tablist">
+            <button class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium" onclick="switchTab('directory')" role="tab">
+                Directory &amp; Module Structure
+            </button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-600" onclick="switchTab('erd')" role="tab">
+                Database Schema (ERD)
+            </button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-600" onclick="switchTab('interactions')" role="tab">
+                Module Interactions
+            </button>
+        </nav>
+    </div>
+</div>
+
+<!-- Tab Content -->
+<main class="max-w-7xl mx-auto px-4 py-6">
+
+<!-- ==================== TAB 1: Directory Structure ==================== -->
+<div id="tab-directory" class="tab-content fade-in">
+
+    <!-- ACTIVE FRONTEND -->
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+            <h2 class="text-xl font-bold text-gray-900">Active Frontend Infrastructure</h2>
+            <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">Next.js 16 · Turbopack · React 19</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Frontend Source Tree -->
+            <div class="bg-white rounded-xl border border-indigo-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                    Frontend Source Structure
+                </h3>
+                <div class="font-mono text-xs space-y-0.5 max-h-[520px] overflow-y-auto pr-2" id="frontend-tree">
+                    <div class="tree-node py-0.5 px-2 rounded border-l-2 border-transparent font-medium" data-module="frontend-src" onclick="highlightModule('frontend-src')">project/frontend/</div>
+
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent font-medium" data-module="app" onclick="highlightModule('app')">
+                        <span class="text-indigo-600">src/app/</span>
+                        <span class="text-gray-400 ml-1">— App Router pages &amp; layouts</span>
+                    </div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">(public)/ → /, /features</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">auth/ → /auth (login &amp; register)</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">user/ → /user/profile, /user/security, /user/invite</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">group/ → /group (family tree editor)</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">admin/ → /admin, /admin/users, /admin/blogs, /admin/blog_editor</div>
+
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent font-medium" data-module="modules" onclick="highlightModule('modules')">
+                        <span class="text-indigo-600">src/modules/</span>
+                        <span class="text-gray-400 ml-1">— Business logic (Service-Action-Module)</span>
+                    </div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">auth/ — register, login, logout, refresh, Google OAuth</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">user/ — profile CRUD, admin user list</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">family/ — tree sync, CRUD, relationships</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">group-family/ — group CRUD, join/quit</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">group-member/ — role management, leader transfer</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">invite/ — invitation link creation</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">blog/ — blog CRUD with draft editing</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">blog-media/ — media upload &amp; orphan cleanup</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">family-member/ — DTOs only</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">relationships/ — DTOs only</div>
+
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent font-medium" data-module="lib" onclick="highlightModule('lib')">
+                        <span class="text-indigo-600">src/lib/</span>
+                        <span class="text-gray-400 ml-1">— Core libraries</span>
+                    </div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">prisma.ts — PrismaClient singleton (pg pool)</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">middleware/auth.lib.ts — server auth utils</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">api/fetch-with-auth.ts — authenticated fetch wrapper</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">env/env-config.lib.ts — Zod-validated config</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">res/response.factory.ts — standardized responses</div>
+
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent font-medium" data-module="store" onclick="highlightModule('store')">
+                        <span class="text-indigo-600">src/store/</span>
+                        <span class="text-gray-400 ml-1">— Redux Toolkit</span>
+                    </div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">family/ — draft/origin pattern, diff sync</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">user/ — profile state</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">blog/ — per-slug draft tracking</div>
+
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent" data-module="components" onclick="highlightModule('components')">
+                        <span class="text-indigo-600">src/components/</span>
+                        <span class="text-gray-400 ml-1">— shadcn/ui + custom components</span>
+                    </div>
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent" data-module="proxy" onclick="highlightModule('proxy')">
+                        <span class="text-indigo-600">src/proxy.ts</span>
+                        <span class="text-gray-400 ml-1">— Middleware: auth, RBAC, silent refresh</span>
+                    </div>
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent">
+                        <span class="text-indigo-600">src/configs/</span>
+                        <span class="text-gray-400 ml-1">— Animation configs, Cloudinary service</span>
+                    </div>
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent">
+                        <span class="text-indigo-600">src/hooks/</span>
+                        <span class="text-gray-400 ml-1">— useMobile, useCopyToClipboard</span>
+                    </div>
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent">
+                        <span class="text-indigo-600">src/types/</span>
+                        <span class="text-gray-400 ml-1">— Shared TypeScript interfaces</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Service-Action-Module Pattern -->
+            <div class="bg-white rounded-xl border border-indigo-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                    Service-Action-Module Pattern
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-500 text-white flex items-center justify-center text-xs font-bold shrink-0">1</div>
+                        <div>
+                            <div class="font-medium text-indigo-900 text-sm">Client Component</div>
+                            <div class="text-xs text-indigo-600">React component with forms, event handlers, Redux dispatch</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center"><span class="text-gray-300">calls</span></div>
+                    <div class="flex items-start gap-3 p-3 bg-violet-50 rounded-lg border border-violet-100">
+                        <div class="w-8 h-8 rounded-lg bg-violet-500 text-white flex items-center justify-center text-xs font-bold shrink-0">2</div>
+                        <div>
+                            <div class="font-medium text-violet-900 text-sm">Server Action (*.actions.ts)</div>
+                            <div class="text-xs text-violet-600">"use server" — validates with Zod, sets cookies, handles errors</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center"><span class="text-gray-300">calls</span></div>
+                    <div class="flex items-start gap-3 p-3 bg-cyan-50 rounded-lg border border-cyan-100">
+                        <div class="w-8 h-8 rounded-lg bg-cyan-500 text-white flex items-center justify-center text-xs font-bold shrink-0">3</div>
+                        <div>
+                            <div class="font-medium text-cyan-900 text-sm">Service (*.service.ts)</div>
+                            <div class="text-xs text-cyan-600">Business logic, Prisma queries, $transactions, JWT/bcrypt</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center"><span class="text-gray-300">queries</span></div>
+                    <div class="flex items-start gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shrink-0">4</div>
+                        <div>
+                            <div class="font-medium text-emerald-900 text-sm">Prisma ORM</div>
+                            <div class="text-xs text-emerald-600">lib/prisma.ts singleton via PrismaPg adapter + pg.Pool</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="text-xs font-medium text-gray-700 mb-2">Supporting files per module:</div>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-2 py-0.5 bg-white border border-gray-200 rounded text-xs">*.dto.ts</span>
+                            <span class="px-2 py-0.5 bg-white border border-gray-200 rounded text-xs">*.service-validator.ts</span>
+                            <span class="px-2 py-0.5 bg-white border border-gray-200 rounded text-xs">*.client-schemas.ts</span>
+                        </div>
+                    </div>
+
+                    <!-- Frontend Routing Map -->
+                    <div class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="text-xs font-medium text-gray-700 mb-2">App Router Layout Hierarchy:</div>
+                        <div class="font-mono text-xs text-gray-600 space-y-1">
+                            <div>RootLayout <span class="text-gray-400">(ThemeProvider + ReduxProvider)</span></div>
+                            <div class="ml-3">(public)/layout → Header + Footer</div>
+                            <div class="ml-3">auth/layout → Full-screen</div>
+                            <div class="ml-3">user/layout → SidebarProfile + Content</div>
+                            <div class="ml-3">group/layout → SidebarGroup + ReactFlow</div>
+                            <div class="ml-3">admin/layout → AdminSidebar + DataTable</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUSPENDED BACKEND -->
+    <div class="mb-6">
+        <div class="suspended-banner rounded-t-xl h-1.5"></div>
+        <div class="flex items-center gap-3 mb-4 bg-amber-50 px-4 py-3 rounded-b-xl border border-amber-200 border-t-0">
+            <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+            <h2 class="text-xl font-bold text-amber-900">Suspended Backend Infrastructure</h2>
+            <span class="px-2 py-0.5 bg-amber-200 text-amber-800 text-xs font-medium rounded-full">PAUSED — NestJS 11</span>
+            <span class="text-xs text-amber-600 ml-auto">This backend is currently suspended. Architecture preserved for future resumption.</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 opacity-70">
+            <!-- Backend Source Tree -->
+            <div class="bg-white rounded-xl border border-amber-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    Backend Source Structure
+                </h3>
+                <div class="font-mono text-xs space-y-0.5 max-h-[420px] overflow-y-auto pr-2" id="backend-tree">
+                    <div class="tree-node py-0.5 px-2 rounded border-l-2 border-transparent font-medium" data-module="backend-src" onclick="highlightModule('backend-src')">project/backend/src/</div>
+
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent" data-module="backend-main" onclick="highlightModule('backend-main')">
+                        <span class="text-amber-600">main.ts</span>
+                        <span class="text-gray-400 ml-1">— Bootstrap, CORS, Swagger, /api prefix</span>
+                    </div>
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent" data-module="app-module" onclick="highlightModule('app-module')">
+                        <span class="text-amber-600">app.module.ts</span>
+                        <span class="text-gray-400 ml-1">— Root module imports</span>
+                    </div>
+
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent font-medium" data-module="backend-modules" onclick="highlightModule('backend-modules')">
+                        <span class="text-amber-600">modules/</span>
+                    </div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">auth/ — controller, service, JWT strategies, guards</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">users/ — controller, service, avatar upload</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">family/ — tree sync, CRUD, transactions</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">group-family/ — CRUD, join, role checks</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">group-members/ — role updates, leader transfer</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">invite/ — token generation, 24h expiry</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">health-check/ — GET /health-check</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-amber-300 text-amber-500">albums/ — STUB (empty)</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-amber-300 text-amber-500">events/ — STUB (empty)</div>
+
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent font-medium" data-module="common" onclick="highlightModule('common')">
+                        <span class="text-amber-600">common/</span>
+                        <span class="text-gray-400 ml-1">— Shared infrastructure</span>
+                    </div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">decorators/ — @Roles, @IsLeader, @GetUser</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">guards/ — RolesGuard, GroupLeaderGuard</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">factories/ — ResponseFactory</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">filters/ — AllExceptionsFilter</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">config/ — EnvConfigService, CloudinaryService</div>
+                    <div class="tree-node py-0.5 px-2 ml-6 rounded border-l-2 border-gray-200 text-gray-500">errors/ — Prisma error mapping (80+ classes)</div>
+
+                    <div class="tree-node py-0.5 px-2 ml-3 rounded border-l-2 border-transparent" data-module="schedule" onclick="highlightModule('schedule')">
+                        <span class="text-amber-600">schedule/</span>
+                        <span class="text-gray-400 ml-1">— Cron: daily expired invite cleanup</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backend Architecture Pattern -->
+            <div class="bg-white rounded-xl border border-amber-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    NestJS Controller-Service Pattern
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-100">
+                        <div class="w-8 h-8 rounded-lg bg-amber-400 text-white flex items-center justify-center text-xs font-bold shrink-0">1</div>
+                        <div>
+                            <div class="font-medium text-amber-900 text-sm">HTTP Request</div>
+                            <div class="text-xs text-amber-600">Client sends request to NestJS REST API endpoint</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center"><span class="text-gray-300">passes through</span></div>
+                    <div class="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                        <div class="w-8 h-8 rounded-lg bg-orange-400 text-white flex items-center justify-center text-xs font-bold shrink-0">2</div>
+                        <div>
+                            <div class="font-medium text-orange-900 text-sm">Guards</div>
+                            <div class="text-xs text-orange-600">AtGuard (JWT) → RolesGuard (RBAC) → GroupLeaderGuard</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center"><span class="text-gray-300">authorized</span></div>
+                    <div class="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-100">
+                        <div class="w-8 h-8 rounded-lg bg-amber-400 text-white flex items-center justify-center text-xs font-bold shrink-0">3</div>
+                        <div>
+                            <div class="font-medium text-amber-900 text-sm">Controller</div>
+                            <div class="text-xs text-amber-600">Route handler with DTO validation (class-validator)</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center"><span class="text-gray-300">delegates to</span></div>
+                    <div class="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                        <div class="w-8 h-8 rounded-lg bg-yellow-400 text-white flex items-center justify-center text-xs font-bold shrink-0">4</div>
+                        <div>
+                            <div class="font-medium text-yellow-900 text-sm">Service</div>
+                            <div class="text-xs text-yellow-600">Business logic, Prisma queries, Cloudinary uploads</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center"><span class="text-gray-300">queries</span></div>
+                    <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="w-8 h-8 rounded-lg bg-gray-400 text-white flex items-center justify-center text-xs font-bold shrink-0">5</div>
+                        <div>
+                            <div class="font-medium text-gray-900 text-sm">PrismaService → PostgreSQL</div>
+                            <div class="text-xs text-gray-600">NestJS injectable PrismaClient wrapper</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="text-xs font-medium text-gray-700 mb-2">Response standardization:</div>
+                        <div class="font-mono text-xs text-gray-500">ResponseFactory.success() / .error() / .paginated()</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TAB 2: ERD Diagram ==================== -->
+<div id="tab-erd" class="tab-content hidden">
+    <div class="mb-6">
+        <div class="flex items-center gap-4 mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">Database Schema — Entity Relationship Diagram</h2>
+            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">20 models · PostgreSQL · UUID PKs</span>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">Click any model card to highlight its direct relations. Click again to deselect.</p>
+
+        <!-- Legend -->
+        <div class="flex flex-wrap gap-4 mb-6 p-4 bg-white rounded-xl border border-gray-200">
+            <div class="flex items-center gap-2 text-xs">
+                <span class="w-3 h-3 rounded-full bg-indigo-500"></span> <span class="font-medium">User &amp; Auth</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+                <span class="w-3 h-3 rounded-full bg-emerald-500"></span> <span class="font-medium">Family Tree</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+                <span class="w-3 h-3 rounded-full bg-violet-500"></span> <span class="font-medium">Groups &amp; Collaboration</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+                <span class="w-3 h-3 rounded-full bg-amber-500"></span> <span class="font-medium">Content</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+                <span class="w-3 h-3 rounded-full bg-cyan-500"></span> <span class="font-medium">Activity &amp; Notifications</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+                <span class="border border-dashed border-gray-400 w-6 h-0 inline-block"></span> <span class="font-medium">1:N</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+                <span class="border-2 border-gray-400 w-6 h-0 inline-block"></span> <span class="font-medium">1:1</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Cards Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" id="model-grid">
+        <!-- User & Auth -->
+        <div class="model-card bg-white rounded-xl border border-indigo-200 p-4" data-model="User" onclick="toggleModelHighlight('User')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <h3 class="font-semibold text-sm text-indigo-900">User</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Core user account</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">id</span> <span class="text-indigo-400">UUID PK</span></div>
+                <div><span class="text-gray-400">email</span> <span class="text-gray-600">String unique</span></div>
+                <div><span class="text-gray-400">role</span> <span class="text-gray-600">ADMIN | USER</span></div>
+                <div><span class="text-gray-400">emailVerified</span> <span class="text-gray-600">Boolean</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-indigo-500">Account · UserProfile · Session · GroupMember · Blog · Notification · Family · Invite · Event · Album · ActivityLog</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-indigo-200 p-4" data-model="Account" onclick="toggleModelHighlight('Account')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <h3 class="font-semibold text-sm text-indigo-900">Account</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Login credentials</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">id</span> <span class="text-indigo-400">UUID PK</span></div>
+                <div><span class="text-gray-400">userId</span> <span class="text-gray-600">UUID unique</span></div>
+                <div><span class="text-gray-400">password</span> <span class="text-gray-600">String?</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-indigo-500">User (1:1) · AuthProvider (1:1)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-indigo-200 p-4" data-model="UserProfile" onclick="toggleModelHighlight('UserProfile')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <h3 class="font-semibold text-sm text-indigo-900">UserProfile</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Extended profile data</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">userId</span> <span class="text-gray-600">UUID unique</span></div>
+                <div><span class="text-gray-400">fullName</span> <span class="text-gray-600">String</span></div>
+                <div><span class="text-gray-400">avatar</span> <span class="text-gray-600">String?</span></div>
+                <div><span class="text-gray-400">gender</span> <span class="text-gray-600">MALE | FEMALE | UNKNOWN</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-indigo-500">User (1:1)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-indigo-200 p-4" data-model="Session" onclick="toggleModelHighlight('Session')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <h3 class="font-semibold text-sm text-indigo-900">Session</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Device-based sessions</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">token</span> <span class="text-gray-600">String (refresh)</span></div>
+                <div><span class="text-gray-400">userId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">expiresAt</span> <span class="text-gray-600">DateTime</span></div>
+                <div><span class="text-gray-400">unique</span> <span class="text-gray-600">(userId, userAgent)</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-indigo-500">User (N:1)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-indigo-200 p-4" data-model="AuthProvider" onclick="toggleModelHighlight('AuthProvider')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <h3 class="font-semibold text-sm text-indigo-900">AuthProvider</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Third-party auth linkage</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">provider</span> <span class="text-gray-600">USER | GOOGLE | GITHUB</span></div>
+                <div><span class="text-gray-400">accountId</span> <span class="text-gray-600">UUID unique</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-indigo-500">Account (1:1)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-indigo-200 p-4" data-model="AuthLog" onclick="toggleModelHighlight('AuthLog')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <h3 class="font-semibold text-sm text-indigo-900">AuthLog</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Auth audit trail</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">accountId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">type</span> <span class="text-gray-600">LOGIN | REGISTER | PASSWORD</span></div>
+                <div><span class="text-gray-400">authBy</span> <span class="text-gray-600">USER | GOOGLE | GITHUB</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-indigo-500">Account (N:1)</span>
+            </div>
+        </div>
+
+        <!-- Family Tree -->
+        <div class="model-card bg-white rounded-xl border border-emerald-200 p-4" data-model="Family" onclick="toggleModelHighlight('Family')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <h3 class="font-semibold text-sm text-emerald-900">Family</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Core family tree</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">ownerId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">groupFamilyId</span> <span class="text-gray-600">UUID unique</span></div>
+                <div><span class="text-gray-400">lineageType</span> <span class="text-gray-600">PATRIARCHAL | MATRIARCHAL | OTHER</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-emerald-500">User · GroupFamily (1:1) · FamilyMember (1:N) · ActivityLog</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-emerald-200 p-4" data-model="FamilyMember" onclick="toggleModelHighlight('FamilyMember')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <h3 class="font-semibold text-sm text-emerald-900">FamilyMember</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Tree node (person)</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">familyId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">fullName</span> <span class="text-gray-600">String</span></div>
+                <div><span class="text-gray-400">gender</span> <span class="text-gray-600">MALE | FEMALE | OTHER</span></div>
+                <div><span class="text-gray-400">generation</span> <span class="text-gray-600">Int</span></div>
+                <div><span class="text-gray-400">positionX/Y</span> <span class="text-gray-600">Float?</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-emerald-500">Family (N:1) · Relationship (from/to)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-emerald-200 p-4" data-model="Relationship" onclick="toggleModelHighlight('Relationship')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <h3 class="font-semibold text-sm text-emerald-900">Relationship</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Tree edge between members</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">fromMemberId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">toMemberId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">type</span> <span class="text-gray-600">PARENT | SPOUSE | CHILD</span></div>
+                <div><span class="text-gray-400">unique</span> <span class="text-gray-600">(from, to, type)</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-emerald-500">FamilyMember x2 (from/to)</span>
+            </div>
+        </div>
+
+        <!-- Groups & Collaboration -->
+        <div class="model-card bg-white rounded-xl border border-violet-200 p-4" data-model="GroupFamily" onclick="toggleModelHighlight('GroupFamily')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-violet-500"></span>
+                <h3 class="font-semibold text-sm text-violet-900">GroupFamily</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Organizational container</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">id</span> <span class="text-violet-400">UUID PK</span></div>
+                <div><span class="text-gray-400">name</span> <span class="text-gray-600">String</span></div>
+                <div><span class="text-gray-400">description</span> <span class="text-gray-600">String?</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-violet-500">Family (1:1) · GroupMember (1:N) · Invite (1:N)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-violet-200 p-4" data-model="GroupMember" onclick="toggleModelHighlight('GroupMember')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-violet-500"></span>
+                <h3 class="font-semibold text-sm text-violet-900">GroupMember</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Group membership + role</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">role</span> <span class="text-gray-600">OWNER | EDITOR | VIEWER</span></div>
+                <div><span class="text-gray-400">groupId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">memberId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">isLeader</span> <span class="text-gray-600">Boolean</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-violet-500">GroupFamily (N:1) · User (N:1)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-violet-200 p-4" data-model="Invite" onclick="toggleModelHighlight('Invite')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-violet-500"></span>
+                <h3 class="font-semibold text-sm text-violet-900">Invite</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Group invitation token</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">token</span> <span class="text-gray-600">String unique</span></div>
+                <div><span class="text-gray-400">groupId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">senderId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">expiresAt</span> <span class="text-gray-600">DateTime</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-violet-500">GroupFamily (N:1) · User (N:1)</span>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="model-card bg-white rounded-xl border border-amber-200 p-4" data-model="Blog" onclick="toggleModelHighlight('Blog')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <h3 class="font-semibold text-sm text-amber-900">Blog</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Blog post</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">userId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">slug</span> <span class="text-gray-600">Text unique</span></div>
+                <div><span class="text-gray-400">content</span> <span class="text-gray-600">Text</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-amber-500">User (N:1) · BlogMedia (1:N)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-amber-200 p-4" data-model="BlogMedia" onclick="toggleModelHighlight('BlogMedia')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <h3 class="font-semibold text-sm text-amber-900">BlogMedia</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Blog media attachment</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">blogId</span> <span class="text-gray-600">UUID?</span></div>
+                <div><span class="text-gray-400">url</span> <span class="text-gray-600">Text</span></div>
+                <div><span class="text-gray-400">type</span> <span class="text-gray-600">IMAGE | VIDEO | OTHER</span></div>
+                <div><span class="text-gray-400">isUsed</span> <span class="text-gray-600">Boolean</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-amber-500">Blog (N:1, nullable)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-amber-200 p-4" data-model="Album" onclick="toggleModelHighlight('Album')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <h3 class="font-semibold text-sm text-amber-900">Album</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Photo album container</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">familyId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">createdBy</span> <span class="text-gray-600">UUID</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-amber-500">User (N:1) · Photo (1:N) · GroupFamily (M:M)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-amber-200 p-4" data-model="Photo" onclick="toggleModelHighlight('Photo')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <h3 class="font-semibold text-sm text-amber-900">Photo</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Individual photo</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">albumId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">imageUrl</span> <span class="text-gray-600">String</span></div>
+                <div><span class="text-gray-400">takenAt</span> <span class="text-gray-600">String</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-amber-500">Album (N:1)</span>
+            </div>
+        </div>
+
+        <!-- Activity & Notifications -->
+        <div class="model-card bg-white rounded-xl border border-cyan-200 p-4" data-model="Notification" onclick="toggleModelHighlight('Notification')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+                <h3 class="font-semibold text-sm text-cyan-900">Notification</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">User notification inbox</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">userId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">type</span> <span class="text-gray-600">NEW | UPDATE | DELETE | OTHER</span></div>
+                <div><span class="text-gray-400">isRead</span> <span class="text-gray-600">Boolean</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-cyan-500">User (N:1)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-cyan-200 p-4" data-model="Event" onclick="toggleModelHighlight('Event')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+                <h3 class="font-semibold text-sm text-cyan-900">Event</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Family events</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">familyId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">createBy</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">type</span> <span class="text-gray-600">BIRTHDAY | WEDDING | OTHER</span></div>
+                <div><span class="text-gray-400">isRecurring</span> <span class="text-gray-600">Boolean</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-cyan-500">User (N:1) · GroupFamily (M:M)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-cyan-200 p-4" data-model="ActivityLog" onclick="toggleModelHighlight('ActivityLog')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+                <h3 class="font-semibold text-sm text-cyan-900">ActivityLog</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Family change audit trail</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">familyId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">userId</span> <span class="text-gray-600">UUID</span></div>
+                <div><span class="text-gray-400">action</span> <span class="text-gray-600">NEW | UPDATE | DELETE</span></div>
+                <div><span class="text-gray-400">target</span> <span class="text-gray-600">ALBUM | FAMILY | USER</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                Relations: <span class="text-cyan-500">Family (N:1) · User (N:1)</span>
+            </div>
+        </div>
+
+        <div class="model-card bg-white rounded-xl border border-gray-200 p-4" data-model="Verification" onclick="toggleModelHighlight('Verification')">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                <h3 class="font-semibold text-sm text-gray-900">Verification</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Email verification tokens</p>
+            <div class="space-y-1 text-xs font-mono">
+                <div><span class="text-gray-400">identifier</span> <span class="text-gray-600">String</span></div>
+                <div><span class="text-gray-400">value</span> <span class="text-gray-600">String</span></div>
+                <div><span class="text-gray-400">expiresAt</span> <span class="text-gray-600">DateTime</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
+                <span class="text-gray-400 italic">No active relations — unused</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Relation Graph -->
+    <div class="mt-8 bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Interactive Relation Graph</h3>
+        <p class="text-sm text-gray-500 mb-4">Click any model node to highlight its direct relationships. Arrows show foreign key connections with cardinality labels. Click again or click the background to deselect.</p>
+        <div id="relation-graph" class="relative overflow-auto border border-gray-100 rounded-lg bg-gray-50" style="height: 640px;">
+            <svg id="relation-svg" width="1200" height="640" class="absolute top-0 left-0" style="pointer-events:none;"></svg>
+            <div id="relation-nodes" class="relative" style="width: 1200px; height: 640px;"></div>
+        </div>
+    </div>
+
+    <!-- Relationship Summary Table -->
+    <div class="mt-8 bg-white rounded-xl border border-gray-200 p-6 overflow-x-auto">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Relationship Summary</h3>
+        <p class="text-sm text-gray-500 mb-4">Complete list of all foreign key relationships between models.</p>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-gray-200">
+                    <th class="text-left py-2 px-3 font-semibold text-gray-700">Source Model</th>
+                    <th class="text-center py-2 px-3 font-semibold text-gray-700">Cardinality</th>
+                    <th class="text-left py-2 px-3 font-semibold text-gray-700">Target Model</th>
+                    <th class="text-left py-2 px-3 font-semibold text-gray-700">Foreign Key</th>
+                    <th class="text-left py-2 px-3 font-semibold text-gray-700">Description</th>
+                </tr>
+            </thead>
+            <tbody class="text-xs font-mono">
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:1</td><td class="py-2 px-3 text-indigo-600">Account</td><td class="py-2 px-3 text-gray-500">Account.userId</td><td class="py-2 px-3 text-gray-600">User has login credentials</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:1</td><td class="py-2 px-3 text-indigo-600">UserProfile</td><td class="py-2 px-3 text-gray-500">UserProfile.userId</td><td class="py-2 px-3 text-gray-600">User has profile data</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-indigo-600">Session</td><td class="py-2 px-3 text-gray-500">Session.userId</td><td class="py-2 px-3 text-gray-600">User has many sessions</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-violet-600">GroupMember</td><td class="py-2 px-3 text-gray-500">GroupMember.memberId</td><td class="py-2 px-3 text-gray-600">User belongs to groups</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-emerald-600">Family</td><td class="py-2 px-3 text-gray-500">Family.ownerId</td><td class="py-2 px-3 text-gray-600">User owns families</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-amber-600">Blog</td><td class="py-2 px-3 text-gray-500">Blog.userId</td><td class="py-2 px-3 text-gray-600">User writes blogs</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-cyan-600">Notification</td><td class="py-2 px-3 text-gray-500">Notification.userId</td><td class="py-2 px-3 text-gray-600">User receives notifications</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-cyan-600">ActivityLog</td><td class="py-2 px-3 text-gray-500">ActivityLog.userId</td><td class="py-2 px-3 text-gray-600">User performs actions</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-amber-600">Album</td><td class="py-2 px-3 text-gray-500">Album.createdBy</td><td class="py-2 px-3 text-gray-600">User creates albums</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-cyan-600">Event</td><td class="py-2 px-3 text-gray-500">Event.createBy</td><td class="py-2 px-3 text-gray-600">User creates events</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-violet-600">Invite</td><td class="py-2 px-3 text-gray-500">Invite.senderId</td><td class="py-2 px-3 text-gray-600">User sends invites</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">User</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-indigo-600">AuthLog</td><td class="py-2 px-3 text-gray-500">AuthLog.userId</td><td class="py-2 px-3 text-gray-600">User has auth events</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">Account</td><td class="py-2 px-3 text-center">1:1</td><td class="py-2 px-3 text-indigo-600">AuthProvider</td><td class="py-2 px-3 text-gray-500">AuthProvider.accountId</td><td class="py-2 px-3 text-gray-600">Account linked to provider</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-indigo-600">Account</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-indigo-600">AuthLog</td><td class="py-2 px-3 text-gray-500">AuthLog.accountId</td><td class="py-2 px-3 text-gray-600">Account has auth logs</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-violet-600">GroupFamily</td><td class="py-2 px-3 text-center">1:1</td><td class="py-2 px-3 text-emerald-600">Family</td><td class="py-2 px-3 text-gray-500">Family.groupFamilyId</td><td class="py-2 px-3 text-gray-600">GroupFamily contains family</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-violet-600">GroupFamily</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-violet-600">GroupMember</td><td class="py-2 px-3 text-gray-500">GroupMember.groupId</td><td class="py-2 px-3 text-gray-600">GroupFamily has members</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-violet-600">GroupFamily</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-violet-600">Invite</td><td class="py-2 px-3 text-gray-500">Invite.groupId</td><td class="py-2 px-3 text-gray-600">GroupFamily generates invites</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-emerald-600">Family</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-emerald-600">FamilyMember</td><td class="py-2 px-3 text-gray-500">FamilyMember.familyId</td><td class="py-2 px-3 text-gray-600">Family contains members</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-emerald-600">Family</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-cyan-600">ActivityLog</td><td class="py-2 px-3 text-gray-500">ActivityLog.familyId</td><td class="py-2 px-3 text-gray-600">Family tracked by logs</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-emerald-600">FamilyMember</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-emerald-600">Relationship</td><td class="py-2 px-3 text-gray-500">Relationship.fromMemberId</td><td class="py-2 px-3 text-gray-600">Member has outgoing edges</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-emerald-600">FamilyMember</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-emerald-600">Relationship</td><td class="py-2 px-3 text-gray-500">Relationship.toMemberId</td><td class="py-2 px-3 text-gray-600">Member has incoming edges</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-amber-600">Blog</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-amber-600">BlogMedia</td><td class="py-2 px-3 text-gray-500">BlogMedia.blogId</td><td class="py-2 px-3 text-gray-600">Blog contains media</td></tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-2 px-3 text-amber-600">Album</td><td class="py-2 px-3 text-center">1:N</td><td class="py-2 px-3 text-amber-600">Photo</td><td class="py-2 px-3 text-gray-500">Photo.albumId</td><td class="py-2 px-3 text-gray-600">Album contains photos</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==================== TAB 3: Module Interactions ==================== -->
+<div id="tab-interactions" class="tab-content hidden">
+    <div class="mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Module Interaction Map</h2>
+        <p class="text-sm text-gray-500">How modules, services, and data flow through the application.</p>
+    </div>
+
+    <!-- ACTIVE FRONTEND FLOWS -->
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+            <h2 class="text-xl font-bold text-gray-900">Active Frontend Flows</h2>
+            <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">Next.js Server Actions</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Auth Flow -->
+            <div class="bg-white rounded-xl border border-indigo-200 p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Authentication Flow</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="px-3 py-1.5 bg-indigo-100 border border-indigo-300 rounded-lg text-indigo-800 font-medium text-xs">Browser</div>
+                        <span class="text-gray-400 text-xs">Login Form</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-indigo-700 font-medium text-xs">login-form.tsx</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-4">
+                        <span class="text-gray-400 text-xs">loginBaseAction()</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-indigo-700 font-medium text-xs">auth.actions.ts</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-8">
+                        <span class="text-gray-400 text-xs">Zod validate</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-amber-100 border border-amber-300 rounded-lg text-amber-800 font-medium text-xs">auth.service.ts</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-12">
+                        <span class="text-gray-400 text-xs">bcrypt.compare()</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-2 py-1 bg-white border border-gray-300 rounded text-gray-700 text-xs">Valid?</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-16">
+                        <span class="text-emerald-600 text-xs">Yes</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-emerald-100 border border-emerald-300 rounded-lg text-emerald-800 font-medium text-xs">getTokens via jose</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-20">
+                        <span class="text-gray-400 text-xs">upsert session</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-pink-100 border border-pink-300 rounded-lg text-pink-800 font-medium text-xs">Prisma Session</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-20">
+                        <span class="text-gray-400 text-xs">set cookies</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-indigo-700 font-medium text-xs">Next.js Cookies</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-12 mt-2">
+                        <span class="px-2 py-0.5 bg-violet-100 text-violet-700 rounded text-xs font-medium">Google OAuth</span>
+                        <span class="text-gray-400 text-xs">loginGoogleAction()</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-indigo-700 font-medium text-xs">auth.actions.ts</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-16">
+                        <span class="text-gray-400 text-xs">verifyIdToken</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-2 py-1 bg-white border border-gray-300 rounded text-gray-700 text-xs">Google valid?</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-20">
+                        <span class="text-gray-400 text-xs">existing user</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-pink-100 border border-pink-300 rounded-lg text-pink-800 font-medium text-xs">upsert Session + AuthLog</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-20">
+                        <span class="text-gray-400 text-xs">new user</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-pink-100 border border-pink-300 rounded-lg text-pink-800 font-medium text-xs">Transaction: User, Account, Profile, Session, AuthLog</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Refresh -->
+            <div class="bg-white rounded-xl border border-indigo-200 p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Token Refresh and RBAC Flow</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="px-3 py-1.5 bg-indigo-100 border border-indigo-300 rounded-lg text-indigo-800 font-medium text-xs">Request</div>
+                        <span class="text-gray-400 text-xs">via proxy.ts</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-2 py-1 bg-white border border-gray-300 rounded text-gray-700 text-xs">access_token valid?</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-4">
+                        <span class="text-emerald-600 text-xs">Yes</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-indigo-700 font-medium text-xs">Inject headers to Next.js</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-4">
+                        <span class="text-red-600 text-xs">No</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-2 py-1 bg-white border border-gray-300 rounded text-gray-700 text-xs">refresh_token valid?</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-8">
+                        <span class="text-emerald-600 text-xs">Yes</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-amber-100 border border-amber-300 rounded-lg text-amber-800 font-medium text-xs">AuthService.refresh()</div>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-indigo-700 font-medium text-xs">Issue new token pair</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-12">
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-indigo-700 font-medium text-xs">Set new cookies</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-8">
+                        <span class="text-red-600 text-xs">No</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-800 font-medium text-xs">Redirect to auth page</div>
+                    </div>
+                    <div class="flex items-center gap-2 mt-2">
+                        <div class="px-2 py-1 bg-white border border-gray-300 rounded text-gray-700 text-xs">Route requires role?</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-4">
+                        <span class="text-gray-400 text-xs">ADMIN route</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-2 py-1 bg-white border border-gray-300 rounded text-gray-700 text-xs">userRole is ADMIN?</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-8">
+                        <span class="text-emerald-600 text-xs">Yes</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-emerald-100 border border-emerald-300 rounded-lg text-emerald-800 font-medium text-xs">Controller</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-8">
+                        <span class="text-red-600 text-xs">No</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg text-red-800 font-medium text-xs">Redirect to 403</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Frontend Module Dependencies -->
+            <div class="bg-white rounded-xl border border-indigo-200 p-6 lg:col-span-2">
+                <h3 class="font-semibold text-gray-900 mb-4">Frontend Module Dependencies</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <div class="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Active Modules</div>
+                        <div class="space-y-1.5">
+                            <div class="px-3 py-1.5 bg-amber-100 border border-amber-300 rounded-lg text-amber-800 font-medium text-xs">auth module</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">user module</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">family module</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">group-family module</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">group-member module</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">invite module</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">blog module</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">blog-media module</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Core Libraries</div>
+                        <div class="space-y-1.5">
+                            <div class="px-3 py-1.5 bg-emerald-100 border border-emerald-300 rounded-lg text-emerald-800 font-medium text-xs">prisma.ts</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">auth.lib.ts</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">fetch-with-auth.ts</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">api-path.lib.ts</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">env-config.lib.ts</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">response.factory.ts</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Redux Store</div>
+                        <div class="space-y-1.5">
+                            <div class="px-3 py-1.5 bg-pink-100 border border-pink-300 rounded-lg text-pink-800 font-medium text-xs">familySlice</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">userSlice</div>
+                            <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">blogSlice</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="text-xs font-semibold text-gray-500 mb-2">Dependencies:</div>
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <span class="px-2 py-1 bg-gray-100 rounded text-gray-600">auth, user, family, group-family, group-member, invite, blog <span class="text-gray-400">&#8594;</span> prisma.ts</span>
+                        <span class="px-2 py-1 bg-gray-100 rounded text-gray-600">auth <span class="text-gray-400">&#8594;</span> env-config.lib.ts</span>
+                        <span class="px-2 py-1 bg-gray-100 rounded text-gray-600">user, family, group-family, group-member, invite <span class="text-gray-400">&#8594;</span> fetch-with-auth.ts</span>
+                        <span class="px-2 py-1 bg-gray-100 rounded text-gray-600">family, group-family, group-member <span class="text-gray-400">&#8594;</span> familySlice</span>
+                        <span class="px-2 py-1 bg-gray-100 rounded text-gray-600">blog, blog-media <span class="text-gray-400">&#8594;</span> blogSlice</span>
+                        <span class="px-2 py-1 bg-gray-100 rounded text-gray-600">user <span class="text-gray-400">&#8594;</span> userSlice</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Sync Flow -->
+            <div class="bg-white rounded-xl border border-indigo-200 p-6 lg:col-span-2">
+                <h3 class="font-semibold text-gray-900 mb-4">Family Tree Data Sync Flow (Draft/Origin Pattern)</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="px-3 py-1.5 bg-indigo-100 border border-indigo-300 rounded-lg text-indigo-800 font-medium text-xs">User edits tree</div>
+                        <span class="text-gray-400 text-xs">React Flow</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-amber-100 border border-amber-300 rounded-lg text-amber-800 font-medium text-xs">updateMemberInDraft()</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-4">
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-amber-100 border border-amber-300 rounded-lg text-amber-800 font-medium text-xs">Redux familySlice.draft</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-8">
+                        <span class="text-gray-400 text-xs">saveFamilyDraft thunk</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-2 py-1 bg-white border border-gray-300 rounded text-gray-700 text-xs">isequal draft vs origin?</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-12">
+                        <span class="text-emerald-600 text-xs">Equal</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg text-gray-600 font-medium text-xs">Skip sync</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-12">
+                        <span class="text-amber-600 text-xs">Different</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-indigo-100 border border-indigo-300 rounded-lg text-indigo-800 font-medium text-xs">SyncFamilyAction()</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-16">
+                        <span class="text-gray-400 text-xs">POST to family service</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-amber-100 border border-amber-300 rounded-lg text-amber-800 font-medium text-xs">family.service.ts</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-20">
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-2 py-1 bg-white border border-gray-300 rounded text-gray-700 text-xs">$transaction</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-24">
+                        <span class="text-gray-400 text-xs">1. Upsert Family</span>
+                        <span class="text-gray-400 text-xs">2. Upsert FamilyMembers</span>
+                        <span class="text-gray-400 text-xs">3. Delete old Relationships</span>
+                        <span class="text-gray-400 text-xs">4. Create new Relationships</span>
+                    </div>
+                    <div class="flex items-center gap-2 ml-28">
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-emerald-100 border border-emerald-300 rounded-lg text-emerald-800 font-medium text-xs">PostgreSQL</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-32">
+                        <span class="text-gray-400 text-xs">Success</span>
+                        <span class="text-gray-300">&#8594;</span>
+                        <div class="px-3 py-1.5 bg-pink-100 border border-pink-300 rounded-lg text-pink-800 font-medium text-xs">syncSuccess: draft to origin</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUSPENDED BACKEND FLOWS -->
+    <div class="suspended-banner rounded-t-xl h-1.5"></div>
+    <div class="flex items-center gap-3 mb-4 bg-amber-50 px-4 py-3 rounded-b-xl border border-amber-200 border-t-0">
+        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+        <h2 class="text-xl font-bold text-amber-900">Suspended Backend Flows</h2>
+        <span class="px-2 py-0.5 bg-amber-200 text-amber-800 text-xs font-medium rounded-full">PAUSED</span>
+    </div>
+
+    <div class="opacity-70 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Backend Module Dependencies -->
+        <div class="bg-white rounded-xl border border-amber-200 p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">NestJS Backend Architecture</h3>
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <div class="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">NestJS Modules</div>
+                    <div class="space-y-1.5">
+                        <div class="px-3 py-1.5 bg-amber-100 border border-amber-300 rounded-lg text-amber-800 font-medium text-xs">AuthModule</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">UserModule</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">FamilyModule</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">GroupFamilyModule</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">GroupMemberModule</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">InviteModule</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Common Infrastructure</div>
+                    <div class="space-y-1.5">
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">Guards: Roles, Leader</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">AllExceptionsFilter</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">ResponseFactory</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">CloudinaryService</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">EnvConfigService</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Core Infrastructure</div>
+                    <div class="space-y-1.5">
+                        <div class="px-3 py-1.5 bg-emerald-100 border border-emerald-300 rounded-lg text-emerald-800 font-medium text-xs">PrismaService</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">JwtModule</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">PassportModule</div>
+                        <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium text-xs">ScheduleModule</div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="text-xs font-semibold text-gray-500 mb-2">Dependencies:</div>
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <span class="px-2 py-1 bg-gray-100 rounded text-gray-600">AuthModule <span class="text-gray-400">&#8594;</span> JwtModule, PrismaService</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-gray-600">UserModule <span class="text-gray-400">&#8594;</span> PrismaService, CloudinaryService</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-gray-600">FamilyModule <span class="text-gray-400">&#8594;</span> PrismaService, Guards</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-gray-600">GroupFamilyModule, GroupMemberModule <span class="text-gray-400">&#8594;</span> PrismaService, Guards</span>
+                    <span class="px-2 py-1 bg-gray-100 rounded text-gray-600">InviteModule <span class="text-gray-400">&#8594;</span> PrismaService</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-amber-200 p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Backend Module Details</h3>
+            <div class="space-y-3 text-sm">
+                <div class="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                    <div class="font-medium text-amber-900">AuthModule</div>
+                    <div class="text-xs text-amber-600 mt-1">JWT strategies (AtStrategy, RtStrategy), AtGuard, RtGuard. Register, login (base + Google), refresh, logout.</div>
+                </div>
+                <div class="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                    <div class="font-medium text-amber-900">UserModule</div>
+                    <div class="text-xs text-amber-600 mt-1">Profile CRUD with Cloudinary avatar upload. Owner-only access.</div>
+                </div>
+                <div class="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                    <div class="font-medium text-amber-900">FamilyModule</div>
+                    <div class="text-xs text-amber-600 mt-1">Full tree sync via $transaction. RolesGuard for EDITOR/OWNER.</div>
+                </div>
+                <div class="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                    <div class="font-medium text-amber-900">GroupFamilyModule</div>
+                    <div class="text-xs text-amber-600 mt-1">Group CRUD, join via invite token, role checks.</div>
+                </div>
+                <div class="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                    <div class="font-medium text-amber-900">GroupMemberModule</div>
+                    <div class="text-xs text-amber-600 mt-1">Role updates, leader transfer, member removal. GroupLeaderGuard.</div>
+                </div>
+                <div class="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                    <div class="font-medium text-amber-900">InviteModule</div>
+                    <div class="text-xs text-amber-600 mt-1">Base64 token generation with 24h expiry.</div>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="font-medium text-gray-500">AlbumsModule — STUB (empty)</div>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="font-medium text-gray-500">EventsModule — STUB (empty)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</main>
+
+<!-- Footer -->
+<footer class="bg-white border-t border-gray-200 mt-12">
+    <div class="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-gray-400">
+        Family Free Management — Architecture Map · Generated from codebase analysis
+    </div>
+</footer>
+
+<script>
+    // Tab switching
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(function(el) {
+            el.classList.add('hidden');
+        });
+        document.querySelectorAll('.tab-btn').forEach(function(el) {
+            el.classList.remove('active');
+            el.classList.add('text-gray-600');
+        });
+        var tab = document.getElementById('tab-' + tabId);
+        tab.classList.remove('hidden');
+        tab.classList.add('fade-in');
+        var btn = document.querySelector('[onclick="switchTab(\'' + tabId + '\')"]');
+        btn.classList.add('active');
+        btn.classList.remove('text-gray-600');
+    }
+
+    // Model highlight data
+    var modelRelations = {
+        'User': ['Account', 'UserProfile', 'Session', 'GroupMember', 'Family', 'Blog', 'Notification', 'ActivityLog', 'Invite', 'Album', 'Event', 'AuthLog'],
+        'Account': ['User', 'AuthProvider', 'AuthLog'],
+        'UserProfile': ['User'],
+        'Session': ['User'],
+        'AuthProvider': ['Account'],
+        'AuthLog': ['Account', 'User'],
+        'Family': ['User', 'GroupFamily', 'FamilyMember', 'ActivityLog'],
+        'FamilyMember': ['Family', 'Relationship'],
+        'Relationship': ['FamilyMember'],
+        'GroupFamily': ['Family', 'GroupMember', 'Invite'],
+        'GroupMember': ['GroupFamily', 'User'],
+        'Invite': ['GroupFamily', 'User'],
+        'Blog': ['User', 'BlogMedia'],
+        'BlogMedia': ['Blog'],
+        'Album': ['User', 'Photo', 'GroupFamily'],
+        'Photo': ['Album'],
+        'Notification': ['User'],
+        'Event': ['User', 'GroupFamily'],
+        'ActivityLog': ['Family', 'User'],
+        'Verification': []
+    };
+
+    var selectedModel = null;
+
+    function toggleModelHighlight(modelName) {
+        var cards = document.querySelectorAll('.model-card');
+        if (selectedModel === modelName) {
+            selectedModel = null;
+            cards.forEach(function(card) {
+                card.classList.remove('highlighted', 'dimmed');
+                card.style.boxShadow = '';
+            });
+            return;
+        }
+        selectedModel = modelName;
+        var related = modelRelations[modelName] || [];
+        cards.forEach(function(card) {
+            var cardModel = card.dataset.model;
+            if (cardModel === modelName) {
+                card.classList.add('highlighted');
+                card.classList.remove('dimmed');
+                card.style.boxShadow = '';
+            } else if (related.indexOf(cardModel) !== -1) {
+                card.classList.remove('dimmed', 'highlighted');
+                card.style.boxShadow = '0 0 0 2px rgba(99,102,241,0.3)';
+            } else {
+                card.classList.add('dimmed');
+                card.classList.remove('highlighted');
+                card.style.boxShadow = '';
+            }
+        });
+    }
+
+    // Module tree highlighting
+    var moduleRelations = {
+        'frontend-src': ['app', 'modules', 'lib', 'store', 'components', 'proxy'],
+        'app': ['frontend-src', 'modules'],
+        'modules': ['frontend-src', 'app', 'lib', 'store'],
+        'lib': ['frontend-src', 'modules'],
+        'store': ['modules'],
+        'proxy': ['modules', 'lib'],
+        'components': ['frontend-src'],
+        'backend-src': ['backend-main', 'app-module', 'backend-modules', 'common', 'schedule'],
+        'backend-modules': ['common'],
+        'common': ['backend-modules'],
+        'schedule': ['backend-modules']
+    };
+
+    function highlightModule(moduleId) {
+        var nodes = document.querySelectorAll('.tree-node');
+        var relations = moduleRelations[moduleId] || [];
+        nodes.forEach(function(node) {
+            var nodeModule = node.dataset.module;
+            if (nodeModule === moduleId) {
+                node.classList.add('highlighted');
+                node.classList.remove('dimmed');
+            } else if (relations.indexOf(nodeModule) !== -1) {
+                node.classList.add('highlighted');
+                node.classList.remove('dimmed');
+            } else {
+                node.classList.remove('highlighted');
+                node.classList.add('dimmed');
+            }
+        });
+        setTimeout(function() {
+            nodes.forEach(function(node) {
+                node.classList.remove('highlighted', 'dimmed');
+            });
+        }, 3000);
+    }
+
+    // Interactive Relation Graph
+    (function() {
+        var graphContainer = document.getElementById('relation-graph');
+        var svg = document.getElementById('relation-svg');
+        var nodesContainer = document.getElementById('relation-nodes');
+        if (!graphContainer || !svg || !nodesContainer) return;
+
+        // Model node positions (x, y)
+        var nodePositions = {
+            'User': { x: 580, y: 60 },
+            'Account': { x: 340, y: 160 },
+            'UserProfile': { x: 820, y: 160 },
+            'Session': { x: 500, y: 260 },
+            'AuthProvider': { x: 180, y: 260 },
+            'AuthLog': { x: 340, y: 360 },
+            'Family': { x: 820, y: 360 },
+            'FamilyMember': { x: 820, y: 460 },
+            'Relationship': { x: 1020, y: 460 },
+            'GroupFamily': { x: 1020, y: 260 },
+            'GroupMember': { x: 1100, y: 160 },
+            'Invite': { x: 1100, y: 360 },
+            'Blog': { x: 180, y: 460 },
+            'BlogMedia': { x: 80, y: 460 },
+            'Album': { x: 180, y: 560 },
+            'Photo': { x: 80, y: 560 },
+            'Notification': { x: 500, y: 160 },
+            'Event': { x: 1100, y: 460 },
+            'ActivityLog': { x: 500, y: 460 },
+            'Verification': { x: 500, y: 560 }
+        };
+
+        // Edge definitions: source, target, label, cardinality
+        var edges = [
+            { from: 'User', to: 'Account', label: '1:1', color: '#6366f1' },
+            { from: 'User', to: 'UserProfile', label: '1:1', color: '#6366f1' },
+            { from: 'User', to: 'Session', label: '1:N', color: '#6366f1' },
+            { from: 'User', to: 'GroupMember', label: '1:N', color: '#6366f1' },
+            { from: 'User', to: 'Family', label: '1:N', color: '#6366f1' },
+            { from: 'User', to: 'Blog', label: '1:N', color: '#6366f1' },
+            { from: 'User', to: 'Notification', label: '1:N', color: '#6366f1' },
+            { from: 'User', to: 'ActivityLog', label: '1:N', color: '#6366f1' },
+            { from: 'User', to: 'Album', label: '1:N', color: '#6366f1' },
+            { from: 'User', to: 'Event', label: '1:N', color: '#6366f1' },
+            { from: 'User', to: 'Invite', label: '1:N', color: '#6366f1' },
+            { from: 'User', to: 'AuthLog', label: '1:N', color: '#6366f1' },
+            { from: 'Account', to: 'AuthProvider', label: '1:N', color: '#8b5cf6' },
+            { from: 'Account', to: 'AuthLog', label: '1:N', color: '#8b5cf6' },
+            { from: 'GroupFamily', to: 'Family', label: '1:1', color: '#f59e0b' },
+            { from: 'GroupFamily', to: 'GroupMember', label: '1:N', color: '#f59e0b' },
+            { from: 'GroupFamily', to: 'Invite', label: '1:N', color: '#f59e0b' },
+            { from: 'Family', to: 'FamilyMember', label: '1:N', color: '#10b981' },
+            { from: 'Family', to: 'ActivityLog', label: '1:N', color: '#10b981' },
+            { from: 'FamilyMember', to: 'Relationship', label: '1:N', color: '#10b981' },
+            { from: 'Blog', to: 'BlogMedia', label: '1:N', color: '#ec4899' },
+            { from: 'Album', to: 'Photo', label: '1:N', color: '#14b8a6' }
+        ];
+
+        // Build adjacency map for click highlighting
+        var adjacency = {};
+        edges.forEach(function(e) {
+            if (!adjacency[e.from]) adjacency[e.from] = [];
+            if (!adjacency[e.to]) adjacency[e.to] = [];
+            adjacency[e.from].push(e.to);
+            adjacency[e.to].push(e.from);
+        });
+
+        // Create SVG arrowhead markers
+        var defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        var markerColors = ['#6366f1', '#8b5cf6', '#f59e0b', '#10b981', '#ec4899', '#14b8a6'];
+        markerColors.forEach(function(color) {
+            var marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+            marker.setAttribute('id', 'arrow-' + color.replace('#', ''));
+            marker.setAttribute('viewBox', '0 0 10 6');
+            marker.setAttribute('refX', '10');
+            marker.setAttribute('refY', '3');
+            marker.setAttribute('markerWidth', '8');
+            marker.setAttribute('markerHeight', '6');
+            marker.setAttribute('orient', 'auto');
+            var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', 'M 0 0 L 10 3 L 0 6 z');
+            path.setAttribute('fill', color);
+            marker.appendChild(path);
+            defs.appendChild(marker);
+        });
+        svg.appendChild(defs);
+
+        // Node width/height constants
+        var NODE_W = 130, NODE_H = 36;
+
+        // Render edges
+        var edgeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        edgeGroup.setAttribute('id', 'edge-group');
+        edges.forEach(function(e, idx) {
+            var fromPos = nodePositions[e.from];
+            var toPos = nodePositions[e.to];
+            var x1 = fromPos.x + NODE_W / 2;
+            var y1 = fromPos.y + NODE_H / 2;
+            var x2 = toPos.x + NODE_W / 2;
+            var y2 = toPos.y + NODE_H / 2;
+
+            // Offset arrow to node edge
+            var angle = Math.atan2(y2 - y1, x2 - x1);
+            x1 += Math.cos(angle) * (NODE_W / 2 + 4);
+            y1 += Math.sin(angle) * (NODE_H / 2 + 4);
+            x2 -= Math.cos(angle) * (NODE_W / 2 + 8);
+            y2 -= Math.sin(angle) * (NODE_H / 2 + 8);
+
+            // Slight curve via control point
+            var mx = (x1 + x2) / 2;
+            var my = (y1 + y2) / 2;
+            var dx = x2 - x1, dy = y2 - y1;
+            var cx = mx - dy * 0.12;
+            var cy = my + dx * 0.12;
+
+            var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', 'edge-line');
+            g.setAttribute('data-from', e.from);
+            g.setAttribute('data-to', e.to);
+
+            var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' Q ' + cx + ' ' + cy + ' ' + x2 + ' ' + y2);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', e.color);
+            path.setAttribute('stroke-width', '1.5');
+            path.setAttribute('marker-end', 'url(#arrow-' + e.color.replace('#', '') + ')');
+            path.setAttribute('class', 'edge-path');
+            path.style.transition = 'opacity 0.25s ease';
+            g.appendChild(path);
+
+            // Midpoint label
+            var labelX = mx - dy * 0.12 + 4;
+            var labelY = my + dx * 0.12 - 4;
+            var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bg.setAttribute('x', labelX - 12);
+            bg.setAttribute('y', labelY - 8);
+            bg.setAttribute('width', '24');
+            bg.setAttribute('height', '14');
+            bg.setAttribute('rx', '3');
+            bg.setAttribute('fill', 'white');
+            bg.setAttribute('stroke', '#e5e7eb');
+            bg.setAttribute('stroke-width', '0.5');
+            bg.setAttribute('class', 'edge-label-bg');
+            bg.style.transition = 'opacity 0.25s ease';
+            g.appendChild(bg);
+
+            var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', labelX);
+            text.setAttribute('y', labelY + 2);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('font-size', '9');
+            text.setAttribute('font-weight', '600');
+            text.setAttribute('fill', '#6b7280');
+            text.setAttribute('class', 'edge-label');
+            text.textContent = e.label;
+            text.style.transition = 'opacity 0.25s ease';
+            g.appendChild(text);
+
+            edgeGroup.appendChild(g);
+        });
+        svg.appendChild(edgeGroup);
+
+        // Render node boxes
+        nodesContainer.innerHTML = '';
+        var selectedNode = null;
+
+        Object.keys(nodePositions).forEach(function(name) {
+            var pos = nodePositions[name];
+            var div = document.createElement('div');
+            div.className = 'absolute flex items-center justify-center rounded-md border border-gray-300 bg-white text-xs font-semibold text-gray-800 shadow-sm select-none';
+            div.style.cssText = 'width:' + NODE_W + 'px;height:' + NODE_H + 'px;left:' + pos.x + 'px;top:' + pos.y + 'px;cursor:pointer;transition:all 0.25s ease;';
+            div.textContent = name;
+            div.setAttribute('data-node', name);
+
+            div.addEventListener('click', function(ev) {
+                ev.stopPropagation();
+                toggleGraphNode(name);
+            });
+
+            nodesContainer.appendChild(div);
+        });
+
+        // Click background to deselect
+        graphContainer.addEventListener('click', function() {
+            clearGraphNodeHighlight();
+        });
+
+        function toggleGraphNode(name) {
+            if (selectedNode === name) {
+                clearGraphNodeHighlight();
+                return;
+            }
+            highlightGraphNode(name);
+        }
+
+        function highlightGraphNode(name) {
+            selectedNode = name;
+            var connected = adjacency[name] || [];
+
+            // Dim all nodes, then highlight relevant ones
+            var nodeDivs = nodesContainer.querySelectorAll('[data-node]');
+            nodeDivs.forEach(function(d) {
+                var n = d.getAttribute('data-node');
+                if (n === name || connected.indexOf(n) !== -1) {
+                    d.style.opacity = '1';
+                    d.style.transform = 'scale(1.05)';
+                    d.style.boxShadow = (n === name)
+                        ? '0 0 0 3px rgba(99,102,241,0.6)'
+                        : '0 0 0 2px rgba(99,102,241,0.3)';
+                    d.style.borderColor = (n === name) ? '#6366f1' : '#a5b4fc';
+                    d.style.background = (n === name) ? '#eef2ff' : '#f5f3ff';
+                    d.style.zIndex = '10';
+                } else {
+                    d.style.opacity = '0.2';
+                    d.style.transform = 'scale(0.95)';
+                    d.style.boxShadow = '';
+                    d.style.borderColor = '#d1d5db';
+                    d.style.background = 'white';
+                    d.style.zIndex = '1';
+                }
+            });
+
+            // Dim all edges, then highlight relevant ones
+            var allEdges = edgeGroup.querySelectorAll('.edge-line');
+            allEdges.forEach(function(g) {
+                var from = g.getAttribute('data-from');
+                var to = g.getAttribute('data-to');
+                var isRelated = (from === name && connected.indexOf(to) !== -1) || (to === name && connected.indexOf(from) !== -1);
+                if (isRelated) {
+                    g.querySelector('.edge-path').style.opacity = '1';
+                    g.querySelector('.edge-path').style.strokeWidth = '2.5';
+                    g.querySelector('.edge-label-bg').style.opacity = '1';
+                    g.querySelector('.edge-label').style.opacity = '1';
+                } else {
+                    g.querySelector('.edge-path').style.opacity = '0.08';
+                    g.querySelector('.edge-path').style.strokeWidth = '1';
+                    g.querySelector('.edge-label-bg').style.opacity = '0.1';
+                    g.querySelector('.edge-label').style.opacity = '0.1';
+                }
+            });
+        }
+
+        function clearGraphNodeHighlight() {
+            selectedNode = null;
+            var nodeDivs = nodesContainer.querySelectorAll('[data-node]');
+            nodeDivs.forEach(function(d) {
+                d.style.opacity = '1';
+                d.style.transform = 'scale(1)';
+                d.style.boxShadow = '';
+                d.style.borderColor = '#d1d5db';
+                d.style.background = 'white';
+                d.style.zIndex = '1';
+            });
+            var allEdges = edgeGroup.querySelectorAll('.edge-line');
+            allEdges.forEach(function(g) {
+                g.querySelector('.edge-path').style.opacity = '1';
+                g.querySelector('.edge-path').style.strokeWidth = '1.5';
+                g.querySelector('.edge-label-bg').style.opacity = '1';
+                g.querySelector('.edge-label').style.opacity = '1';
+            });
+        }
+    })();
+</script>
+
+</body>
+</html>
