@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +16,6 @@ import { MdEventAvailable } from "react-icons/md";
 import { RiArrowDropRightLine } from "react-icons/ri";
 import { TiCloudStorageOutline } from "react-icons/ti";
 import { GrGroup } from "react-icons/gr";
-import React from "react";
 
 const features = [
   { slug: "build-flow", name: "Dựng sơ đồ", Icon: FaDrawPolygon },

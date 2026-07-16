@@ -20,7 +20,6 @@ import {
 import { IResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
 import { RemoveFromGroupAction } from "@/modules/group-member/group-member.actions";
 import { RootState } from "@/store";
-import { IErrorResponse } from "@/types/base.types";
 import { useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { CiLogout } from "react-icons/ci";
@@ -30,6 +29,7 @@ import { MdOutlineInfo } from "react-icons/md";
 import { TbEdit } from "react-icons/tb";
 import { useSelector } from "react-redux";
 import FamilyInfoForm from "./forms/family-info-form";
+import { ApiResponse } from "@/types/api.types";
 
 export const FamilyInfoDrawer = ({
   data,
@@ -45,15 +45,13 @@ export const FamilyInfoDrawer = ({
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   const handleRemoveMember = async (memberId: string) => {
-    const res: IErrorResponse | undefined = await RemoveFromGroupAction(
-      data.id,
-      memberId,
-    );
+    const res: ApiResponse<never, unknown> | undefined =
+      await RemoveFromGroupAction(data.id, memberId);
     if (res !== undefined) {
       Toaster({
         title: "Lỗi",
         description:
-          (res.error as string) || "Không thể xóa thành viên khỏi nhóm",
+          (res.message as string) || "Không thể xóa thành viên khỏi nhóm",
         type: "error",
       });
     }

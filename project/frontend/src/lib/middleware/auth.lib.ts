@@ -1,7 +1,7 @@
 import { cache } from "react";
 
 import { prisma } from "@/lib/prisma";
-import { IJwtPayload, IJwtVerifyResult } from "@/types/base.types";
+import { IJwtVerifyResult } from "@/types/base.types";
 import { IUserSession } from "@/types/auth.types";
 import { jwtVerify } from "jose";
 import { EnvConfig } from "../env/env-config.lib";

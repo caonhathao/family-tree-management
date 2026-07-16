@@ -8,17 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { updateGroupFamilyAction } from "@/modules/group-family/group-family.actions";
 import { UpdateGroupFamilySchema } from "@/modules/group-family/group-family.client-schemas";
 import {
-  IResponseGroupFamiliesDto,
   IResponseGroupFamilyDetailDto,
   IUpdateGroupFamilyDto,
 } from "@/modules/group-family/group-family.dto";
@@ -26,7 +20,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import isEqual from "lodash.isequal";
 import { Dispatch, SetStateAction } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { TbEdit } from "react-icons/tb";
 
 interface IFamilyInfoProps {
   data: IResponseGroupFamilyDetailDto;
@@ -34,11 +27,7 @@ interface IFamilyInfoProps {
 }
 
 const FamilyInfoForm = ({ data, setIsUpdate }: IFamilyInfoProps) => {
-  const {
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm<IUpdateGroupFamilyDto>({
+  const { handleSubmit, control } = useForm<IUpdateGroupFamilyDto>({
     resolver: zodResolver(UpdateGroupFamilySchema),
     defaultValues: {
       name: data.name || "",

@@ -12,23 +12,23 @@ import {
 import UpdateUserForm from "./components/forms/update-user";
 import { useEffect, useMemo } from "react";
 import { IResponseUserDto } from "@/modules/user/user.dto";
-import { IErrorResponse } from "@/types/base.types";
 import { useDispatch } from "react-redux";
 import { setProfile } from "@/store/user/userSlice";
 import { useRouter } from "next/navigation";
 import { navigateTo } from "@/lib/utils/navigate.utils";
 import { Separator } from "@/components/ui/separator";
 import { FaArrowRight } from "react-icons/fa6";
+import { ApiResponse } from "@/types/api.types";
 
 const ProfileContent = ({
   data,
 }: {
-  data: IResponseUserDto | IErrorResponse | null;
+  data: IResponseUserDto | ApiResponse<IResponseUserDto, unknown>;
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    if (data && !("error" in data)) {
+    if (data && "userProfile" in data) {
       const serializableProfile = {
         ...data,
         userProfile: {
@@ -43,7 +43,7 @@ const ProfileContent = ({
   }, [data, dispatch]);
 
   const avatar = useMemo(() => {
-    if (data && !("error" in data) && data.userProfile.avatar) {
+    if (data && "userProfile" in data && data.userProfile.avatar) {
       return data.userProfile.avatar;
     } else {
       return unknownImage.src;
@@ -123,7 +123,10 @@ const ProfileContent = ({
           <div className={" p-3 flex flex-col"}>
             <strong>Tóm tắt hoạt động</strong>
             <div>
-              Số nhóm hiện có: {availableData?.groups}
+              Số nhóm hiện có:{" "}
+              {availableData && "groups" in availableData
+                ? availableData.groups
+                : 0}
               <Button
                 variant={"link"}
                 size={"sm"}
@@ -138,7 +141,12 @@ const ProfileContent = ({
                 Xem chi tiết
               </Button>
             </div>
-            <div>Số lời mời hiện có: {availableData?.invites}</div>
+            <div>
+              Số lời mời hiện có:{" "}
+              {availableData && "invites" in availableData
+                ? availableData.invites
+                : 0}
+            </div>
             <div>Số cuộc trò chuyện hiện có: (in progress)</div>
           </div>
           <Separator />

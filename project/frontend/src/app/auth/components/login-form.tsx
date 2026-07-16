@@ -55,10 +55,10 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
       // console.log(result);
 
       if (result) {
-        if (result.success == false && "error" in result) {
+        if (result.success == false && "errors" in result) {
           Toaster({
             title: "Đăng nhập thất bại",
-            description: result.error,
+            description: result.message,
             type: "error",
             cancel: {
               label: "OK",
@@ -156,7 +156,7 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
                   <GoogleLogin
                     onSuccess={(credentialResponse) => {
                       startTransition(async () => {
-                        const result = await loginGoogleAction({
+                        await loginGoogleAction({
                           token: credentialResponse.credential!,
                         });
                         // xử lý kết quả...

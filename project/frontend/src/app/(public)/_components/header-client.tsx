@@ -1,13 +1,13 @@
-import { IErrorResponse } from "@/types/base.types";
 import { Navigation } from "./navigation-menu";
 import { UserMenu } from "./user-menu";
 import { IUserSession } from "@/types/auth.types";
 import { ToggleThemeButton } from "@/components/custom/toggle-theme";
+import { ApiResponse } from "@/types/api.types";
 
 const HeaderClient = ({
   user,
 }: {
-  user: IUserSession | IErrorResponse | null;
+  user: IUserSession | ApiResponse<IUserSession, unknown> | null;
 }) => {
   return (
     <header

@@ -127,10 +127,10 @@ export const handleDeleteAll = async ({
           type: "success",
           cancel: { label: "OK", onClick: () => {} },
         });
-      else if ("error" in result) {
+      else if ("errors" in result) {
         Toaster({
           title: "Lỗi",
-          description: result.error,
+          description: result.message,
           type: "success",
           cancel: { label: "OK", onClick: () => {} },
         });

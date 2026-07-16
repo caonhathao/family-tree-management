@@ -34,8 +34,7 @@ import {
   IResponseCreateInviteDto,
 } from "@/modules/invite/invite.dto";
 import { RootState } from "@/store";
-import { IErrorResponse } from "@/types/base.types";
-
+import { ApiResponse } from "@/types/api.types";
 import { MdOutlineSettings } from "react-icons/md";
 import { useSelector } from "react-redux";
 
@@ -56,9 +55,9 @@ const FamilySettingDrawer = ({
       expiresAt: new Date(),
     };
     const res:
-      | { success: boolean; error: string }
       | IResponseCreateInviteDto
-      | { err: string } = await CreateInviteLinkAction(payload);
+      | ApiResponse<IResponseCreateInviteDto, unknown> =
+      await CreateInviteLinkAction(payload);
     //console.log(res);
     if (res && "error" in res) {
       Toaster({
@@ -77,21 +76,24 @@ const FamilySettingDrawer = ({
   };
 
   const handleQuitGroup = async () => {
-    const res: IErrorResponse | undefined = await quitGroupAction(data.id);
-    if (res?.error) {
+    const res: ApiResponse<never, unknown> | undefined = await quitGroupAction(
+      data.id,
+    );
+    if (res && "errors" in res) {
       Toaster({
         title: "Lỗi",
-        description: res.error as string,
+        description: res.message,
         type: "error",
       });
     }
   };
   const handleDestroyGroup = async () => {
-    const res: IErrorResponse | undefined = await destroyGroupAction(data.id);
-    if (res?.error) {
+    const res: ApiResponse<never, unknown> | undefined =
+      await destroyGroupAction(data.id);
+    if (res && "errors" in res) {
       Toaster({
         title: "Lỗi",
-        description: res.error as string,
+        description: res.message,
         type: "error",
       });
     }

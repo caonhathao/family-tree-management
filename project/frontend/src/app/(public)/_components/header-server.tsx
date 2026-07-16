@@ -5,6 +5,7 @@ import { IErrorResponse } from "@/types/base.types";
 import HeaderClient from "./header-client";
 import { IUserSession } from "@/types/auth.types";
 import { getUserSessionAction } from "@/modules/auth/auth.actions";
+import { ApiResponse } from "@/types/api.types";
 
 export async function HeaderServer() {
   const cookieStore = await cookies();
@@ -14,7 +15,7 @@ export async function HeaderServer() {
   const token =
     headersStore.get("x-access-token") ||
     cookieStore.get("access_token")?.value;
-  let user: IUserSession | IErrorResponse | null = null;
+  let user: IUserSession | ApiResponse<IUserSession, unknown> | null = null;
 
   if (userIdFromHeader) {
     user = await getUserFromUserId(userIdFromHeader);

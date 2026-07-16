@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { navigateTo } from "@/lib/utils/navigate.utils";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { ApiResponse } from "@/types/api.types";
 
 interface SignupFormProps extends React.ComponentProps<typeof Card> {
   callback?: string;
@@ -51,13 +52,15 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
     // console.log(values);
     e?.preventDefault();
     startTransition(async () => {
-      const result: ISuccessResponse | IErrorResponse | undefined =
-        await registerAction(values);
+      const result:
+        | ISuccessResponse
+        | ApiResponse<ISuccessResponse, unknown>
+        | undefined = await registerAction(values);
       if (result) {
-        if (result.success == false && "error" in result) {
+        if (result.success == false && "errors" in result) {
           Toaster({
             title: "Đăng kí thất bại",
-            description: result.error,
+            description: result.message,
             type: "error",
             cancel: {
               label: "OK",
@@ -177,7 +180,7 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
                   <GoogleLogin
                     onSuccess={(credentialResponse) => {
                       startTransition(async () => {
-                        const result = await loginGoogleAction({
+                        await loginGoogleAction({
                           token: credentialResponse.credential!,
                         });
                         // xử lý kết quả...

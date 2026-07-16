@@ -10,8 +10,9 @@ import {
 } from "./user.dto";
 import { validate as isUUID } from "uuid";
 import { validator } from "../_common/validator";
-import { handleError } from "@/lib/utils/funcs.utils";
 import { IPaginationBase } from "@/types/base.types";
+import { ResponseFactory } from "@/lib/res/response.factory";
+import { ApiResponse } from "@/types/api.types";
 
 export const UserService = {
   updateUserInfo: async (
@@ -254,7 +255,12 @@ export const UserService = {
     };
   },
 
-  getAllAuthProviders: async (userId: string) => {
+  getAllAuthProviders: async (
+    userId: string,
+  ): Promise<
+    | IResponseLinkProvidersDto[]
+    | ApiResponse<IResponseLinkProvidersDto[], unknown>
+  > => {
     try {
       if (!isUUID(userId)) {
         throw new Error(Exception.ID_INVALID);
@@ -285,7 +291,7 @@ export const UserService = {
       });
       return result as IResponseLinkProvidersDto[];
     } catch (err) {
-      return handleError(err);
+      return ResponseFactory.handleError(err);
     }
   },
 
@@ -335,7 +341,7 @@ export const UserService = {
 
       return result;
     } catch (err) {
-      return handleError(err);
+      return ResponseFactory.handleError(err);
     }
   },
 };

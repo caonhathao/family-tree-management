@@ -2,8 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { IBlogDto, IBlogsDto } from "@/modules/blog/blog.dto";
-import { IErrorResponse, IPaginationBase } from "@/types/base.types";
+import { IPaginationBase } from "@/types/base.types";
 import { LoaderModule } from "@/components/shared/loader-module";
+import { ApiResponse } from "@/types/api.types";
 
 const FeatureEditorInternal = dynamic(() => import("./FeatureEditorInternal"), {
   ssr: false,
@@ -19,9 +20,9 @@ const FeatureEditorInternal = dynamic(() => import("./FeatureEditorInternal"), {
 });
 
 interface FeatureEditorProps {
-  blog: IBlogDto | IErrorResponse;
+  blog: IBlogDto | ApiResponse<IBlogDto, unknown>;
   slug: string;
-  list: IPaginationBase<IBlogsDto[]> | IErrorResponse;
+  list: IPaginationBase<IBlogsDto[]> | ApiResponse<IBlogsDto[], unknown>;
 }
 
 export default function FeatureEditor({

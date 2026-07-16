@@ -2,14 +2,17 @@
 import { LoaderModule } from "@/components/shared/loader-module";
 import { Toaster } from "@/components/shared/toast";
 import { IResponseJoinGroupDto } from "@/modules/group-family/group-family.dto";
-import { IErrorResponse } from "@/types/base.types";
+import { ApiResponse } from "@/types/api.types";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const InviteContent = ({
   data,
 }: {
-  data: IResponseJoinGroupDto | IErrorResponse | null;
+  data:
+    | IResponseJoinGroupDto
+    | ApiResponse<IResponseJoinGroupDto, unknown>
+    | null;
 }) => {
   const router = useRouter();
   useEffect(() => {
@@ -17,10 +20,10 @@ const InviteContent = ({
       router.push(`/group?groupId=${data.groupId}`);
     }
   }, [data, router]);
-  if (!data || "error" in data)
+  if (!data || "errors" in data)
     return Toaster({
       title: "Có lỗi xảy ra",
-      description: data?.error || "Vui lòng thử lại sau!",
+      description: data?.message || "Vui lòng thử lại sau!",
       type: "error",
       cancel: { label: "OK", onClick: () => {} },
     });

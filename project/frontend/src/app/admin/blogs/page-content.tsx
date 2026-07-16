@@ -1,24 +1,26 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
 import SearchBar from "../_components/search-bar";
-import { IErrorResponse, IPaginationBase } from "@/types/base.types";
+import { IPaginationBase } from "@/types/base.types";
 import { Toaster } from "@/components/shared/toast";
 import { useEffect } from "react";
 import { DataTable } from "../_components/data-table";
+import { IBlogsDto } from "@/modules/blog/blog.dto";
+import { ApiResponse } from "@/types/api.types";
 
 export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
-  data: IPaginationBase<TData[]> | IErrorResponse;
+  data: IPaginationBase<TData[]> | ApiResponse<IBlogsDto[], unknown>;
 }
 export function BlogContentPage<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
   useEffect(() => {
-    if (data && "error" in data) {
+    if (data && "errors" in data) {
       Toaster({
         title: "Hành động thất bại",
-        description: data.error,
+        description: data.message,
         type: "error",
         cancel: { label: "OK", onClick: () => {} },
       });
@@ -33,13 +35,13 @@ export function BlogContentPage<TData, TValue>({
         placeholder={"Nhập từ khóa ở đây"}
         keyQueryList={["slug", "title"]}
       />
-      {data && "error" in data ? null : (
+      {data && "pagination" in data && "data" in data ? (
         <DataTable
           columns={columns}
           data={data.data}
           pagination={data.pagination}
         />
-      )}
+      ) : null}
     </div>
   );
 }

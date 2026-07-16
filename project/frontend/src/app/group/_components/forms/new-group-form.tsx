@@ -29,6 +29,7 @@ import { CreateGroupFamilySchema } from "@/modules/group-family/group-family.cli
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { ApiResponse } from "@/types/api.types";
 
 const NewGroupForm = ({ className }: { className?: string }) => {
   const {
@@ -56,13 +57,14 @@ const NewGroupForm = ({ className }: { className?: string }) => {
     e?.preventDefault();
 
     startTransition(async () => {
-      const result = await createGroupFamilyAction(values);
+      const result: ApiResponse<never, unknown> | undefined =
+        await createGroupFamilyAction(values);
       // console.log(result);
 
-      if (result?.error) {
+      if (result && "errors" in result) {
         Toaster({
           title: "Khởi tạo thất bại",
-          description: result.error,
+          description: result.message,
           type: "error",
         });
       }

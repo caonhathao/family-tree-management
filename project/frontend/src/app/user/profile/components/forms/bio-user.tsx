@@ -9,8 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { safeJsonParse } from "@/lib/utils/funcs.utils";
-import { Dispatch, JSX, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { IoIosClose } from "react-icons/io";
 
 interface IBioProps {

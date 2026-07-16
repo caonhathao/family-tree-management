@@ -1,6 +1,4 @@
 "use client";
-import { scrollConfig } from "@/configs/animation/configs.anim";
-
 import { motion } from "framer-motion";
 
 import ScrollToTop from "../../_components/scroll-to-top-btn";

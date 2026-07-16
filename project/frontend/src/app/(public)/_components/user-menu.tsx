@@ -18,14 +18,14 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AppDispatch } from "@/store";
 import { useDispatch } from "react-redux";
-import { IErrorResponse } from "@/types/base.types";
 import { IUserSession } from "@/types/auth.types";
 import { handleLogOut } from "@/lib/middleware/auth-client-lib";
+import { ApiResponse } from "@/types/api.types";
 export const UserMenu = ({
   session,
   className,
 }: {
-  session: IUserSession | IErrorResponse | null;
+  session: IUserSession | ApiResponse<IUserSession, unknown> | null;
   className?: string;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -36,7 +36,7 @@ export const UserMenu = ({
   const isLogin = !!session && !("error" in session);
 
   const avatar = useMemo(() => {
-    if (isLogin && session?.avatar) {
+    if (isLogin && "avatar" in session) {
       return session.avatar;
     }
     return "";

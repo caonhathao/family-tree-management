@@ -28,6 +28,7 @@ import { AppDispatch, RootState } from "@/store";
 import { setDraft, setOrigin } from "@/store/family/familySlice";
 import isEqual from "lodash.isequal";
 import FamilySettingDrawer from "./family-setting-drawer";
+import { ApiResponse } from "@/types/api.types";
 
 const nodeTypes = {
   familyNode: FamilyMemberNode,
@@ -37,8 +38,10 @@ export const GroupContentPage = ({
   group,
   family,
 }: {
-  group: IResponseGroupFamilyDetailDto;
-  family: IDraftFamilyData | null;
+  group:
+    | IResponseGroupFamilyDetailDto
+    | ApiResponse<IResponseGroupFamilyDetailDto>;
+  family: IDraftFamilyData | ApiResponse<IDraftFamilyData, unknown>;
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -224,69 +227,73 @@ export const GroupContentPage = ({
     };
   }, [draft]);
 
-  return (
-    <div
-      ref={constrainRef}
-      className={"relative h-[calc(100vh-3.5rem)] w-full overflow-hidden"}
-    >
-      <PanelEditor
-        constraintsRef={constrainRef}
-        setOpenFamilyForm={setOpenFamilyForm}
-        setOpenFamilyMemberForm={setOpenFamilyMemberForm}
-        setOpenRelationshipForm={setOpenRelationForm}
-        showGrid={showGrid}
-        setShowGrid={setShowGrid}
-        onLayout={onLayout}
-        nodesDraggable={nodesDraggable}
-        setNodesDraggable={setNodesDraggable}
-        groupId={group.id}
-      />
-      <div className={"w-fit fixed top-20 right-5 z-50 flex flex-col gap-3"}>
-        <FamilyInfoDrawer data={group} />
-        <FamilySettingDrawer data={group} />
-      </div>
-
-      {openFamilyMemberForm && (
-        <NewFamilyMemberForm
-          currentData={editingMember}
-          setCurrentData={setEditingMember}
-          openState={openFamilyMemberForm}
-          setOpenState={setOpenFamilyMemberForm}
-        />
-      )}
-      {openFamilyForm && (
-        <NewFamilyForm
-          openState={openFamilyForm}
-          setOpenState={setOpenFamilyForm}
-        />
-      )}
-      {openRelationForm && (
-        <RelationshipForm
-          openState={openRelationForm}
-          setOpenState={setOpenRelationForm}
-          setCurrentData={setEditingRelation}
-          currentData={editingRelation}
-        />
-      )}
-      <div className={"w-full h-full border bg-slate-50"}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          nodeTypes={nodeTypes}
-          fitView
-          onNodeDoubleClick={onNodeDoubleClick}
-          onEdgeClick={onEdgeClick}
+  if (group && "id" in group) {
+    return (
+      <div
+        ref={constrainRef}
+        className={"relative h-[calc(100vh-3.5rem)] w-full overflow-hidden"}
+      >
+        <PanelEditor
+          constraintsRef={constrainRef}
+          setOpenFamilyForm={setOpenFamilyForm}
+          setOpenFamilyMemberForm={setOpenFamilyMemberForm}
+          setOpenRelationshipForm={setOpenRelationForm}
+          showGrid={showGrid}
+          setShowGrid={setShowGrid}
+          onLayout={onLayout}
           nodesDraggable={nodesDraggable}
-          onNodeDragStop={onNodeDragStop}
-          // Vô hiệu hóa kéo node nếu bạn muốn chỉ dùng Panel để sửa
-          // nodesDraggable={true}
-        >
-          {showGrid && <Background variant={BackgroundVariant.Dots} gap={20} />}{" "}
-          <Controls />
-        </ReactFlow>
+          setNodesDraggable={setNodesDraggable}
+          groupId={group.id}
+        />
+        <div className={"w-fit fixed top-20 right-5 z-50 flex flex-col gap-3"}>
+          <FamilyInfoDrawer data={group} />
+          <FamilySettingDrawer data={group} />
+        </div>
+
+        {openFamilyMemberForm && (
+          <NewFamilyMemberForm
+            currentData={editingMember}
+            setCurrentData={setEditingMember}
+            openState={openFamilyMemberForm}
+            setOpenState={setOpenFamilyMemberForm}
+          />
+        )}
+        {openFamilyForm && (
+          <NewFamilyForm
+            openState={openFamilyForm}
+            setOpenState={setOpenFamilyForm}
+          />
+        )}
+        {openRelationForm && (
+          <RelationshipForm
+            openState={openRelationForm}
+            setOpenState={setOpenRelationForm}
+            setCurrentData={setEditingRelation}
+            currentData={editingRelation}
+          />
+        )}
+        <div className={"w-full h-full border bg-slate-50"}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            nodeTypes={nodeTypes}
+            fitView
+            onNodeDoubleClick={onNodeDoubleClick}
+            onEdgeClick={onEdgeClick}
+            nodesDraggable={nodesDraggable}
+            onNodeDragStop={onNodeDragStop}
+            // Vô hiệu hóa kéo node nếu bạn muốn chỉ dùng Panel để sửa
+            // nodesDraggable={true}
+          >
+            {showGrid && (
+              <Background variant={BackgroundVariant.Dots} gap={20} />
+            )}{" "}
+            <Controls />
+          </ReactFlow>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 };

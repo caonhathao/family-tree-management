@@ -47,11 +47,12 @@ import { FaPen } from "react-icons/fa";
 import z from "zod";
 import { Controller, FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ApiResponse } from "@/types/api.types";
 
 interface FeatureEditorProps {
-  blog: IBlogDto | IErrorResponse;
+  blog: IBlogDto | ApiResponse<IBlogDto, unknown>;
   slug: string;
-  list: IPaginationBase<IBlogsDto[]> | IErrorResponse;
+  list: IPaginationBase<IBlogsDto[]> | ApiResponse<IBlogsDto[], unknown>;
 }
 
 const EDITOR_HOLDER_ID = "editorjs";
@@ -142,7 +143,7 @@ export default function FeatureEditorInternal({
           config: {
             uploader: {
               async uploadByFile(file: File) {
-                const res: IBlogMediaDto | IErrorResponse =
+                const res: IBlogMediaDto | ApiResponse<IBlogMediaDto, unknown> =
                   await uploadBlogMediaAction("IMAGE", file);
                 if (res && "url" in res && typeof res.url === "string") {
                   return {
@@ -225,7 +226,7 @@ export default function FeatureEditorInternal({
       const savedData = await ejInstance.current.save();
       //console.log(savedData);
       //we get the header from saveData and slog from searchParams
-      const res: IErrorResponse | IBlogDto | boolean | undefined =
+      const res: ApiResponse<IBlogDto, unknown> | IBlogDto | boolean =
         await dispatch(saveBlogDraft(slug)).unwrap();
       if (res && "id" in res && res.id?.length !== 0) {
         setData(savedData);
@@ -307,9 +308,8 @@ export default function FeatureEditorInternal({
                   >
                     Khác
                   </SelectItem>
-                  {list && "error" in list
-                    ? null
-                    : list.data.map((item) => {
+                  {list && "data" in list && list.data != undefined
+                    ? list.data.map((item) => {
                         return (
                           <SelectItem
                             key={item.id}
@@ -319,7 +319,8 @@ export default function FeatureEditorInternal({
                             {item.title}
                           </SelectItem>
                         );
-                      })}
+                      })
+                    : null}
                 </SelectGroup>
               </SelectContent>
             </Select>

@@ -10,25 +10,30 @@ import {
 } from "./auth.dto";
 import { cookies, headers } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
-import { handleError } from "@/lib/utils/funcs.utils";
 import { AuthService } from "./auth.service";
 
 import { IJwtVerifyResult, ISuccessResponse } from "@/types/base.types";
 import { jwtVerify } from "jose";
+import { ResponseFactory } from "@/lib/res/response.factory";
+import { IUserSession } from "@/types/auth.types";
+import { ApiResponse } from "@/types/api.types";
 
 export async function registerAction(data: IRegisterDto) {
   try {
     const headerList = await headers();
     const ipAddress = headerList.get("x-forwarded-for") || "unknown";
     const userAgent = headerList.get("user-agent") || "unknown";
-    const res: IAuthResponseDto | null | undefined = await AuthService.register(
+    const res:
+      | IAuthResponseDto
+      | null
+      | ApiResponse<IAuthResponseDto, unknown> = await AuthService.register(
       data,
       {
         ipAddress,
         userAgent,
       },
     );
-    if (res) {
+    if (res && "tokens" in res) {
       const cookieStore = await cookies();
       //storing tokens authentication
       cookieStore.set("access_token", res.tokens.accessToken, {
@@ -51,7 +56,7 @@ export async function registerAction(data: IRegisterDto) {
       } as ISuccessResponse;
     }
   } catch (err: unknown) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 }
 
@@ -60,12 +65,17 @@ export async function loginBaseAction(data: ILoginBaseDto) {
     const headerList = await headers();
     const ipAddress = headerList.get("x-forwarded-for") || "unknown";
     const userAgent = headerList.get("user-agent") || "unknown";
-    const res: IAuthResponseDto | null | undefined =
-      await AuthService.loginBase(data, {
+    const res:
+      | IAuthResponseDto
+      | null
+      | ApiResponse<IAuthResponseDto, unknown> = await AuthService.loginBase(
+      data,
+      {
         ipAddress,
         userAgent,
-      });
-    if (res) {
+      },
+    );
+    if (res && "tokens" in res) {
       const cookieStore = await cookies();
       //storing tokens authentication
       cookieStore.set("access_token", res.tokens.accessToken, {
@@ -88,7 +98,7 @@ export async function loginBaseAction(data: ILoginBaseDto) {
       } as ISuccessResponse;
     }
   } catch (err: unknown) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 }
 
@@ -124,7 +134,7 @@ export async function loginGoogleAction(token: IGoogleLoginDto) {
       });
     }
   } catch (err) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
   if (isSuccess) {
     redirect("/");
@@ -148,7 +158,7 @@ export async function logoutAction() {
     }
   } catch (err: unknown) {
     console.error("error at logout action", err);
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 
   // 3. Xóa sạch dấu vết ở trình duyệt cho dù DB có lỗi hay không
@@ -202,22 +212,26 @@ export async function refreshAction() {
       return { success: true };
     }
   } catch (err: unknown) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 }
 
-export async function getUserSessionAction() {
+export async function getUserSessionAction(): Promise<
+  IUserSession | ApiResponse<IUserSession, unknown>
+> {
   try {
     const headerList = await headers();
     const currentUserId = headerList.get("X-User-Id");
     if (!currentUserId) {
       throw new Error("Unauthorized");
     }
-    const res = await AuthService.getUserSession({ userId: currentUserId });
+    const res: IUserSession = await AuthService.getUserSession({
+      userId: currentUserId,
+    });
     //console.log(res);
     return res;
   } catch (err) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 }
 
@@ -232,6 +246,6 @@ export async function createNewBaseAuth(data: INewBaseAuth) {
     //console.log(res);
     return res;
   } catch (err) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 }

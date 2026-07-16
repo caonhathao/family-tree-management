@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { IBlogDto } from "@/modules/blog/blog.dto";
-import { IErrorResponse } from "@/types/base.types";
 import { LoaderModule } from "@/components/shared/loader-module";
+import { ApiResponse } from "@/types/api.types";
 
 const EditorJSComponent = dynamic(() => import("./feature-editor-internal"), {
   ssr: false,
@@ -19,7 +19,7 @@ const EditorJSComponent = dynamic(() => import("./feature-editor-internal"), {
 });
 
 interface FeatureEditorProps {
-  blog: IBlogDto | IErrorResponse;
+  blog: IBlogDto | ApiResponse<IBlogDto, unknown>;
   slug: string;
 }
 

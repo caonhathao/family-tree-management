@@ -3,6 +3,7 @@ import { RootState } from "..";
 import isEqual from "lodash.isequal";
 import { updateBlogAction } from "@/modules/blog/blog.action";
 import { syncSuccess } from "./blogSlice";
+import { IBlogDto } from "@/modules/blog/blog.dto";
 
 export const saveBlogDraft = createAsyncThunk(
   "blog/save",
@@ -23,7 +24,7 @@ export const saveBlogDraft = createAsyncThunk(
 
     if (result && "error" in result) {
       return rejectWithValue(result.error);
-    } else dispatch(syncSuccess(result));
+    } else dispatch(syncSuccess(result as IBlogDto));
 
     return result;
   },

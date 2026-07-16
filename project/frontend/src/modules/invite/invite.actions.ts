@@ -1,7 +1,7 @@
 "use server";
+import { ResponseFactory } from "@/lib/res/response.factory";
 import { ICreateInviteDto } from "./invite.dto";
 import { InviteService } from "./invite.service";
-import { handleError } from "@/lib/utils/funcs.utils";
 import { headers } from "next/headers";
 
 export async function CreateInviteLinkAction(data: ICreateInviteDto) {
@@ -15,6 +15,6 @@ export async function CreateInviteLinkAction(data: ICreateInviteDto) {
     const res = await InviteService.createInviteLink(userId, data);
     return res;
   } catch (err) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 }

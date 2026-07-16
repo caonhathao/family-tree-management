@@ -8,13 +8,13 @@ import {
   LoginBaseDto,
   RegisterServiceDto,
 } from "./auth.service-validator";
-import z, { success } from "zod";
+import z from "zod";
 import { validator } from "../_common/validator";
 import { IUserSession } from "@/types/auth.types";
 import { SignJWT } from "jose";
 import { AUTH_TYPE, PROVIDERS } from "@prisma/client";
-import { handleError } from "@/lib/utils/funcs.utils";
 import { IErrorResponse, ISuccessResponse } from "@/types/base.types";
+import { ResponseFactory } from "@/lib/res/response.factory";
 const getTokens = async (payload: Record<string, string>) => {
   const accessSecret = new TextEncoder().encode(EnvConfig.jwtAccessSecret);
   const refreshSecret = new TextEncoder().encode(EnvConfig.jwtRefreshSecret);
@@ -345,92 +345,97 @@ const register = async (
   data: RegisterServiceDto,
   metadata: { ipAddress: string; userAgent: string },
 ) => {
-  const email = await prisma.user.findFirst({
-    where: {
-      email: data.email,
-    },
-  });
-
-  if (email) {
-    throw new Error("Email already exists");
-  }
-
-  const hashedPW = await bcrypt.hash(data.password, 10);
-
-  const result = await prisma.$transaction(async (tx) => {
-    // 1. Tạo User, Account, AuthProvider và Profile đồng thời
-    const newUser = (await tx.user.create({
-      data: {
+  try {
+    const email = await prisma.user.findFirst({
+      where: {
         email: data.email,
-        userProfile: {
-          create: { fullName: data.fullName },
-        },
-        accounts: {
-          create: {
-            password: hashedPW,
-            authProvider: {
-              create: { provider: PROVIDERS.USER },
+      },
+    });
+
+    if (email) {
+      throw new Error("Email already exists");
+    }
+
+    const hashedPW = await bcrypt.hash(data.password, 10);
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Tạo User, Account, AuthProvider và Profile đồng thời
+      const newUser = (await tx.user.create({
+        data: {
+          email: data.email,
+          userProfile: {
+            create: { fullName: data.fullName },
+          },
+          accounts: {
+            create: {
+              password: hashedPW,
+              authProvider: {
+                create: { provider: PROVIDERS.USER },
+              },
             },
           },
         },
-      },
-      select: {
-        id: true,
-        role: true,
-        userProfile: {
-          select: { fullName: true, avatar: true },
+        select: {
+          id: true,
+          role: true,
+          userProfile: {
+            select: { fullName: true, avatar: true },
+          },
+          accounts: {
+            select: { id: true },
+          },
         },
-        accounts: {
-          select: { id: true },
+      })) as INewUser;
+
+      // Kiểm tra điều kiện sớm để bảo vệ dữ liệu và tránh lỗi TypeScript
+      if (!newUser.userProfile || !newUser.accounts) {
+        throw new Error("Failed to create user profile or account");
+      }
+
+      // 2. Tạo Token hệ thống
+      const tokens = await getTokens({ id: newUser.id, role: newUser.role });
+
+      // 3. Tạo Session và AuthLog song song thông qua Promise.all để tối ưu hiệu năng
+      await Promise.all([
+        tx.session.create({
+          data: {
+            userId: newUser.id,
+            token: tokens.refreshToken,
+            expiresAt: new Date(
+              Date.now() + EnvConfig.refreshTokenExpireIn * 1000,
+            ),
+            userAgent: metadata.userAgent,
+            ipAddress: metadata.ipAddress,
+          },
+        }),
+        tx.authLog.create({
+          data: {
+            userId: newUser.id,
+            accountId: newUser.accounts[0].id,
+            authBy: PROVIDERS.USER,
+            type: AUTH_TYPE.REGISTER,
+            ipAddress: metadata.ipAddress,
+            userAgent: metadata.userAgent,
+          },
+        }),
+      ]);
+
+      // 4. Trả về kết quả sau khi transaction thành công thành công
+      return {
+        user: {
+          id: newUser.id,
+          role: newUser.role,
+          userProfile: newUser.userProfile,
         },
-      },
-    })) as INewUser;
+        tokens,
+      } as IAuthResponseDto;
+    });
 
-    // Kiểm tra điều kiện sớm để bảo vệ dữ liệu và tránh lỗi TypeScript
-    if (!newUser.userProfile || !newUser.accounts) {
-      throw new Error("Failed to create user profile or account");
-    }
-
-    // 2. Tạo Token hệ thống
-    const tokens = await getTokens({ id: newUser.id, role: newUser.role });
-
-    // 3. Tạo Session và AuthLog song song thông qua Promise.all để tối ưu hiệu năng
-    await Promise.all([
-      tx.session.create({
-        data: {
-          userId: newUser.id,
-          token: tokens.refreshToken,
-          expiresAt: new Date(
-            Date.now() + EnvConfig.refreshTokenExpireIn * 1000,
-          ),
-          userAgent: metadata.userAgent,
-          ipAddress: metadata.ipAddress,
-        },
-      }),
-      tx.authLog.create({
-        data: {
-          userId: newUser.id,
-          accountId: newUser.accounts[0].id,
-          authBy: PROVIDERS.USER,
-          type: AUTH_TYPE.REGISTER,
-          ipAddress: metadata.ipAddress,
-          userAgent: metadata.userAgent,
-        },
-      }),
-    ]);
-
-    // 4. Trả về kết quả sau khi transaction thành công thành công
-    return {
-      user: {
-        id: newUser.id,
-        role: newUser.role,
-        userProfile: newUser.userProfile,
-      },
-      tokens,
-    } as IAuthResponseDto;
-  });
-
-  return result;
+    return result;
+  } catch (err) {
+    console.error("Error at register", err);
+    return ResponseFactory.handleError(err);
+  }
 };
 
 const loginBase = async (
@@ -518,7 +523,7 @@ const loginBase = async (
     } as IAuthResponseDto;
   } catch (err) {
     console.error("login failed: ", err);
-    throw err;
+    return ResponseFactory.handleError(err);
   }
 };
 
@@ -582,7 +587,7 @@ const createBaseAuth = async (data: INewBaseAuth, userId: string) => {
       throw new Error("User does not found");
     }
   } catch (err) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 };
 
