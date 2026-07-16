@@ -40,7 +40,7 @@ export async function seedUsers(
       email: adminEmail,
       emailVerified: true,
       role: USER_ROLE.ADMIN,
-      account: {
+      accounts: {
         create: {
           password: await bcrypt.hash(adminPassword, 12),
         },
@@ -86,7 +86,7 @@ export async function seedUsers(
         email: userData.email,
         emailVerified: faker.datatype.boolean(),
         role: userData.role,
-        account: {
+        accounts: {
           create: {
             password: hashedPassword,
           },

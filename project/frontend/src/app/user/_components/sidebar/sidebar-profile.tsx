@@ -34,7 +34,7 @@ const data: Record<string, dataProps> = {
         title: "Thông tin cá nhân",
         url: "/user/profile",
       },
-      { icon: RiLockPasswordLine, title: "Bảo mật", url: "/user/security" },
+      { icon: RiLockPasswordLine, title: "Bảo mật", url: "/user/secure" },
     ],
   },
   group: {

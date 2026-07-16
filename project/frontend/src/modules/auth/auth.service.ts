@@ -2,17 +2,19 @@ import * as bcrypt from "bcrypt";
 import { OAuth2Client, TokenPayload } from "google-auth-library";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { prisma } from "@/lib/prisma";
-import { IAuthResponseDto } from "./auth.dto";
+import { IAuthResponseDto, INewBaseAuth } from "./auth.dto";
 import {
   GoogleLoginDto,
   LoginBaseDto,
   RegisterServiceDto,
 } from "./auth.service-validator";
-import z from "zod";
+import z, { success } from "zod";
 import { validator } from "../_common/validator";
 import { IUserSession } from "@/types/auth.types";
 import { SignJWT } from "jose";
 import { AUTH_TYPE, PROVIDERS } from "@prisma/client";
+import { handleError } from "@/lib/utils/funcs.utils";
+import { IErrorResponse, ISuccessResponse } from "@/types/base.types";
 const getTokens = async (payload: Record<string, string>) => {
   const accessSecret = new TextEncoder().encode(EnvConfig.jwtAccessSecret);
   const refreshSecret = new TextEncoder().encode(EnvConfig.jwtRefreshSecret);
@@ -28,6 +30,19 @@ const getTokens = async (payload: Record<string, string>) => {
 
   return { accessToken, refreshToken };
 };
+
+interface INewUser {
+  id: string;
+  role: string;
+  userProfile: {
+    fullName: string;
+    avatar: string | null;
+  } | null;
+  accounts: {
+    id: string;
+    password: string | null;
+  }[];
+}
 
 const loginGoogle = async (
   token: GoogleLoginDto,
@@ -46,7 +61,7 @@ const loginGoogle = async (
     }
 
     //check user in database
-    const user = await prisma.user.findFirst({
+    const user = (await prisma.user.findFirst({
       where: {
         email: payload?.email,
       },
@@ -59,7 +74,7 @@ const loginGoogle = async (
             avatar: true,
           },
         },
-        account: {
+        accounts: {
           where: {
             authProvider: {
               provider: PROVIDERS.GOOGLE,
@@ -70,7 +85,7 @@ const loginGoogle = async (
           },
         },
       },
-    });
+    })) as INewUser;
 
     //if user is eixist, generate new token and session
     if (user) {
@@ -81,7 +96,7 @@ const loginGoogle = async (
       const tokens = await getTokens(payload);
       const safeUserAgent = userAgent || "unknown";
 
-      const [session, authLog] = await prisma.$transaction([
+      await prisma.$transaction([
         //create session
         prisma.session.upsert({
           where: {
@@ -109,7 +124,8 @@ const loginGoogle = async (
         //craete log
         prisma.authLog.create({
           data: {
-            accountId: user.account[0].id,
+            userId: user.id,
+            accountId: user.accounts[0].id,
             ipAddress: ipAddress,
             userAgent: userAgent,
             type: AUTH_TYPE.LOGIN,
@@ -132,7 +148,7 @@ const loginGoogle = async (
       //create user,account,provider and log
       const result = await prisma.$transaction(async (tx) => {
         // 1. Tạo User cùng với Profile và Account lồng nhau
-        const newUser = await tx.user.create({
+        const newUser = (await tx.user.create({
           data: {
             email: payload.email as string,
             userProfile: {
@@ -141,7 +157,7 @@ const loginGoogle = async (
                 avatar: payload.picture as string,
               },
             },
-            account: {
+            accounts: {
               create: {
                 authProvider: {
                   create: {
@@ -160,27 +176,24 @@ const loginGoogle = async (
                 avatar: true,
               },
             },
-            account: {
+            accounts: {
               select: {
                 id: true,
               },
             },
           },
-        });
+        })) as INewUser;
 
         // Kiểm tra sớm (Early return/throw) để rollback transaction nếu lỗi profile
-        if (
-          !newUser.userProfile ||
-          !newUser.account ||
-          newUser.account.length === 0
-        ) {
+        if (!newUser.userProfile || !newUser.accounts) {
           throw new Error("Failed to create user profile or account relation");
         }
 
         // 2. Tạo Auth Log liên kết với Account vừa tạo
         await tx.authLog.create({
           data: {
-            accountId: newUser.account[0].id,
+            userId: newUser.id,
+            accountId: newUser.accounts[0].id,
             ipAddress: ipAddress,
             userAgent: userAgent,
             type: AUTH_TYPE.LOGIN,
@@ -346,13 +359,13 @@ const register = async (
 
   const result = await prisma.$transaction(async (tx) => {
     // 1. Tạo User, Account, AuthProvider và Profile đồng thời
-    const newUser = await tx.user.create({
+    const newUser = (await tx.user.create({
       data: {
         email: data.email,
         userProfile: {
           create: { fullName: data.fullName },
         },
-        account: {
+        accounts: {
           create: {
             password: hashedPW,
             authProvider: {
@@ -367,14 +380,14 @@ const register = async (
         userProfile: {
           select: { fullName: true, avatar: true },
         },
-        account: {
+        accounts: {
           select: { id: true },
         },
       },
-    });
+    })) as INewUser;
 
     // Kiểm tra điều kiện sớm để bảo vệ dữ liệu và tránh lỗi TypeScript
-    if (!newUser.userProfile || !newUser.account) {
+    if (!newUser.userProfile || !newUser.accounts) {
       throw new Error("Failed to create user profile or account");
     }
 
@@ -396,7 +409,8 @@ const register = async (
       }),
       tx.authLog.create({
         data: {
-          accountId: newUser.account[0].id,
+          userId: newUser.id,
+          accountId: newUser.accounts[0].id,
           authBy: PROVIDERS.USER,
           type: AUTH_TYPE.REGISTER,
           ipAddress: metadata.ipAddress,
@@ -424,7 +438,7 @@ const loginBase = async (
   { userAgent, ipAddress }: { userAgent: string; ipAddress: string },
 ) => {
   try {
-    const user = await prisma.user.findUnique({
+    const user = (await prisma.user.findUnique({
       where: {
         email: data.email,
       },
@@ -432,16 +446,16 @@ const loginBase = async (
         id: true,
         email: true,
         role: true,
-        account: {
-          select: {
-            password: true,
+        accounts: {
+          where: {
             authProvider: {
-              where: {
-                provider: PROVIDERS.USER,
-              },
+              provider: PROVIDERS.USER,
             },
           },
-          take: 1,
+          select: {
+            id: true,
+            password: true,
+          },
         },
         userProfile: {
           select: {
@@ -450,19 +464,19 @@ const loginBase = async (
           },
         },
       },
-    });
+    })) as INewUser;
 
     if (!user) {
       throw new Error("User not found");
     }
 
-    if (user?.account) {
-      if (!user.account[0].password) {
+    if (user?.accounts) {
+      if (!user.accounts[0].password) {
         throw new Error("Email incorrect");
       } else {
         const isPWValid = await bcrypt.compare(
           data.password,
-          user.account[0].password,
+          user.accounts[0].password,
         );
         if (!isPWValid) {
           throw new Error("Password incorrect");
@@ -534,6 +548,44 @@ const getUserSession = async ({ userId }: { userId: string }) => {
   }
 };
 
+const createBaseAuth = async (data: INewBaseAuth, userId: string) => {
+  try {
+    //check valid user by id
+    const user = await validator(userId, (id) =>
+      prisma.user.findUnique({
+        where: { id },
+        select: {
+          id: true,
+        },
+      }),
+    );
+    //create new base auth infomation
+    const hashedPW = await bcrypt.hash(data.password, 10);
+    if (user) {
+      const newAuth = await prisma.account.create({
+        data: {
+          userId: user.id,
+          password: hashedPW,
+          authProvider: {
+            create: {
+              provider: PROVIDERS.USER,
+            },
+          },
+        },
+      });
+      if (newAuth) {
+        return { success: true, message: "ok" } as ISuccessResponse;
+      } else {
+        return { error: "e", success: false } as IErrorResponse;
+      }
+    } else {
+      throw new Error("User does not found");
+    }
+  } catch (err) {
+    return handleError(err);
+  }
+};
+
 export const AuthService = {
   loginGoogle,
   logout,
@@ -541,4 +593,5 @@ export const AuthService = {
   register,
   loginBase,
   getUserSession,
+  createBaseAuth,
 };

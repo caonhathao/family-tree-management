@@ -43,6 +43,7 @@ model AuthProvider {
     accountId String  @unique @db.Uuid
     account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
+    @@unique([accountId, provider])
     @@index([accountId])
     @@map("authProvider")
 }

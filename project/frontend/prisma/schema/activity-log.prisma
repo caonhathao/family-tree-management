@@ -37,6 +37,7 @@ enum AUTH_TYPE {
 
 model AuthLog {
     id        String    @id @default(uuid()) @db.Uuid
+    userId    String    @db.Uuid()
     accountId String    @db.Uuid()
     ipAddress String?
     userAgent String?

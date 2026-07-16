@@ -1,4 +1,4 @@
-import { GENDERS } from "@prisma/client";
+import { AUTH_TYPE, GENDERS, PROVIDERS } from "@prisma/client";
 
 export interface IUserInfoDto {
   fullName?: string;
@@ -25,6 +25,21 @@ export interface IResponseUserDto {
   };
   groups: number;
   invites: number;
+}
+
+export interface IResponseLinkProvidersDto {
+  id: string;
+  provider: string;
+}
+
+export interface IResponseAuthLog {
+  id: string;
+  accountId: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  type: AUTH_TYPE;
+  authBy: PROVIDERS;
+  createdAt: Date;
 }
 
 export interface IUserList {

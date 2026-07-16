@@ -29,6 +29,11 @@ export interface ILoginBaseDto {
   password: string;
 }
 
+export interface INewBaseAuth {
+  password: string;
+  confirmPassword: string;
+}
+
 export interface IGoogleLoginDto {
   token: string;
 }
