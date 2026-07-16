@@ -12,6 +12,13 @@ export default async function ProfilePage() {
   const res: IResponseUserDto | IErrorResponse | null =
     await getUserDetailAction("self");
 
+  if (!res || "error" in res) {
+    return (
+      <div className={"w-full h-full flex justify-center items-center"}>
+        <LoaderModule />
+      </div>
+    );
+  }
   return (
     <Suspense fallback={<LoaderModule />}>
       <ProfileContent data={res} />

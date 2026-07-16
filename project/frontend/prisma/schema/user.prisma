@@ -16,8 +16,7 @@ model User {
     createdAt       DateTime       @default(now())
     updatedAt       DateTime       @updatedAt
     role            USER_ROLE      @default(USER)
-    account         Account?
-    sessions        Session[]
+    accounts        Account[]
     userProfile     UserProfile?
     families        Family[]
     albums          Album[]
@@ -28,6 +27,7 @@ model User {
     sentInvites     Invite[]       @relation("SentInvites")
     receivedInvites Invite[]       @relation("ReceivedInvites")
     blogs           Blog[]
+    sesstion        Session[]
 
     @@index([email])
     @@map("user")
@@ -36,11 +36,13 @@ model User {
 //storing sign in infomation and token
 model Account {
     id        String   @id @default(uuid()) @db.Uuid
-    userId    String   @unique @db.Uuid
+    userId    String   @db.Uuid
     user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     password  String?
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    authProvider AuthProvider?
 
     @@index([userId])
     @@map("account")
@@ -53,16 +55,18 @@ enum GENDERS {
 }
 
 model UserProfile {
-    id          String    @id @default(uuid()) @db.Uuid
-    userId      String    @unique @db.Uuid
-    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-    fullName    String
-    dateOfBirth DateTime?
-    avatar      String?
-    biography   String?
-    gender      GENDERS   @default(UNKNOWN)
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
+    id            String    @id @default(uuid()) @db.Uuid
+    userId        String    @unique @db.Uuid
+    user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    fullName      String
+    memorableName String?
+    address       String?
+    dateOfBirth   DateTime?
+    avatar        String?
+    biography     String?
+    gender        GENDERS   @default(UNKNOWN)
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
 
     @@map("user_profile")
 }

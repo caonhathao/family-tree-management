@@ -2,9 +2,16 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { UpdateUserInfoDto } from "./user.service-validator";
 import { Exception } from "@/lib/messages/response.messages";
-import { IResponseUserDto, IUserList } from "./user.dto";
+import {
+  IResponseAuthLog,
+  IResponseLinkProvidersDto,
+  IResponseUserDto,
+  IUserList,
+} from "./user.dto";
 import { validate as isUUID } from "uuid";
 import { validator } from "../_common/validator";
+import { handleError } from "@/lib/utils/funcs.utils";
+import { IPaginationBase } from "@/types/base.types";
 
 export const UserService = {
   updateUserInfo: async (
@@ -97,7 +104,9 @@ export const UserService = {
               userProfile: {
                 select: {
                   fullName: true,
+                  memorableName: true,
                   avatar: true,
+                  address: true,
                   dateOfBirth: true,
                   biography: true,
                   gender: true,
@@ -150,7 +159,9 @@ export const UserService = {
               userProfile: {
                 select: {
                   fullName: true,
+                  memorableName: true,
                   avatar: true,
+                  address: true,
                   dateOfBirth: true,
                   biography: true,
                   gender: true,
@@ -241,5 +252,90 @@ export const UserService = {
         pageSize: pageSize,
       },
     };
+  },
+
+  getAllAuthProviders: async (userId: string) => {
+    try {
+      if (!isUUID(userId)) {
+        throw new Error(Exception.ID_INVALID);
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          accounts: {
+            select: {
+              authProvider: {
+                select: {
+                  accountId: true,
+                  provider: true,
+                },
+              },
+            },
+          },
+        },
+      });
+      if (!user) throw new Error(Exception.NOT_EXIST);
+
+      const result = user.accounts.map((value) => {
+        return {
+          id: value.authProvider?.accountId,
+          provider: value.authProvider?.provider,
+        };
+      });
+      return result as IResponseLinkProvidersDto[];
+    } catch (err) {
+      return handleError(err);
+    }
+  },
+
+  getAllAuthLog: async ({
+    userId,
+    page = 1,
+    limit = 10,
+  }: {
+    userId: string;
+    page: number | undefined;
+    limit: number | undefined;
+  }) => {
+    try {
+      if (!isUUID(userId)) {
+        throw new Error(Exception.ID_INVALID);
+      }
+
+      const skip = (page - 1) * limit;
+
+      const logs = await prisma.authLog.findMany({
+        where: { userId: userId },
+        select: {
+          id: true,
+          accountId: true,
+          authBy: true,
+          type: true,
+          ipAddress: true,
+          userAgent: true,
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip,
+        take: limit,
+      });
+
+      const result: IPaginationBase<IResponseAuthLog[]> = {
+        data: logs,
+        pagination: {
+          currentPage: page,
+          totalItems: logs.length,
+          pageSize: limit,
+          totalPages: Math.ceil(logs.length / limit),
+        },
+      };
+
+      return result;
+    } catch (err) {
+      return handleError(err);
+    }
   },
 };

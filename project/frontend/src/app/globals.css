@@ -52,7 +52,7 @@
   --glass: rgba(255, 255, 255, 0.75);
   --glass-border: rgba(0, 0, 0, 0.12);
   --shadow: 0 10px 30px rgb(0 0 0 / 0.08);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(57.349% 0.23474 28.427);
 }
 
 .dark {

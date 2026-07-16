@@ -26,6 +26,7 @@ const ProfileContent = ({
   data: IResponseUserDto | IErrorResponse | null;
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+
   useEffect(() => {
     if (data && !("error" in data)) {
       const serializableProfile = {
@@ -38,6 +39,7 @@ const ProfileContent = ({
 
       dispatch(setProfile(serializableProfile));
     }
+    console.log("Data at profile content:", data);
   }, [data, dispatch]);
 
   const avatar = useMemo(() => {
@@ -51,9 +53,18 @@ const ProfileContent = ({
   const availableData = useMemo(() => {
     if (data && !("error" in data)) {
       return data;
-    }
+    } else return null;
   }, [data]);
+
   const router = useRouter();
+
+  if (!availableData) {
+    return (
+      <div className={"w-full h-full flex justify-center items-center"}>
+        Tải dữ liệu thất bại.
+      </div>
+    );
+  }
   return (
     <div
       className={
@@ -94,7 +105,10 @@ const ProfileContent = ({
         {/* display profile */}
         <div className={"w-full flex flex-col gap-3 p-3"}>
           <h2 className={"font-bold"}>Thông tin chung</h2>
-          <UpdateUserForm className={"w-full bg-background"} />
+          <UpdateUserForm
+            className={"w-full bg-background"}
+            data={availableData}
+          />
         </div>
       </div>
       <Separator />
