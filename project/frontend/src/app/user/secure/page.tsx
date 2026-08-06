@@ -1,7 +1,6 @@
 import { LoaderModule } from "@/components/shared/loader-module";
 import { getAllLinkedAuthProviders } from "@/modules/user/user.actions";
 import { IResponseLinkProvidersDto } from "@/modules/user/user.dto";
-import { IErrorResponse } from "@/types/base.types";
 import { Suspense } from "react";
 import SecureContent from "./secure-content";
 import { ApiResponse } from "@/types/api.types";

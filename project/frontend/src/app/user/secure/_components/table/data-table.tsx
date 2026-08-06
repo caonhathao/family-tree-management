@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { getAllAuthLogs } from "@/modules/user/user.actions";
 import { IResponseAuthLog } from "@/modules/user/user.dto";
-import { IErrorResponse, IPaginationBase } from "@/types/base.types";
+import { IPaginationBase } from "@/types/base.types";
 import {
   ColumnDef,
   flexRender,

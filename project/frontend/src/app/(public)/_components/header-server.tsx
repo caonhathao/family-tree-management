@@ -1,7 +1,6 @@
 "use server";
 import { getUserFromToken, getUserFromUserId } from "@/lib/middleware/auth.lib";
 import { cookies, headers } from "next/headers";
-import { IErrorResponse } from "@/types/base.types";
 import HeaderClient from "./header-client";
 import { IUserSession } from "@/types/auth.types";
 import { getUserSessionAction } from "@/modules/auth/auth.actions";

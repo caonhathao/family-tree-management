@@ -18,7 +18,7 @@ import { IRegisterDto } from "@/modules/auth/auth.dto";
 import { loginGoogleAction, registerAction } from "@/modules/auth/auth.actions";
 import { RegisterSchema } from "@/modules/auth/auth.client-schemas";
 import { Toaster } from "@/components/shared/toast";
-import { IErrorResponse, ISuccessResponse } from "@/types/base.types";
+import { ISuccessResponse } from "@/types/base.types";
 import { cn } from "@/lib/utils";
 import { navigateTo } from "@/lib/utils/navigate.utils";
 import { EnvConfig } from "@/lib/env/env-config.lib";

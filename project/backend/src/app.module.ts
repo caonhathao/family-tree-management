@@ -18,6 +18,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TaskModule } from './schedule/task-schedule.module';
 import { PassportModule } from '@nestjs/passport';
 import { HealthCheckModule } from './modules/health-check/health-check.module';
+import { BlogModule } from './modules/blog/blog.module';
+import { BlogMediaModule } from './modules/blog-media/blog-media.module';
 
 @Module({
   imports: [
@@ -41,6 +43,8 @@ import { HealthCheckModule } from './modules/health-check/health-check.module';
     TaskModule,
     PassportModule,
     HealthCheckModule,
+    BlogModule,
+    BlogMediaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -7,6 +7,7 @@ import {
   Post,
   Headers,
   HttpCode,
+  Get,
   UseGuards,
 } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
@@ -15,12 +16,13 @@ import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { AuthService } from './auth.service';
 import { LoginBaseDto } from './dto/login.dto';
 import { HttpStatus } from 'src/common/constants/api';
-import { RtGuard } from './guards/auth.guard';
+import { AtGuard, RtGuard } from './guards/auth.guard';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { GetCurrentUser } from 'src/common/decorators/get-user.decorator';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
+import { CreateBaseAuthDto } from './dto/create-base-auth.dto';
 
 // Verifies the username and password.
 
@@ -129,6 +131,39 @@ export class AuthController {
       data: user,
       code: HttpStatus.OK,
       message: ValidMessageResponse.LOGIN,
+    });
+  }
+
+  @Get('session')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Get current user session info' })
+  @ApiResponse({ status: 200, description: 'Get session successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getUserSession(@GetCurrentUserId() userId: string) {
+    const user = await this.authService.getUserSession(userId);
+
+    return ResponseFactory.success({
+      data: user,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.GETTED,
+    });
+  }
+
+  @Post('create-base-auth')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Create base auth for current user' })
+  @ApiResponse({ status: 200, description: 'Create base auth successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createBaseAuth(
+    @GetCurrentUserId() userId: string,
+    @Body() data: CreateBaseAuthDto,
+  ) {
+    const result = await this.authService.createBaseAuth(data, userId);
+
+    return ResponseFactory.success({
+      data: result,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.CREATED,
     });
   }
 

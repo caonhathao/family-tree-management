@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 import 'tsconfig-paths/register';
 
 // console.log('--- TEST LOG ---'); // Đặt ở đây
@@ -18,6 +19,13 @@ async function bootstrap() {
 
   //register module
   app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
   app.enableCors({
     origin: process.env.CLIENT_DOMAIN, // URL Frontend trên Render
     credentials: true,

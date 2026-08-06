@@ -10,8 +10,7 @@ import { Exception } from 'src/common/messages/messages.response';
 import * as bcrypt from 'bcrypt';
 import { UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 import { CloudinaryService } from 'src/common/config/cloudinary/cloudinary.service';
-import { Prisma } from '@prisma/client';
-import { JsonValue } from '@prisma/client/runtime/client';
+import { Prisma, USER_ROLE } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { EnvConfigService } from 'src/common/config/env/env-config.service';
 
@@ -39,17 +38,7 @@ export class UserService {
     const accountUpdate: Prisma.AccountUpdateInput = {};
 
     if (data.fullName) profileUpdate.fullName = data.fullName;
-    if (data.biography)
-      try {
-        const parsed =
-          typeof data.biography === 'string'
-            ? (JSON.parse(data.biography) as JsonValue)
-            : data.biography;
-        profileUpdate.biography = parsed as Prisma.InputJsonValue;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (e) {
-        throw new BadRequestException('Biography format is invalid JSON');
-      }
+    if (data.biography) profileUpdate.biography = data.biography;
     if (data.dateOfBirth) {
       const date = new Date(data.dateOfBirth);
       if (isNaN(date.getTime())) {
@@ -115,7 +104,7 @@ export class UserService {
         }
 
         if (Object.keys(accountUpdate).length > 0) {
-          await tx.account.update({
+          await tx.account.updateMany({
             where: { userId: targetId },
             data: accountUpdate,
           });
@@ -135,28 +124,224 @@ export class UserService {
     }
   }
 
-  async get(targetId: string, userId: string) {
+  async get(targetId: string, userId: string, type = 'self') {
     // console.log(targetId, userId);
     if (!isUUID(targetId, 'all'))
       throw new NotFoundException(Exception.NOT_EXIST);
 
-    if (targetId !== userId) {
-      throw new NotFoundException(Exception.NOT_EXIST);
+    if (type === 'self') {
+      if (targetId !== userId) {
+        throw new NotFoundException(Exception.NOT_EXIST);
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          userProfile: {
+            select: {
+              fullName: true,
+              memorableName: true,
+              avatar: true,
+              address: true,
+              dateOfBirth: true,
+              biography: true,
+              gender: true,
+            },
+          },
+        },
+      });
+
+      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+
+      const [groups, invites] = await this.prisma.$transaction([
+        this.prisma.groupFamily.count({
+          where: {
+            groupMembers: {
+              some: {
+                memberId: userId,
+              },
+            },
+          },
+        }),
+        this.prisma.invite.count({
+          where: {
+            targetId: userId,
+            expiresAt: {
+              gt: new Date(),
+            },
+          },
+        }),
+      ]);
+
+      return {
+        ...user,
+        groups,
+        invites,
+      };
+    } else if (type === 'target') {
+      const target = await this.prisma.user.findUnique({
+        where: { id: targetId },
+        select: {
+          id: true,
+          email: true,
+          userProfile: {
+            select: {
+              fullName: true,
+              memorableName: true,
+              avatar: true,
+              address: true,
+              dateOfBirth: true,
+              biography: true,
+              gender: true,
+            },
+          },
+        },
+      });
+
+      if (!target) throw new NotFoundException(Exception.NOT_EXIST);
+
+      return target;
+    } else {
+      throw new BadRequestException(Exception.BAD_REQUEST);
     }
-    return await this.prisma.user.findUnique({
+  }
+
+  async getAll(
+    userId: string,
+    page?: number,
+    limit?: number,
+    filter?: string,
+    filterType?: string,
+  ) {
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      select: { id: true, email: true, role: true },
+    });
+
+    if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+    if (user.role !== USER_ROLE.ADMIN)
+      throw new ForbiddenException(Exception.PEMRISSION);
+
+    const whereClause: Prisma.UserWhereInput = {};
+    if (filter && filterType) {
+      if (filterType === 'id') {
+        if (!isUUID(filter))
+          throw new BadRequestException(Exception.ID_INVALID);
+        whereClause.id = filter;
+      }
+      if (filterType === 'email') {
+        whereClause.email = { contains: filter, mode: 'insensitive' };
+      }
+    }
+
+    const currentPage = page && page > 0 ? page : 1;
+    const pageSize = limit && limit > 0 ? limit : 10;
+    const skip = (currentPage - 1) * pageSize;
+
+    const [totalCount, listUser] = await this.prisma.$transaction([
+      this.prisma.user.count({ where: whereClause }),
+      this.prisma.user.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          email: true,
+          userProfile: {
+            select: { fullName: true, avatar: true },
+          },
+          createdAt: true,
+        },
+        skip: skip,
+        take: pageSize,
+        orderBy: { id: 'asc' },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      data: listUser,
+      pagination: {
+        totalItems: totalCount,
+        totalPages: totalPages,
+        currentPage: currentPage,
+        pageSize: pageSize,
+      },
+    };
+  }
+
+  async getAuthProviders(targetId: string, userId: string) {
+    if (!isUUID(targetId, 'all'))
+      throw new BadRequestException(Exception.ID_INVALID);
+    if (targetId !== userId) throw new ForbiddenException(Exception.PEMRISSION);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetId },
       select: {
-        id: true,
-        email: true,
-        userProfile: {
+        accounts: {
           select: {
-            fullName: true,
-            avatar: true,
-            dateOfBirth: true,
-            biography: true,
+            authProvider: {
+              select: {
+                accountId: true,
+                provider: true,
+              },
+            },
           },
         },
       },
     });
+
+    if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+
+    return user.accounts.map((value) => {
+      return {
+        id: value.authProvider?.accountId,
+        provider: value.authProvider?.provider,
+      };
+    });
+  }
+
+  async getAuthLogs(targetId: string, userId: string, page = 1, limit = 10) {
+    if (!isUUID(targetId, 'all'))
+      throw new BadRequestException(Exception.ID_INVALID);
+    if (targetId !== userId) throw new ForbiddenException(Exception.PEMRISSION);
+
+    const currentPage = page && page > 0 ? page : 1;
+    const pageSize = limit && limit > 0 ? limit : 10;
+    const skip = (currentPage - 1) * pageSize;
+
+    const [totalCount, logs] = await this.prisma.$transaction([
+      this.prisma.authLog.count({ where: { userId: targetId } }),
+      this.prisma.authLog.findMany({
+        where: { userId: targetId },
+        select: {
+          id: true,
+          accountId: true,
+          authBy: true,
+          type: true,
+          ipAddress: true,
+          userAgent: true,
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: skip,
+        take: pageSize,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      data: logs,
+      pagination: {
+        currentPage: currentPage,
+        totalItems: totalCount,
+        pageSize: pageSize,
+        totalPages: totalPages,
+      },
+    };
   }
 }

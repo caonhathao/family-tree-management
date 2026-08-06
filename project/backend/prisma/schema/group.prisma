@@ -13,6 +13,8 @@ model GroupFamily {
     updatedAt    DateTime      @updatedAt
     groupMembers GroupMember[]
     invites      Invite[]
+    albums       Album[]
+    events       Event[]
 
     @@map("group_family")
 }

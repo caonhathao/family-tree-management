@@ -37,7 +37,7 @@ export class GroupLeaderGuard implements CanActivate {
     if (!user) {
       throw new UnauthorizedException(Exception.UNAUTHORIZED);
     }
-    const userId = user?.payload.sub;
+    const userId = user?.payload.id;
     //fixed params to detect exactly id of group where leader in every api need leader permission
     const groupId = req.params.groupId;
 

@@ -74,6 +74,13 @@ export class EnvConfigService {
       'family'
     );
   }
+  get folderBlogName(): string {
+    return (
+      this.configService?.get<string>('cloudinary.folderBlog') ||
+      process.env.FOLDER_BLOG ||
+      'blog'
+    );
+  }
   get cloudinaryApiKey(): string {
     return (
       this.configService?.get<string>('cloudinary.apiKey') ||
@@ -128,6 +135,7 @@ export class EnvConfigService {
       folderAlbumName: this.folderAlbumName,
       folderUserName: this.folderUserName,
       folderFamilyName: this.folderFamilyName,
+      folderBlogName: this.folderBlogName,
       cloudinaryApiKey: this.cloudinaryApiKey,
       cloudinaryApiSecret: this.cloudinaryApiSecret,
       cloudinaryUrl: this.cloudinaryUrl,

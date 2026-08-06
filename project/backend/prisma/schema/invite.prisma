@@ -1,12 +1,15 @@
 model Invite {
-    id        String      @id @default(uuid()) @db.Uuid()
-    token     String      @unique
-    groupId   String      @db.Uuid()
-    group     GroupFamily @relation(fields: [groupId], references: [id], onDelete: Cascade)
-    senderId  String      @db.Uuid()
-    sender    User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+    id        String   @id @default(uuid()) @db.Uuid()
+    token     String   @unique
+    groupId   String   @db.Uuid()
+    senderId  String   @db.Uuid()
+    targetId  String?  @db.Uuid()
     expiresAt DateTime
-    createdAt DateTime    @default(now())
+    createdAt DateTime @default(now())
+
+    group  GroupFamily @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    sender User        @relation("SentInvites", fields: [senderId], references: [id], onDelete: Cascade)
+    target User?       @relation("ReceivedInvites", fields: [targetId], references: [id], onDelete: Cascade)
 
     @@index([token])
     @@map("invite")

@@ -1,5 +1,5 @@
 "use server";
-import { IBlogDto, IBlogList, IBlogsDto } from "./blog.dto";
+import { IBlogDto, IBlogsDto } from "./blog.dto";
 import { BlogService } from "./blog.service";
 import { headers } from "next/headers";
 import { IPaginationBase } from "@/types/base.types";

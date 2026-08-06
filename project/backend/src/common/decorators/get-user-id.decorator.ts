@@ -12,9 +12,9 @@ export const GetCurrentUserId = createParamDecorator(
     const { user }: { user: JwtRequest } = context.switchToHttp().getRequest();
     //console.log(user);
 
-    if (!user || !user.payload || !isUUID(user.payload.sub)) {
+    if (!user || !user.payload || !isUUID(user.payload.id)) {
       throw new UnauthorizedException(Exception.UNAUTHORIZED);
     }
-    return user.payload.sub;
+    return user.payload.id;
   },
 );

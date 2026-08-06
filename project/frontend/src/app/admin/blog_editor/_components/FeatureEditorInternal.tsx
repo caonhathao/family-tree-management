@@ -14,7 +14,7 @@ import Embed from "@editorjs/embed";
 import Marker from "@editorjs/marker";
 import ImageTool from "@editorjs/image";
 import { Toaster } from "@/components/shared/toast";
-import { IErrorResponse, IPaginationBase } from "@/types/base.types";
+import { IPaginationBase } from "@/types/base.types";
 import { Button } from "@/components/ui/button";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";

@@ -1,4 +1,5 @@
 import {
+  Allow,
   IsDate,
   IsEnum,
   IsNotEmpty,
@@ -13,8 +14,11 @@ import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 import { LINEAGE_TYPE, TYPE_RELATIONSHIP } from '@prisma/client';
 
 export class FamilyDto {
+  @Allow()
   members: IFamilyMemberDto[];
+  @Allow()
   relationships: IRelationshipDto[];
+  @Allow()
   family: IFamilyDto;
 }
 

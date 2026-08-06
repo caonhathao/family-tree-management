@@ -8,7 +8,6 @@ enum EVENT_TYPE {
 model Event {
     id          String     @id @default(uuid()) @db.Uuid
     familyId    String@db.Uuid
-    family      Family     @relation(fields: [familyId], references: [id], onDelete: Cascade)
     title       String
     description String
     eventDate   DateTime   @db.Date
@@ -22,4 +21,5 @@ model Event {
     @@index([familyId])
     @@index([eventDate])
     @@map("event")
+    groupFamilies GroupFamily[]
 }

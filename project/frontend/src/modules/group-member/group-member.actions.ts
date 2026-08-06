@@ -3,7 +3,6 @@ import { UpdateGroupMemberDto } from "./group-member.dto";
 import { GroupMemberService } from "./group-member.service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { IErrorResponse } from "@/types/base.types";
 import { ResponseFactory } from "@/lib/res/response.factory";
 import { ApiResponse } from "@/types/api.types";
 

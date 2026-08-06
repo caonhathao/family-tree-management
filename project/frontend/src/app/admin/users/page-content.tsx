@@ -5,7 +5,6 @@ import { IPaginationBase } from "@/types/base.types";
 import { Toaster } from "@/components/shared/toast";
 import { useEffect } from "react";
 import { DataTable } from "../_components/data-table";
-import { IUserList } from "@/modules/user/user.dto";
 import { ApiResponse } from "@/types/api.types";
 
 export interface DataTableProps<TData, TValue> {

@@ -3,8 +3,7 @@ import { Request } from 'express';
 
 // 1. Định nghĩa cấu trúc của User mà bạn đã trả về từ hàm validate() trong Strategy
 export interface JwtPayloadWithRt {
-  userId: string;
-  email: string;
+  id: string;
   role: string;
   refreshToken?: string; // Có dấu ? vì Access Token sẽ không có trường này
 }

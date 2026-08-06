@@ -35,6 +35,10 @@ const serverSchema = z.object({
     .url()
     .nonempty({ message: "CLIENT_DOMAIN is required" }),
   SITE_URL: z.string().nonempty({ message: "SITE_URL is required" }),
+  BACKEND_API_URL: z
+    .string()
+    .url()
+    .nonempty({ message: "BACKEND_API_URL is required" }),
   NEXT_PUBLIC_GOOGLE_CLIENT_ID: z
     .string()
     .nonempty({ message: "NEXT_PUBLIC_GOOGLE_CLIENT_ID is required" }),
@@ -92,6 +96,7 @@ export const EnvConfig = {
   cloudinaryUrl: envData.CLOUDINARY_URL || process.env.CLOUDINARY_URL,
   clientDomain: envData.CLIENT_DOMAIN || process.env.CLIENT_DOMAIN,
   siteUrl: envData.SITE_URL || process.env.SITE_URL,
+  backendApiUrl: envData.BACKEND_API_URL || process.env.BACKEND_API_URL,
 
   // Biến này bắt buộc viết tường minh chuỗi process.env.NEXT_PUBLIC_... ở đây
   // để Next.js có thể inject giá trị vào client-side khi build.

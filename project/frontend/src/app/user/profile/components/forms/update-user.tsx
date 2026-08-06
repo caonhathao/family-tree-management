@@ -14,7 +14,6 @@ import { UserSchema } from "@/modules/user/user.client-schemas";
 import { IResponseUserDto, IUserInfoDto } from "@/modules/user/user.dto";
 import { AppDispatch } from "@/store";
 import { setProfile } from "@/store/user/userSlice";
-import { IErrorResponse } from "@/types/base.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";

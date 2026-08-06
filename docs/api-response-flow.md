@@ -1,55 +1,63 @@
+# API Response Flow — Type Safety & Error Handling Audit
 
 ## 1. Executive Summary
 
 ### Findings
 
-The frontend codebase contains **three competing response shapes**, **two error handlers**, **two pagination schemas**, and **multiple duplicated type definitions**. While a well-designed `ApiResponse<T>` envelope and `ResponseFactory` class exist in `src/lib/res/`, they are **not used by any server action**. Instead, all server actions use a simplified `handleError()` that returns an incompatible `{ success, error }` shape, forcing client components into fragile duck-typing patterns like `"error" in result`.
+The frontend codebase has a **well-designed** `ResponseFactory` class and `ApiResponse<T>` envelope in `src/lib/res/`, and all server actions already use `ResponseFactory.handleError()` for error handling. However, the **success path is unstructured**: actions return raw data with no unified envelope, creating inconsistent return types across all 8 action files. Client components must duck-type results at runtime (`"content" in result`, `"tokens" in result`) with no compile-time safety.
+
+Additionally, a critical bug exists: multiple actions throw `new Error("Unauthorized")` instead of `new ServiceError("Unauthorized", 401)`, which causes `handleError()` to return **500 Internal Server Error** instead of **401 Unauthorized**.
 
 ### Impact
 
 | Problem | Severity | Scope |
 |---------|----------|-------|
-|`handleError()` returns incompatible shape vs `ApiResponse` | **High** | All 6 modules, all client consumers |
-| Two pagination schemas with different field names | **High** | Blog, User list endpoints |
+| Mixed success return types (no unified `ActionResponse<T>`) | **High** | All 8 actions, all client consumers |
+| `throw new Error("Unauthorized")` -> 500 instead of 401 | **High** | auth, family, blog, group-family, group-member, user, invite actions |
+| Two pagination schemas with incompatible field names | **High** | Blog, User list endpoints |
+| `fetchWithAuth` has ad-hoc 401 handling bypassing `ResponseFactory` | **Medium** | All `fetchWithAuth` consumers |
 | Duplicate DTO types across `.dto.ts` and `.service-validator.ts` | **Medium** | Family, FamilyMember, Relationship, GroupMember |
 | Heavy `as Type` assertions hiding Prisma shape mismatches | **Medium** | Auth, Family, Blog services |
-| 11+ unused/dead type definitions | **Low** | All DTO files |
 | Services throw raw `Error` instead of `ServiceError` | **Medium** | All service files |
-| Mix of English and Vietnamese error messages | **Low** | Client schemas, services |
+| 11+ unused/dead type definitions | **Low** | All DTO files |
+| Mix of English and Vietnamese error messages | **Low** | Client schemas, services, `fetchWithAuth` |
 
 ### Recommended Action
 
-Adopt the **unified `ActionResponse<T>` contract** defined in this document and migrate incrementally, starting with the error handling layer (`handleError` -> `ResponseFactory`).
+Adopt the **unified `ActionResponse<T>` contract** defined in this document. The error handling infrastructure is already correct -- the migration focuses on (1) unifying the success path, (2) fixing the `Error("Unauthorized")` bug, and (3) standardizing service throws to `ServiceError`.
 
 ---
 
 ## 2. Current State Audit
 
-### 2.1 Competing Response Types
+### 2.1 Response Types Across the Codebase
 
-Three distinct shapes exist across the codebase:
+Five distinct shapes exist, used in different contexts:
 
-**Shape A - `ApiResponse<T>`** (`src/types/api.types.ts`)
+**Shape A -- `ApiResponse<T, ME>`** (`src/types/api.types.ts:51`) -- Used for **error responses** by all actions.
 ```typescript
-interface ApiResponse<T = null> {
+export interface ApiResponse<T = null, ME = unknown> {
   success: boolean;
   message: string;
   code: StatusCode;
   data?: T;
-  meta?: { pagination?: PaginationMeta; cursor?: CursorMeta };
+  meta?: {
+    pagination?: PaginationMeta;
+    cursor?: CursorMeta;
+  } & (ME extends Record<string, unknown> ? ME : unknown);
   errors?: Record<string, string[] | undefined> | null | object;
 }
 ```
 
-**Shape B - `IErrorResponse`** (`src/types/base.types.ts`)
+**Shape B -- `IErrorResponse`** (`src/types/base.types.ts:21`) -- Exists but NOT used by actions. Used in auth client-side code.
 ```typescript
 interface IErrorResponse {
   success: boolean;
-  error: string;  // NOTE: singular "error", not "errors"
+  error: string;  // singular "error", not "errors"
 }
 ```
 
-**Shape C - `ISuccessResponse`** (`src/types/base.types.ts`)
+**Shape C -- `ISuccessResponse`** (`src/types/base.types.ts:26`) -- Used by auth actions for explicit success returns.
 ```typescript
 interface ISuccessResponse {
   success: boolean;
@@ -57,35 +65,77 @@ interface ISuccessResponse {
 }
 ```
 
-**Shape D - Ad-hoc** (returned by various services)
+**Shape D -- Raw data** -- Most actions return raw Prisma/service data on success with no wrapper.
+
+**Shape E -- `IPaginationBase<T>`** (`src/types/base.types.ts:11`) -- Used by blog and user list actions.
 ```typescript
-// blog.service.ts getBlogs()
-{ data: IBlogList[]; pagination: { totalItems, totalPages, currentPage, pageSize } }
+interface IPaginationBase<T> {
+  data: T;
+  pagination: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+  };
+}
+```
 
-// user.service.ts getAllUser()
-{ data: IUserList[]; pagination: { totalItems, totalPages, currentPage, pageSize } }
-
-// fetchWith-auth.ts 401 handling
+**Shape F -- Ad-hoc** (`fetch-with-auth.ts:20-27`) -- Hand-crafted 401 response bypassing `ResponseFactory`.
+```typescript
 { success: false, message: "Unauthorized: Please login again", code: 401 }
 ```
 
-### 2.2 Two Error Handlers
+### 2.2 Error Handler -- Single, Already Used Everywhere
+
+There is **one** error handler, and all 8 server actions already use it:
 
 | Function | Location | Returns | Used By |
 |----------|----------|---------|---------|
-| `ResponseFactory.handleError()` | `src/lib/res/response.factory.ts:121` | `ApiResponse<never>` with `code`, `message`, `errors` | **Nothing** in modules |
-| `handleError()` | `src/lib/utils/funcs.utils.ts:3` | `IErrorResponse` with `success`, `error` | **All** server actions |
+| `ResponseFactory.handleError()` | `src/lib/res/response.factory.ts:121` | `ApiResponse<never>` with `success, message, code, errors` | **All 8 actions + all services** |
 
-### 2.3 Duplicate Pagination
+There is **no** `handleError()` in `src/lib/utils/funcs.utils.ts` -- that file contains only `safeJsonParse()`.
+
+### 2.3 Success Return Types -- The Real Problem
+
+Actions return different types on success with no unified envelope:
+
+| Action | Return Type Annotation | Actual Success Return |
+|--------|----------------------|----------------------|
+| `GetFamilyData` | `Promise<IDraftFamilyData \| ApiResponse<IDraftFamilyData, unknown>>` | Raw `IDraftFamilyData` |
+| `SyncFamilyAction` | *(none)* | Raw service result |
+| `UpdatefamilyInfo` | *(none)* | Raw service result |
+| `DeleteFamilyAction` | *(none)* | Raw service result |
+| `getBlogAction` | `Promise<IBlogDto \| ApiResponse<IBlogDto, unknown>>` | Raw `IBlogDto` |
+| `updateBlogAction` | `Promise<IBlogDto \| ApiResponse<IBlogDto, unknown>>` | Raw `IBlogDto` |
+| `getBlogsAction` | `Promise<IPaginationBase<IBlogsDto[]> \| ApiResponse<IBlogsDto[], unknown>>` | Raw `IPaginationBase<IBlogsDto[]>` |
+| `getUserSessionAction` | `Promise<IUserSession \| ApiResponse<IUserSession, unknown>>` | Raw `IUserSession` |
+| `registerAction` | *(none)* | `{ success: true, message: "..." } as ISuccessResponse` or `void` |
+| `loginBaseAction` | *(none)* | `{ success: true, message: "..." } as ISuccessResponse` or `void` |
+| `refreshAction` | *(none)* | `{ success: true }` or `void` |
+
+### 2.4 The `throw new Error("Unauthorized")` Bug
+
+Multiple actions throw `new Error("Unauthorized")` instead of `throw new ServiceError("Unauthorized", 401)`. When caught by `ResponseFactory.handleError()`, this is **not recognized** as a `ServiceError` and falls through to the default 500 handler, returning "Internal Server Error" instead of "Unauthorized".
+
+Affected actions (all that check `userId` from headers):
+- `family.actions.ts:19`
+- `blog.action.ts:17`
+- `auth.actions.ts:227`
+- `user.actions.ts`
+- `group-family.actions.ts`
+- `group-member.actions.ts`
+- `invite.actions.ts`
+
+### 2.5 Duplicate Pagination
 
 | Type | Location | Fields |
 |------|----------|--------|
 | `PaginationMeta` | `src/types/api.types.ts:20` | `page, limit, total, totalPages, hasNextPage, hasPrevPage` |
-| `IPaginationBase<T>` | `src/types/base.types.ts:11` | `data, pagination: { totalItems, totalPages, currentPage, pageSize }` |
+| `IPaginationBase<T>` | `src/types/base.types.ts:11` | `totalItems, totalPages, currentPage, pageSize` |
 
 These have **incompatible field names** (`total` vs `totalItems`, `page` vs `currentPage`, `limit` vs `pageSize`).
 
-### 2.4 Duplicate DTO Definitions
+### 2.6 Duplicate DTO Definitions
 
 | Type | Defined In | Also Defined In |
 |------|-----------|----------------|
@@ -96,7 +146,7 @@ These have **incompatible field names** (`total` vs `totalItems`, `page` vs `cur
 
 The Zod-inferred types and manual interfaces have **different shapes** (e.g., `gender: string` vs `gender: GENDER`, `dateOfBirth: string` vs `dateOfBirth: Date`).
 
-### 2.5 Unused Types
+### 2.7 Unused Types
 
 | Type | File | Status |
 |------|------|--------|
@@ -111,10 +161,10 @@ The Zod-inferred types and manual interfaces have **different shapes** (e.g., `g
 | `ResponseRelationshipDto` | `relationships/relationship.dto.ts:8` | Never imported |
 | `ResponseUpdateGroupMemberDto` | `group-member/group-member.dto.ts:8` | Never imported |
 | `IResponseCreateInviteDto` | `invite/invite.dto.ts:5` | Never imported |
-| `CursorMeta` | `types/api.types.ts:29` | Never used in action flow |
+| `CursorMeta` | `types/api.types.ts:29` | Only used inside `ApiResponse` type definition, never imported standalone |
 | `DbClient` | `types/api.types.ts:62` | Never imported |
 
-### 2.6 Loose Types and `as` Assertions
+### 2.8 Loose Types and `as` Assertions
 
 | File:Line | Pattern | Issue |
 |-----------|---------|-------|
@@ -128,11 +178,17 @@ The Zod-inferred types and manual interfaces have **different shapes** (e.g., `g
 | `env-config.lib.ts:45` | `let envData: any = {}` | Untyped environment |
 | `blog.service.ts:50` | `OutputBlockData<string, any>` | Explicit any |
 
+### 2.9 File Naming Inconsistency
+
+6 action files use plural `*.actions.ts`, 2 use singular `*.action.ts`:
+- Plural: `auth.actions.ts`, `family.actions.ts`, `group-family.actions.ts`, `group-member.actions.ts`, `user.actions.ts`, `invite.actions.ts`
+- Singular: `blog.action.ts`, `blog-media.action.ts`
+
 ---
 
 ## 3. Data Flow Diagram
 
-### Current (Broken) Flow
+### Current State
 
 ```
 +-----------------------------------------------------------+
@@ -144,18 +200,24 @@ The Zod-inferred types and manual interfaces have **different shapes** (e.g., `g
                            v
 +-----------------------------------------------------------+
 |  Server Action Layer (.actions.ts)                         |
-|  try/catch -> handleError() -> returns IErrorResponse      |
-|  { success: false, error: "message" }                      |
-|  On success: returns raw data, ISuccessResponse,           |
-|  or nothing (void)                                         |
+|  try/catch -> ResponseFactory.handleError(err)             |
+|  Returns on ERROR: ApiResponse<never>                      |
+|    { success: false, message, code, errors? }              |
+|  Returns on SUCCESS: (inconsistent)                        |
+|    - Raw data (IDraftFamilyData, IBlogDto, etc.)           |
+|    - ISuccessResponse { success: true, message }           |
+|    - IPaginationBase<T> { data, pagination }               |
+|    - void (auth actions that redirect)                     |
 +--------------------------+--------------------------------+
                            |
                            v
 +-----------------------------------------------------------+
 |  Client Component                                          |
-|  Duck-types: "error" in result                             |
-|  Or: result.success == false && "error" in result          |
-|  No compile-time type safety on the discriminated union    |
+|  Must duck-type the return:                                |
+|    "content" in result                                     |
+|    "tokens" in result                                      |
+|    result.success == false && "error" in result            |
+|  No compile-time type safety on success shape              |
 +-----------------------------------------------------------+
 ```
 
@@ -171,7 +233,7 @@ The Zod-inferred types and manual interfaces have **different shapes** (e.g., `g
                            v
 +-----------------------------------------------------------+
 |  Server Action Layer (.actions.ts)                         |
-|  try/catch -> ResponseFactory.handleError()                 |
+|  try/catch -> ResponseFactory.handleError(err)             |
 |  Returns: ActionResponse<T>                                |
 |  = ActionSuccess<T> | ActionError                          |
 |  Discriminated by: "success" field                         |
@@ -230,7 +292,9 @@ export interface CursorMeta {
 }
 
 // --- Unified API Response Envelope ---
-export interface ApiResponse<T = null> {
+// NOTE: Two type parameters -- T (data) and ME (extra meta, defaults to unknown).
+// ME is rarely leveraged; most usages pass `unknown`.
+export interface ApiResponse<T = null, ME = unknown> {
   success: boolean;
   message: string;
   code: StatusCode;
@@ -238,8 +302,8 @@ export interface ApiResponse<T = null> {
   meta?: {
     pagination?: PaginationMeta;
     cursor?: CursorMeta;
-  };
-  errors?: Record<string, string[] | undefined> | null;
+  } & (ME extends Record<string, unknown> ? ME : unknown);
+  errors?: Record<string, string[] | undefined> | null | object;
 }
 ```
 
@@ -399,24 +463,59 @@ export function isPaginatedSuccess<T>(
 
 ## 6. Server Action Layer Convention
 
-### 6.1 Current Pattern (Deprecated)
+### 6.1 Current Pattern (Needs Unification)
 
 ```typescript
-// CURRENT -- each action has inconsistent return shapes
-export async function GetFamilyData(groupId: string) {
+// CURRENT -- actions already use ResponseFactory.handleError() for errors,
+// but return raw data with no envelope on success.
+
+// Example: family.actions.ts (has return type annotation)
+export async function GetFamilyData(
+  groupId: string,
+): Promise<IDraftFamilyData | ApiResponse<IDraftFamilyData, unknown>> {
   try {
-    const res: IDraftFamilyData = await FamilyService.getFamily(groupId);
-    return res;  // Returns raw data, or IErrorResponse on failure
+    const res = await FamilyService.getFamily(groupId);
+    return res;  // Returns raw data
   } catch (err: unknown) {
-    return handleError(err);  // Returns { success: false, error: "..." }
+    return ResponseFactory.handleError(err);  // Returns ApiResponse<never>
   }
+}
+
+// Example: blog.action.ts (has return type annotation)
+export async function getBlogAction(
+  slug: string,
+): Promise<IBlogDto | ApiResponse<IBlogDto, unknown>> {
+  try {
+    const res = await BlogService.getBlog(slug);
+    return res;
+  } catch (err: unknown) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
+// Example: auth.actions.ts (ad-hoc ISuccessResponse on success)
+export async function registerAction(data: IRegisterDto) {
+  try {
+    // ...
+    return { success: true, message: "Register successfully" } as ISuccessResponse;
+  } catch (err: unknown) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
+// BUG: family.actions.ts -- throw new Error("Unauthorized")
+// handleError() does NOT recognize this as ServiceError,
+// so it falls through to default 500 handler.
+if (!userId) {
+  throw new Error("Unauthorized");  // BUG: returns 500, not 401
 }
 ```
 
 Client must duck-type:
 ```typescript
-// Fragile runtime check
+// Fragile runtime checks
 if (blog && "content" in blog && typeof blog.content === "string") { ... }
+if (res && "tokens" in res) { ... }
 ```
 
 ### 6.2 Proposed Pattern (Unified)
@@ -425,11 +524,17 @@ if (blog && "content" in blog && typeof blog.content === "string") { ... }
 // PROPOSED -- consistent ActionResponse<T> return type
 import { ActionResponse, ActionError } from "@/types/action.types";
 import { ResponseFactory } from "@/lib/res/response.factory";
+import { ServiceError } from "@/lib/res/service-error";
 
 export async function GetFamilyData(
   groupId: string,
 ): Promise<ActionResponse<IDraftFamilyData>> {
   try {
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new ServiceError("Unauthorized", 401);  // FIXED: was Error("Unauthorized")
+    }
     const res = await FamilyService.getFamily(groupId);
     return { success: true, data: res };
   } catch (err: unknown) {
@@ -572,16 +677,17 @@ Error (unexpected)
 
 ### 8.2 Central Error Handler
 
-The existing `ResponseFactory.handleError()` in `src/lib/res/response.factory.ts` is well-designed and should become the **single error handler** for all server actions. It already handles:
+`ResponseFactory.handleError()` in `src/lib/res/response.factory.ts:121` is the **single error handler** used by all server actions. It already handles:
 
 - `ServiceError` -> maps `statusCode` and `message`
 - `ZodError` -> returns 422 with first error message
 - `PrismaUniqueConstraintError` -> 409 with field name
 - `PrismaRecordDoesNotExistError` -> 404
 - `PrismaForeignKeyConstraintError` -> 400 with field name
+- `PrismaClientKnownRequestError` codes P2000 (too long) and P1008 (timeout)
 - Unknown errors -> 500
 
-**Action**: Delete `handleError()` from `src/lib/utils/funcs.utils.ts` and replace all usages with `ResponseFactory.handleError()`.
+**No changes needed** to this handler. It is correctly designed and already used everywhere.
 
 ### 8.3 Service Layer Rules
 
@@ -594,7 +700,27 @@ The existing `ResponseFactory.handleError()` in `src/lib/res/response.factory.ts
 3. **Services throw raw `Error`** only for unexpected/programmer errors
 4. **Services never catch and return error objects** -- let the action layer handle it
 
-### 8.4 Message Constants
+### 8.4 CRITICAL BUG FIX: Replace `Error("Unauthorized")` with `ServiceError`
+
+All server actions that check for `userId` must change from:
+```typescript
+// BUG: handleError() treats this as unknown Error -> returns 500
+if (!userId) {
+  throw new Error("Unauthorized");
+}
+```
+
+To:
+```typescript
+// CORRECT: handleError() recognizes ServiceError -> returns 401
+if (!userId) {
+  throw new ServiceError("Unauthorized", 401);
+}
+```
+
+This affects all 7+ action files that read `X-User-Id` from headers.
+
+### 8.5 Message Constants
 
 All user-facing messages should use the translation key system in `src/lib/messages/response.messages.ts`:
 
@@ -603,6 +729,19 @@ import { Exception } from "@/lib/messages/response.messages";
 throw new ServiceError(Exception.PEMRISSION, 403);
 throw new ServiceError(Exception.NOT_EXIST, 404);
 ```
+
+Note: Services currently throw hardcoded English strings (e.g., `"User is not a leader of this group"`) rather than translation keys. Migrating to `Exception.*` keys is recommended for i18n support.
+
+### 8.6 `fetchWithAuth` Ad-Hoc Handling
+
+`src/lib/api/fetch-with-auth.ts:20-27` returns a hand-crafted object on 401:
+```typescript
+if (res.status === 401) {
+  return { success: false, message: "Unauthorized: Please login again", code: 401 };
+}
+```
+
+This bypasses `ResponseFactory` and is structurally compatible with `ApiResponse` but lacks `meta` and `errors` fields. Additionally, non-401 errors throw raw `Error` instead of `ServiceError`. This file should be updated to use `ResponseFactory.error()`.
 
 ---
 
@@ -701,48 +840,55 @@ throw new ServiceError(Exception.NOT_EXIST, 404);
 | Step | Action | Files |
 |------|--------|-------|
 | 1.1 | Create `src/types/action.types.ts` with `ActionResponse<T>`, `ActionError`, type guards | NEW |
-| 1.2 | Remove `ResponseDataBase<T>`, `IPaginationBase<T>`, `IErrorResponse`, `ISuccessResponse` from `base.types.ts` | `types/base.types.ts` |
-| 1.3 | Remove duplicate option interfaces from `response.interface.ts` (keep only the ones in `response.factory.ts`) | `lib/res/response.interface.ts` |
-| 1.4 | Remove all 11 unused DTO types (see Section 2.5) | Multiple `.dto.ts` files |
+| 1.2 | Remove unused types from `base.types.ts` (`ResponseDataBase<T>`) -- **keep** `IErrorResponse`, `ISuccessResponse`, `IPaginationBase<T>` (they are actively used) | `types/base.types.ts` |
+| 1.3 | Delete `response.interface.ts` (redundant with `response.factory.ts` local interfaces) | `lib/res/response.interface.ts` |
+| 1.4 | Remove all 13 unused DTO types (see Section 2.7) | Multiple `.dto.ts` files |
 
-### Phase 2: Error Handling Migration
-
-| Step | Action | Files |
-|------|--------|-------|
-| 2.1 | Replace `handleError()` calls with `ResponseFactory.handleError()` in all server actions | All `*.actions.ts`, `*.action.ts` |
-| 2.2 | Delete `handleError()` from `funcs.utils.ts` | `lib/utils/funcs.utils.ts` |
-| 2.3 | Replace `throw new Error(...)` in services with `throw new ServiceError(...)` | All `*.service.ts` |
-| 2.4 | Update `fetchWithAuth` to return typed `ApiResponse<unknown>` or `ActionError` | `lib/api/fetch-with-auth.ts` |
-
-### Phase 3: DTO Consolidation
+### Phase 2: Fix Critical Bug
 
 | Step | Action | Files |
 |------|--------|-------|
-| 3.1 | Keep Zod-inferred types as source of truth, delete manual interface duplicates | `family.dto.ts`, `family-member.dto.ts`, `relationship.dto.ts`, `group-member.dto.ts` |
-| 3.2 | Remove `as Type` assertions by aligning Prisma `select` with DTO shapes | `auth.service.ts`, `family.service.ts`, `blog.service.ts` |
-| 3.3 | Replace `z.any()` in `BlogUpdateServiceDto.content` with proper schema | `blog/blog.service-validator.ts` |
+| 2.1 | Replace `throw new Error("Unauthorized")` -> `throw new ServiceError("Unauthorized", 401)` in all action files that check `X-User-Id` | All `*.actions.ts`, `*.action.ts` |
+| 2.2 | Replace `throw new Error(...)` -> `throw new ServiceError(...)` in all service files for business logic errors | All `*.service.ts` |
+| 2.3 | Update `fetchWithAuth` to use `ResponseFactory.error()` for 401 and throw `ServiceError` for non-401 errors | `lib/api/fetch-with-auth.ts` |
 
-### Phase 4: Client Consumption Update
+### Phase 3: Unify Action Return Types
 
 | Step | Action | Files |
 |------|--------|-------|
-| 4.1 | Update all client components to use `isActionSuccess()` / `isActionError()` type guards | All `*.tsx` client components |
-| 4.2 | Update Redux thunks to use `ActionResponse<T>` | `store/family/familyThunk.ts`, `store/blog/blogThunk.ts` |
-| 4.3 | Remove duck-typing patterns (`"error" in result`) | `feature-editor-internal.tsx`, `login-form.tsx`, `auth-client-lib.ts` |
+| 3.1 | Add explicit `Promise<ActionResponse<T>>` return types to all actions | All `*.actions.ts`, `*.action.ts` |
+| 3.2 | Wrap success returns: `return { success: true, data: result }` | All `*.actions.ts`, `*.action.ts` |
+| 3.3 | Replace ad-hoc `ISuccessResponse` returns with `ActionSuccess<T>` | `auth.actions.ts` |
+| 3.4 | Unify pagination schema -- migrate `IPaginationBase<T>` consumers to use `PaginationMeta` from `api.types.ts` | `blog.action.ts`, `user.actions.ts` |
+
+### Phase 4: DTO Consolidation & Type Safety
+
+| Step | Action | Files |
+|------|--------|-------|
+| 4.1 | Keep Zod-inferred types as source of truth, delete manual interface duplicates | `family.dto.ts`, `family-member.dto.ts`, `relationship.dto.ts`, `group-member.dto.ts` |
+| 4.2 | Remove `as Type` assertions by aligning Prisma `select` with DTO shapes | `auth.service.ts`, `family.service.ts`, `blog.service.ts` |
+| 4.3 | Replace `z.any()` in `BlogUpdateServiceDto.content` with proper schema | `blog/blog.service-validator.ts` |
+
+### Phase 5: Client Consumption Update
+
+| Step | Action | Files |
+|------|--------|-------|
+| 5.1 | Update all client components to use `isActionSuccess()` / `isActionError()` type guards | All `*.tsx` client components |
+| 5.2 | Update Redux thunks to use `ActionResponse<T>` | `store/family/familyThunk.ts`, `store/blog/blogThunk.ts` |
+| 5.3 | Remove duck-typing patterns (`"error" in result`, `"content" in result`) | `feature-editor-internal.tsx`, `login-form.tsx`, `auth-client-lib.ts` |
 
 ### Files to Modify
 
 | File | Change |
 |------|--------|
 | `src/types/action.types.ts` | **CREATE** -- New discriminated union types |
-| `src/types/api.types.ts` | Clean up -- keep `ApiResponse`, `HttpStatus`, `StatusCode`, `PaginationMeta`, `CursorMeta`, `DbClient` |
-| `src/types/base.types.ts` | **DELETE** -- Remove `ResponseDataBase`, `IPaginationBase`, `IErrorResponse`, `ISuccessResponse` (migrate to `action.types.ts`) |
+| `src/types/api.types.ts` | Keep as-is (already well-designed) |
+| `src/types/base.types.ts` | Remove `ResponseDataBase<T>` only; keep `IErrorResponse`, `ISuccessResponse`, `IPaginationBase<T>`, JWT types, `dataProps` |
 | `src/lib/res/response.factory.ts` | Already correct -- use as-is |
 | `src/lib/res/response.interface.ts` | **DELETE** -- Redundant with factory's local interfaces |
-| `src/lib/utils/funcs.utils.ts` | Remove `handleError()` (keep `safeJsonParse`) |
-| `src/lib/api/fetch-with-auth.ts` | Add generic type parameter, return `ActionResponse<T>` |
-| All `*.actions.ts` / `*.action.ts` | Return `ActionResponse<T>`, use `ResponseFactory.handleError()` |
-| All `*.service.ts` | Throw `ServiceError` instead of `Error` |
+| `src/lib/api/fetch-with-auth.ts` | Use `ResponseFactory.error()` for 401, add typed return |
+| All `*.actions.ts` / `*.action.ts` | Return `ActionResponse<T>`, fix `Error("Unauthorized")` -> `ServiceError` |
+| All `*.service.ts` | Throw `ServiceError` instead of `Error` for business errors |
 | All `*.dto.ts` | Remove unused types, keep Zod-inferred as source of truth |
 | All client components | Use `isActionSuccess()` / `isActionError()` type guards |
 | `store/family/familyThunk.ts` | Handle `ActionResponse` |
@@ -750,4 +896,4 @@ throw new ServiceError(Exception.NOT_EXIST, 404);
 
 ---
 
-> **Summary**: The `ResponseFactory` and `ApiResponse<T>` already exist and are well-designed. The core problem is that the server action layer bypasses them. By migrating all actions to return `ActionResponse<T>` and using `ResponseFactory.handleError()` as the single error handler, we achieve full type safety from service -> action -> client with zero duck-typing.
+> **Summary**: The error handling infrastructure (`ResponseFactory.handleError()` + `ApiResponse<T>`) is already well-designed and used by all actions. The core problem is that the **success path has no unified envelope** -- actions return raw data, `ISuccessResponse`, or `IPaginationBase<T>` with no consistent wrapper. Additionally, `throw new Error("Unauthorized")` in action files causes a critical bug (500 instead of 401). By adopting `ActionResponse<T>` and fixing the `ServiceError` throws, we achieve full type safety from service -> action -> client with zero duck-typing.

@@ -1,6 +1,7 @@
 import {
   Controller,
   Param,
+  Query,
   UseGuards,
   Body,
   Get,
@@ -65,6 +66,31 @@ export class UserController {
     });
   }
 
+  @Get()
+  @ApiOperation({ summary: 'Get all users (admin only)' })
+  @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async getAllUsers(
+    @GetCurrentUserId() userId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('filter') filter?: string,
+    @Query('filterType') filterType?: string,
+  ) {
+    const users = await this.userService.getAll(
+      userId,
+      page,
+      limit,
+      filter,
+      filterType,
+    );
+    return ResponseFactory.success({
+      data: users,
+      message: ValidMessageResponse.GETTED,
+    });
+  }
+
   @Get(':targetId')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({ name: 'targetId', description: 'User ID' })
@@ -74,10 +100,47 @@ export class UserController {
   async getUser(
     @Param('targetId') id: string,
     @GetCurrentUserId() userId: string,
+    @Query('type') type?: string,
   ) {
-    const user = await this.userService.get(id, userId);
+    const user = await this.userService.get(id, userId, type);
     return ResponseFactory.success({
       data: user,
+      message: ValidMessageResponse.GETTED,
+    });
+  }
+
+  @Get(':targetId/auth-providers')
+  @ApiOperation({ summary: 'Get all linked auth providers of user' })
+  @ApiParam({ name: 'targetId', description: 'User ID' })
+  @ApiResponse({ status: 200, description: 'Providers retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getAuthProviders(
+    @Param('targetId') id: string,
+    @GetCurrentUserId() userId: string,
+  ) {
+    const providers = await this.userService.getAuthProviders(id, userId);
+    return ResponseFactory.success({
+      data: providers,
+      message: ValidMessageResponse.GETTED,
+    });
+  }
+
+  @Get(':targetId/auth-logs')
+  @ApiOperation({ summary: 'Get all auth logs of user' })
+  @ApiParam({ name: 'targetId', description: 'User ID' })
+  @ApiResponse({ status: 200, description: 'Auth logs retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getAuthLogs(
+    @Param('targetId') id: string,
+    @GetCurrentUserId() userId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    const logs = await this.userService.getAuthLogs(id, userId, page, limit);
+    return ResponseFactory.success({
+      data: logs,
       message: ValidMessageResponse.GETTED,
     });
   }

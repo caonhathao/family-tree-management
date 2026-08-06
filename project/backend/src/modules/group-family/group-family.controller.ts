@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -115,6 +116,50 @@ export class GroupFamilyController {
     return ResponseFactory.success({
       data: groupFamilies,
       message: ValidMessageResponse.GETTED,
+    });
+  }
+
+  @Delete(':id')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Destroy a group family (leader only)' })
+  @ApiParam({ name: 'id', description: 'Group family ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Group family deleted successfully',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Group family not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async destroyGroupFamily(
+    @GetCurrentUserId() userId: string,
+    @Param('id') groupId: string,
+  ) {
+    const result = await this.groupFamilyService.delete(userId, groupId);
+    return ResponseFactory.success({
+      data: result,
+      message: ValidMessageResponse.DELETED,
+    });
+  }
+
+  @Delete(':id/quit')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Quit a group family (viewer only)' })
+  @ApiParam({ name: 'id', description: 'Group family ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Quit group family successfully',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Group family not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async quitGroupFamily(
+    @GetCurrentUserId() userId: string,
+    @Param('id') groupId: string,
+  ) {
+    const result = await this.groupFamilyService.quitGroup(userId, groupId);
+    return ResponseFactory.success({
+      data: result,
+      message: ValidMessageResponse.DELETED,
     });
   }
 
