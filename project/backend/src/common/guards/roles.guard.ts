@@ -50,7 +50,7 @@ export class RolesGuard implements CanActivate {
       const member = await this.prisma.groupMember.findUnique({
         where: {
           memberId_groupId: {
-            memberId: user.payload.id,
+            memberId: user.id,
             groupId: groupId as string,
           },
         },

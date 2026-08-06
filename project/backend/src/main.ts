@@ -8,9 +8,6 @@ import 'tsconfig-paths/register';
 // console.log('--- TEST LOG ---'); // Đặt ở đây
 // console.log('PORT:', process.env.PORT);
 async function bootstrap() {
-  // console.log('--- ALL ENV VARIABLES ---');
-  // console.log(process.env);
-  // console.log('-------------------------');
   const app = await NestFactory.create(AppModule);
 
   // const envConfigService = app.get(EnvConfigService);

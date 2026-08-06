@@ -42,7 +42,7 @@ export class EnvConfigService {
   get refreshExpires(): number {
     return (
       this.configService?.get<number>('jwt.refreshExpires') ||
-      Number(process.env.JWT_ACCESS_SECRET_KEY) ||
+      Number(process.env.REFRESH_TOKEN_EXPIRES_IN) ||
       604800
     );
   }

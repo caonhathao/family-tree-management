@@ -7,7 +7,6 @@ import {
   Post,
   Headers,
   HttpCode,
-  Get,
   UseGuards,
 } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
@@ -131,21 +130,6 @@ export class AuthController {
       data: user,
       code: HttpStatus.OK,
       message: ValidMessageResponse.LOGIN,
-    });
-  }
-
-  @Get('session')
-  @UseGuards(AtGuard)
-  @ApiOperation({ summary: 'Get current user session info' })
-  @ApiResponse({ status: 200, description: 'Get session successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getUserSession(@GetCurrentUserId() userId: string) {
-    const user = await this.authService.getUserSession(userId);
-
-    return ResponseFactory.success({
-      data: user,
-      code: HttpStatus.OK,
-      message: ValidMessageResponse.GETTED,
     });
   }
 

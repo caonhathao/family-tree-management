@@ -41,7 +41,28 @@ async function verifyAndGetPayload(token: string, secret: string) {
       token,
       new TextEncoder().encode(secret),
     );
-    return payload as unknown as IJwtPayload; // Trả về payload (chứa sub, email...)
+    return payload as unknown as IJwtPayload; // Trả về payload (chứa id, role...)
+  } catch {
+    return null;
+  }
+}
+
+async function refreshViaBackend(
+  refreshToken: string,
+): Promise<IAuthResponseDto | null> {
+  const baseUrl = process.env.BACKEND_API_URL || "";
+  if (!baseUrl) return null;
+  try {
+    const res = await fetch(`${baseUrl}/api/auth/refresh`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${refreshToken}`,
+      },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const envelope = (await res.json()) as { data?: IAuthResponseDto };
+    return envelope?.data || null;
   } catch {
     return null;
   }
@@ -77,10 +98,13 @@ export async function proxy(req: NextRequest) {
 
     if (rUserId) {
       try {
-        result = await AuthService.refresh(rUserId, refreshToken, {
-          userAgent,
-          ipAddress: userIp,
-        });
+        result = await refreshViaBackend(refreshToken);
+        if (!result) {
+          result = await AuthService.refresh(rUserId, refreshToken, {
+            userAgent,
+            ipAddress: userIp,
+          });
+        }
 
         if (result && result.tokens) {
           userId = result.user.id;

@@ -1,6 +1,7 @@
 import { ZodError } from 'zod';
 import { ApiResponse, HttpStatus, StatusCode } from '../constants/api';
 import { ServiceError } from '../errors/service-error';
+import { BusinessException } from '../errors/business.exception';
 import {
   toTypedPrismaError,
   PrismaUniqueConstraintError,
@@ -61,7 +62,7 @@ export class ResponseFactory {
   static error({
     message = 'error',
     code = HttpStatus.BAD_REQUEST,
-    errors,
+    errors = null,
   }: ErrorOptions = {}): ApiResponse<never> {
     return {
       success: false,
@@ -82,6 +83,14 @@ export class ResponseFactory {
       });
     }
 
+    if (error instanceof BusinessException) {
+      return ResponseFactory.error({
+        message: error.message,
+        code: error.getStatus() as StatusCode,
+        errors: error.errors,
+      });
+    }
+
     if (error instanceof HttpException) {
       const status = error.getStatus();
 
@@ -93,10 +102,29 @@ export class ResponseFactory {
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
       const response = error.getResponse();
+      const responseBody =
+        typeof response === 'object' && response !== null
+          ? (response as Record<string, unknown>)
+          : null;
+
+      // `message` from the payload wins (validation arrays, error keys, ...)
+      const rawMessage = responseBody?.message ?? error.message;
+      const message = Array.isArray(rawMessage)
+        ? rawMessage.join(', ')
+        : typeof rawMessage === 'string'
+          ? rawMessage
+          : error.message;
+
+      const errors = responseBody?.message
+        ? Array.isArray(responseBody.message)
+          ? { _errors: responseBody.message as string[] }
+          : responseBody
+        : null;
+
       return ResponseFactory.error({
-        message: error.message,
+        message,
         code: finalStatus,
-        errors: typeof response === 'object' ? response : undefined,
+        errors,
       });
     }
 

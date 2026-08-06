@@ -1,11 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
@@ -13,10 +6,9 @@ import { UserProfileDto } from '../users/dto/create-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { LoginBaseDto } from './dto/login.dto';
 import { EnvConfigService } from 'src/common/config/env/env-config.service';
-import {
-  Exception,
-  InvalidMessageResponse,
-} from 'src/common/messages/messages.response';
+import { BusinessException } from 'src/common/errors/business.exception';
+import { ErrorCode } from 'src/common/errors/error-codes.enum';
+import { HttpStatus } from 'src/common/constants/api';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
 import { GoogleLoginDto } from './dto/google-login.dto';
@@ -42,7 +34,7 @@ export class AuthService {
       },
     });
 
-    if (email) throw new ConflictException(Exception.CONFLICT);
+    if (email) throw new BusinessException(ErrorCode.CONFLICT);
 
     const hashedPW = await bcrypt.hash(data.password, 10);
     const newUser = await this.prisma.$transaction(async (tx) => {
@@ -161,21 +153,21 @@ export class AuthService {
           },
         },
       });
-      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
       if (user?.accounts) {
         if (!user.accounts[0].password) {
-          throw new UnauthorizedException(
-            InvalidMessageResponse.EMAIL_INCORRECT,
-          );
+          throw new BusinessException(ErrorCode.EMAIL_INCORRECT, {
+            httpStatus: HttpStatus.UNAUTHORIZED,
+          });
         } else {
           const isPWValid = await bcrypt.compare(
             data.password,
             user.accounts[0].password,
           );
           if (!isPWValid) {
-            throw new UnauthorizedException(
-              InvalidMessageResponse.PASSWORD_INCORRECT,
-            );
+            throw new BusinessException(ErrorCode.PASSWORD_INCORRECT, {
+              httpStatus: HttpStatus.UNAUTHORIZED,
+            });
           }
         }
       }
@@ -242,7 +234,7 @@ export class AuthService {
       });
 
       const payload: TokenPayload | undefined = ticket.getPayload();
-      if (!payload) throw new BadRequestException(Exception.BAD_REQUEST);
+      if (!payload) throw new BusinessException(ErrorCode.BAD_REQUEST);
 
       //check user in database
       const user = await this.prisma.user.findFirst({
@@ -419,14 +411,16 @@ export class AuthService {
 
       if (!currentSession) {
         await this.prisma.session.deleteMany({ where: { userId } });
-        throw new ForbiddenException(
-          'Cảnh báo bảo mật: Phiên làm việc không hợp lệ',
-        );
+        throw new BusinessException(ErrorCode.SESSION_BAD_ACCESS, {
+          httpStatus: HttpStatus.FORBIDDEN,
+        });
       }
 
       if (currentSession.expiresAt < new Date()) {
         await this.prisma.session.delete({ where: { id: currentSession.id } });
-        throw new ForbiddenException('Phiên đăng nhập hết hạn');
+        throw new BusinessException(ErrorCode.EXPIRED, {
+          httpStatus: HttpStatus.FORBIDDEN,
+        });
       }
 
       const user = await this.prisma.user.findUnique({
@@ -446,7 +440,7 @@ export class AuthService {
         },
       });
 
-      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
 
       const tokens = await this.getTokens({ id: user.id, role: user.role });
 
@@ -480,40 +474,12 @@ export class AuthService {
           email: data.email,
         },
       });
-      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
     } catch (err) {
       console.log(
         `error at reset password service with email: ${data.email}`,
         err,
       );
-      throw err;
-    }
-  }
-
-  async getUserSession(userId: string) {
-    try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId,
-        },
-        select: {
-          userProfile: {
-            select: {
-              fullName: true,
-              avatar: true,
-            },
-          },
-        },
-      });
-
-      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
-
-      return {
-        fullName: user.userProfile?.fullName ?? '',
-        avatar: user.userProfile?.avatar ?? '',
-      };
-    } catch (err) {
-      console.log('error at get user session service:', err);
       throw err;
     }
   }
@@ -525,7 +491,7 @@ export class AuthService {
         select: { id: true },
       });
 
-      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
 
       const hashedPW = await bcrypt.hash(data.password, 10);
       await this.prisma.account.create({
@@ -551,7 +517,7 @@ export class AuthService {
     try {
       return await this.prisma.$transaction(async (tx) => {
         const user = await tx.user.findUnique({ where: { id: userId } });
-        if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+        if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
 
         await tx.session.deleteMany({
           where: {

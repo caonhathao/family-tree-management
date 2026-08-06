@@ -4,5 +4,6 @@ export type JwtPayload = {
 };
 
 export type JwtRequest = {
-  payload: JwtPayload;
+  id: string;
+  role: string;
 };

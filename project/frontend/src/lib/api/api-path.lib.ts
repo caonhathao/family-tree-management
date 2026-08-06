@@ -6,6 +6,7 @@ export const apiClient = {
     loginGoogle: "/api/auth/login-google",
     resetPassword: "/api/auth/reset",
     logOut: "/api/auth/logout",
+    createBaseAuth: "/api/auth/create-base-auth",
   },
   family: {
     syncFamily: (groupId: string) => `/api/family/sync-data/${groupId}`,
@@ -16,14 +17,19 @@ export const apiClient = {
   },
   groupFamily: {
     createGroup: "/api/group-family",
-    getAll: "/api/group-family",
     updateGroup: (groupId: string) => `/api/group-family/${groupId}`,
+    getAll: "/api/group-family",
     getDetail: (groupId: string) => `/api/group-family/${groupId}`,
+    deleteGroup: (groupId: string) => `/api/group-family/${groupId}`,
+    quitGroup: (groupId: string) => `/api/group-family/${groupId}/quit`,
     joinGroup: (token: string) => `/api/group-family/join?token=${token}`,
   },
   user: {
     updateUser: (userId: string) => `/api/users/${userId}`,
     getDetail: (userId: string) => `/api/users/${userId}`,
+    getAll: "/api/users",
+    getAuthProviders: (userId: string) => `/api/users/${userId}/auth-providers`,
+    getAuthLogs: (userId: string) => `/api/users/${userId}/auth-logs`,
   },
   groupMember: {
     updateRole: (groupId: string) => `/api/group-member/${groupId}`,
@@ -35,5 +41,17 @@ export const apiClient = {
   },
   invite: {
     createInvite: "/api/invite",
+  },
+  blog: {
+    upsert: "/api/blog",
+    list: "/api/blog/list",
+    get: (slug: string) => `/api/blog/${slug}`,
+  },
+  blogMedia: {
+    upload: "/api/blog-media/upload",
+    cleanup: "/api/blog-media/cleanup",
+  },
+  health: {
+    check: "/api/health-check",
   },
 };

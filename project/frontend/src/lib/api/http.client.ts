@@ -15,6 +15,17 @@ export interface ApiRequestOptions {
   token?: string;
 }
 
+function isApiResponse(value: unknown): value is ApiResponse {
+  if (!value || typeof value !== "object") return false;
+
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.success === "boolean" &&
+    typeof record.code === "number" &&
+    typeof record.message === "string"
+  );
+}
+
 export async function apiRequest<T = unknown>(
   path: string,
   options: ApiRequestOptions = {},
@@ -37,7 +48,10 @@ export async function apiRequest<T = unknown>(
     );
   }
 
-  const url = new URL(`/api/${path.replace(/^\/+/, "")}`, baseUrl);
+  const url = new URL(
+    path.startsWith("/") ? path : `/api/${path.replace(/^\/+/, "")}`,
+    baseUrl,
+  );
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined && value !== null && value !== "") {
@@ -82,12 +96,19 @@ export async function apiRequest<T = unknown>(
     );
   }
 
-  let payload: ApiResponse<T>;
+  let payload: unknown;
   try {
-    payload = (await response.json()) as ApiResponse<T>;
+    payload = await response.json();
   } catch {
     throw new ServiceError(
       "Backend trả về định dạng không hợp lệ",
+      (response.status as StatusCode) || HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+
+  if (!isApiResponse(payload)) {
+    throw new ServiceError(
+      "Backend trả về response không đúng chuẩn ApiResponse",
       (response.status as StatusCode) || HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
@@ -102,5 +123,5 @@ export async function apiRequest<T = unknown>(
     );
   }
 
-  return payload;
+  return payload as ApiResponse<T>;
 }
