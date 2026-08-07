@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { AuthService } from "./modules/auth/auth.service";
 import { IJwtPayload } from "./types/base.types";
 import { IAuthResponseDto } from "./modules/auth/auth.dto";
+import { apiClient } from "./lib/api/api-client.lib";
+import { apiRequest } from "./lib/api/http.client";
 
 const publicRoutes = [
   "/",
@@ -53,16 +54,25 @@ async function refreshViaBackend(
   const baseUrl = process.env.BACKEND_API_URL || "";
   if (!baseUrl) return null;
   try {
-    const res = await fetch(`${baseUrl}/api/auth/refresh`, {
-      method: "POST",
+    // const res = await fetch(`${baseUrl}/api/auth/refresh`, {
+    //   method: "POST",
+    //   headers: {
+    //     Authorization: `Bearer ${refreshToken}`,
+    //   },
+    //   cache: "no-store",
+    // });
+
+    const res = await apiRequest<IAuthResponseDto>(apiClient.auth.refresh.url, {
+      method: apiClient.auth.refresh.method,
+      token: refreshToken,
       headers: {
         Authorization: `Bearer ${refreshToken}`,
       },
-      cache: "no-store",
     });
-    if (!res.ok) return null;
-    const envelope = (await res.json()) as { data?: IAuthResponseDto };
-    return envelope?.data || null;
+    if (res && "errors" in res) return null;
+    else if (res && "data" in res && res.data != undefined) {
+      return res.data as IAuthResponseDto;
+    } else return null;
   } catch {
     return null;
   }
@@ -73,8 +83,8 @@ export async function proxy(req: NextRequest) {
   const accessToken = req.cookies.get("access_token")?.value;
   const refreshToken = req.cookies.get("refresh_token")?.value;
 
-  const userAgent = req.headers.get("user-agent") || "unknown";
-  const userIp = req.headers.get("x-forwarded-for") || "unknown";
+  // const userAgent = req.headers.get("user-agent") || "unknown";
+  // const userIp = req.headers.get("x-forwarded-for") || "unknown";
 
   let userId: string | null = null;
   let userRole: string | null = null;
@@ -99,12 +109,6 @@ export async function proxy(req: NextRequest) {
     if (rUserId) {
       try {
         result = await refreshViaBackend(refreshToken);
-        if (!result) {
-          result = await AuthService.refresh(rUserId, refreshToken, {
-            userAgent,
-            ipAddress: userIp,
-          });
-        }
 
         if (result && result.tokens) {
           userId = result.user.id;

@@ -90,7 +90,9 @@ export class AuthService {
           data: {
             userId: createdUser.id,
             token: tokens.refreshToken,
-            expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
+            expiresAt: new Date(
+              Date.now() + this.envConfig.refreshExpires * 1000,
+            ),
             userAgent: userAgent,
             ipAddress: ipAddress,
           },
@@ -186,13 +188,17 @@ export class AuthService {
           },
           update: {
             token: tokens.refreshToken,
-            expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
+            expiresAt: new Date(
+              Date.now() + this.envConfig.refreshExpires * 1000,
+            ),
           },
           create: {
             userId: user.id,
             token: tokens.refreshToken,
-            expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
-            userAgent: userAgent,
+            expiresAt: new Date(
+              Date.now() + this.envConfig.refreshExpires * 1000,
+            ),
+            userAgent: safeUserAgent,
             ipAddress: ipAddress,
           },
         }),
@@ -283,13 +289,17 @@ export class AuthService {
             },
             update: {
               token: tokens.refreshToken,
-              expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
+              expiresAt: new Date(
+                Date.now() + this.envConfig.refreshExpires * 1000,
+              ),
             },
             create: {
               userId: user.id,
               token: tokens.refreshToken,
-              expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
-              userAgent: userAgent,
+              expiresAt: new Date(
+                Date.now() + this.envConfig.refreshExpires * 1000,
+              ),
+              userAgent: safeUserAgent,
               ipAddress: ipAddress,
             },
           }),
@@ -366,7 +376,9 @@ export class AuthService {
               data: {
                 userId: createdUser.id,
                 token: tokens.refreshToken,
-                expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
+                expiresAt: new Date(
+                  Date.now() + this.envConfig.refreshExpires * 1000,
+                ),
                 userAgent: userAgent,
                 ipAddress: ipAddress,
               },
@@ -410,7 +422,6 @@ export class AuthService {
       const currentSession = sessions.find((s) => s.token === refreshToken);
 
       if (!currentSession) {
-        await this.prisma.session.deleteMany({ where: { userId } });
         throw new BusinessException(ErrorCode.SESSION_BAD_ACCESS, {
           httpStatus: HttpStatus.FORBIDDEN,
         });
@@ -448,7 +459,9 @@ export class AuthService {
         where: { id: currentSession.id },
         data: {
           token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
+          expiresAt: new Date(
+            Date.now() + this.envConfig.refreshExpires * 1000,
+          ),
         },
       });
 

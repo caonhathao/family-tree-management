@@ -8,7 +8,11 @@ import { IDraftFamilyData } from "@/types/draft.types";
 export async function GroupContentWrapper({ groupId }: { groupId: string }) {
   if (!groupId)
     return (
-      <div className={"w-full h-screen flex justify-center items-center"}>
+      <div
+        className={
+          "w-full h-screen flex justify-center items-center text-sm text-muted-foreground sm:text-base lg:text-lg"
+        }
+      >
         Vui lòng chọn một gia đình.
       </div>
     );
@@ -23,7 +27,11 @@ export async function GroupContentWrapper({ groupId }: { groupId: string }) {
 
   if ("errors" in dataGroup) {
     return (
-      <div className={"w-full h-screen flex justify-center items-center"}>
+      <div
+        className={
+          "w-full h-screen flex justify-center items-center text-sm text-muted-foreground sm:text-base lg:text-lg"
+        }
+      >
         Lỗi: {dataGroup.message}
       </div>
     );
@@ -31,7 +39,11 @@ export async function GroupContentWrapper({ groupId }: { groupId: string }) {
 
   if ("errors" in familyData) {
     return (
-      <div className={"w-full h-screen flex justify-center items-center"}>
+      <div
+        className={
+          "w-full h-screen flex justify-center items-center text-sm text-muted-foreground sm:text-base lg:text-lg"
+        }
+      >
         Lỗi: {familyData.message}
       </div>
     );

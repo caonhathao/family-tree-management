@@ -71,24 +71,28 @@ const SidebarGroupClient = ({
                 </div>
                 <div
                   className={
-                    "font-bold group-data-[collapsible=icon]:hidden lg:text-xl"
+                    "text-sm font-bold group-data-[collapsible=icon]:hidden sm:text-base lg:text-lg"
                   }
                 >
-                  Nhóm của bạn
+                  Xin chào
                 </div>
                 <IoIosArrowForward />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem
-                className={"hover:cursor-pointer lg:text-xl gap-3"}
+                className={
+                  "hover:cursor-pointer text-sm sm:text-base lg:text-lg gap-3"
+                }
                 onClick={() => router.push("/")}
               >
                 <IoMdHome />
                 Về trang chủ
               </DropdownMenuItem>
               <DropdownMenuItem
-                className={"hover:cursor-pointer lg:text-xl gap-3"}
+                className={
+                  "hover:cursor-pointer text-sm sm:text-base lg:text-lg gap-3"
+                }
                 onClick={() => router.push("/tutorials")}
               >
                 <MdOutlineContactSupport />
@@ -99,7 +103,7 @@ const SidebarGroupClient = ({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarGroup>
-        <SidebarGroupLabel className={"lg:text-lg"}>
+        <SidebarGroupLabel className={"text-xs sm:text-base lg:text-lg"}>
           Danh sách
         </SidebarGroupLabel>
         <SidebarContent>
@@ -109,7 +113,7 @@ const SidebarGroupClient = ({
                 "w-full flex flex-col justify-center items-center gap-3 group-data-[collapsible=icon]:hidden"
               }
             >
-              <p className={"italic lg:text-2xl"}>Không có nhóm nào</p>
+              <p className={"text-sm italic"}>(Trống)</p>
             </div>
           ) : (
             data.map((item, index) => (
@@ -135,7 +139,9 @@ const SidebarGroupClient = ({
                   {item.name[0]}
                 </div>
                 <div
-                  className={"group-data-[collapsible=icon]:hidden lg:text-xl"}
+                  className={
+                    "text-sm group-data-[collapsible=icon]:hidden sm:text-base lg:text-lg"
+                  }
                 >
                   {item.name}
                 </div>

@@ -10,14 +10,12 @@ import {
 } from "./auth.dto";
 import { cookies, headers } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
-import { AuthService } from "./auth.service";
 
-import { IJwtVerifyResult, ISuccessResponse } from "@/types/base.types";
-import { jwtVerify } from "jose";
+import { ISuccessResponse } from "@/types/base.types";
 import { ResponseFactory } from "@/lib/res/response.factory";
 import { ApiResponse } from "@/types/api.types";
 import { apiRequest } from "@/lib/api/http.client";
-import { apiClient } from "@/lib/api/api-path.lib";
+import { apiClient } from "@/lib/api/api-client.lib";
 
 const setAuthCookies = async (tokens: {
   accessToken: string;
@@ -42,40 +40,26 @@ const setAuthCookies = async (tokens: {
 
 export async function registerAction(data: IRegisterDto) {
   try {
-    const headerList = await headers();
-    const ipAddress = headerList.get("x-forwarded-for") || "unknown";
-    const userAgent = headerList.get("user-agent") || "unknown";
-
     let tokens: { accessToken: string; refreshToken: string } | undefined;
 
-    try {
-      const res = await apiRequest<IAuthResponseDto>(apiClient.auth.register, {
-        method: "POST",
+    const res = await apiRequest<IAuthResponseDto>(
+      apiClient.auth.register.url,
+      {
+        method: apiClient.auth.register.method,
         body: data,
-      });
-      tokens = res.data?.tokens;
-    } catch {
-      const res:
-        | IAuthResponseDto
-        | null
-        | ApiResponse<IAuthResponseDto, unknown> = await AuthService.register(
-        data,
-        {
-          ipAddress,
-          userAgent,
-        },
-      );
-      if (res && "tokens" in res) {
-        tokens = res.tokens;
-      }
-    }
+      },
+    );
 
-    if (tokens) {
-      await setAuthCookies(tokens);
-      return {
-        success: true,
-        message: "Register successfully",
-      } as ISuccessResponse;
+    if (res && "data" in res && res.data != undefined) {
+      tokens = res.data.tokens;
+
+      if (tokens) {
+        await setAuthCookies(tokens);
+        return {
+          success: true,
+          message: "Register successfully",
+        } as ISuccessResponse;
+      }
     }
   } catch (err: unknown) {
     return ResponseFactory.handleError(err);
@@ -84,16 +68,15 @@ export async function registerAction(data: IRegisterDto) {
 
 export async function loginBaseAction(data: ILoginBaseDto) {
   try {
-    const headerList = await headers();
-    const ipAddress = headerList.get("x-forwarded-for") || "unknown";
-    const userAgent = headerList.get("user-agent") || "unknown";
-
     let tokens: { accessToken: string; refreshToken: string } | undefined;
 
-    const res = await apiRequest<IAuthResponseDto>(apiClient.auth.loginBase, {
-      method: "POST",
-      body: data,
-    });
+    const res = await apiRequest<IAuthResponseDto>(
+      apiClient.auth.loginBase.url,
+      {
+        method: apiClient.auth.loginBase.method,
+        body: data,
+      },
+    );
 
     if (res && "data" in res) {
       tokens = res.data?.tokens;
@@ -115,9 +98,6 @@ export async function loginGoogleAction(token: IGoogleLoginDto) {
   let isSuccess = false;
 
   try {
-    const headerList = await headers();
-    const ipAddress = headerList.get("x-forwarded-for") || "unknown";
-    const userAgent = headerList.get("user-agent") || "unknown";
     // const res: IAuthResponseDto | null | undefined =
     //   await AuthService.loginGoogle(token, {
     //     ipAddress,
@@ -125,8 +105,8 @@ export async function loginGoogleAction(token: IGoogleLoginDto) {
     //   });
 
     const res: ApiResponse<IAuthResponseDto, unknown> =
-      await apiRequest<IAuthResponseDto>(apiClient.auth.loginGoogle, {
-        method: "POST",
+      await apiRequest<IAuthResponseDto>(apiClient.auth.loginGoogle.url, {
+        method: apiClient.auth.loginGoogle.method,
         body: token,
       });
     if (res && "errors" in res) {
@@ -171,7 +151,10 @@ export async function logoutAction() {
   try {
     if (userId && refreshToken) {
       // Gọi service để xóa session trong Database
-      await AuthService.logout(userId, refreshToken);
+      await apiRequest(apiClient.auth.logOut.url, {
+        method: apiClient.auth.logOut.method,
+        token: refreshToken,
+      });
     }
   } catch (err: unknown) {
     console.error("error at logout action", err);
@@ -186,59 +169,35 @@ export async function logoutAction() {
 export async function refreshAction() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("refresh_token")?.value;
+    const refreshToken = cookieStore.get("refresh_token")?.value;
 
-    if (!token) throw new Error("No refresh token found");
+    if (!refreshToken) throw new Error("No refresh token found");
 
-    let tokens: { accessToken: string; refreshToken: string } | undefined;
+    const res = await apiRequest<IAuthResponseDto>(apiClient.auth.refresh.url, {
+      method: apiClient.auth.refresh.method,
+      token: refreshToken,
+    });
+    if (res && "data" in res && res.data != undefined) {
+      if (res.data.tokens) {
+        const cookieOptions = {
+          httpOnly: true,
+          secure: EnvConfig.nodeValue === "production",
+          sameSite: "lax" as const,
+          path: "/",
+        };
 
-    try {
-      const res = await apiRequest<IAuthResponseDto>(apiClient.auth.refresh, {
-        method: "POST",
-        token,
-      });
-      tokens = res.data?.tokens;
-    } catch {
-      const payload: IJwtVerifyResult = await jwtVerify(
-        token,
-        new TextEncoder().encode(EnvConfig.jwtRefreshSecret),
-      );
-      const userId = payload?.payload.id;
+        cookieStore.set("access_token", res.data.tokens.accessToken, {
+          ...cookieOptions,
+          maxAge: EnvConfig.accessTokenExpireIn,
+        });
 
-      if (!userId) throw new Error("Invalid token payload");
-      const headerList = await headers();
+        cookieStore.set("refresh_token", res.data.tokens.refreshToken, {
+          ...cookieOptions,
+          maxAge: EnvConfig.refreshTokenExpireIn,
+        });
 
-      const ipAddress = headerList.get("x-forwarded-for") || "unknown";
-      const userAgent = headerList.get("user-agent") || "unknown";
-      const res = await AuthService.refresh(userId, token, {
-        ipAddress,
-        userAgent,
-      });
-
-      if (res.tokens) {
-        tokens = res.tokens;
+        return { success: true };
       }
-    }
-
-    if (tokens) {
-      const cookieOptions = {
-        httpOnly: true,
-        secure: EnvConfig.nodeValue === "production",
-        sameSite: "lax" as const,
-        path: "/",
-      };
-
-      cookieStore.set("access_token", tokens.accessToken, {
-        ...cookieOptions,
-        maxAge: EnvConfig.accessTokenExpireIn,
-      });
-
-      cookieStore.set("refresh_token", tokens.refreshToken, {
-        ...cookieOptions,
-        maxAge: EnvConfig.refreshTokenExpireIn,
-      });
-
-      return { success: true };
     }
   } catch (err: unknown) {
     return ResponseFactory.handleError(err);
@@ -252,7 +211,10 @@ export async function createNewBaseAuth(data: INewBaseAuth) {
     if (!currentUserId) {
       throw new Error("Unauthorized");
     }
-    const res = await AuthService.createBaseAuth(data, currentUserId);
+    const res = await apiRequest(apiClient.auth.createBaseAuth.url, {
+      method: apiClient.auth.createBaseAuth.method,
+      body: data,
+    });
     //console.log(res);
     return res;
   } catch (err) {
