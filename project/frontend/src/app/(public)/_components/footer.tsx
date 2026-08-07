@@ -10,7 +10,10 @@ const Footer = () => {
       <p>@Copyright MYFA Project 2026</p>
       <div>
         Contact:
-        <Button variant={"link"} className={"hover:cursor-pointer"}>
+        <Button
+          variant={"link"}
+          className={"hover:cursor-pointer text-sm sm:text-base"}
+        >
           caonhathao2372004@gmail.com
         </Button>
       </div>

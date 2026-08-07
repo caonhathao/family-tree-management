@@ -87,7 +87,9 @@ const ProfileContent = ({
               <Button
                 variant={"outline"}
                 size={"icon-sm"}
-                className={"absolute top-0 right-0 z-10 hover:cursor-pointer"}
+                className={
+                  "absolute top-0 right-0 z-10 hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
+                }
               >
                 <FaExchangeAlt />
               </Button>
@@ -130,7 +132,7 @@ const ProfileContent = ({
               <Button
                 variant={"link"}
                 size={"sm"}
-                className={"hover:cursor-pointer"}
+                className={"hover:cursor-pointer text-sm sm:text-base"}
                 onClick={() =>
                   navigateTo({
                     router: router,
@@ -167,13 +169,21 @@ const ProfileContent = ({
         <div className={"flex flex-col justify-center items-start gap-3"}>
           <div className={"flex flex-row justify-center items-start gap-3"}>
             <p className={"py-1"}>Xem thêm về thông tin đăng nhập</p>
-            <Button variant={"outline"}>
+            <Button
+              variant={"outline"}
+              className={"border hover:shadow-md active:scale-[0.98]"}
+            >
               <FaArrowRight />
             </Button>
           </div>
           <div className={"flex flex-row justify-center items-start gap-3"}>
             <p className={"py-1"}>Xóa tài khoản:</p>
-            <Button variant={"destructive"}>
+            <Button
+              variant={"destructive"}
+              className={
+                "border border-destructive/20 hover:shadow-md active:scale-[0.98]"
+              }
+            >
               <FaArrowRight />
             </Button>
           </div>

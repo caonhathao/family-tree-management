@@ -30,7 +30,9 @@ export function Pagination<TData>({
     <div className={"ml-auto flex items-center gap-2 lg:ml-0"}>
       <Button
         variant={"outline"}
-        className={"hidden h-8 w-8 p-0 lg:flex hover:cursor-pointer"}
+        className={
+          "hidden h-8 w-8 p-0 lg:flex hover:cursor-pointer hover:shadow-sm active:scale-[0.98]"
+        }
         onClick={() => {
           table.setPageIndex(0);
           handleChangePage(10, 1);
@@ -43,7 +45,9 @@ export function Pagination<TData>({
       </Button>
       <Button
         variant={"outline"}
-        className={"size-8 hover:cursor-pointer"}
+        className={
+          "size-8 hover:cursor-pointer hover:shadow-sm active:scale-[0.98]"
+        }
         size={"icon"}
         onClick={() => {
           table.previousPage();
@@ -56,7 +60,9 @@ export function Pagination<TData>({
       </Button>
       <Button
         variant={"outline"}
-        className={"size-8 hover:cursor-pointer"}
+        className={
+          "size-8 hover:cursor-pointer hover:shadow-sm active:scale-[0.98]"
+        }
         size={"icon"}
         onClick={() => {
           table.nextPage();
@@ -71,7 +77,9 @@ export function Pagination<TData>({
       </Button>
       <Button
         variant={"outline"}
-        className={"hidden size-8 lg:flex hover:cursor-pointer"}
+        className={
+          "hidden size-8 lg:flex hover:cursor-pointer hover:shadow-sm active:scale-[0.98]"
+        }
         size={"icon"}
         onClick={() => {
           table.setPageIndex(table.getPageCount() - 1);

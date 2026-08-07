@@ -87,7 +87,11 @@ export const Navigation = () => {
             aria-label={"navigate menu"}
             asChild
           >
-            <Button size={"icon-lg"} variant={"outline"}>
+            <Button
+              size={"icon-lg"}
+              variant={"outline"}
+              className={"border hover:shadow-md active:scale-[0.98]"}
+            >
               <MdOutlineKeyboardArrowDown
                 size={20}
                 className={`inline-block ${isOpen ? "animate-rotate-up" : "animate-rotate-down"}`}

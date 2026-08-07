@@ -109,7 +109,9 @@ const BioUserGroup = ({ bio, setBio }: IBioProps) => {
                   type={"button"}
                   variant={"destructive"}
                   size={"icon"}
-                  className={"hover:cursor-pointer"}
+                  className={
+                    "hover:cursor-pointer border border-destructive/20 hover:shadow-md active:scale-[0.98]"
+                  }
                   onClick={() => removeField(item.key)}
                 >
                   <IoIosClose />

@@ -41,7 +41,7 @@ const FeatureStaticContent = () => {
             bậc và mối quan hệ rõ ràng.
             <Button
               variant={"link"}
-              className={"hover:cursor-pointer"}
+              className={"hover:cursor-pointer text-sm sm:text-base"}
               onClick={() => router.push("/features?part=build-flow")}
             >
               Xem thêm
@@ -52,7 +52,7 @@ const FeatureStaticContent = () => {
             gia.
             <Button
               variant={"link"}
-              className={"hover:cursor-pointer"}
+              className={"hover:cursor-pointer text-sm sm:text-base"}
               onClick={() => router.push("/features?part=group-family")}
             >
               Xem thêm
@@ -63,7 +63,7 @@ const FeatureStaticContent = () => {
             <strong className={"text-sm"}>(đang lên kế hoạch)</strong>
             <Button
               variant={"link"}
-              className={"hover:cursor-pointer"}
+              className={"hover:cursor-pointer text-sm sm:text-base"}
               onClick={() => router.push("/features?part=storage")}
             >
               Xem thêm
@@ -74,7 +74,7 @@ const FeatureStaticContent = () => {
             <strong className={"text-sm"}>(đang lên kế hoạch)</strong>
             <Button
               variant={"link"}
-              className={"hover:cursor-pointer"}
+              className={"hover:cursor-pointer text-sm sm:text-base"}
               onClick={() => router.push("/features?part=event")}
             >
               Xem thêm

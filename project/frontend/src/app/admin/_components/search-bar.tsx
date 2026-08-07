@@ -87,14 +87,18 @@ const SearchBar = ({ placeholder, keyQueryList }: SearchProps) => {
                   <InputGroupButton
                     variant={"outline"}
                     onClick={() => resetResult()}
-                    className={"hover:cursor-pointer"}
+                    className={
+                      "hover:cursor-pointer hover:shadow-sm active:scale-[0.98]"
+                    }
                   >
                     <RiResetRightLine />
                   </InputGroupButton>
                   <InputGroupButton
                     variant={"secondary"}
                     type={"submit"}
-                    className={"hover:cursor-pointer"}
+                    className={
+                      "hover:cursor-pointer text-sm hover:shadow-sm active:scale-[0.98] sm:text-base"
+                    }
                   >
                     Tìm kiếm
                   </InputGroupButton>
@@ -107,7 +111,12 @@ const SearchBar = ({ placeholder, keyQueryList }: SearchProps) => {
       <div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant={"outline"} className={"hover:cursor-pointer"}>
+            <Button
+              variant={"outline"}
+              className={
+                "hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
+              }
+            >
               <IoFilterOutline />
             </Button>
           </DropdownMenuTrigger>

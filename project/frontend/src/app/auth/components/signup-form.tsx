@@ -171,7 +171,9 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
               <Field>
                 <Button
                   type={"submit"}
-                  className={"hover:cursor-pointer"}
+                  className={
+                    "hover:cursor-pointer border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+                  }
                   disabled={isPending}
                 >
                   Tạo tài khoản
@@ -194,7 +196,7 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
                   <Button
                     type={"button"}
                     variant={"link"}
-                    className={"hover:cursor-pointer p-1"}
+                    className={"hover:cursor-pointer p-1 text-sm sm:text-base"}
                     onClick={() =>
                       navigateTo({
                         router: router,

@@ -140,7 +140,7 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
               <Field>
                 <Button
                   type={"submit"}
-                  className={`hover:cursor-pointer ${isPending ? "disabled" : ""}`}
+                  className={`hover:cursor-pointer border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base ${isPending ? "disabled" : ""}`}
                 >
                   {isPending ? (
                     <>
@@ -171,7 +171,7 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
                   <Button
                     type={"button"}
                     variant={"link"}
-                    className={"hover:cursor-pointer p-1"}
+                    className={"hover:cursor-pointer p-1 text-sm sm:text-base"}
                     onClick={() =>
                       navigateTo({
                         router: router,

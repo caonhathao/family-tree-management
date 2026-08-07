@@ -78,7 +78,10 @@ export const columns: ColumnDef<IUserList>[] = [
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant={"ghost"} className={"h-8 w-8 p-0"}>
+            <Button
+              variant={"ghost"}
+              className={"h-8 w-8 p-0 hover:shadow-sm active:scale-[0.98]"}
+            >
               <span className={"sr-only"}>Mở menu</span>
               <MoreHorizontal className={"h-4 w-4"} />
             </Button>

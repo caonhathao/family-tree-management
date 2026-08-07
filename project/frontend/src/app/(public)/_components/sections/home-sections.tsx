@@ -151,7 +151,9 @@ const HomeSections = () => {
             {item.hasButton == true ? (
               <MotionButton
                 variant={"default"}
-                className={"hover:cursor-pointer text-xl rounded-full p-3"}
+                className={
+                  "hover:cursor-pointer text-sm sm:text-base p-3 rounded-md border border-primary/20 shadow-sm hover:bg-primary/90 hover:shadow-md active:scale-[0.98]"
+                }
                 onClick={() =>
                   navigateTo({
                     router: router,

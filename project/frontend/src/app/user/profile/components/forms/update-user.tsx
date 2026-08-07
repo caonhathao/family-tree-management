@@ -188,7 +188,9 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
                 <Button
                   variant={"outline"}
                   id={"date"}
-                  className={"justify-start font-normal hover:cursor-pointer"}
+                  className={
+                    "justify-start font-normal text-sm hover:cursor-pointer hover:shadow-sm active:scale-[0.98] sm:text-base"
+                  }
                 >
                   {date ? date.toLocaleDateString() : "Ngày nào nè?"}
                 </Button>
@@ -259,7 +261,9 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
           <Button
             type={"button"}
             variant={"outline"}
-            className={"hover:cursor-pointer"}
+            className={
+              "hover:cursor-pointer text-sm hover:shadow-sm active:scale-[0.98] sm:text-base"
+            }
             onClick={() => reset()}
           >
             Hủy bỏ
@@ -267,7 +271,9 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
           <Button
             type={"submit"}
             variant={"default"}
-            className={"hover:cursor-pointer flex flex-row gap-3"}
+            className={
+              "hover:cursor-pointer flex flex-row gap-3 border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+            }
           >
             Cập nhật
             {isLoading ? (

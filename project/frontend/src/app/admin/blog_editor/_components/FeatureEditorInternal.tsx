@@ -349,7 +349,9 @@ export default function FeatureEditorInternal({
                       variant={"outline"}
                       size={"icon"}
                       type={"submit"}
-                      className={"hover:cursor-pointer"}
+                      className={
+                        "hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
+                      }
                     >
                       <FaCheck />
                     </Button>
@@ -363,7 +365,9 @@ export default function FeatureEditorInternal({
                   <Button
                     variant={"outline"}
                     size={"icon"}
-                    className={"hover:cursor-pointer"}
+                    className={
+                      "hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
+                    }
                     onClick={() => handleEdit()}
                   >
                     <FaPen />
@@ -378,14 +382,18 @@ export default function FeatureEditorInternal({
             <Button
               variant={"outline"}
               onClick={() => handleSave()}
-              className={"hover:cursor-pointer"}
+              className={
+                "hover:cursor-pointer text-sm hover:shadow-sm active:scale-[0.98] sm:text-base"
+              }
             >
               Lưu
             </Button>
             <Button
               variant={"secondary"}
               onClick={handleCancel}
-              className={"hover:cursor-pointer"}
+              className={
+                "hover:cursor-pointer text-sm hover:shadow-sm active:scale-[0.98] sm:text-base"
+              }
             >
               Hủy
             </Button>
