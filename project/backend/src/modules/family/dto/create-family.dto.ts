@@ -1,4 +1,5 @@
 import {
+  Allow,
   IsDate,
   IsEnum,
   IsNotEmpty,
@@ -11,12 +12,6 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 import { LINEAGE_TYPE, TYPE_RELATIONSHIP } from '@prisma/client';
-
-export class FamilyDto {
-  members: IFamilyMemberDto[];
-  relationships: IRelationshipDto[];
-  family: IFamilyDto;
-}
 
 export class IFamilyMemberDto {
   @ApiProperty({
@@ -167,6 +162,15 @@ export class IFamilyDto {
   })
   lineageType: string;
 }
+export class FamilyDto {
+  @Allow()
+  members: IFamilyMemberDto[];
+  @Allow()
+  relationships: IRelationshipDto[];
+  @Allow()
+  family: IFamilyDto;
+}
+
 export type IBiographyContent = {
   education_level: string;
   occupation: string;

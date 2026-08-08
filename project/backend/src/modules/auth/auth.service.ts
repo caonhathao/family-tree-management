@@ -1,11 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
@@ -13,13 +6,14 @@ import { UserProfileDto } from '../users/dto/create-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { LoginBaseDto } from './dto/login.dto';
 import { EnvConfigService } from 'src/common/config/env/env-config.service';
-import {
-  Exception,
-  InvalidMessageResponse,
-} from 'src/common/messages/messages.response';
+import { BusinessException } from 'src/common/errors/business.exception';
+import { ErrorCode } from 'src/common/errors/error-codes.enum';
+import { HttpStatus } from 'src/common/constants/api';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
 import { GoogleLoginDto } from './dto/google-login.dto';
+import { CreateBaseAuthDto } from './dto/create-base-auth.dto';
+import { AUTH_TYPE, PROVIDERS } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -40,64 +34,92 @@ export class AuthService {
       },
     });
 
-    if (email) throw new ConflictException(Exception.CONFLICT);
+    if (email) throw new BusinessException(ErrorCode.CONFLICT);
 
     const hashedPW = await bcrypt.hash(data.password, 10);
-    const newUser = await this.prisma.user.create({
-      data: {
-        email: data.email,
-        account: {
-          create: {
-            password: hashedPW,
-          },
-        },
-        userProfile: {
-          create: {
-            fullName: data.fullName,
-          },
-        },
-      },
-      select: {
-        id: true,
-        email: true,
-        userProfile: {
-          select: {
-            fullName: true,
-            avatar: true,
-          },
-        },
-      },
-    });
-
-    if (!newUser.userProfile) {
-      throw new Error('can not create new user profile');
-    } else {
-      const profile: UserProfileDto = newUser.userProfile as UserProfileDto;
-      const payload = {
-        sub: newUser.id,
-        email: newUser.email,
-      };
-      const tokens = await this.getTokens(payload);
-
-      await this.prisma.session.create({
+    const newUser = await this.prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
         data: {
-          userId: newUser.id,
-          token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
-          userAgent: userAgent,
-          ipAddress: ipAddress,
+          email: data.email,
+          accounts: {
+            create: {
+              password: hashedPW,
+              authProvider: {
+                create: {
+                  provider: PROVIDERS.USER,
+                },
+              },
+            },
+          },
+          userProfile: {
+            create: {
+              fullName: data.fullName,
+            },
+          },
+        },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          userProfile: {
+            select: {
+              fullName: true,
+              avatar: true,
+            },
+          },
+          accounts: {
+            select: {
+              id: true,
+            },
+          },
         },
       });
 
+      if (!createdUser.userProfile || !createdUser.accounts) {
+        throw new Error('can not create new user profile');
+      }
+
+      const payload = {
+        id: createdUser.id,
+        role: createdUser.role,
+      };
+      const tokens = await this.getTokens(payload);
+
+      await Promise.all([
+        tx.session.create({
+          data: {
+            userId: createdUser.id,
+            token: tokens.refreshToken,
+            expiresAt: new Date(
+              Date.now() + this.envConfig.refreshExpires * 1000,
+            ),
+            userAgent: userAgent,
+            ipAddress: ipAddress,
+          },
+        }),
+        tx.authLog.create({
+          data: {
+            userId: createdUser.id,
+            accountId: createdUser.accounts[0].id,
+            authBy: PROVIDERS.USER,
+            type: AUTH_TYPE.REGISTER,
+            ipAddress: ipAddress,
+            userAgent: userAgent,
+          },
+        }),
+      ]);
+
       return {
         user: {
-          id: newUser.id,
-          email: newUser.email,
-          userProfile: profile,
+          id: createdUser.id,
+          role: createdUser.role,
+          userProfile: createdUser.userProfile,
         },
         tokens,
       };
-    }
+    });
+
+    return newUser;
   }
 
   async loginBase(
@@ -113,8 +135,17 @@ export class AuthService {
         select: {
           id: true,
           email: true,
-          account: {
-            select: { password: true },
+          role: true,
+          accounts: {
+            where: {
+              authProvider: {
+                provider: PROVIDERS.USER,
+              },
+            },
+            select: {
+              id: true,
+              password: true,
+            },
           },
           userProfile: {
             select: {
@@ -124,53 +155,69 @@ export class AuthService {
           },
         },
       });
-      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
-      if (user?.account) {
-        if (!user.account?.password) {
-          throw new UnauthorizedException(
-            InvalidMessageResponse.EMAIL_INCORRECT,
-          );
+      if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
+      if (user?.accounts) {
+        if (!user.accounts[0].password) {
+          throw new BusinessException(ErrorCode.EMAIL_INCORRECT, {
+            httpStatus: HttpStatus.UNAUTHORIZED,
+          });
         } else {
           const isPWValid = await bcrypt.compare(
             data.password,
-            user.account?.password,
+            user.accounts[0].password,
           );
           if (!isPWValid) {
-            throw new UnauthorizedException(
-              InvalidMessageResponse.PASSWORD_INCORRECT,
-            );
+            throw new BusinessException(ErrorCode.PASSWORD_INCORRECT, {
+              httpStatus: HttpStatus.UNAUTHORIZED,
+            });
           }
         }
       }
-      const payload = { sub: user.id, email: user.email };
+      const payload = { id: user.id, role: user.role };
       const tokens = await this.getTokens(payload);
       //udpate session if login again in same device
       //in testing, userAgent is undefined, so we will set a variable before update session
       const safeUserAgent = userAgent || 'unknow';
-      await this.prisma.session.upsert({
-        where: {
-          userId_userAgent: {
-            userId: user.id,
-            userAgent: safeUserAgent,
+      await this.prisma.$transaction([
+        this.prisma.session.upsert({
+          where: {
+            userId_userAgent: {
+              userId: user.id,
+              userAgent: safeUserAgent,
+            },
           },
-        },
-        update: {
-          token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
-        },
-        create: {
-          userId: user.id,
-          token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
-          userAgent: userAgent,
-          ipAddress: ipAddress,
-        },
-      });
+          update: {
+            token: tokens.refreshToken,
+            expiresAt: new Date(
+              Date.now() + this.envConfig.refreshExpires * 1000,
+            ),
+          },
+          create: {
+            userId: user.id,
+            token: tokens.refreshToken,
+            expiresAt: new Date(
+              Date.now() + this.envConfig.refreshExpires * 1000,
+            ),
+            userAgent: safeUserAgent,
+            ipAddress: ipAddress,
+          },
+        }),
+        this.prisma.authLog.create({
+          data: {
+            userId: user.id,
+            accountId: user.accounts[0].id,
+            authBy: PROVIDERS.USER,
+            type: AUTH_TYPE.LOGIN,
+            ipAddress: ipAddress,
+            userAgent: userAgent,
+          },
+        }),
+      ]);
 
       return {
         user: {
           id: user.id,
-          email: user.email,
+          role: user.role,
           userProfile: user.userProfile as UserProfileDto,
         },
         tokens,
@@ -193,7 +240,7 @@ export class AuthService {
       });
 
       const payload: TokenPayload | undefined = ticket.getPayload();
-      if (!payload) throw new BadRequestException(Exception.BAD_REQUEST);
+      if (!payload) throw new BusinessException(ErrorCode.BAD_REQUEST);
 
       //check user in database
       const user = await this.prisma.user.findFirst({
@@ -203,10 +250,21 @@ export class AuthService {
         select: {
           id: true,
           email: true,
+          role: true,
           userProfile: {
             select: {
               fullName: true,
               avatar: true,
+            },
+          },
+          accounts: {
+            where: {
+              authProvider: {
+                provider: PROVIDERS.GOOGLE,
+              },
+            },
+            select: {
+              id: true,
             },
           },
         },
@@ -216,90 +274,138 @@ export class AuthService {
       //if not, register account
       if (user) {
         const payload = {
-          sub: user.id,
-          email: user.email,
+          id: user.id,
+          role: user.role,
         };
         const tokens = await this.getTokens(payload);
         const safeUserAgent = userAgent || 'unknow';
-        await this.prisma.session.upsert({
-          where: {
-            userId_userAgent: {
-              userId: user.id,
-              userAgent: safeUserAgent,
+        await this.prisma.$transaction([
+          this.prisma.session.upsert({
+            where: {
+              userId_userAgent: {
+                userId: user.id,
+                userAgent: safeUserAgent,
+              },
             },
-          },
-          update: {
-            token: tokens.refreshToken,
-            expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
-          },
-          create: {
-            userId: user.id,
-            token: tokens.refreshToken,
-            expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
-            userAgent: userAgent,
-            ipAddress: ipAddress,
-          },
-        });
+            update: {
+              token: tokens.refreshToken,
+              expiresAt: new Date(
+                Date.now() + this.envConfig.refreshExpires * 1000,
+              ),
+            },
+            create: {
+              userId: user.id,
+              token: tokens.refreshToken,
+              expiresAt: new Date(
+                Date.now() + this.envConfig.refreshExpires * 1000,
+              ),
+              userAgent: safeUserAgent,
+              ipAddress: ipAddress,
+            },
+          }),
+          this.prisma.authLog.create({
+            data: {
+              userId: user.id,
+              accountId: user.accounts[0].id,
+              authBy: PROVIDERS.GOOGLE,
+              type: AUTH_TYPE.LOGIN,
+              ipAddress: ipAddress,
+              userAgent: userAgent,
+            },
+          }),
+        ]);
         return {
           user: {
             id: user.id,
-            email: user.email,
+            role: user.role,
             userProfile: user.userProfile as UserProfileDto,
           },
           tokens,
         };
       } else {
-        const newUser = await this.prisma.user.create({
-          data: {
-            email: payload.email as string,
-            userProfile: {
-              create: {
-                fullName: payload.name as string,
-                avatar: payload.picture as string,
-              },
-            },
-          },
-          select: {
-            id: true,
-            email: true,
-            userProfile: {
-              select: {
-                fullName: true,
-                avatar: true,
-              },
-            },
-          },
-        });
-
-        if (!newUser.userProfile) {
-          throw new Error('can not create new user profile');
-        } else {
-          const profile: UserProfileDto = newUser.userProfile as UserProfileDto;
-          const payload = {
-            sub: newUser.id,
-            email: newUser.email,
-          };
-          const tokens = await this.getTokens(payload);
-
-          await this.prisma.session.create({
+        const newUser = await this.prisma.$transaction(async (tx) => {
+          const createdUser = await tx.user.create({
             data: {
-              userId: newUser.id,
-              token: tokens.refreshToken,
-              expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
-              userAgent: userAgent,
-              ipAddress: ipAddress,
+              email: payload.email as string,
+              userProfile: {
+                create: {
+                  fullName: payload.name as string,
+                  avatar: payload.picture as string,
+                },
+              },
+              accounts: {
+                create: {
+                  authProvider: {
+                    create: {
+                      provider: PROVIDERS.GOOGLE,
+                    },
+                  },
+                },
+              },
+            },
+            select: {
+              id: true,
+              email: true,
+              role: true,
+              userProfile: {
+                select: {
+                  fullName: true,
+                  avatar: true,
+                },
+              },
+              accounts: {
+                select: {
+                  id: true,
+                },
+              },
             },
           });
 
+          if (!createdUser.userProfile || !createdUser.accounts) {
+            throw new Error('can not create new user profile');
+          }
+
+          const jwtPayload = {
+            id: createdUser.id,
+            role: createdUser.role,
+          };
+          const tokens = await this.getTokens(jwtPayload);
+
+          await Promise.all([
+            tx.session.create({
+              data: {
+                userId: createdUser.id,
+                token: tokens.refreshToken,
+                expiresAt: new Date(
+                  Date.now() + this.envConfig.refreshExpires * 1000,
+                ),
+                userAgent: userAgent,
+                ipAddress: ipAddress,
+              },
+            }),
+            tx.authLog.create({
+              data: {
+                userId: createdUser.id,
+                accountId: createdUser.accounts[0].id,
+                authBy: PROVIDERS.GOOGLE,
+                type: AUTH_TYPE.LOGIN,
+                ipAddress: ipAddress,
+                userAgent: userAgent,
+              },
+            }),
+          ]);
+
           return {
             user: {
-              id: newUser.id,
-              email: newUser.email,
-              userProfile: profile,
+              id: createdUser.id,
+              role: createdUser.role,
+              userProfile: createdUser.userProfile,
             },
             tokens,
           };
-        }
+        });
+
+        return newUser;
       }
     } catch (err) {
       console.log('error at login by google', err);
@@ -316,15 +422,16 @@ export class AuthService {
       const currentSession = sessions.find((s) => s.token === refreshToken);
 
       if (!currentSession) {
-        await this.prisma.session.deleteMany({ where: { userId } });
-        throw new ForbiddenException(
-          'Cảnh báo bảo mật: Phiên làm việc không hợp lệ',
-        );
+        throw new BusinessException(ErrorCode.SESSION_BAD_ACCESS, {
+          httpStatus: HttpStatus.FORBIDDEN,
+        });
       }
 
       if (currentSession.expiresAt < new Date()) {
         await this.prisma.session.delete({ where: { id: currentSession.id } });
-        throw new ForbiddenException('Phiên đăng nhập hết hạn');
+        throw new BusinessException(ErrorCode.EXPIRED, {
+          httpStatus: HttpStatus.FORBIDDEN,
+        });
       }
 
       const user = await this.prisma.user.findUnique({
@@ -334,22 +441,38 @@ export class AuthService {
         select: {
           id: true,
           email: true,
+          role: true,
+          userProfile: {
+            select: {
+              fullName: true,
+              avatar: true,
+            },
+          },
         },
       });
 
-      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
 
-      const tokens = await this.getTokens({ sub: user.id, email: user.email });
+      const tokens = await this.getTokens({ id: user.id, role: user.role });
 
       await this.prisma.session.update({
         where: { id: currentSession.id },
         data: {
           token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + this.envConfig.refreshExpires),
+          expiresAt: new Date(
+            Date.now() + this.envConfig.refreshExpires * 1000,
+          ),
         },
       });
 
-      return { user, tokens };
+      return {
+        user: {
+          id: user.id,
+          role: user.role,
+          userProfile: user.userProfile as UserProfileDto,
+        },
+        tokens,
+      };
     } catch (err) {
       console.log('error at refresh service:', err);
       throw err;
@@ -364,7 +487,7 @@ export class AuthService {
           email: data.email,
         },
       });
-      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
     } catch (err) {
       console.log(
         `error at reset password service with email: ${data.email}`,
@@ -374,11 +497,40 @@ export class AuthService {
     }
   }
 
+  async createBaseAuth(data: CreateBaseAuthDto, userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+
+      if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
+
+      const hashedPW = await bcrypt.hash(data.password, 10);
+      await this.prisma.account.create({
+        data: {
+          userId: user.id,
+          password: hashedPW,
+          authProvider: {
+            create: {
+              provider: PROVIDERS.USER,
+            },
+          },
+        },
+      });
+
+      return { success: true, message: 'ok' };
+    } catch (err) {
+      console.log('error at create base auth service:', err);
+      throw err;
+    }
+  }
+
   async logout(userId: string, token: string) {
     try {
       return await this.prisma.$transaction(async (tx) => {
         const user = await tx.user.findUnique({ where: { id: userId } });
-        if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+        if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
 
         await tx.session.deleteMany({
           where: {
@@ -397,20 +549,14 @@ export class AuthService {
 
   private async getTokens(payload: Record<string, string>) {
     const [at, rt] = await Promise.all([
-      this.jwtService.signAsync(
-        { payload },
-        {
-          secret: this.envConfig.jwtAccessKey,
-          expiresIn: this.envConfig.accessExpires,
-        },
-      ),
-      this.jwtService.signAsync(
-        { payload },
-        {
-          secret: this.envConfig.jwtRefreshKey,
-          expiresIn: this.envConfig.refreshExpires,
-        },
-      ),
+      this.jwtService.signAsync(payload, {
+        secret: this.envConfig.jwtAccessKey,
+        expiresIn: this.envConfig.accessExpires,
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.envConfig.jwtRefreshKey,
+        expiresIn: this.envConfig.refreshExpires,
+      }),
     ]);
     return { accessToken: at, refreshToken: rt };
   }

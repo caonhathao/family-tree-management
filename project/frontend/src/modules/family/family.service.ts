@@ -8,6 +8,7 @@ import {
   IFamilyMemberDto,
   IRelationshipDto,
 } from "./family.service-validator";
+import { ResponseFactory } from "@/lib/res/response.factory";
 
 export const FamilyService = {
   deleteFamily: async (groupId: string, familyId: string) => {
@@ -119,7 +120,7 @@ export const FamilyService = {
       } as IDraftFamilyData;
     } catch (err) {
       console.error("err at get family data service:", err);
-      throw err;
+      return ResponseFactory.handleError(err);
     }
   },
 

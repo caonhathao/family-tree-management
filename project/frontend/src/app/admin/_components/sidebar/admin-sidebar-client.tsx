@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { IUserSession } from "@/types/auth.types";
-import { dataProps, IErrorResponse } from "@/types/base.types";
+import { dataProps } from "@/types/base.types";
 import { useMemo } from "react";
 import { IoIosArrowForward, IoMdHome } from "react-icons/io";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,6 +25,7 @@ import { VscFeedback } from "react-icons/vsc";
 import { SidebarGroupContent } from "@/components/custom/sidebar-group";
 import { MdOutlineSpaceDashboard } from "react-icons/md";
 import { useRouter } from "next/navigation";
+import { ApiResponse } from "@/types/api.types";
 
 const data: Record<string, dataProps> = {
   general: {
@@ -78,20 +79,20 @@ const data: Record<string, dataProps> = {
 export const AdminSidebarClient = ({
   session,
 }: {
-  session: IUserSession | IErrorResponse | null;
+  session: IUserSession | ApiResponse<IUserSession, unknown> | null;
 }) => {
   const router = useRouter();
   const isLogin = !!session && !("error" in session);
 
   const avatar = useMemo(() => {
-    if (isLogin && session.avatar) {
+    if (isLogin && "avatar" in session) {
       return session.avatar;
     }
     return unknow.src;
   }, [session, isLogin]);
 
   const name = useMemo(() => {
-    if (isLogin && session.fullName) {
+    if (isLogin && "fullName" in session) {
       return session.fullName;
     }
     return "admin";

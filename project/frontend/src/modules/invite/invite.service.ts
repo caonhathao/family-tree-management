@@ -1,8 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { CreateInviteDto } from "./invite.service-validator";
+import { ApiResponse } from "@/types/api.types";
+import { IResponseCreateInviteDto } from "./invite.dto";
 
 export const InviteService = {
-  createInviteLink: async (userId: string, data: CreateInviteDto) => {
+  createInviteLink: async (
+    userId: string,
+    data: CreateInviteDto,
+  ): Promise<
+    IResponseCreateInviteDto | ApiResponse<IResponseCreateInviteDto, unknown>
+  > => {
     const [user, group] = await Promise.all([
       prisma.groupMember.findFirst({
         where: {
@@ -38,7 +45,7 @@ export const InviteService = {
 
     if (invite) {
       const inviteLink = `/invite?token=${invite.token}`;
-      return { inviteLink: inviteLink };
+      return { inviteLink: inviteLink } as IResponseCreateInviteDto;
     }
     const payload = `${userId}-${data.groupId}-${Date.now()}`;
     const inviteToken = Buffer.from(payload).toString("base64");
@@ -54,6 +61,6 @@ export const InviteService = {
     });
 
     const inviteLink = `/invite?token=${inviteToken}`;
-    return { inviteLink: inviteLink };
+    return { inviteLink: inviteLink } as IResponseCreateInviteDto;
   },
 };

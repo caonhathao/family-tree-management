@@ -10,6 +10,7 @@ import {
 } from "@/configs/animation/variants.amin";
 import { Button } from "@/components/ui/button";
 import { navigateTo } from "@/lib/utils/navigate.utils";
+import { cn } from "@/lib/utils";
 
 const features = [
   "Sơ đồ gia phả thông minh, trực quan.",
@@ -63,7 +64,14 @@ const HomeSections = () => {
       {sectionContent.map((item, index) => (
         <motion.section
           key={"home-section-" + index}
-          className={`w-full lg:w-4/5 ${index % 2 == 0 ? "bg-section-1  md:flex-row" : " md:flex-row-reverse"} flex flex-col justify-center items-center gap-3 px-1 py-10 lg:p-10`}
+          className={cn(
+            "w-full lg:w-4/5 border-2 border-dashed",
+            index % 2 == 0
+              ? "bg-section-1  md:flex-row"
+              : " md:flex-row-reverse",
+            "flex flex-col justify-center items-center gap-3 px-1 py-10 lg:p-10",
+            "my-10 md:my-16 lg:my-24",
+          )}
           variants={staggerContainerVariants}
           initial={"offscreen"}
           whileInView={"onscreen"}
@@ -75,13 +83,13 @@ const HomeSections = () => {
           {/* display iamge */}
           <motion.div
             variants={fadeInUpVariants}
-            className={"relative  h-60 lg:h-96 aspect-square"}
+            className={"relative  h-60 lg:h-175 aspect-square"}
           >
             <Image
               loading={"eager"}
               src={logo.src}
               fill
-              sizes={"(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 30vw"}
+              sizes={"(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 60vw"}
               priority
               alt={"family=tree-logo"}
               className={"object-cover transition-opacity duration-300"}
@@ -137,7 +145,7 @@ const HomeSections = () => {
                     <li
                       key={featureIndex}
                       className={
-                        "w-full p-4 bg-white rounded-lg shadow-sm border-l-2 border-green-500 hover:shadow-md transition-shadow"
+                        "w-full p-4 bg-white rounded-lg shadow-sm border-l-8 border-green-500 hover:shadow-md transition-shadow"
                       }
                     >
                       <span>{featureIndex + 1}. </span>
@@ -151,7 +159,9 @@ const HomeSections = () => {
             {item.hasButton == true ? (
               <MotionButton
                 variant={"default"}
-                className={"hover:cursor-pointer text-xl rounded-full p-3"}
+                className={
+                  "hover:cursor-pointer text-sm sm:text-base p-3 rounded-md border border-primary/20 shadow-sm hover:bg-primary/90 hover:shadow-md active:scale-[0.98]"
+                }
                 onClick={() =>
                   navigateTo({
                     router: router,

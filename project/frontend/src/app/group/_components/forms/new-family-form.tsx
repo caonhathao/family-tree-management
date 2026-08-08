@@ -97,8 +97,10 @@ const NewFamilyForm = ({
         <DialogContent className={"sm:max-w-sm"}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>
-              <DialogTitle>Tạo sơ đồ mới</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className={"text-base sm:text-lg lg:text-xl"}>
+                Tạo sơ đồ mới
+              </DialogTitle>
+              <DialogDescription className={"text-sm sm:text-base"}>
                 {draft.family.localId.length !== 0 ? (
                   <p className={"text-red-500"}>Sơ đồ đã được tạo rồi</p>
                 ) : (
@@ -108,7 +110,12 @@ const NewFamilyForm = ({
             </DialogHeader>
             <FieldGroup>
               <Field>
-                <Label htmlFor={"fullName"}>Tên sơ đồ</Label>
+                <Label
+                  htmlFor={"fullName"}
+                  className={"text-sm sm:text-base lg:text-base"}
+                >
+                  Tên sơ đồ
+                </Label>
                 <Input
                   id={"fullName"}
                   type={"text"}
@@ -123,7 +130,12 @@ const NewFamilyForm = ({
               </Field>
 
               <Field>
-                <Label htmlFor={"biography"}>Mô tả chung</Label>
+                <Label
+                  htmlFor={"biography"}
+                  className={"text-sm sm:text-base lg:text-base"}
+                >
+                  Mô tả chung
+                </Label>
                 <Textarea
                   id={"biography"}
                   className={"resize-none"}
@@ -137,7 +149,12 @@ const NewFamilyForm = ({
               </Field>
 
               <Field>
-                <Label htmlFor={"lineageType"}>Loại sơ đồ</Label>
+                <Label
+                  htmlFor={"lineageType"}
+                  className={"text-sm sm:text-base lg:text-base"}
+                >
+                  Loại sơ đồ
+                </Label>
                 <Controller
                   name={"lineageType"}
                   control={control}
@@ -146,26 +163,34 @@ const NewFamilyForm = ({
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
-                      <SelectTrigger className={"hover:cursor-pointer"}>
+                      <SelectTrigger
+                        className={"hover:cursor-pointer text-sm sm:text-base"}
+                      >
                         <SelectValue placeholder={"Chọn"} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
                           <SelectItem
                             value={"PATRIARCHAL"}
-                            className={"hover:cursor-pointer"}
+                            className={
+                              "hover:cursor-pointer text-sm sm:text-base"
+                            }
                           >
                             Phụ hệ
                           </SelectItem>
                           <SelectItem
                             value={"MATRIARCHAL"}
-                            className={"hover:cursor-pointer"}
+                            className={
+                              "hover:cursor-pointer text-sm sm:text-base"
+                            }
                           >
                             Mẫu hệ
                           </SelectItem>
                           <SelectItem
                             value={"OTHER"}
-                            className={"hover:cursor-pointer"}
+                            className={
+                              "hover:cursor-pointer text-sm sm:text-base"
+                            }
                           >
                             Khác
                           </SelectItem>
@@ -186,7 +211,9 @@ const NewFamilyForm = ({
                 <Button
                   type={"button"}
                   variant={"outline"}
-                  className={"hover:cursor-pointer"}
+                  className={
+                    "hover:cursor-pointer text-sm hover:shadow-sm active:scale-[0.98] sm:text-base"
+                  }
                 >
                   Hủy
                 </Button>
@@ -194,7 +221,7 @@ const NewFamilyForm = ({
               <Button
                 type={"submit"}
                 disabled={draft.family.localId.length !== 0}
-                className={`w-fit flex justify-center items-center gap-2 ${draft.family.localId.length === 0 ? "hover:cursor-pointer" : "hover:cursor-not-allowed"}`}
+                className={`w-fit flex justify-center items-center gap-2 border border-primary/20 hover:shadow-md active:scale-[0.98] text-sm sm:text-base ${draft.family.localId.length === 0 ? "hover:cursor-pointer" : "hover:cursor-not-allowed"}`}
               >
                 Tạo
               </Button>

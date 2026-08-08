@@ -1,9 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { MEMBER_ROLE } from "@prisma/client";
 import { UpdateGroupMemberDto } from "./group-member.service-validator";
+import { ResponseFactory } from "@/lib/res/response.factory";
+import { ApiResponse } from "@/types/api.types";
 
 export const GroupMemberService = {
-  removeMember: async (userId: string, groupId: string, memberId: string) => {
+  removeMember: async (
+    userId: string,
+    groupId: string,
+    memberId: string,
+  ): Promise<number | ApiResponse<number, unknown>> => {
     try {
       //check validation
       //role in group
@@ -36,10 +42,12 @@ export const GroupMemberService = {
           memberId: memberId,
         },
       });
-      return count as number;
+      if (count === 0) {
+        throw new Error("Error when delete group");
+      } else return count as number;
     } catch (err) {
-      console.log("remove member service", err);
-      throw err;
+      console.error("remove member service", err);
+      return ResponseFactory.handleError(err);
     }
   },
 

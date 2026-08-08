@@ -34,8 +34,7 @@ import {
   IResponseCreateInviteDto,
 } from "@/modules/invite/invite.dto";
 import { RootState } from "@/store";
-import { IErrorResponse } from "@/types/base.types";
-
+import { ApiResponse } from "@/types/api.types";
 import { MdOutlineSettings } from "react-icons/md";
 import { useSelector } from "react-redux";
 
@@ -56,9 +55,9 @@ const FamilySettingDrawer = ({
       expiresAt: new Date(),
     };
     const res:
-      | { success: boolean; error: string }
       | IResponseCreateInviteDto
-      | { err: string } = await CreateInviteLinkAction(payload);
+      | ApiResponse<IResponseCreateInviteDto, unknown> =
+      await CreateInviteLinkAction(payload);
     //console.log(res);
     if (res && "error" in res) {
       Toaster({
@@ -77,21 +76,24 @@ const FamilySettingDrawer = ({
   };
 
   const handleQuitGroup = async () => {
-    const res: IErrorResponse | undefined = await quitGroupAction(data.id);
-    if (res?.error) {
+    const res: ApiResponse<never, unknown> | undefined = await quitGroupAction(
+      data.id,
+    );
+    if (res && "errors" in res) {
       Toaster({
         title: "Lỗi",
-        description: res.error as string,
+        description: res.message,
         type: "error",
       });
     }
   };
   const handleDestroyGroup = async () => {
-    const res: IErrorResponse | undefined = await destroyGroupAction(data.id);
-    if (res?.error) {
+    const res: ApiResponse<never, unknown> | undefined =
+      await destroyGroupAction(data.id);
+    if (res && "errors" in res) {
       Toaster({
         title: "Lỗi",
-        description: res.error as string,
+        description: res.message,
         type: "error",
       });
     }
@@ -100,7 +102,11 @@ const FamilySettingDrawer = ({
     <>
       <Drawer direction={"right"}>
         <DrawerTrigger asChild className={" hover:cursor-pointer"}>
-          <Button variant={"outline"} size={"icon-lg"}>
+          <Button
+            variant={"outline"}
+            size={"icon-lg"}
+            className={"border hover:shadow-md active:scale-[0.98]"}
+          >
             <MdOutlineSettings />
           </Button>
         </DrawerTrigger>
@@ -108,9 +114,11 @@ const FamilySettingDrawer = ({
           <DrawerHeader>
             <div className={"w-full flex flex-col gap-1"}>
               <div className={"relative w-full flex flex-row justify-between"}>
-                <DrawerTitle>{data.name || "Nhóm gia đình"}</DrawerTitle>
+                <DrawerTitle className={"text-base sm:text-lg lg:text-xl"}>
+                  {data.name || "Nhóm gia đình"}
+                </DrawerTitle>
               </div>
-              <DrawerDescription>
+              <DrawerDescription className={"text-sm sm:text-base"}>
                 {data.description || "Chưa có mô tả"}
               </DrawerDescription>
             </div>
@@ -119,14 +127,18 @@ const FamilySettingDrawer = ({
             className={"w-full flex flex-col justify-center items-start gap-3"}
           >
             <div className={"p-2"}>
-              <p>Cài đặt nhóm</p>
+              <p className={"text-sm font-semibold sm:text-base lg:text-lg"}>
+                Cài đặt nhóm
+              </p>
             </div>
           </div>
           <DrawerFooter>
             <Button
               type={"button"}
               onClick={() => handleCreateInviteLink()}
-              className={"hover:cursor-pointer"}
+              className={
+                "hover:cursor-pointer border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+              }
             >
               Tạo lời mời
             </Button>
@@ -134,7 +146,9 @@ const FamilySettingDrawer = ({
               <Button
                 type={"button"}
                 variant={"destructive"}
-                className={"hover:cursor-pointer"}
+                className={
+                  "hover:cursor-pointer border border-destructive/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+                }
                 onClick={() => handleQuitGroup()}
               >
                 Rời khỏi nhóm
@@ -145,15 +159,21 @@ const FamilySettingDrawer = ({
                   <Button
                     type={"button"}
                     variant={"destructive"}
-                    className={"hover:cursor-pointer"}
+                    className={
+                      "hover:cursor-pointer border border-destructive/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+                    }
                   >
                     Xóa nhóm
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Bạn chắc chứ?</AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <AlertDialogTitle
+                      className={"text-base sm:text-lg lg:text-xl"}
+                    >
+                      Bạn chắc chứ?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className={"text-sm sm:text-base"}>
                       Hành động này không thể thu hồi
                     </AlertDialogDescription>
                   </AlertDialogHeader>
@@ -163,7 +183,9 @@ const FamilySettingDrawer = ({
                       <Button
                         type={"button"}
                         variant={"destructive"}
-                        className={"hover:cursor-pointer"}
+                        className={
+                          "hover:cursor-pointer border border-destructive/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+                        }
                         onClick={() => handleDestroyGroup()}
                       >
                         Đồng ý
@@ -174,7 +196,12 @@ const FamilySettingDrawer = ({
               </AlertDialog>
             )}
             <DrawerClose asChild>
-              <Button variant={"outline"} className={"hover:cursor-pointer"}>
+              <Button
+                variant={"outline"}
+                className={
+                  "hover:cursor-pointer text-sm hover:shadow-sm active:scale-[0.98] sm:text-base"
+                }
+              >
                 Thoát
               </Button>
             </DrawerClose>

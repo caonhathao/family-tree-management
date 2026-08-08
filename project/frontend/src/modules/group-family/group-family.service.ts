@@ -9,48 +9,80 @@ import {
   CreateGroupFamilyDto,
   UpdateGroupFamilyDto,
 } from "./group-family.service-validator";
+import { ResponseFactory } from "@/lib/res/response.factory";
 
 export const GroupFamilyService = {
   joinGroup: async (token: string, getterId: string) => {
-    const invite = await prisma.invite.findUnique({
-      where: { token },
-      select: {
-        groupId: true,
-        expiresAt: true,
-      },
-    });
-    if (!invite) {
-      throw new Error("Invite not found");
-    }
+    try {
+      const invite = await prisma.invite.findUnique({
+        where: { token },
+        select: {
+          groupId: true,
+          expiresAt: true,
+        },
+      });
+      if (!invite) {
+        throw new Error("Invite not found");
+      }
 
-    if (new Date() > invite.expiresAt) {
-      throw new Error("Invite expired");
-    }
+      if (new Date() > invite.expiresAt) {
+        throw new Error("Invite expired");
+      }
 
-    const getter = await prisma.user.findFirst({
-      where: { id: getterId },
-      select: {
-        id: true,
-      },
-    });
-    if (!getter) {
-      throw new Error("User not found");
-    }
-    const existedGetter = await prisma.groupMember.findFirst({
-      where: {
-        memberId: getterId,
-        groupId: invite.groupId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (existedGetter) {
-      return await prisma.groupMember.findFirst({
+      const getter = await prisma.user.findFirst({
+        where: { id: getterId },
+        select: {
+          id: true,
+        },
+      });
+      if (!getter) {
+        throw new Error("User not found");
+      }
+      const existedGetter = await prisma.groupMember.findFirst({
         where: {
           memberId: getterId,
           groupId: invite.groupId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (existedGetter) {
+        return await prisma.groupMember.findFirst({
+          where: {
+            memberId: getterId,
+            groupId: invite.groupId,
+          },
+          select: {
+            id: true,
+            groupId: true,
+            memberId: true,
+            role: true,
+            isLeader: true,
+          },
+        });
+      }
+
+      const group = await prisma.groupFamily.findUnique({
+        where: {
+          id: invite.groupId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!group) {
+        throw new Error("Group not found");
+      }
+
+      const newMember = await prisma.groupMember.create({
+        data: {
+          groupId: invite.groupId,
+          memberId: getterId,
+          role: MEMBER_ROLE.VIEWER,
+          isLeader: false,
         },
         select: {
           id: true,
@@ -60,40 +92,14 @@ export const GroupFamilyService = {
           isLeader: true,
         },
       });
+      if (!newMember) {
+        throw new Error("Could not create member");
+      }
+      return newMember as IResponseJoinGroupDto;
+    } catch (err) {
+      console.error("error at join group:", err);
+      return ResponseFactory.handleError(err);
     }
-
-    const group = await prisma.groupFamily.findUnique({
-      where: {
-        id: invite.groupId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!group) {
-      throw new Error("Group not found");
-    }
-
-    const newMember = await prisma.groupMember.create({
-      data: {
-        groupId: invite.groupId,
-        memberId: getterId,
-        role: MEMBER_ROLE.VIEWER,
-        isLeader: false,
-      },
-      select: {
-        id: true,
-        groupId: true,
-        memberId: true,
-        role: true,
-        isLeader: true,
-      },
-    });
-    if (!newMember) {
-      throw new Error("Could not create member");
-    }
-    return newMember as IResponseJoinGroupDto;
   },
 
   getAll: async (userId: string) => {
@@ -116,52 +122,57 @@ export const GroupFamilyService = {
   },
 
   getDetail: async (userId: string, groupId: string) => {
-    const group = await prisma.groupFamily.findFirst({
-      where: {
-        id: groupId,
-        groupMembers: {
-          some: { memberId: userId },
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        family: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
+    try {
+      const group = await prisma.groupFamily.findFirst({
+        where: {
+          id: groupId,
+          groupMembers: {
+            some: { memberId: userId },
           },
         },
-        groupMembers: {
-          select: {
-            member: {
-              select: {
-                userProfile: {
-                  select: {
-                    id: true,
-                    userId: true,
-                    fullName: true,
-                    avatar: true,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          family: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
+          groupMembers: {
+            select: {
+              member: {
+                select: {
+                  userProfile: {
+                    select: {
+                      id: true,
+                      userId: true,
+                      fullName: true,
+                      avatar: true,
+                    },
                   },
                 },
               },
+              role: true,
+              isLeader: true,
             },
-            role: true,
-            isLeader: true,
           },
+          createdAt: true,
+          updatedAt: true,
         },
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+      });
 
-    if (!group) {
-      throw new Error("Group not found");
+      if (!group) {
+        throw new Error("Group not found");
+      }
+
+      return group as IResponseGroupFamilyDetailDto;
+    } catch (err) {
+      console.error("error at get group detail:", err);
+      return ResponseFactory.handleError(err);
     }
-
-    return group as IResponseGroupFamilyDetailDto;
   },
 
   updateGroup: async (
@@ -224,7 +235,7 @@ export const GroupFamilyService = {
       return newGroup;
     } catch (err) {
       console.log("err at create group family service:", err);
-      throw err;
+      return ResponseFactory.handleError(err);
     }
   },
 

@@ -174,14 +174,21 @@ const RelationshipForm = ({
         <DialogContent className={"sm:max-w-sm"}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>
-              <DialogTitle>Tạo/Cập nhật mối quan hệ</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className={"text-base sm:text-lg lg:text-xl"}>
+                Tạo/Cập nhật mối quan hệ
+              </DialogTitle>
+              <DialogDescription className={"text-sm sm:text-base"}>
                 Điền thông tin mối quan hệ vào biểu mẫu dưới đây.
               </DialogDescription>
             </DialogHeader>
             <FieldGroup>
               <Field>
-                <Label htmlFor={"fromMemberId"}>Thành viên 1 (Nguồn)</Label>
+                <Label
+                  htmlFor={"fromMemberId"}
+                  className={"text-sm sm:text-base lg:text-base"}
+                >
+                  Thành viên 1 (Nguồn)
+                </Label>
                 <Controller
                   name={"fromMemberId"}
                   control={control}
@@ -201,7 +208,12 @@ const RelationshipForm = ({
                 )}
               </Field>
               <Field>
-                <Label htmlFor={"toMemberId"}>Thành viên 2 (Đích)</Label>
+                <Label
+                  htmlFor={"toMemberId"}
+                  className={"text-sm sm:text-base lg:text-base"}
+                >
+                  Thành viên 2 (Đích)
+                </Label>
                 <Controller
                   name={"toMemberId"}
                   control={control}
@@ -222,7 +234,12 @@ const RelationshipForm = ({
               </Field>
 
               <Field>
-                <Label htmlFor={"type"}>Loại quan hệ</Label>
+                <Label
+                  htmlFor={"type"}
+                  className={"text-sm sm:text-base lg:text-base"}
+                >
+                  Loại quan hệ
+                </Label>
                 <Controller
                   name={"type"}
                   control={control}
@@ -232,20 +249,26 @@ const RelationshipForm = ({
                       value={field.value}
                       defaultValue={field.value}
                     >
-                      <SelectTrigger className={"hover:cursor-pointer"}>
+                      <SelectTrigger
+                        className={"hover:cursor-pointer text-sm sm:text-base"}
+                      >
                         <SelectValue placeholder={"Chọn loại quan hệ"} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
                           <SelectItem
                             value={"PARENT"}
-                            className={"hover:cursor-pointer"}
+                            className={
+                              "hover:cursor-pointer text-sm sm:text-base"
+                            }
                           >
                             Cha/Mẹ
                           </SelectItem>
                           <SelectItem
                             value={"SPOUSE"}
-                            className={"hover:cursor-pointer"}
+                            className={
+                              "hover:cursor-pointer text-sm sm:text-base"
+                            }
                           >
                             Vợ/Chồng
                           </SelectItem>
@@ -266,14 +289,16 @@ const RelationshipForm = ({
                 <Button
                   type={"button"}
                   variant={"outline"}
-                  className={"hover:cursor-pointer"}
+                  className={
+                    "hover:cursor-pointer text-sm hover:shadow-sm active:scale-[0.98] sm:text-base"
+                  }
                 >
                   Hủy
                 </Button>
               </DialogClose>
               <Button
                 type={"submit"}
-                className={`w-fit flex justify-center items-center gap-2 hover:cursor-pointer`}
+                className={`w-fit flex justify-center items-center gap-2 border border-primary/20 hover:shadow-md active:scale-[0.98] text-sm hover:cursor-pointer sm:text-base`}
               >
                 {currentData ? "Cập nhật" : "Tạo"}
               </Button>

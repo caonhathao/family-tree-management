@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { AuthService } from "./modules/auth/auth.service";
 import { IJwtPayload } from "./types/base.types";
 import { IAuthResponseDto } from "./modules/auth/auth.dto";
+import { apiClient } from "./lib/api/api-client.lib";
+import { apiRequest } from "./lib/api/http.client";
 
 const publicRoutes = [
   "/",
@@ -41,7 +42,37 @@ async function verifyAndGetPayload(token: string, secret: string) {
       token,
       new TextEncoder().encode(secret),
     );
-    return payload as unknown as IJwtPayload; // Trả về payload (chứa sub, email...)
+    return payload as unknown as IJwtPayload; // Trả về payload (chứa id, role...)
+  } catch {
+    return null;
+  }
+}
+
+async function refreshViaBackend(
+  refreshToken: string,
+): Promise<IAuthResponseDto | null> {
+  const baseUrl = process.env.BACKEND_API_URL || "";
+  if (!baseUrl) return null;
+  try {
+    // const res = await fetch(`${baseUrl}/api/auth/refresh`, {
+    //   method: "POST",
+    //   headers: {
+    //     Authorization: `Bearer ${refreshToken}`,
+    //   },
+    //   cache: "no-store",
+    // });
+
+    const res = await apiRequest<IAuthResponseDto>(apiClient.auth.refresh.url, {
+      method: apiClient.auth.refresh.method,
+      token: refreshToken,
+      headers: {
+        Authorization: `Bearer ${refreshToken}`,
+      },
+    });
+    if (res && "errors" in res) return null;
+    else if (res && "data" in res && res.data != undefined) {
+      return res.data as IAuthResponseDto;
+    } else return null;
   } catch {
     return null;
   }
@@ -52,8 +83,8 @@ export async function proxy(req: NextRequest) {
   const accessToken = req.cookies.get("access_token")?.value;
   const refreshToken = req.cookies.get("refresh_token")?.value;
 
-  const userAgent = req.headers.get("user-agent") || "unknown";
-  const userIp = req.headers.get("x-forwarded-for") || "unknown";
+  // const userAgent = req.headers.get("user-agent") || "unknown";
+  // const userIp = req.headers.get("x-forwarded-for") || "unknown";
 
   let userId: string | null = null;
   let userRole: string | null = null;
@@ -77,10 +108,7 @@ export async function proxy(req: NextRequest) {
 
     if (rUserId) {
       try {
-        result = await AuthService.refresh(rUserId, refreshToken, {
-          userAgent,
-          ipAddress: userIp,
-        });
+        result = await refreshViaBackend(refreshToken);
 
         if (result && result.tokens) {
           userId = result.user.id;

@@ -39,7 +39,9 @@ export function MemberSelect({
           variant={"outline"}
           role={"combobox"}
           aria-expanded={open}
-          className={"w-full justify-between font-normal hover:cursor-pointer"}
+          className={
+            "w-full justify-between font-normal text-sm hover:cursor-pointer hover:shadow-sm active:scale-[0.98] sm:text-base"
+          }
         >
           {value
             ? members.find((m: IFamilyMemberDto) => m.localId === value)
@@ -62,7 +64,7 @@ export function MemberSelect({
                     onChange(member.localId);
                     setOpen(false);
                   }}
-                  className={"hover:cursor-pointer"}
+                  className={"hover:cursor-pointer text-sm sm:text-base"}
                 >
                   <Check
                     className={cn(

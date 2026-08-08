@@ -41,7 +41,12 @@ const AddNewAuthForm = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
     >
       <DialogTrigger asChild>
         <div className={"w-full flex flex-row justify-start items-center"}>
-          <Button className={"w-3/5 flex flex-row"} variant={"outline"}>
+          <Button
+            className={
+              "w-3/5 flex flex-row border text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+            }
+            variant={"outline"}
+          >
             <MdAddLink />
             Thêm mới
           </Button>
@@ -84,7 +89,11 @@ const AddNewAuthForm = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
               </SelectContent>
             </Select>
             {provider != "" ? (
-              <Button variant={"outline"} onClick={() => setMove(true)}>
+              <Button
+                variant={"outline"}
+                className={"border hover:shadow-md active:scale-[0.98]"}
+                onClick={() => setMove(true)}
+              >
                 <MdKeyboardArrowRight />
               </Button>
             ) : null}

@@ -6,10 +6,10 @@ import { Suspense } from "react";
 import ProfileContent from "./profile-content";
 import { getUserDetailAction } from "@/modules/user/user.actions";
 import { IResponseUserDto } from "@/modules/user/user.dto";
-import { IErrorResponse } from "@/types/base.types";
+import { ApiResponse } from "@/types/api.types";
 
 export default async function ProfilePage() {
-  const res: IResponseUserDto | IErrorResponse | null =
+  const res: IResponseUserDto | ApiResponse<IResponseUserDto, unknown> =
     await getUserDetailAction("self");
 
   if (!res || "error" in res) {

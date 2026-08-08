@@ -1,10 +1,10 @@
 "use server";
-import { handleError } from "@/lib/utils/funcs.utils";
 import { UpdateGroupMemberDto } from "./group-member.dto";
 import { GroupMemberService } from "./group-member.service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { IErrorResponse } from "@/types/base.types";
+import { ResponseFactory } from "@/lib/res/response.factory";
+import { ApiResponse } from "@/types/api.types";
 
 export async function UpdateGroupMemberRoleAction(
   groupId: string,
@@ -25,7 +25,7 @@ export async function UpdateGroupMemberRoleAction(
       return { err: "Failed to update role" };
     }
   } catch (err) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
   if (isSuccess) {
     revalidatePath(`/group/${groupId}`);
@@ -51,7 +51,7 @@ export async function UpdateGroupMemberLeaderAction(
       return { err: "Failed to change leader" };
     }
   } catch (err) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
   if (isSuccess) {
     revalidatePath(`/group/${groupId}`);
@@ -67,21 +67,13 @@ export async function RemoveFromGroupAction(groupId: string, memberId: string) {
       throw new Error("Unauthorized");
     }
 
-    const res: number = await GroupMemberService.removeMember(
-      userId,
-      groupId,
-      memberId,
-    );
-    if (res !== 0) {
+    const res: ApiResponse<number, unknown> | number =
+      await GroupMemberService.removeMember(userId, groupId, memberId);
+    if (typeof res === "number") {
       isSuccess = true;
-    } else {
-      return {
-        success: false,
-        error: "Failed to remove from group",
-      } as IErrorResponse;
     }
   } catch (err) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
   if (isSuccess) {
     revalidatePath(`/group/${groupId}`);

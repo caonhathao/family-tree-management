@@ -1,14 +1,19 @@
 "use server";
-import { handleError } from "@/lib/utils/funcs.utils";
+import { ResponseFactory } from "@/lib/res/response.factory";
 import { BlogMediaService } from "./blog-media.service";
+import { IBlogMediaDto } from "./blog.dto";
+import { ApiResponse } from "@/types/api.types";
 
-export async function uploadBlogMediaAction(type: string, file?: File) {
+export async function uploadBlogMediaAction(
+  type: string,
+  file?: File,
+): Promise<IBlogMediaDto | ApiResponse<IBlogMediaDto, unknown>> {
   try {
     const res = await BlogMediaService.uploadBlogMedia(type, file);
 
     return res;
   } catch (err: unknown) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 }
 
@@ -17,6 +22,6 @@ export async function cleanupOrphanedMediaAction() {
     const res = await BlogMediaService.cleanupOrphanedMedia();
     return res;
   } catch (err: unknown) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 }

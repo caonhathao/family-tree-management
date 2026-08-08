@@ -43,6 +43,8 @@
   --bg-card: #ffffff;
   --bg-popover: #ffffff;
   --bg-muted: #eef3ec;
+  --bg-section-1: #ffffff;
+  --bg-section-2: #f6f3ec;
   --text: #111111;
   --text-muted: #4b4b4b; /* Đảm bảo chuẩn WCAG AA cho văn bản nhỏ */
   --text-inverse: #ffffff;
@@ -56,26 +58,28 @@
 }
 
 .dark {
-  /* Cập nhật tăng độ tương phản Dark Mode */
+  /* Cập nhật Dark Mode theo hướng Dracula - nền #2B2B2B dịu mắt, đồng bộ */
   --primary: #82ce6e;
   --primary-hover: #9eeb8a;
   --accent: #c99c65;
   --accent-hover: #e2b37a;
-  --bg-page: #0a0b08; /* Nền tối sâu hơn */
-  --bg-footer: #151310;
-  --bg-card: #121410;
-  --bg-popover: #121410;
-  --bg-muted: #1d211a;
-  --text: #fafafa;
-  --text-muted: #b5b5b5; /* Tăng tương phản chữ phụ trên nền tối */
-  --text-inverse: #0a0b08;
-  --border: #3e423a; /* Đường viền phân cách rõ hơn */
-  --input: #3e423a;
+  --bg-page: #2b2b2b; /* Nền chính dịu mắt hơn */
+  --bg-footer: #252525;
+  --bg-card: #333333;
+  --bg-popover: #383838;
+  --bg-muted: #3d3d3d;
+  --bg-section-1: #2e2e2e;
+  --bg-section-2: #303030;
+  --text: #f5f5f5; /* Trắng mềm, dịu hơn */
+  --text-muted: #bcbcbc; /* Vẫn đạt WCAG AA trên nền #2B2B2B */
+  --text-inverse: #2b2b2b;
+  --border: #4a4a4a; /* Đường viền phân cách rõ hơn */
+  --input: #4a4a4a;
   --ring: color-mix(in srgb, var(--primary) 65%, white);
-  --glass: rgba(15, 17, 13, 0.75);
+  --glass: rgba(43, 43, 43, 0.75);
   --glass-border: rgba(255, 255, 255, 0.15);
-  --shadow: 0 12px 35px rgb(0 0 0 / 0.5);
-  --destructive: oklch(0.704 0.191 22.216);
+  --shadow: 0 12px 35px rgb(0 0 0 / 0.4);
+  --destructive: #e5534b; /* Đỏ dịu, dễ nhìn trên nền tối */
 }
 
 .react-flow__edge {

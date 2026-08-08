@@ -1,35 +1,32 @@
 "use server";
 import {
   ICreateGroupFamilyDto,
+  IResponseGroupFamiliesDto,
+  IResponseGroupFamilyDetailDto,
+  IResponseJoinGroupDto,
   IUpdateGroupFamilyDto,
 } from "./group-family.dto";
-import { handleError } from "@/lib/utils/funcs.utils";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { GroupFamilyService } from "./group-family.service";
 import { redirect } from "next/navigation";
+import { ISuccessResponse } from "@/types/base.types";
+import { ResponseFactory } from "@/lib/res/response.factory";
+import { ApiResponse } from "@/types/api.types";
+import { apiRequest } from "@/lib/api/http.client";
+import { apiClient } from "@/lib/api/api-client.lib";
 
 export async function createGroupFamilyAction(data: ICreateGroupFamilyDto) {
-  let isSuccess = false;
-
   try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
+    const res = await apiRequest(apiClient.groupFamily.createGroup.url, {
+      method: apiClient.groupFamily.createGroup.method,
+      body: data,
+    });
 
-    const res = await GroupFamilyService.createGroup(userId, data);
-    if (res) {
-      isSuccess = true;
-    } else {
-      return { error: "Failed to create group" };
+    if (res && "data" in res && res.data != undefined) {
+      revalidatePath(`/group`);
+      return { success: true, message: res.message } as ISuccessResponse;
     }
   } catch (err: unknown) {
-    return handleError(err);
-  }
-  if (isSuccess) {
-    revalidatePath(`/group`);
+    return ResponseFactory.handleError(err);
   }
 }
 
@@ -37,90 +34,105 @@ export async function updateGroupFamilyAction(
   groupId: string,
   data: IUpdateGroupFamilyDto,
 ) {
-  let isSuccess = false;
   try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
+    const res = await apiRequest(
+      apiClient.groupFamily.updateGroup.url(groupId),
+      {
+        method: apiClient.groupFamily.updateGroup.method,
+        body: data,
+      },
+    );
 
-    const res = await GroupFamilyService.updateGroup(userId, groupId, data);
-    if (res) {
-      isSuccess = true;
-    } else {
-      return { error: "Failed to update group" };
+    if (res && "data" in res && res.data != undefined) {
+      revalidatePath(`/groups`);
+      return { success: true, message: res.message } as ISuccessResponse;
     }
-  } catch (err) {
-    return handleError(err);
-  }
-
-  if (isSuccess) {
-    revalidatePath(`/groups`);
+  } catch (err: unknown) {
+    return ResponseFactory.handleError(err);
   }
 }
 
-export async function joinGroupAcion(tokenCode: string) {
+export async function joinGroupAcion(
+  tokenCode: string,
+): Promise<
+  IResponseJoinGroupDto | ApiResponse<IResponseJoinGroupDto, unknown> | null
+> {
   try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
+    const res = await apiRequest<IResponseJoinGroupDto>(
+      apiClient.groupFamily.joinGroup.url(tokenCode),
+      {
+        method: apiClient.groupFamily.joinGroup.method,
+      },
+    );
 
-    const res = await GroupFamilyService.joinGroup(tokenCode, userId);
-    return res;
-  } catch (err) {
-    return handleError(err);
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+    return null;
+  } catch (err: unknown) {
+    return ResponseFactory.handleError(err);
   }
 }
 
 export async function getAllGroupAction() {
   try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
+    const res = await apiRequest<IResponseGroupFamiliesDto[]>(
+      apiClient.groupFamily.getAll.url,
+      {
+        method: apiClient.groupFamily.getAll.method,
+      },
+    );
 
-    const res = await GroupFamilyService.getAll(userId);
-    return res;
-  } catch (err) {
-    return handleError(err);
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+    return [] as IResponseGroupFamiliesDto[];
+  } catch (err: unknown) {
+    return ResponseFactory.handleError(err);
   }
 }
 
-export async function getDetailGroupAction(groupId: string) {
+export async function getDetailGroupAction(
+  groupId: string,
+): Promise<
+  | IResponseGroupFamilyDetailDto
+  | ApiResponse<IResponseGroupFamilyDetailDto, unknown>
+> {
   try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
+    const res = await apiRequest<IResponseGroupFamilyDetailDto>(
+      apiClient.groupFamily.getDetail.url(groupId),
+      {
+        method: apiClient.groupFamily.getDetail.method,
+      },
+    );
 
-    const res = await GroupFamilyService.getDetail(userId, groupId);
-    return res;
-  } catch (err) {
-    return handleError(err);
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+    return ResponseFactory.error({
+      message: "Group not found",
+      code: 404,
+    });
+  } catch (err: unknown) {
+    return ResponseFactory.handleError(err);
   }
 }
 
 export async function quitGroupAction(groupId: string) {
   let isSuccess = false;
-  try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
 
-    const res = await GroupFamilyService.quitGroup(userId, groupId);
-    if (res) {
+  try {
+    const res = await apiRequest(apiClient.groupFamily.quitGroup.url(groupId), {
+      method: apiClient.groupFamily.quitGroup.method,
+    });
+
+    if (res && "data" in res && res.data != undefined) {
       isSuccess = true;
     }
-  } catch (err) {
-    return handleError(err);
+  } catch (err: unknown) {
+    return ResponseFactory.handleError(err);
   }
+
   if (isSuccess) {
     revalidatePath("/group");
     redirect("/group");
@@ -129,20 +141,22 @@ export async function quitGroupAction(groupId: string) {
 
 export async function destroyGroupAction(groupId: string) {
   let isSuccess = false;
-  try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthoried");
-    }
 
-    const res = await GroupFamilyService.destroyGroup(userId, groupId);
-    if (res) {
+  try {
+    const res = await apiRequest(
+      apiClient.groupFamily.deleteGroup.url(groupId),
+      {
+        method: apiClient.groupFamily.deleteGroup.method,
+      },
+    );
+
+    if (res && "data" in res && res.data != undefined) {
       isSuccess = true;
     }
-  } catch (err) {
-    return handleError(err);
+  } catch (err: unknown) {
+    return ResponseFactory.handleError(err);
   }
+
   if (isSuccess) {
     revalidatePath("/group");
     redirect("/group");

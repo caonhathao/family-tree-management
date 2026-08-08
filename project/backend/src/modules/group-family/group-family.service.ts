@@ -178,6 +178,48 @@ export class GroupFamilyService {
       console.log('failed at delete of group-family service: ', err);
     }
   }
+  async quitGroup(userId: string, groupId: string) {
+    try {
+      if (!isUUID(groupId, 'all')) {
+        throw new NotFoundException(Exception.NOT_EXIST);
+      }
+
+      const member = await this.prisma.groupMember.findFirst({
+        where: {
+          memberId: userId,
+          groupId: groupId,
+        },
+        select: {
+          id: true,
+          role: true,
+          isLeader: true,
+        },
+      });
+
+      if (!member) throw new NotFoundException(Exception.NOT_EXIST);
+
+      if (member.isLeader) throw new ForbiddenException(Exception.PEMRISSION);
+      if (member.role !== MEMBER_ROLE.VIEWER)
+        throw new ForbiddenException(Exception.PEMRISSION);
+
+      return await this.prisma.groupMember.delete({
+        where: {
+          memberId_groupId: {
+            memberId: userId,
+            groupId: groupId,
+          },
+        },
+        select: {
+          id: true,
+          memberId: true,
+        },
+      });
+    } catch (err) {
+      console.log('failed at quitGroup of group-family service: ', err);
+      throw err;
+    }
+  }
+
   async joinGroup(token: string, getterId: string) {
     //check token valid
     const invite = await this.prisma.invite.findUnique({

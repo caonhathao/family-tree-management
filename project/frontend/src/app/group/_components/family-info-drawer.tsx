@@ -20,7 +20,6 @@ import {
 import { IResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
 import { RemoveFromGroupAction } from "@/modules/group-member/group-member.actions";
 import { RootState } from "@/store";
-import { IErrorResponse } from "@/types/base.types";
 import { useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { CiLogout } from "react-icons/ci";
@@ -30,6 +29,7 @@ import { MdOutlineInfo } from "react-icons/md";
 import { TbEdit } from "react-icons/tb";
 import { useSelector } from "react-redux";
 import FamilyInfoForm from "./forms/family-info-form";
+import { ApiResponse } from "@/types/api.types";
 
 export const FamilyInfoDrawer = ({
   data,
@@ -45,15 +45,13 @@ export const FamilyInfoDrawer = ({
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   const handleRemoveMember = async (memberId: string) => {
-    const res: IErrorResponse | undefined = await RemoveFromGroupAction(
-      data.id,
-      memberId,
-    );
+    const res: ApiResponse<never, unknown> | undefined =
+      await RemoveFromGroupAction(data.id, memberId);
     if (res !== undefined) {
       Toaster({
         title: "Lỗi",
         description:
-          (res.error as string) || "Không thể xóa thành viên khỏi nhóm",
+          (res.message as string) || "Không thể xóa thành viên khỏi nhóm",
         type: "error",
       });
     }
@@ -74,7 +72,11 @@ export const FamilyInfoDrawer = ({
         }}
       >
         <DrawerTrigger asChild className={"hover:cursor-pointer"}>
-          <Button variant={"outline"} size={"icon-lg"}>
+          <Button
+            variant={"outline"}
+            size={"icon-lg"}
+            className={"border hover:shadow-md active:scale-[0.98]"}
+          >
             <MdOutlineInfo />
           </Button>
         </DrawerTrigger>
@@ -82,12 +84,16 @@ export const FamilyInfoDrawer = ({
           <DrawerHeader>
             <div className={"w-full flex flex-col gap-1"}>
               <div className={"relative w-full flex flex-row justify-between"}>
-                <DrawerTitle>{data.name || "Nhóm gia đình"}</DrawerTitle>
+                <DrawerTitle className={"text-base sm:text-lg lg:text-xl"}>
+                  {data.name || "Nhóm gia đình"}
+                </DrawerTitle>
                 <Button
                   type={"button"}
                   variant={"outline"}
                   size={"icon"}
-                  className={"hover:cursor-pointer"}
+                  className={
+                    "hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
+                  }
                   onClick={() => setIsUpdateInfo(true)}
                 >
                   <TbEdit />
@@ -96,7 +102,7 @@ export const FamilyInfoDrawer = ({
                   <FamilyInfoForm data={data} setIsUpdate={setIsUpdateInfo} />
                 ) : null}
               </div>
-              <DrawerDescription>
+              <DrawerDescription className={"text-sm sm:text-base"}>
                 {data.description || "Chưa có mô tả"}
               </DrawerDescription>
             </div>
@@ -106,7 +112,9 @@ export const FamilyInfoDrawer = ({
               "w-full flex flex-col gap-3 justify-center items-start p-2"
             }
           >
-            <p className={"font-semibold"}>Thành viên nhóm</p>
+            <p className={"text-sm font-semibold sm:text-base lg:text-lg"}>
+              Thành viên nhóm
+            </p>
             {data.groupMembers.map((item, index) => (
               <div
                 key={index}
@@ -129,7 +137,7 @@ export const FamilyInfoDrawer = ({
                 </div>
                 <div
                   className={
-                    "col-span-4 flex flex-row justify-between items-center"
+                    "col-span-4 flex flex-row justify-between items-center text-sm sm:text-base"
                   }
                 >
                   {item.member.userProfile.fullName}
@@ -148,7 +156,9 @@ export const FamilyInfoDrawer = ({
                       <Button
                         variant={"outline"}
                         size={"icon"}
-                        className={"hover:cursor-pointer"}
+                        className={
+                          "hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
+                        }
                       >
                         <BsThreeDotsVertical />
                       </Button>
@@ -158,7 +168,9 @@ export const FamilyInfoDrawer = ({
                         {/* dont show this option for leader */}
                         {amILeader && !item.isLeader ? (
                           <DropdownMenuItem
-                            className={"hover:cursor-pointer"}
+                            className={
+                              "hover:cursor-pointer text-sm sm:text-base"
+                            }
                             onClick={() =>
                               handleRemoveMember(item.member.userProfile.userId)
                             }
@@ -167,7 +179,11 @@ export const FamilyInfoDrawer = ({
                             Xóa khỏi nhóm
                           </DropdownMenuItem>
                         ) : null}
-                        <DropdownMenuItem className={"hover:cursor-pointer"}>
+                        <DropdownMenuItem
+                          className={
+                            "hover:cursor-pointer text-sm sm:text-base"
+                          }
+                        >
                           <MdOutlineInfo />
                           Thông tin
                         </DropdownMenuItem>
@@ -176,7 +192,9 @@ export const FamilyInfoDrawer = ({
                             disabled={
                               item.member.userProfile.userId === profile.id
                             }
-                            className={"hover:cursor-pointer"}
+                            className={
+                              "hover:cursor-pointer text-sm sm:text-base"
+                            }
                           >
                             <IoSwapVertical />
                             Đổi vai trò

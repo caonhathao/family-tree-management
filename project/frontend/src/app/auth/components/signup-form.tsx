@@ -18,11 +18,12 @@ import { IRegisterDto } from "@/modules/auth/auth.dto";
 import { loginGoogleAction, registerAction } from "@/modules/auth/auth.actions";
 import { RegisterSchema } from "@/modules/auth/auth.client-schemas";
 import { Toaster } from "@/components/shared/toast";
-import { IErrorResponse, ISuccessResponse } from "@/types/base.types";
+import { ISuccessResponse } from "@/types/base.types";
 import { cn } from "@/lib/utils";
 import { navigateTo } from "@/lib/utils/navigate.utils";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { ApiResponse } from "@/types/api.types";
 
 interface SignupFormProps extends React.ComponentProps<typeof Card> {
   callback?: string;
@@ -51,13 +52,15 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
     // console.log(values);
     e?.preventDefault();
     startTransition(async () => {
-      const result: ISuccessResponse | IErrorResponse | undefined =
-        await registerAction(values);
+      const result:
+        | ISuccessResponse
+        | ApiResponse<ISuccessResponse, unknown>
+        | undefined = await registerAction(values);
       if (result) {
-        if (result.success == false && "error" in result) {
+        if (result.success == false && "errors" in result) {
           Toaster({
             title: "Đăng kí thất bại",
-            description: result.error,
+            description: result.message,
             type: "error",
             cancel: {
               label: "OK",
@@ -168,7 +171,9 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
               <Field>
                 <Button
                   type={"submit"}
-                  className={"hover:cursor-pointer"}
+                  className={
+                    "hover:cursor-pointer border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+                  }
                   disabled={isPending}
                 >
                   Tạo tài khoản
@@ -177,7 +182,7 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
                   <GoogleLogin
                     onSuccess={(credentialResponse) => {
                       startTransition(async () => {
-                        const result = await loginGoogleAction({
+                        await loginGoogleAction({
                           token: credentialResponse.credential!,
                         });
                         // xử lý kết quả...
@@ -191,7 +196,7 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
                   <Button
                     type={"button"}
                     variant={"link"}
-                    className={"hover:cursor-pointer p-1"}
+                    className={"hover:cursor-pointer p-1 text-sm sm:text-base"}
                     onClick={() =>
                       navigateTo({
                         router: router,

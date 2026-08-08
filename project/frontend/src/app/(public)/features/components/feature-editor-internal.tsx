@@ -13,13 +13,13 @@ import Embed from "@editorjs/embed";
 // @ts-expect-error: Missing type definitions for @editorjs/embed
 import Marker from "@editorjs/marker";
 import ImageTool from "@editorjs/image";
-import { IErrorResponse } from "@/types/base.types";
 import { IBlogMediaDto } from "@/modules/blog-media/blog.dto";
 import { safeJsonParse } from "../../../../lib/utils/funcs.utils";
 import FeatureStaticContent from "./feature-static-content";
+import { ApiResponse } from "@/types/api.types";
 
 interface FeatureEditorProps {
-  blog: IBlogDto | IErrorResponse;
+  blog: IBlogDto | ApiResponse<IBlogDto, unknown>;
   slug: string;
 }
 
@@ -66,7 +66,7 @@ export default function FeatureEditorInternal({
           config: {
             uploader: {
               async uploadByFile(file: File) {
-                const res: IBlogMediaDto | IErrorResponse =
+                const res: IBlogMediaDto | ApiResponse<IBlogMediaDto, unknown> =
                   await uploadBlogMediaAction("IMAGE", file);
                 if (res && "url" in res && typeof res.url === "string") {
                   return {

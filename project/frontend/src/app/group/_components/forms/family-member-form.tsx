@@ -152,14 +152,21 @@ const NewFamilyMemberForm = ({
         <DialogContent className={"sm:max-w-sm"}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>
-              <DialogTitle>Tạo/Cập nhật thành viên mới</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className={"text-base sm:text-lg lg:text-xl"}>
+                Tạo/Cập nhật thành viên mới
+              </DialogTitle>
+              <DialogDescription className={"text-sm sm:text-base"}>
                 Điền thông tin thành viên vào biểu mẫu dưới đây.
               </DialogDescription>
             </DialogHeader>
             <FieldGroup>
               <Field>
-                <Label htmlFor={"fullName"}>Họ và tên</Label>
+                <Label
+                  htmlFor={"fullName"}
+                  className={"text-sm sm:text-base lg:text-base"}
+                >
+                  Họ và tên
+                </Label>
                 <Input
                   id={"fullName"}
                   type={"text"}
@@ -174,7 +181,12 @@ const NewFamilyMemberForm = ({
               </Field>
               <div className={"grid grid-cols-2 gap-4"}>
                 <Field>
-                  <Label htmlFor={"gender"}>Giới tính</Label>
+                  <Label
+                    htmlFor={"gender"}
+                    className={"text-sm sm:text-base lg:text-base"}
+                  >
+                    Giới tính
+                  </Label>
                   <Controller
                     name={"gender"}
                     control={control}
@@ -183,26 +195,36 @@ const NewFamilyMemberForm = ({
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
-                        <SelectTrigger className={"hover:cursor-pointer"}>
+                        <SelectTrigger
+                          className={
+                            "hover:cursor-pointer text-sm sm:text-base"
+                          }
+                        >
                           <SelectValue placeholder={"Chọn"} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
                             <SelectItem
                               value={"MALE"}
-                              className={"hover:cursor-pointer"}
+                              className={
+                                "hover:cursor-pointer text-sm sm:text-base"
+                              }
                             >
                               Nam
                             </SelectItem>
                             <SelectItem
                               value={"FEMALE"}
-                              className={"hover:cursor-pointer"}
+                              className={
+                                "hover:cursor-pointer text-sm sm:text-base"
+                              }
                             >
                               Nữ
                             </SelectItem>
                             <SelectItem
                               value={"OTHER"}
-                              className={"hover:cursor-pointer"}
+                              className={
+                                "hover:cursor-pointer text-sm sm:text-base"
+                              }
                             >
                               Khác
                             </SelectItem>
@@ -218,7 +240,12 @@ const NewFamilyMemberForm = ({
                   )}
                 </Field>
                 <Field>
-                  <Label htmlFor={"generation"}>Thế hệ</Label>
+                  <Label
+                    htmlFor={"generation"}
+                    className={"text-sm sm:text-base lg:text-base"}
+                  >
+                    Thế hệ
+                  </Label>
                   <Input
                     id={"generation"}
                     type={"number"}
@@ -234,7 +261,12 @@ const NewFamilyMemberForm = ({
               </div>
               <div className={"grid grid-cols-2 gap-4"}>
                 <Field>
-                  <Label htmlFor={"dateOfBirth"}>Ngày sinh</Label>
+                  <Label
+                    htmlFor={"dateOfBirth"}
+                    className={"text-sm sm:text-base lg:text-base"}
+                  >
+                    Ngày sinh
+                  </Label>
                   <Input
                     id={"dateOfBirth"}
                     type={"date"}
@@ -247,7 +279,12 @@ const NewFamilyMemberForm = ({
                   )}
                 </Field>
                 <Field>
-                  <Label htmlFor={"dateOfDeath"}>Ngày mất</Label>
+                  <Label
+                    htmlFor={"dateOfDeath"}
+                    className={"text-sm sm:text-base lg:text-base"}
+                  >
+                    Ngày mất
+                  </Label>
                   <Input
                     id={"dateOfDeath"}
                     type={"date"}
@@ -272,13 +309,18 @@ const NewFamilyMemberForm = ({
                 />
                 <Label
                   htmlFor={"isAlive"}
-                  className={"font-normal cursor-pointer"}
+                  className={"font-normal cursor-pointer text-sm sm:text-base"}
                 >
                   Thành viên này còn sống
                 </Label>
               </div>
               <Field>
-                <Label htmlFor={"biography"}>Tiểu sử</Label>
+                <Label
+                  htmlFor={"biography"}
+                  className={"text-sm sm:text-base lg:text-base"}
+                >
+                  Tiểu sử
+                </Label>
                 <Textarea
                   id={"biography"}
                   placeholder={"Nhập tiểu sử..."}
@@ -301,7 +343,7 @@ const NewFamilyMemberForm = ({
                 <Button
                   type={"submit"}
                   className={
-                    "w-full md:w-4/5 lg:w-fit flex justify-center items-center gap-2 hover:cursor-pointer"
+                    "w-full md:w-4/5 lg:w-fit flex justify-center items-center gap-2 border border-primary/20 hover:shadow-md active:scale-[0.98] text-sm hover:cursor-pointer sm:text-base"
                   }
                 >
                   Tạo
@@ -310,7 +352,9 @@ const NewFamilyMemberForm = ({
                   type={"button"}
                   variant={"destructive"}
                   disabled={currentData === null}
-                  className={"w-full md:w-4/5 lg:w-fit hover:cursor-pointer"}
+                  className={
+                    "w-full md:w-4/5 lg:w-fit border border-destructive/20 hover:shadow-md active:scale-[0.98] text-sm hover:cursor-pointer sm:text-base"
+                  }
                   onClick={() =>
                     deleteMemberFromDraft(currentData?.localId || "")
                   }
@@ -320,7 +364,9 @@ const NewFamilyMemberForm = ({
                 <DialogClose asChild>
                   <Button
                     variant={"outline"}
-                    className={"w-full md:w-4/5 lg:w-fit hover:cursor-pointer"}
+                    className={
+                      "w-full md:w-4/5 lg:w-fit text-sm hover:shadow-sm active:scale-[0.98] hover:cursor-pointer sm:text-base"
+                    }
                   >
                     Hủy
                   </Button>

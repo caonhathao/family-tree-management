@@ -12,23 +12,23 @@ import {
 import UpdateUserForm from "./components/forms/update-user";
 import { useEffect, useMemo } from "react";
 import { IResponseUserDto } from "@/modules/user/user.dto";
-import { IErrorResponse } from "@/types/base.types";
 import { useDispatch } from "react-redux";
 import { setProfile } from "@/store/user/userSlice";
 import { useRouter } from "next/navigation";
 import { navigateTo } from "@/lib/utils/navigate.utils";
 import { Separator } from "@/components/ui/separator";
 import { FaArrowRight } from "react-icons/fa6";
+import { ApiResponse } from "@/types/api.types";
 
 const ProfileContent = ({
   data,
 }: {
-  data: IResponseUserDto | IErrorResponse | null;
+  data: IResponseUserDto | ApiResponse<IResponseUserDto, unknown>;
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    if (data && !("error" in data)) {
+    if (data && "userProfile" in data) {
       const serializableProfile = {
         ...data,
         userProfile: {
@@ -43,7 +43,7 @@ const ProfileContent = ({
   }, [data, dispatch]);
 
   const avatar = useMemo(() => {
-    if (data && !("error" in data) && data.userProfile.avatar) {
+    if (data && "userProfile" in data && data.userProfile.avatar) {
       return data.userProfile.avatar;
     } else {
       return unknownImage.src;
@@ -87,7 +87,9 @@ const ProfileContent = ({
               <Button
                 variant={"outline"}
                 size={"icon-sm"}
-                className={"absolute top-0 right-0 z-10 hover:cursor-pointer"}
+                className={
+                  "absolute top-0 right-0 z-10 hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
+                }
               >
                 <FaExchangeAlt />
               </Button>
@@ -123,11 +125,14 @@ const ProfileContent = ({
           <div className={" p-3 flex flex-col"}>
             <strong>Tóm tắt hoạt động</strong>
             <div>
-              Số nhóm hiện có: {availableData?.groups}
+              Số nhóm hiện có:{" "}
+              {availableData && "groups" in availableData
+                ? availableData.groups
+                : 0}
               <Button
                 variant={"link"}
                 size={"sm"}
-                className={"hover:cursor-pointer"}
+                className={"hover:cursor-pointer text-sm sm:text-base"}
                 onClick={() =>
                   navigateTo({
                     router: router,
@@ -138,7 +143,12 @@ const ProfileContent = ({
                 Xem chi tiết
               </Button>
             </div>
-            <div>Số lời mời hiện có: {availableData?.invites}</div>
+            <div>
+              Số lời mời hiện có:{" "}
+              {availableData && "invites" in availableData
+                ? availableData.invites
+                : 0}
+            </div>
             <div>Số cuộc trò chuyện hiện có: (in progress)</div>
           </div>
           <Separator />
@@ -159,13 +169,21 @@ const ProfileContent = ({
         <div className={"flex flex-col justify-center items-start gap-3"}>
           <div className={"flex flex-row justify-center items-start gap-3"}>
             <p className={"py-1"}>Xem thêm về thông tin đăng nhập</p>
-            <Button variant={"outline"}>
+            <Button
+              variant={"outline"}
+              className={"border hover:shadow-md active:scale-[0.98]"}
+            >
               <FaArrowRight />
             </Button>
           </div>
           <div className={"flex flex-row justify-center items-start gap-3"}>
             <p className={"py-1"}>Xóa tài khoản:</p>
-            <Button variant={"destructive"}>
+            <Button
+              variant={"destructive"}
+              className={
+                "border border-destructive/20 hover:shadow-md active:scale-[0.98]"
+              }
+            >
               <FaArrowRight />
             </Button>
           </div>

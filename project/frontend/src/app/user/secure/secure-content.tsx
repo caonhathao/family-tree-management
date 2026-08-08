@@ -43,13 +43,19 @@ const SecureContent = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
               key={value.id}
               className={"w-full flex flex-row justify-start items-center"}
             >
-              <Button className={"w-3/5 flex flex-row rounded-r-none"}>
+              <Button
+                className={
+                  "w-3/5 flex flex-row rounded-r-none border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+                }
+              >
                 {renderIconProvider(value.provider)}
                 {value.provider}
               </Button>
               <Button
                 variant={"destructive"}
-                className={"rounded-l-none"}
+                className={
+                  "rounded-l-none border border-destructive/20 hover:shadow-md active:scale-[0.98]"
+                }
                 onClick={() => alert("Tính năng đang phát triển")}
               >
                 <IoTrashBin />
@@ -83,13 +89,19 @@ const SecureContent = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
             "w-full flex flex-col md:grid md:grid-cols-2 md:grid-rows-1 gap-3 justify-center items-center"
           }
         >
-          <Button className={"w-4/5 flex flex-row justify-self-center"}>
+          <Button
+            className={
+              "w-4/5 flex flex-row justify-self-center border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+            }
+          >
             <MdChangeCircle />
             Đổi mật khẩu
           </Button>
           <Button
             variant={"destructive"}
-            className={"w-4/5 flex flex-row justify-self-center"}
+            className={
+              "w-4/5 flex flex-row justify-self-center border border-destructive/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+            }
           >
             <IoTrashBin />
             Xóa tài khoản

@@ -42,7 +42,7 @@ export class EnvConfigService {
   get refreshExpires(): number {
     return (
       this.configService?.get<number>('jwt.refreshExpires') ||
-      Number(process.env.JWT_ACCESS_SECRET_KEY) ||
+      Number(process.env.REFRESH_TOKEN_EXPIRES_IN) ||
       604800
     );
   }
@@ -72,6 +72,13 @@ export class EnvConfigService {
       this.configService?.get<string>('cloudinary.folderFamily') ||
       process.env.FOLDER_FAMILY ||
       'family'
+    );
+  }
+  get folderBlogName(): string {
+    return (
+      this.configService?.get<string>('cloudinary.folderBlog') ||
+      process.env.FOLDER_BLOG ||
+      'blog'
     );
   }
   get cloudinaryApiKey(): string {
@@ -128,6 +135,7 @@ export class EnvConfigService {
       folderAlbumName: this.folderAlbumName,
       folderUserName: this.folderUserName,
       folderFamilyName: this.folderFamilyName,
+      folderBlogName: this.folderBlogName,
       cloudinaryApiKey: this.cloudinaryApiKey,
       cloudinaryApiSecret: this.cloudinaryApiSecret,
       cloudinaryUrl: this.cloudinaryUrl,

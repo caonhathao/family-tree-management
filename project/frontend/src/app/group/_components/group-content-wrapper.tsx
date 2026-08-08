@@ -1,31 +1,50 @@
 import { getDetailGroupAction } from "@/modules/group-family/group-family.actions";
 import { GroupContentPage } from "./group-content";
 import { GetFamilyData } from "@/modules/family/family.actions";
+import { IResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
+import { ApiResponse } from "@/types/api.types";
+import { IDraftFamilyData } from "@/types/draft.types";
 
 export async function GroupContentWrapper({ groupId }: { groupId: string }) {
   if (!groupId)
     return (
-      <div className={"w-full h-screen flex justify-center items-center"}>
+      <div
+        className={
+          "w-full h-screen flex justify-center items-center text-sm text-muted-foreground sm:text-base lg:text-lg"
+        }
+      >
         Vui lòng chọn một gia đình.
       </div>
     );
 
-  const dataGroup = await getDetailGroupAction(groupId);
-  const familyData = await GetFamilyData(groupId);
+  const dataGroup:
+    | IResponseGroupFamilyDetailDto
+    | ApiResponse<IResponseGroupFamilyDetailDto> =
+    await getDetailGroupAction(groupId);
+  const familyData: IDraftFamilyData | ApiResponse<IDraftFamilyData, unknown> =
+    await GetFamilyData(groupId);
   //console.log("familyData: ", familyData);
 
-  if ("error" in dataGroup) {
+  if ("errors" in dataGroup) {
     return (
-      <div className={"w-full h-screen flex justify-center items-center"}>
-        Lỗi: {dataGroup.error}
+      <div
+        className={
+          "w-full h-screen flex justify-center items-center text-sm text-muted-foreground sm:text-base lg:text-lg"
+        }
+      >
+        Lỗi: {dataGroup.message}
       </div>
     );
   }
 
-  if ("error" in familyData) {
+  if ("errors" in familyData) {
     return (
-      <div className={"w-full h-screen flex justify-center items-center"}>
-        Lỗi: {familyData.error}
+      <div
+        className={
+          "w-full h-screen flex justify-center items-center text-sm text-muted-foreground sm:text-base lg:text-lg"
+        }
+      >
+        Lỗi: {familyData.message}
       </div>
     );
   }

@@ -5,7 +5,7 @@ import { joinGroupAcion } from "@/modules/group-family/group-family.actions";
 import { Suspense } from "react";
 import InviteContent from "./invite-content-page";
 import { IResponseJoinGroupDto } from "@/modules/group-family/group-family.dto";
-import { IErrorResponse } from "@/types/base.types";
+import { ApiResponse } from "@/types/api.types";
 
 export default async function InvitePage({
   searchParams,
@@ -13,8 +13,10 @@ export default async function InvitePage({
   searchParams: Promise<{ token: string }>;
 }) {
   const { token } = await searchParams;
-  const res: IResponseJoinGroupDto | IErrorResponse | null =
-    await joinGroupAcion(token);
+  const res:
+    | IResponseJoinGroupDto
+    | ApiResponse<IResponseJoinGroupDto, unknown>
+    | null = await joinGroupAcion(token);
 
   return (
     <Suspense fallback={<LoaderModule />}>

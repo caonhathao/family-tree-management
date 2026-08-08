@@ -30,7 +30,9 @@ const AuthContent = () => {
         <Button
           variant={"outline"}
           size={"default"}
-          className={"flex flex-row gap-2 hover:cursor-pointer"}
+          className={
+            "flex flex-row gap-2 text-sm hover:cursor-pointer hover:shadow-sm active:scale-[0.98] sm:text-base"
+          }
           onClick={() =>
             navigateTo({
               router: router,
@@ -44,7 +46,9 @@ const AuthContent = () => {
         <Button
           variant={"outline"}
           size={"icon"}
-          className={"hover:cursor-pointer"}
+          className={
+            "hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
+          }
         >
           <IoIosInformationCircleOutline />
         </Button>

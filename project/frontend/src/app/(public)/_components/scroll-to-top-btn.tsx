@@ -45,7 +45,9 @@ const ScrollToTop = () => {
           <Button
             variant={"outline"}
             size={"icon"}
-            className={"hover:cursor-pointer shadow-lg bg-white"}
+            className={
+              "hover:cursor-pointer shadow-lg bg-white border hover:shadow-xl active:scale-[0.98]"
+            }
             onClick={scrollToTop}
           >
             <IoMdArrowRoundUp />

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { getAllAuthLogs } from "@/modules/user/user.actions";
 import { IResponseAuthLog } from "@/modules/user/user.dto";
-import { IErrorResponse, IPaginationBase } from "@/types/base.types";
+import { IPaginationBase } from "@/types/base.types";
 import {
   ColumnDef,
   flexRender,
@@ -46,6 +46,7 @@ import {
   MdKeyboardArrowRight,
   MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
+import { ApiResponse } from "@/types/api.types";
 
 export function DataTable() {
   const [data, setData] =
@@ -116,6 +117,7 @@ export function DataTable() {
     },
   ];
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: data?.data || [],
     columns,
@@ -127,13 +129,15 @@ export function DataTable() {
 
   const getAuthLog = async (page: number, limit: number) => {
     try {
-      const logs: IPaginationBase<IResponseAuthLog[]> | IErrorResponse =
+      const logs:
+        | IPaginationBase<IResponseAuthLog[]>
+        | ApiResponse<IPaginationBase<IResponseAuthLog[]>, unknown> =
         await getAllAuthLogs(page, limit);
-      if (!logs || "error" in logs) {
-        console.log(logs.error);
-      } else {
+      if (logs && "pagination" in logs) {
         setData(logs);
         SetIsShow(true);
+      } else {
+        console.log(logs.errors);
       }
     } catch (err) {
       console.log(err);
@@ -142,10 +146,22 @@ export function DataTable() {
 
   const loadData = async (page: number, limit: number) => {
     try {
-      const res: IPaginationBase<IResponseAuthLog[]> | IErrorResponse =
+      const res:
+        | IPaginationBase<IResponseAuthLog[]>
+        | ApiResponse<IPaginationBase<IResponseAuthLog[]>, unknown> =
         await getAllAuthLogs(page, limit);
 
-      if ("error" in res) {
+      if ("pagination" in res) {
+        setData({
+          data: res.data,
+          pagination: res.pagination || {
+            currentPage: 1,
+            pageSize: rows,
+            totalItems: 0,
+            totalPages: 1,
+          },
+        });
+      } else {
         Toaster({
           title: "Hành động thất bại",
           description: "Không thể sao chép vào bộ nhớ tạm",
@@ -160,16 +176,6 @@ export function DataTable() {
             pageSize: rows,
             totalItems: 0,
             totalPages: 0,
-          },
-        });
-      } else {
-        setData({
-          data: res.data,
-          pagination: res.pagination || {
-            currentPage: 1,
-            pageSize: rows,
-            totalItems: 0,
-            totalPages: 1,
           },
         });
       }

@@ -8,17 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { updateGroupFamilyAction } from "@/modules/group-family/group-family.actions";
 import { UpdateGroupFamilySchema } from "@/modules/group-family/group-family.client-schemas";
 import {
-  IResponseGroupFamiliesDto,
   IResponseGroupFamilyDetailDto,
   IUpdateGroupFamilyDto,
 } from "@/modules/group-family/group-family.dto";
@@ -26,7 +20,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import isEqual from "lodash.isequal";
 import { Dispatch, SetStateAction } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { TbEdit } from "react-icons/tb";
 
 interface IFamilyInfoProps {
   data: IResponseGroupFamilyDetailDto;
@@ -34,11 +27,7 @@ interface IFamilyInfoProps {
 }
 
 const FamilyInfoForm = ({ data, setIsUpdate }: IFamilyInfoProps) => {
-  const {
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm<IUpdateGroupFamilyDto>({
+  const { handleSubmit, control } = useForm<IUpdateGroupFamilyDto>({
     resolver: zodResolver(UpdateGroupFamilySchema),
     defaultValues: {
       name: data.name || "",
@@ -62,10 +51,10 @@ const FamilyInfoForm = ({ data, setIsUpdate }: IFamilyInfoProps) => {
     }
     const res = await updateGroupFamilyAction(data.id, values);
     // console.log(res);
-    if (res && "error" in res) {
+    if (res && "errors" in res) {
       Toaster({
         title: "Lỗi",
-        description: res.error,
+        description: res.message,
         type: "error",
       });
     } else {
@@ -79,8 +68,10 @@ const FamilyInfoForm = ({ data, setIsUpdate }: IFamilyInfoProps) => {
   return (
     <Card className={"absolute top-0 right-0 z-9999 w-full"}>
       <CardHeader>
-        <CardTitle className={"lg:text-xl"}>Cập nhật thông tin</CardTitle>
-        <CardDescription className={"lg:text-lg"}>
+        <CardTitle className={"text-base sm:text-lg lg:text-xl"}>
+          Cập nhật thông tin
+        </CardTitle>
+        <CardDescription className={"text-sm sm:text-base lg:text-base"}>
           Vui lòng điền thông tin vào các ô sau
         </CardDescription>
       </CardHeader>
@@ -96,7 +87,10 @@ const FamilyInfoForm = ({ data, setIsUpdate }: IFamilyInfoProps) => {
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name} className={"lg:text-lg"}>
+                  <FieldLabel
+                    htmlFor={field.name}
+                    className={"text-sm sm:text-base lg:text-base"}
+                  >
                     Tên nhóm
                   </FieldLabel>
                   <Input
@@ -118,7 +112,10 @@ const FamilyInfoForm = ({ data, setIsUpdate }: IFamilyInfoProps) => {
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name} className={"lg:text-lg"}>
+                  <FieldLabel
+                    htmlFor={field.name}
+                    className={"text-sm sm:text-base lg:text-base"}
+                  >
                     Mô tả
                   </FieldLabel>
                   <Input
@@ -143,7 +140,9 @@ const FamilyInfoForm = ({ data, setIsUpdate }: IFamilyInfoProps) => {
           formTarget={"update-family-info-form"}
           type={"button"}
           variant={"outline"}
-          className={"hover:cursor-pointer"}
+          className={
+            "hover:cursor-pointer text-sm hover:shadow-sm active:scale-[0.98] sm:text-base"
+          }
           onClick={() => setIsUpdate(false)}
         >
           Hủy bỏ
@@ -151,8 +150,10 @@ const FamilyInfoForm = ({ data, setIsUpdate }: IFamilyInfoProps) => {
         <Button
           formTarget={"update-family-info-form"}
           type={"submit"}
-          variant={"outline"}
-          className={"hover:cursor-pointer bg-primary text-white"}
+          variant={"default"}
+          className={
+            "border border-primary/30 hover:shadow-md active:scale-[0.98] text-sm sm:text-base"
+          }
         >
           Cập nhật
         </Button>

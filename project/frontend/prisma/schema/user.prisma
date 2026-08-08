@@ -27,7 +27,7 @@ model User {
     sentInvites     Invite[]       @relation("SentInvites")
     receivedInvites Invite[]       @relation("ReceivedInvites")
     blogs           Blog[]
-    sesstion        Session[]
+    sessions        Session[]
 
     @@index([email])
     @@map("user")

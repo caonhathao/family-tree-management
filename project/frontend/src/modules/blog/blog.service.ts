@@ -6,6 +6,7 @@ import { IBlogDto, IBlogList } from "./blog.dto";
 import { safeJsonParse } from "@/lib/utils/funcs.utils";
 import { validator } from "../_common/validator";
 import { Prisma } from "@prisma/client";
+import { ResponseFactory } from "@/lib/res/response.factory";
 
 const extractMediaUrls = (data: OutputData): string[] => {
   const urls: string[] = [];
@@ -144,7 +145,7 @@ const getBlog = async (slug: string) => {
     return blog as IBlogDto;
   } catch (err: unknown) {
     console.log("error at get blog service:", err);
-    throw err;
+    return ResponseFactory.handleError(err);
   }
 };
 

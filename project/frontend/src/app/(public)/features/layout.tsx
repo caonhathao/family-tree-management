@@ -8,7 +8,7 @@ const FeaturesLayout = ({ children }: { children: React.ReactNode }) => {
         <div className={"flex flex-1"}>
           <FeatureMenu />
           <main className={"mt-(--header-height)"}>
-            <SidebarTrigger />
+            <SidebarTrigger className={" block lg:hidden"} />
             {children}
           </main>
         </div>

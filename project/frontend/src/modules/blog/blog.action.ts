@@ -1,12 +1,15 @@
 "use server";
-import { handleError } from "@/lib/utils/funcs.utils";
 import { IBlogDto, IBlogsDto } from "./blog.dto";
 import { BlogService } from "./blog.service";
 import { headers } from "next/headers";
 import { IPaginationBase } from "@/types/base.types";
 import { cache } from "react";
+import { ResponseFactory } from "@/lib/res/response.factory";
+import { ApiResponse } from "@/types/api.types";
 
-export async function updateBlogAction(data: IBlogDto) {
+export async function updateBlogAction(
+  data: IBlogDto,
+): Promise<IBlogDto | ApiResponse<IBlogDto, unknown>> {
   try {
     const headerList = await headers();
     const userId = headerList.get("X-User-Id");
@@ -16,16 +19,18 @@ export async function updateBlogAction(data: IBlogDto) {
     const res = await BlogService.updateBlog(data, userId);
     return res as IBlogDto;
   } catch (err: unknown) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 }
 
-export async function getBlogAction(slug: string) {
+export async function getBlogAction(
+  slug: string,
+): Promise<IBlogDto | ApiResponse<IBlogDto, unknown>> {
   try {
     const res = await BlogService.getBlog(slug);
-    return res as IBlogDto;
+    return res;
   } catch (err: unknown) {
-    return handleError(err);
+    return ResponseFactory.handleError(err);
   }
 }
 
@@ -35,7 +40,9 @@ export const getBlogsAction = cache(
     limit?: number,
     filterType?: string,
     filter?: string,
-  ) => {
+  ): Promise<
+    IPaginationBase<IBlogsDto[]> | ApiResponse<IBlogsDto[], unknown>
+  > => {
     try {
       const headerList = await headers();
       const currentUserId = headerList.get("X-User-Id");
@@ -51,7 +58,7 @@ export const getBlogsAction = cache(
       );
       return res as IPaginationBase<IBlogsDto[]>;
     } catch (err: unknown) {
-      return handleError(err);
+      return ResponseFactory.handleError(err);
     }
   },
 );

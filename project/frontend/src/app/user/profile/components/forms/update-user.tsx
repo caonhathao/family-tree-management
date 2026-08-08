@@ -14,7 +14,6 @@ import { UserSchema } from "@/modules/user/user.client-schemas";
 import { IResponseUserDto, IUserInfoDto } from "@/modules/user/user.dto";
 import { AppDispatch } from "@/store";
 import { setProfile } from "@/store/user/userSlice";
-import { IErrorResponse } from "@/types/base.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -24,10 +23,11 @@ import { Button } from "@/components/ui/button";
 import BioUserGroup from "./bio-user";
 import { safeJsonParse } from "@/lib/utils/funcs.utils";
 import { LuLoaderCircle } from "react-icons/lu";
+import { ApiResponse } from "@/types/api.types";
 
 interface IUserFormProps {
   className: string;
-  data: IResponseUserDto | null;
+  data: IResponseUserDto | ApiResponse<IResponseUserDto, unknown>;
 }
 
 const UpdateUserForm = ({ className, data }: IUserFormProps) => {
@@ -35,15 +35,15 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
   const {
     register,
     handleSubmit,
-    control,
     reset,
     formState: { errors },
   } = useForm<UserFormValues>({
     resolver: zodResolver(UserSchema),
     defaultValues: {
-      fullName: data?.userProfile.fullName || "",
-      memorableName: data?.userProfile.memorableName || "",
-      address: data?.userProfile.address || "",
+      fullName: data && "userProfile" in data ? data.userProfile.fullName : "",
+      memorableName:
+        data && "userProfile" in data ? data.userProfile.memorableName : "",
+      address: data && "userProfile" in data ? data.userProfile.address : "",
     },
   });
 
@@ -58,7 +58,7 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
 
     return (
       dateOverride ??
-      (data.userProfile.dateOfBirth
+      (data && "userProfile" in data && data.userProfile.dateOfBirth
         ? new Date(data.userProfile.dateOfBirth)
         : undefined)
     );
@@ -66,7 +66,13 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
 
   const bio = useMemo(() => {
     if (!data) return undefined;
-    return bioOverride ?? (safeJsonParse(data.userProfile.biography) || []);
+    return (
+      bioOverride ??
+      (safeJsonParse(
+        data && "userProfile" in data ? data.userProfile.biography : null,
+      ) ||
+        [])
+    );
   }, [bioOverride, data]);
 
   const [open, setOpen] = useState<boolean>(false);
@@ -84,21 +90,21 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
 
     //prepare data before update
     startTransition(async () => {
-      if (data) {
-        const res: IResponseUserDto | IErrorResponse =
+      if (data && "id" in data) {
+        const res: IResponseUserDto | ApiResponse<IResponseUserDto, unknown> =
           await UpdateUserInfoAction(data.id, payload);
 
-        if (res && "error" in res) {
+        if (res && "errors" in res) {
           Toaster({
             title: "Hành động thất bại",
-            description: res.error,
+            description: res.message,
             type: "error",
             cancel: {
               label: "OK",
               onClick: () => {},
             },
           });
-        } else {
+        } else if ("userProfile" in res) {
           Toaster({
             title: "Hành động thành công",
             description: "Cập nhật thông tin thành công.",
@@ -135,7 +141,7 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
     });
   };
   useEffect(() => {
-    if (data?.userProfile) {
+    if (data && "userProfile" in data) {
       reset({
         fullName: data.userProfile.fullName || "",
       });
@@ -164,7 +170,9 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
               type={"text"}
               required
               {...register("fullName")}
-              defaultValue={data?.userProfile.fullName}
+              defaultValue={
+                data && "userProfile" in data ? data.userProfile.fullName : ""
+              }
             />
             {errors.fullName && (
               <span className={"text-xs text-red-500"}>
@@ -180,7 +188,9 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
                 <Button
                   variant={"outline"}
                   id={"date"}
-                  className={"justify-start font-normal hover:cursor-pointer"}
+                  className={
+                    "justify-start font-normal text-sm hover:cursor-pointer hover:shadow-sm active:scale-[0.98] sm:text-base"
+                  }
                 >
                   {date ? date.toLocaleDateString() : "Ngày nào nè?"}
                 </Button>
@@ -251,7 +261,9 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
           <Button
             type={"button"}
             variant={"outline"}
-            className={"hover:cursor-pointer"}
+            className={
+              "hover:cursor-pointer text-sm hover:shadow-sm active:scale-[0.98] sm:text-base"
+            }
             onClick={() => reset()}
           >
             Hủy bỏ
@@ -259,7 +271,9 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
           <Button
             type={"submit"}
             variant={"default"}
-            className={"hover:cursor-pointer flex flex-row gap-3"}
+            className={
+              "hover:cursor-pointer flex flex-row gap-3 border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+            }
           >
             Cập nhật
             {isLoading ? (

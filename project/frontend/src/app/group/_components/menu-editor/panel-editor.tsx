@@ -127,10 +127,10 @@ export const handleDeleteAll = async ({
           type: "success",
           cancel: { label: "OK", onClick: () => {} },
         });
-      else if ("error" in result) {
+      else if ("errors" in result) {
         Toaster({
           title: "Lỗi",
-          description: result.error,
+          description: result.message,
           type: "success",
           cancel: { label: "OK", onClick: () => {} },
         });
@@ -204,7 +204,7 @@ export const PanelEditor = ({
             variant={"ghost"}
             size={"icon"}
             className={
-              "rounded-none h-10 w-10 hover:bg-accent hover:cursor-pointer"
+              "rounded-md h-10 w-10 border hover:bg-accent hover:shadow-md active:scale-[0.98] hover:cursor-pointer"
             }
           >
             <LuLayoutPanelTop className={"h-5 w-5"} />
@@ -217,11 +217,13 @@ export const PanelEditor = ({
           side={"right"}
         >
           <DropdownMenuGroup>
-            <DropdownMenuLabel className={" lg:text-lg"}>
+            <DropdownMenuLabel className={"text-xs sm:text-sm lg:text-base"}>
               Chung
             </DropdownMenuLabel>
             <DropdownMenuItem
-              className={"hover:cursor-pointer lg:text-lg"}
+              className={
+                "hover:cursor-pointer text-sm sm:text-base lg:text-base"
+              }
               onClick={() =>
                 handleOpenFamilyMemberForm({
                   draft: draft,
@@ -233,7 +235,9 @@ export const PanelEditor = ({
               Thêm thành viên
             </DropdownMenuItem>
             <DropdownMenuItem
-              className={"hover:cursor-pointer lg:text-lg"}
+              className={
+                "hover:cursor-pointer text-sm sm:text-base lg:text-base"
+              }
               onClick={() => setOpenRelationshipForm(true)}
             >
               <IoLink />
@@ -242,12 +246,14 @@ export const PanelEditor = ({
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuLabel className={" lg:text-lg"}>
+            <DropdownMenuLabel className={"text-xs sm:text-sm lg:text-base"}>
               Hiển thị
             </DropdownMenuLabel>
             <DropdownMenuItem
               onClick={onLayout}
-              className={"hover:cursor-pointer lg:text-lg"}
+              className={
+                "hover:cursor-pointer text-sm sm:text-base lg:text-base"
+              }
             >
               <FaSort />
               Sắp xếp sơ đồ
@@ -255,7 +261,9 @@ export const PanelEditor = ({
             <DropdownMenuCheckboxItem
               checked={showGrid}
               onCheckedChange={setShowGrid}
-              className={"hover:cursor-pointer lg:text-lg"}
+              className={
+                "hover:cursor-pointer text-sm sm:text-base lg:text-base"
+              }
             >
               <MdOutlineGrid4X4 />
               Lưới
@@ -263,13 +271,17 @@ export const PanelEditor = ({
             <DropdownMenuCheckboxItem
               checked={nodesDraggable}
               onCheckedChange={setNodesDraggable}
-              className={"hover:cursor-pointer lg:text-lg"}
+              className={
+                "hover:cursor-pointer text-sm sm:text-base lg:text-base"
+              }
             >
               <RiDragMoveFill />
               Cho phép kéo thả
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
-              className={"hover:cursor-pointer lg:text-lg"}
+              className={
+                "hover:cursor-pointer text-sm sm:text-base lg:text-base"
+              }
             >
               <BiDetail />
               Chi tiết
@@ -277,11 +289,13 @@ export const PanelEditor = ({
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuLabel className={" lg:text-lg"}>
+            <DropdownMenuLabel className={"text-xs sm:text-sm lg:text-base"}>
               Hành động
             </DropdownMenuLabel>
             <DropdownMenuItem
-              className={"hover:cursor-pointer lg:text-lg"}
+              className={
+                "hover:cursor-pointer text-sm sm:text-base lg:text-base"
+              }
               disabled={draft.family.localId !== "" ? true : false}
               onClick={() => setOpenFamilyForm(true)}
             >
@@ -289,7 +303,9 @@ export const PanelEditor = ({
               Tạo sơ đồ
             </DropdownMenuItem>
             <DropdownMenuItem
-              className={"hover:cursor-pointer lg:text-lg"}
+              className={
+                "hover:cursor-pointer text-sm sm:text-base lg:text-base"
+              }
               disabled={!isDirty}
               onClick={() =>
                 handleSaveFamilyDraft({
@@ -308,7 +324,9 @@ export const PanelEditor = ({
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={draft.family.localId === "" ? true : false}
-              className={"hover:cursor-pointer lg:text-lg"}
+              className={
+                "hover:cursor-pointer text-sm sm:text-base lg:text-base"
+              }
               onClick={() =>
                 handleDeleteAll({
                   dispatch: dispatch,

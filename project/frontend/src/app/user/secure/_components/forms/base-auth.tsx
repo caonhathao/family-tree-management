@@ -120,7 +120,7 @@ export const BaseForm = () => {
         <Field>
           <Button
             type={"submit"}
-            className={`hover:cursor-pointer ${isPending ? "disabled" : ""}`}
+            className={`hover:cursor-pointer border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base ${isPending ? "disabled" : ""}`}
           >
             {isPending ? (
               <>

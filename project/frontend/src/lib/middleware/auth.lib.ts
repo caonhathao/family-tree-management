@@ -1,29 +1,31 @@
 import { cache } from "react";
 
 import { prisma } from "@/lib/prisma";
-import { IJwtPayload, IJwtVerifyResult } from "@/types/base.types";
+import { IJwtVerifyResult } from "@/types/base.types";
 import { IUserSession } from "@/types/auth.types";
 import { jwtVerify } from "jose";
 import { EnvConfig } from "../env/env-config.lib";
 
-export const getUserFromToken = cache(async (token: string | undefined) => {
-  if (!token || token.length === 0) return null;
+export const getUserFromToken = cache(
+  async (accessToken: string | undefined) => {
+    if (!accessToken || accessToken.length === 0) return null;
 
-  try {
-    const payload: IJwtVerifyResult = await jwtVerify(
-      token,
-      new TextEncoder().encode(EnvConfig.jwtRefreshSecret),
-    );
-    const userId = payload?.payload.id;
+    try {
+      const payload: IJwtVerifyResult = await jwtVerify(
+        accessToken,
+        new TextEncoder().encode(EnvConfig.jwtAccessSecret),
+      );
+      const userId = payload?.payload.id;
 
-    if (!userId) return null;
+      if (!userId) return null;
 
-    return await getUserFromUserId(userId);
-  } catch (error) {
-    console.error("Error getting user from token:", error);
-    return null;
-  }
-});
+      return await getUserFromUserId(userId);
+    } catch (error) {
+      console.error("Error getting user from token:", error);
+      return null;
+    }
+  },
+);
 
 export const getRoleFromToken = cache(async (token: string | undefined) => {
   if (!token || token.length === 0) return null;

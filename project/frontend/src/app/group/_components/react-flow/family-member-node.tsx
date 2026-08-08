@@ -7,7 +7,7 @@ export const FamilyMemberNode = ({ data }: { data: IFamilyMemberDto }) => {
   const tempAvatar = lastName ? lastName[0].toUpperCase() : "?";
   return (
     <div
-      className={`px-4 py-2 shadow-md rounded-md border-2 bg-white ${data.gender === "male" ? "border-blue-400" : "border-pink-400"}`}
+      className={`px-4 py-2 shadow-md rounded-md border-2 bg-white transition-shadow hover:shadow-lg ${data.gender === "male" ? "border-blue-400" : "border-pink-400"}`}
     >
       <div className={"flex items-center"}>
         <div
@@ -19,7 +19,7 @@ export const FamilyMemberNode = ({ data }: { data: IFamilyMemberDto }) => {
         </div>
         <div className={"ml-2"}>
           <div className={"text-sm font-bold"}>{data.fullName}</div>
-          <div className={"text-gray-500 text-[10px]"}>{data.gender}</div>
+          <div className={"text-gray-500 text-xs"}>{data.gender}</div>
         </div>
       </div>
 
