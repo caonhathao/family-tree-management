@@ -22,7 +22,7 @@ model User {
     albums          Album[]
     events          Event[]
     activityLogs    ActivityLog[]
-    notifications   Notification[]
+    groupNotifications GroupNotification[]
     groupMembers    GroupMember[]
     sentInvites     Invite[]       @relation("SentInvites")
     receivedInvites Invite[]       @relation("ReceivedInvites")

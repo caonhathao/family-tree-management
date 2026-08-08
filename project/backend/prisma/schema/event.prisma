@@ -5,21 +5,70 @@ enum EVENT_TYPE {
     OTHER
 }
 
-model Event {
-    id          String     @id @default(uuid()) @db.Uuid
-    familyId    String@db.Uuid
-    title       String
-    description String
-    eventDate   DateTime   @db.Date
-    isRecurring Boolean    @default(true)
-    type        EVENT_TYPE
-    createBy    String     @db.Uuid
-    creator     User       @relation(fields: [createBy], references: [id], onDelete: Cascade)
-    createdAt   DateTime   @default(now())
-    updatedAt   DateTime   @updatedAt
+enum RECURRENCE_FREQUENCY {
+    DAILY
+    WEEKLY
+    MONTHLY
+}
 
-    @@index([familyId])
-    @@index([eventDate])
+enum EVENT_INSTANCE_STATUS {
+    SCHEDULED
+    ONGOING
+    COMPLETED
+    CANCELLED
+    SKIPPED
+}
+
+model Event {
+    id                 String               @id @default(uuid()) @db.Uuid
+    groupId            String               @db.Uuid
+    group              GroupFamily          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    title              String
+    description        String?
+    type               EVENT_TYPE           @default(OTHER)
+    startTime          DateTime             @db.Timestamp(3)
+    endTime            DateTime             @db.Timestamp(3)
+    isRecurring        Boolean              @default(false)
+    recurrence         EventRecurrence?
+    createBy           String               @db.Uuid
+    creator            User                 @relation(fields: [createBy], references: [id], onDelete: Cascade)
+    instances          EventInstance[]
+    groupNotifications GroupNotification[]
+    createdAt          DateTime             @default(now())
+    updatedAt          DateTime             @updatedAt
+
+    @@index([groupId, startTime])
+    @@index([startTime])
     @@map("event")
-    groupFamilies GroupFamily[]
+}
+
+model EventRecurrence {
+    id        String               @id @default(uuid()) @db.Uuid
+    eventId   String               @unique @db.Uuid
+    event     Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    freq      RECURRENCE_FREQUENCY
+    interval  Int                  @default(1)
+    endsAt    DateTime?
+    count     Int?
+    createdAt DateTime             @default(now())
+    updatedAt DateTime             @updatedAt
+
+    @@map("event_recurrence")
+}
+
+model EventInstance {
+    id                 String                @id @default(uuid()) @db.Uuid
+    eventId            String                @db.Uuid
+    event              Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    startTime          DateTime              @db.Timestamp(3)
+    endTime            DateTime              @db.Timestamp(3)
+    status             EVENT_INSTANCE_STATUS @default(SCHEDULED)
+    groupNotifications GroupNotification[]
+    createdAt          DateTime              @default(now())
+    updatedAt          DateTime              @updatedAt
+
+    @@unique([eventId, startTime])
+    @@index([startTime, status])
+    @@index([endTime, status])
+    @@map("event_instance")
 }

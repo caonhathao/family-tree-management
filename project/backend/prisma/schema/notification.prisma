@@ -5,17 +5,25 @@ enum NOTIFICATION_TYPE {
     OTHER
 }
 
-model Notification {
-    id        String            @id @default(uuid()) @db.Uuid
-    userId    String            @db.Uuid
-    user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-    title     String
-    content   String
-    type      NOTIFICATION_TYPE
-    isRead    Boolean           @default(false)
-    link      String?
-    createdAt DateTime          @default(now())
+model GroupNotification {
+    id              String         @id @default(uuid()) @db.Uuid
+    userId          String         @db.Uuid
+    user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+    groupId         String?        @db.Uuid
+    group           GroupFamily?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    eventId         String?        @db.Uuid
+    event           Event?         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    eventInstanceId String?        @db.Uuid
+    eventInstance   EventInstance? @relation(fields: [eventInstanceId], references: [id], onDelete: Cascade)
+    title           String
+    content         String
+    type            NOTIFICATION_TYPE
+    isRead          Boolean        @default(false)
+    link            String?
+    createdAt       DateTime       @default(now())
 
-    @@index([userId])
-    @@map("notification")
+    @@index([userId, isRead])
+    @@index([groupId])
+    @@index([userId, createdAt])
+    @@map("group_notification")
 }
