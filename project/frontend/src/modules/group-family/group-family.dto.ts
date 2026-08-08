@@ -15,8 +15,8 @@ export interface IResponseGroupFamilyDetailDto {
   id: string;
   name: string;
   description: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   groupMembers: {
     member: {
       userProfile: {
@@ -35,8 +35,10 @@ export interface IResponseGroupFamiliesDto {
   id: string;
   name: string;
   description: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
+  in_event: boolean;
+  hasEventToday: boolean;
 }
 
 export interface IResponseJoinGroupDto {

@@ -1,6 +1,5 @@
 "use server";
 import { getUserFromUserId, getUserFromToken } from "@/lib/middleware/auth.lib";
-import { getUserSessionAction } from "@/modules/auth/auth.actions";
 import { IUserSession } from "@/types/auth.types";
 import { cookies, headers } from "next/headers";
 import { AdminSidebarClient } from "./admin-sidebar-client";
@@ -11,18 +10,23 @@ export async function AdminSidebarServer() {
   const headersStore = await headers();
 
   const userIdFromHeader = headersStore.get("x-user-id");
-  const token =
+  let token =
     headersStore.get("x-access-token") ||
     cookieStore.get("access_token")?.value;
   let user: IUserSession | ApiResponse<IUserSession, unknown> | null = null;
 
-  if (userIdFromHeader) {
-    user = await getUserFromUserId(userIdFromHeader);
-    //console.log("user at server:", user);
-  } else if (token) {
+  if (token) {
     user = await getUserFromToken(token);
     //console.log("user at cookie:", user);
-  } else user = await getUserSessionAction();
+  } else {
+    token =
+      headersStore.get("x-refresh-token") ||
+      cookieStore.get("refresh_token")?.value;
+    if (token) {
+      user = await getUserFromToken(token);
+      //console.log("user at cookie:", user);
+    }
+  }
 
   //console.log("user at header server:", user);
   return <AdminSidebarClient session={user} />;

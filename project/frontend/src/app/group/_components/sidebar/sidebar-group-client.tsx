@@ -127,23 +127,33 @@ const SidebarGroupClient = ({
                 onClick={() => router.push(`/group?groupId=${item.id}`)}
               >
                 <div
+                  className={
+                    "relative size-7 lg:size-8 shrink-0 border rounded-lg font-bold flex items-center justify-center"
+                  }
                   style={{
                     backgroundColor: `color-mix(in srgb, ${getColorFromName(item.name)} 12%, transparent)`,
                     color: getColorFromName(item.name),
                     borderColor: getColorFromName(item.name),
                   }}
-                  className={
-                    "size-7 lg:size-8 shrink-0 border rounded-lg font-bold flex items-center justify-center"
-                  }
                 >
                   {item.name[0]}
+                  {item.hasEventToday ? (
+                    <span
+                      className={
+                        "absolute -top-1 -right-1 size-2.5 rounded-full bg-red-500 ring-2 ring-background"
+                      }
+                    />
+                  ) : null}
                 </div>
                 <div
                   className={
-                    "text-sm group-data-[collapsible=icon]:hidden sm:text-base lg:text-lg"
+                    "flex flex-row items-center gap-2 text-sm group-data-[collapsible=icon]:hidden sm:text-base lg:text-lg"
                   }
                 >
                   {item.name}
+                  {item.hasEventToday ? (
+                    <span className={"size-2 rounded-full bg-red-500"} />
+                  ) : null}
                 </div>
               </SidebarMenuButton>
             ))
