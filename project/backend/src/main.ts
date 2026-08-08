@@ -23,8 +23,17 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+  const corsOrigins = (
+    process.env.CORS_ORIGINS ||
+    process.env.CLIENT_DOMAIN ||
+    ''
+  )
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+
   app.enableCors({
-    origin: process.env.CLIENT_DOMAIN, // URL Frontend trên Render
+    origin: corsOrigins,
     credentials: true,
   });
 
