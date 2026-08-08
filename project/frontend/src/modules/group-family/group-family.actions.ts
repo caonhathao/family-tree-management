@@ -44,7 +44,7 @@ export async function updateGroupFamilyAction(
     );
 
     if (res && "data" in res && res.data != undefined) {
-      revalidatePath(`/groups`);
+      revalidatePath(`/group`);
       return { success: true, message: res.message } as ISuccessResponse;
     }
   } catch (err: unknown) {
@@ -52,7 +52,7 @@ export async function updateGroupFamilyAction(
   }
 }
 
-export async function joinGroupAcion(
+export async function joinGroupAction(
   tokenCode: string,
 ): Promise<
   IResponseJoinGroupDto | ApiResponse<IResponseJoinGroupDto, unknown> | null

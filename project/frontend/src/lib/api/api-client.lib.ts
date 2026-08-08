@@ -81,6 +81,46 @@ export const apiClient = {
     upload: "/api/blog-media/upload",
     cleanup: "/api/blog-media/cleanup",
   },
+  events: {
+    createEvent: { url: "/api/events", method: "POST" as HttpMethod },
+    getAllEvents: { url: "/api/events", method: "GET" as HttpMethod },
+    getEvent: {
+      url: (eventId: string) => `/api/events/${eventId}`,
+      method: "GET" as HttpMethod,
+    },
+    getEventInstances: {
+      url: (eventId: string) => `/api/events/${eventId}/instances`,
+      method: "GET" as HttpMethod,
+    },
+    updateEvent: {
+      url: (eventId: string) => `/api/events/${eventId}`,
+      method: "PATCH" as HttpMethod,
+    },
+    cancelInstance: {
+      url: (eventId: string, instanceId: string) =>
+        `/api/events/${eventId}/instances/${instanceId}`,
+      method: "PATCH" as HttpMethod,
+    },
+    deleteEvent: {
+      url: (eventId: string) => `/api/events/${eventId}`,
+      method: "DELETE" as HttpMethod,
+    },
+  },
+  notifications: {
+    getAllNotifications: {
+      url: "/api/notifications",
+      method: "GET" as HttpMethod,
+    },
+    markRead: {
+      url: (notificationId: string) =>
+        `/api/notifications/${notificationId}/read`,
+      method: "PATCH" as HttpMethod,
+    },
+    readAll: {
+      url: "/api/notifications/read-all",
+      method: "PATCH" as HttpMethod,
+    },
+  },
   health: {
     check: "/api/health-check",
   },

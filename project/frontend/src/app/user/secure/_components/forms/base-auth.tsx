@@ -56,7 +56,7 @@ export const BaseForm = () => {
         if (result.success == false && "error" in result) {
           Toaster({
             title: "Khởi tạo thất bại",
-            description: result.error,
+            description: result.error as string,
             type: "error",
             cancel: {
               label: "OK",

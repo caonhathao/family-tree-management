@@ -118,7 +118,7 @@ export const GroupFamilyService = {
         updatedAt: true,
       },
     });
-    return groups as IResponseGroupFamiliesDto[];
+    return groups as unknown as IResponseGroupFamiliesDto[];
   },
 
   getDetail: async (userId: string, groupId: string) => {
@@ -168,7 +168,7 @@ export const GroupFamilyService = {
         throw new Error("Group not found");
       }
 
-      return group as IResponseGroupFamilyDetailDto;
+      return group as unknown as IResponseGroupFamilyDetailDto;
     } catch (err) {
       console.error("error at get group detail:", err);
       return ResponseFactory.handleError(err);

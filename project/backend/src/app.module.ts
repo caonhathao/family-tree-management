@@ -22,6 +22,8 @@ import { PassportModule } from '@nestjs/passport';
 import { HealthCheckModule } from './modules/health-check/health-check.module';
 import { BlogModule } from './modules/blog/blog.module';
 import { BlogMediaModule } from './modules/blog-media/blog-media.module';
+import { EventsModule } from './modules/events/events.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -47,6 +49,8 @@ import { BlogMediaModule } from './modules/blog-media/blog-media.module';
     HealthCheckModule,
     BlogModule,
     BlogMediaModule,
+    EventsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

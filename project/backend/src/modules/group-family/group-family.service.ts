@@ -9,8 +9,9 @@ import { Exception } from 'src/common/messages/messages.response';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateGroupFamilyDto } from './dto/update-group-family.dto';
 import { CreateGroupFamilyDto } from './dto/create-group-family.dto';
-import { MEMBER_ROLE } from '@prisma/client';
+import { EVENT_INSTANCE_STATUS, MEMBER_ROLE } from '@prisma/client';
 import { isUUID } from 'class-validator';
+import { endOfDay, startOfDay } from 'date-fns';
 
 @Injectable()
 export class GroupFamilyService {
@@ -141,7 +142,45 @@ export class GroupFamilyService {
         updatedAt: true,
       },
     });
-    return groups;
+
+    const membershipWhere = {
+      group: { groupMembers: { some: { memberId: userId } } },
+    };
+
+    const [eventGroups, todayEventGroups] = await Promise.all([
+      this.prisma.event.groupBy({
+        by: ['groupId'],
+        where: membershipWhere,
+        _count: { _all: true },
+      }),
+      this.prisma.eventInstance.findMany({
+        where: {
+          startTime: { lte: endOfDay(new Date()) },
+          endTime: { gte: startOfDay(new Date()) },
+          status: {
+            notIn: [
+              EVENT_INSTANCE_STATUS.CANCELLED,
+              EVENT_INSTANCE_STATUS.SKIPPED,
+            ],
+          },
+          event: membershipWhere,
+        },
+        select: { event: { select: { groupId: true } } },
+        distinct: ['eventId'],
+        orderBy: { eventId: 'asc' },
+      }),
+    ]);
+
+    const eventGroupIds = new Set(eventGroups.map((row) => row.groupId));
+    const todayEventGroupIds = new Set(
+      todayEventGroups.map((row) => row.event.groupId),
+    );
+
+    return groups.map((group) => ({
+      ...group,
+      in_event: eventGroupIds.has(group.id),
+      hasEventToday: todayEventGroupIds.has(group.id),
+    }));
   }
   async delete(userId: string, groupId: string) {
     try {

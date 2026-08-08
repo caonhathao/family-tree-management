@@ -1,7 +1,7 @@
 "use server";
 
 import { LoaderModule } from "@/components/shared/loader-module";
-import { joinGroupAcion } from "@/modules/group-family/group-family.actions";
+import { joinGroupAction } from "@/modules/group-family/group-family.actions";
 import { Suspense } from "react";
 import InviteContent from "./invite-content-page";
 import { IResponseJoinGroupDto } from "@/modules/group-family/group-family.dto";
@@ -16,7 +16,7 @@ export default async function InvitePage({
   const res:
     | IResponseJoinGroupDto
     | ApiResponse<IResponseJoinGroupDto, unknown>
-    | null = await joinGroupAcion(token);
+    | null = await joinGroupAction(token);
 
   return (
     <Suspense fallback={<LoaderModule />}>
