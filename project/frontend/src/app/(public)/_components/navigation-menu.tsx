@@ -19,6 +19,7 @@ import {
 import { useState } from "react";
 import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 export const Navigation = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -39,9 +40,10 @@ export const Navigation = () => {
         />
       </div>
       <h2
-        className={
-          "text-2xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent"
-        }
+        className={cn(
+          "text-2xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent",
+          "hidden md:block",
+        )}
       >
         MYFA
       </h2>
