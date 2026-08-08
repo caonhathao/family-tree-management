@@ -15,6 +15,7 @@ model GroupFamily {
     invites      Invite[]
     albums       Album[]
     events       Event[]
+    groupNotifications GroupNotification[]
 
     @@map("group_family")
 }
