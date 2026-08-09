@@ -48,6 +48,7 @@ const FamilyInfoForm = ({ data, setIsUpdate }: IFamilyInfoProps) => {
         description: "Không có thay đổi nào diễn ra",
         type: "info",
       });
+      return;
     }
     const res = await updateGroupFamilyAction(data.id, values);
     // console.log(res);

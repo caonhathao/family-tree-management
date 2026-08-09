@@ -29,6 +29,9 @@ import { setDraft, setOrigin } from "@/store/family/familySlice";
 import isEqual from "lodash.isequal";
 import FamilySettingDrawer from "./family-setting-drawer";
 import { ApiResponse } from "@/types/api.types";
+import { EventCalendar } from "./event-calendar";
+import { DayEventsDialog } from "./day-events-dialog";
+import { MEMBER_ROLE } from "@prisma/client";
 
 const nodeTypes = {
   familyNode: FamilyMemberNode,
@@ -62,7 +65,11 @@ export const GroupContentPage = ({
     useState<IRelationshipDto | null>(null);
   if (!openRelationForm && editingRelation !== null) setEditingRelation(null);
 
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [openDayDialog, setOpenDayDialog] = useState<boolean>(false);
+
   const { draft } = useSelector((state: RootState) => state.family);
+  const { profile } = useSelector((state: RootState) => state.user);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -196,11 +203,6 @@ export const GroupContentPage = ({
     }
   }, [draft, setNodes, setEdges]);
 
-  // useEffect(() => {
-  //   console.log("draft: ", draft);
-  //   console.log("family: ", family);
-  // }, [draft, family]);
-
   useEffect(() => {
     if (family) {
       dispatch(setOrigin(family));
@@ -228,6 +230,12 @@ export const GroupContentPage = ({
   }, [draft]);
 
   if (group && "id" in group) {
+    const canManage = group.groupMembers.some(
+      (m) =>
+        m.member.userProfile.userId === profile.id &&
+        (m.role === MEMBER_ROLE.OWNER || m.role === MEMBER_ROLE.EDITOR),
+    );
+
     return (
       <div
         ref={constrainRef}
@@ -245,10 +253,28 @@ export const GroupContentPage = ({
           setNodesDraggable={setNodesDraggable}
           groupId={group.id}
         />
+        {/* this section is for settings, info and other actions related to the family tree. It is fixed on the top right corner of the screen and contains drawers for family info and settings. */}
         <div className={"w-fit fixed top-20 right-5 z-50 flex flex-col gap-3"}>
+          <EventCalendar
+            groupId={group.id}
+            onSelectDay={(date) => {
+              setSelectedDay(date);
+              setOpenDayDialog(true);
+            }}
+          />
           <FamilyInfoDrawer data={group} />
           <FamilySettingDrawer data={group} />
         </div>
+
+        {selectedDay && (
+          <DayEventsDialog
+            groupId={group.id}
+            canManage={canManage}
+            date={selectedDay}
+            openState={openDayDialog}
+            setOpenState={setOpenDayDialog}
+          />
+        )}
 
         {openFamilyMemberForm && (
           <NewFamilyMemberForm

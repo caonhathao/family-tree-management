@@ -94,9 +94,9 @@ const AuthContent = () => {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               {isLogin ? (
-                <LoginForm callback={decodeURIComponent(callBack)} />
+                <LoginForm callback={callBack} />
               ) : (
-                <SignupForm />
+                <SignupForm callback={callBack} />
               )}
             </motion.div>
           </motion.div>

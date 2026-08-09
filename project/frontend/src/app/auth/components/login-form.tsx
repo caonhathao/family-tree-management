@@ -52,10 +52,10 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
     startTransition(async () => {
       const result: ISuccessResponse | IErrorResponse | undefined =
         await loginBaseAction(values);
-      // console.log(result);
+      console.log(result);
 
       if (result) {
-        if (result.success == false && "errors" in result) {
+        if (result.success == false) {
           Toaster({
             title: "Đăng nhập thất bại",
             description: result.message,
@@ -75,7 +75,9 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
               onClick: () => {},
             },
           });
-          router.push(callback || "/");
+          setTimeout(() => {
+            window.location.href = callback || "/";
+          }, 400);
         }
       }
     });
@@ -156,9 +158,12 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
                   <GoogleLogin
                     onSuccess={(credentialResponse) => {
                       startTransition(async () => {
-                        await loginGoogleAction({
-                          token: credentialResponse.credential!,
-                        });
+                        await loginGoogleAction(
+                          {
+                            token: credentialResponse.credential!,
+                          },
+                          callback,
+                        );
                         // xử lý kết quả...
                       });
                     }}
@@ -175,7 +180,12 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
                     onClick={() =>
                       navigateTo({
                         router: router,
-                        action: () => router.push("/auth?mode=register"),
+                        action: () =>
+                          router.push(
+                            callback
+                              ? `/auth?mode=register&callbackUrl=${encodeURIComponent(callback)}`
+                              : "/auth?mode=register",
+                          ),
                       })
                     }
                   >

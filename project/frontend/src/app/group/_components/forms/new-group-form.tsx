@@ -68,6 +68,7 @@ const NewGroupForm = ({ className }: { className?: string }) => {
           description: result.message,
           type: "error",
         });
+        return;
       }
       setOpen(false); // Đóng dialog
       Toaster({
@@ -113,7 +114,7 @@ const NewGroupForm = ({ className }: { className?: string }) => {
                 Tên nhóm
               </Label>
               <Input
-                id={"name-1"}
+                id={"name-group"}
                 type={"text"}
                 required
                 {...register("name")}
@@ -127,15 +128,14 @@ const NewGroupForm = ({ className }: { className?: string }) => {
             </Field>
             <Field>
               <Label
-                htmlFor={"username-1"}
+                htmlFor={"description-group"}
                 className={"text-sm sm:text-base lg:text-base"}
               >
                 Mô tả
               </Label>
               <Input
-                id={"username-1"}
+                id={"description-group"}
                 type={"text"}
-                required
                 {...register("description")}
               />
               {errors.description && (
@@ -146,7 +146,7 @@ const NewGroupForm = ({ className }: { className?: string }) => {
             </Field>
             <Field>
               <Label
-                htmlFor={"username-1"}
+                htmlFor={"role-creater"}
                 className={"text-sm sm:text-base lg:text-base"}
               >
                 Vai trò của bạn
@@ -160,6 +160,7 @@ const NewGroupForm = ({ className }: { className?: string }) => {
                     defaultValue={field.value}
                   >
                     <SelectTrigger
+                      id={"role-creater"}
                       className={
                         "w-45 text-sm hover:cursor-pointer sm:text-base"
                       }

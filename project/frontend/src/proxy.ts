@@ -118,6 +118,10 @@ export async function proxy(req: NextRequest) {
             ? NextResponse.redirect(new URL("/", req.url))
             : NextResponse.next();
 
+          if (finalResponse.status >= 300 && finalResponse.status < 400) {
+            finalResponse.headers.set("x-middleware-cache", "no-cache");
+          }
+
           const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
@@ -152,11 +156,15 @@ export async function proxy(req: NextRequest) {
       roleRights.ADMIN.some((route) => pathname.startsWith(route));
 
     if (isAdminRoute && userRole !== "ADMIN") {
-      return NextResponse.redirect(new URL("/403", req.url));
+      const res = NextResponse.redirect(new URL("/403", req.url));
+      res.headers.set("x-middleware-cache", "no-cache");
+      return res;
     }
 
     if (pathname.startsWith("/auth")) {
-      return NextResponse.redirect(new URL("/", req.url));
+      const res = NextResponse.redirect(new URL("/", req.url));
+      res.headers.set("x-middleware-cache", "no-cache");
+      return res;
     }
 
     const requestHeaders = new Headers(req.headers);
@@ -191,9 +199,11 @@ export async function proxy(req: NextRequest) {
   const callbackUrl = encodeURIComponent(
     req.nextUrl.pathname + req.nextUrl.search,
   );
-  return NextResponse.redirect(
+  const loginRedirect = NextResponse.redirect(
     new URL(`/auth?mode=login&callbackUrl=${callbackUrl}`, req.url),
   );
+  loginRedirect.headers.set("x-middleware-cache", "no-cache");
+  return loginRedirect;
 }
 
 export const config = {

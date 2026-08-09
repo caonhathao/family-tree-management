@@ -77,7 +77,9 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
               onClick: () => {},
             },
           });
-          router.push(callback || "/");
+          setTimeout(() => {
+            window.location.href = callback || "/";
+          }, 400);
         }
       }
     });
@@ -182,9 +184,12 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
                   <GoogleLogin
                     onSuccess={(credentialResponse) => {
                       startTransition(async () => {
-                        await loginGoogleAction({
-                          token: credentialResponse.credential!,
-                        });
+                        await loginGoogleAction(
+                          {
+                            token: credentialResponse.credential!,
+                          },
+                          callback,
+                        );
                         // xử lý kết quả...
                       });
                     }}
@@ -200,7 +205,12 @@ export function SignupForm({ className, callback, ...props }: SignupFormProps) {
                     onClick={() =>
                       navigateTo({
                         router: router,
-                        action: () => router.push("/auth?mode=login"),
+                        action: () =>
+                          router.push(
+                            callback
+                              ? `/auth?mode=login&callbackUrl=${encodeURIComponent(callback)}`
+                              : "/auth?mode=login",
+                          ),
                       })
                     }
                   >
