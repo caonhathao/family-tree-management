@@ -1,5 +1,5 @@
 import { MEMBER_ROLE } from '@prisma/client';
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 
@@ -19,5 +19,6 @@ export class UpdateGroupMemberDto {
     required: false,
   })
   @IsOptional()
+  @IsEnum(MEMBER_ROLE, { message: InvalidMessageResponse.ROLE_INVALID })
   role?: MEMBER_ROLE;
 }

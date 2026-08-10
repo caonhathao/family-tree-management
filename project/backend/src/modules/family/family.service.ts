@@ -104,8 +104,8 @@ export class FamilyService {
             fullName: savedMember.fullName,
             gender: savedMember.gender,
             generation: savedMember.generation,
-            dateOfBirth: savedMember.dateOfBirth ?? undefined,
-            dateOfDeath: savedMember.dateOfDeath ?? undefined,
+            dateOfBirth: savedMember.dateOfBirth?.toISOString(),
+            dateOfDeath: savedMember.dateOfDeath?.toISOString(),
             isAlive: savedMember.isAlive,
             biography: savedMember.biography as unknown as IBiographyContent,
             positionX: savedMember.positionX
@@ -217,6 +217,7 @@ export class FamilyService {
           localId: '',
           name: '',
           description: '',
+          lineageType: LINEAGE_TYPE.PATRIARCHAL,
         },
       };
     } catch (err) {
@@ -229,6 +230,14 @@ export class FamilyService {
       //check validation
       if (!isUUID(groupId, 'all'))
         throw new NotFoundException(Exception.NOT_EXIST);
+      if (!isUUID(data.localId))
+        throw new NotFoundException(Exception.NOT_EXIST);
+
+      const existed = await this.prisma.family.findFirst({
+        where: { id: data.localId, groupFamilyId: groupId },
+        select: { id: true },
+      });
+      if (!existed) throw new NotFoundException(Exception.NOT_EXIST);
 
       const family = await this.prisma.family.update({
         where: { id: data.localId },
@@ -245,7 +254,6 @@ export class FamilyService {
         },
       });
 
-      if (!family) throw new NotFoundException(Exception.NOT_EXIST);
       return family;
     } catch (err) {
       console.error('err at update family info service:', err);

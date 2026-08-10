@@ -18,15 +18,21 @@ const InviteContent = ({
   useEffect(() => {
     if (data && "id" in data) {
       router.push(`/group?groupId=${data.groupId}`);
+    } else {
+      Toaster({
+        title: "Có lỗi xảy ra",
+        description: data?.message || "Vui lòng thử lại sau!",
+        type: "error",
+        cancel: { label: "OK", onClick: () => {} },
+      });
     }
   }, [data, router]);
   if (!data || "errors" in data)
-    return Toaster({
-      title: "Có lỗi xảy ra",
-      description: data?.message || "Vui lòng thử lại sau!",
-      type: "error",
-      cancel: { label: "OK", onClick: () => {} },
-    });
+    return (
+      <div className={"w-full h-full flex justify-center items-center"}>
+        {data?.message || "Vui lòng thử lại sau!"}
+      </div>
+    );
   else
     return (
       <div

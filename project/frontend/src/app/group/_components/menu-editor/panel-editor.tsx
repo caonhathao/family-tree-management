@@ -118,23 +118,14 @@ export const handleDeleteAll = async ({
 }) => {
   startTransition(async () => {
     try {
-      const result = await dispatch(deleteFamily(groupId)).unwrap();
+      await dispatch(deleteFamily(groupId)).unwrap();
 
-      if ("id" in result)
-        Toaster({
-          title: "Thành công",
-          description: "Sơ đồ gia đình đã được xóa.",
-          type: "success",
-          cancel: { label: "OK", onClick: () => {} },
-        });
-      else if ("errors" in result) {
-        Toaster({
-          title: "Lỗi",
-          description: result.message,
-          type: "success",
-          cancel: { label: "OK", onClick: () => {} },
-        });
-      }
+      Toaster({
+        title: "Thành công",
+        description: "Sơ đồ gia đình đã được xóa.",
+        type: "success",
+        cancel: { label: "OK", onClick: () => {} },
+      });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       Toaster({

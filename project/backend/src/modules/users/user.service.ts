@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -54,10 +55,10 @@ export class UserService {
           email: data.email,
         },
       });
-      if (!isEmailTaken) {
-        // throw new ConflictException(Exception.EXISTED);
-        userUpdate.email = data.email;
+      if (isEmailTaken && isEmailTaken.id !== targetId) {
+        throw new ConflictException(Exception.EXISTED);
       }
+      userUpdate.email = data.email;
     }
 
     if (data.password && data.password.trim() !== '') {

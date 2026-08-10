@@ -51,7 +51,7 @@ const ProfileContent = ({
   }, [data]);
 
   const availableData = useMemo(() => {
-    if (data && !("error" in data)) {
+    if (data && !("errors" in data)) {
       return data;
     } else return null;
   }, [data]);

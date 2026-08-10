@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { GENDER, LINEAGE_TYPE, TYPE_RELATIONSHIP } from "@prisma/client";
+import { LINEAGE_TYPE, TYPE_RELATIONSHIP } from "@prisma/client";
 
 export const BiographyContentSchema = z.object({
   education_level: z.string(),
@@ -10,15 +10,15 @@ export const BiographyContentSchema = z.object({
 
 export const FamilyMemberDtoSchema = z.object({
   localId: z.string().uuid(),
-  fullName: z.string().min(2).max(100),
-  gender: z.nativeEnum(GENDER),
-  dateOfBirth: z.date().optional(),
-  dateOfDeath: z.date().optional(),
+  fullName: z.string().min(1).max(100),
+  gender: z.string().min(1),
+  dateOfBirth: z.string().nullable().optional(),
+  dateOfDeath: z.string().nullable().optional(),
   isAlive: z.boolean().optional(),
-  biography: BiographyContentSchema.optional(),
+  biography: z.unknown().nullable().optional(),
   generation: z.number(),
-  positionX: z.number().optional(),
-  positionY: z.number().optional(),
+  positionX: z.number().nullable().optional(),
+  positionY: z.number().nullable().optional(),
 });
 
 export const RelationshipDtoSchema = z.object({
@@ -30,7 +30,7 @@ export const RelationshipDtoSchema = z.object({
 
 export const FamilyDtoSchema = z.object({
   localId: z.string().uuid(),
-  name: z.string().min(2).max(100),
+  name: z.string().min(1).max(100),
   description: z.string().optional(),
   lineageType: z.nativeEnum(LINEAGE_TYPE),
 });

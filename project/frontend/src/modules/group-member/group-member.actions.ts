@@ -1,10 +1,9 @@
 "use server";
 import { UpdateGroupMemberDto } from "./group-member.dto";
-import { GroupMemberService } from "./group-member.service";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { ResponseFactory } from "@/lib/res/response.factory";
-import { ApiResponse } from "@/types/api.types";
+import { apiRequest } from "@/lib/api/http.client";
+import { apiClient } from "@/lib/api/api-client.lib";
 
 export async function UpdateGroupMemberRoleAction(
   groupId: string,
@@ -12,14 +11,14 @@ export async function UpdateGroupMemberRoleAction(
 ) {
   let isSuccess = false;
   try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
-
-    const res = await GroupMemberService.updateRole(userId, groupId, data);
-    if (res) {
+    const res = await apiRequest(
+      apiClient.groupMember.updateRole.url(groupId),
+      {
+        method: apiClient.groupMember.updateRole.method,
+        body: data,
+      },
+    );
+    if (res && "data" in res && res.data != undefined) {
       isSuccess = true;
     } else {
       return { err: "Failed to update role" };
@@ -38,14 +37,14 @@ export async function UpdateGroupMemberLeaderAction(
 ) {
   let isSuccess = false;
   try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
-
-    const res = await GroupMemberService.changeLeader(userId, groupId, data);
-    if (res) {
+    const res = await apiRequest(
+      apiClient.groupMember.changeLeader.url(groupId),
+      {
+        method: apiClient.groupMember.changeLeader.method,
+        body: data,
+      },
+    );
+    if (res && "data" in res && res.data != undefined) {
       isSuccess = true;
     } else {
       return { err: "Failed to change leader" };
@@ -61,15 +60,13 @@ export async function UpdateGroupMemberLeaderAction(
 export async function RemoveFromGroupAction(groupId: string, memberId: string) {
   let isSuccess = false;
   try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
-
-    const res: ApiResponse<number, unknown> | number =
-      await GroupMemberService.removeMember(userId, groupId, memberId);
-    if (typeof res === "number") {
+    const res = await apiRequest<{ count: number }>(
+      apiClient.groupMember.deleteGroupMember.url(groupId, memberId),
+      {
+        method: apiClient.groupMember.deleteGroupMember.method,
+      },
+    );
+    if (res && "data" in res && res.data != undefined && res.data.count > 0) {
       isSuccess = true;
     }
   } catch (err) {

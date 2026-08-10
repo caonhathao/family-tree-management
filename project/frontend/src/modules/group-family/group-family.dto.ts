@@ -48,3 +48,14 @@ export interface IResponseJoinGroupDto {
   role: string;
   isLeader: boolean;
 }
+
+export interface IResponseInviteGroupInfoDto {
+  id: string;
+  name: string;
+  description: string | null;
+  memberCount: number;
+  sender: {
+    fullName: string;
+    avatar: string | null;
+  } | null;
+}

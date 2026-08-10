@@ -1,19 +1,32 @@
 "use server";
 import { ResponseFactory } from "@/lib/res/response.factory";
-import { ICreateInviteDto } from "./invite.dto";
-import { InviteService } from "./invite.service";
-import { headers } from "next/headers";
+import { ICreateInviteDto, IResponseCreateInviteDto } from "./invite.dto";
+import { apiRequest } from "@/lib/api/http.client";
+import { apiClient } from "@/lib/api/api-client.lib";
+import { ApiResponse } from "@/types/api.types";
 
-export async function CreateInviteLinkAction(data: ICreateInviteDto) {
+export async function CreateInviteLinkAction(
+  data: ICreateInviteDto,
+): Promise<
+  IResponseCreateInviteDto | ApiResponse<IResponseCreateInviteDto, unknown>
+> {
   try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
+    const res = await apiRequest<IResponseCreateInviteDto>(
+      apiClient.invite.createInvite.url,
+      {
+        method: apiClient.invite.createInvite.method,
+        body: { groupId: data.groupId },
+      },
+    );
 
-    const res = await InviteService.createInviteLink(userId, data);
-    return res;
+    if (res && "data" in res && res.data != undefined) {
+      const raw = res.data.inviteLink;
+      const inviteLink = /^https?:\/\//.test(raw)
+        ? raw.replace(/^https?:\/\/[^/]+/, "")
+        : raw;
+      return { inviteLink: inviteLink };
+    }
+    return res as ApiResponse<IResponseCreateInviteDto, unknown>;
   } catch (err) {
     return ResponseFactory.handleError(err);
   }
