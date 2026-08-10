@@ -12,10 +12,29 @@ This is the **standalone frontend** of the Family-Tree Management System, built 
 
 -   Next.js 16 (App Router, Server Components, Turbopack)
 -   Authentication flows (email/password + Google OAuth) with httpOnly cookie handling
--   Interactive family-tree visualization (React Flow + Dagre.js)
--   Family, member, relationship, and recurring-events management UIs
+-   Family group management: create groups, invite members, and manage roles
+-   Interactive family-tree visualization (React Flow + Dagre.js) with drag-and-drop and auto-layout
+-   Family, member, and relationship management UIs
+-   Events management: create/edit one-time & recurring events, calendar view, and day dialogs
+-   User area: profile, biography, and security (auth methods) management
+-   Invite acceptance page
+-   Admin panel: dashboard, user management, blog list, and an Editor.js blog editor
 -   Tailwind CSS + Radix UI component library
--   Redux Toolkit state management
+-   Redux Toolkit state management, React Hook Form + Zod validation
+
+## 🧭 Pages
+
+| Route | Description |
+| --- | --- |
+| `/` , `/features` | Public landing & feature pages |
+| `/auth` | Login / sign-up (email/password + Google OAuth) |
+| `/group` | Main group workspace: family-tree editor, event calendar, info/settings drawers, member/relationship/event forms |
+| `/user/profile` | User profile & biography |
+| `/user/secure` | Account security & auth methods |
+| `/user/invite` | Accept a group invite via token link |
+| `/admin` | Admin dashboard |
+| `/admin/users` | User management |
+| `/admin/blogs` , `/admin/blog_editor` | Blog list & Editor.js blog editor |
 
 ## 🛠️ Getting Started
 

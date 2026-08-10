@@ -7,51 +7,69 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-This is a comprehensive family tree management system that allows users to create, manage, and visualize their family genealogies.
+A family genealogy management system that lets users create, manage, and visualize family trees. Users can organize into **family groups**, invite members, model relationships between relatives, schedule **recurring events**, and receive **in-app & email notifications**.
 
 ## 🚀 Features
 
--   **User Authentication:** Secure registration and login (email/password + Google OAuth).
--   **Family Management:** Create and manage families, invite members, and set permissions (owner/editor/viewer).
--   **Interactive Tree Visualization:** A dynamic, interactive, and zoomable family tree diagram.
--   **Member Profiles:** Add and edit detailed profiles for each family member, including biography, photos, and key dates.
--   **Relationship Management:** Define and manage complex relationships between family members.
--   **Recurring Events & Notifications:** Schedule family events and receive in-app notifications.
+-   **User Authentication:** Secure registration and login (email/password + Google OAuth), JWT access/refresh tokens, and account/session management.
+-   **Family Groups:** Create groups, invite members via unique invite links (with expiry), and manage roles — `owner` / `editor` / `viewer` — per group member.
+-   **Interactive Tree Visualization:** A dynamic, interactive, zoomable, and draggable family-tree canvas (React Flow), with automatic layout via Dagre.
+-   **Member Profiles:** Add/edit family members with biography, key dates (birth/death), generation rank, gender, and positions on the canvas.
+-   **Relationship Management:** Define relations between members (`PARENT`, `SPOUSE`, `CHILD`).
+-   **Recurring Events & Notifications:** Schedule one-time or recurring events (daily/weekly/monthly), view them on a calendar, and get in-app notifications.
+-   **Email Notifications (experimental):** Scheduled reminders send event emails via Resend (skipped automatically when not configured).
+-   **Albums & Media (API):** Album/photo uploads backed by Cloudinary.
+-   **Admin & Blog:** Admin panel for user/blog management with an Editor.js-based blog editor.
+
+> **Roadmap:** integrate cloud storage for media assets (albums, avatars, blog media) across the product.
 
 ## 🏛️ Architecture Overview
 
 The system is a decoupled monorepo with two independent applications, deployed on **separate platforms**:
 
--   **Frontend** (`project/frontend`) — a Next.js application that can run/deploy on its own (e.g., Vercel). It talks to the backend only through the `BACKEND_API_URL` environment variable.
--   **Backend** (`project/backend`) — a NestJS + Prisma + PostgreSQL REST API (e.g., Render/Railway). It exposes the API and validates the frontend origin via CORS.
+-   **Frontend** (`project/frontend`) — a Next.js (App Router) application that can run/deploy on its own (e.g., Vercel). It talks to the backend only through the `BACKEND_API_URL` environment variable, always **server-side via Next.js server actions**.
+-   **Backend** (`project/backend`) — a NestJS + Prisma + PostgreSQL REST API (e.g., Render/Railway). It exposes the API, validates the frontend origin via CORS, and runs scheduled jobs.
+
+Both packages use **pnpm**.
 
 ### Backend (NestJS)
 
-The backend, located in `project/backend`, is a robust and scalable application built with the NestJS framework.
+The backend, located in `project/backend`, is built with the NestJS framework.
 
 -   **Framework:** NestJS
--   **ORM:** Prisma
+-   **ORM:** Prisma (multi-file schema, PostgreSQL driver adapter)
 -   **Database:** PostgreSQL
--   **Authentication:** Passport.js with JWT (access/refresh tokens)
+-   **Authentication:** JWT (access/refresh) via Passport strategies + Google OAuth (ID-token verification)
+-   **Scheduling:** `@nestjs/schedule` cron jobs (event lifecycle roll-forward, event emails, expired-invite cleanup)
+-   **Email:** Resend + `react-email` templates
+-   **File Upload:** Cloudinary
 -   **API Documentation:** Swagger (available at `/api/docs`)
 
-The backend exposes a RESTful API (global prefix `/api`) to the frontend for all data operations. It handles business logic, data persistence, and authentication.
+The backend exposes a RESTful API (global prefix `/api`) consumed by the frontend. It handles business logic, data persistence, authentication, and scheduled tasks.
 
-#### Family Tree Data Model
+#### Core Data Model
 
-The core of the family tree is represented by three main Prisma models: `Family`, `FamilyMember`, and `Relationship`.
+The main entities are `GroupFamily` (a container shared by users), `Family` (one tree per group), `FamilyMember` (a person/node), `Relationship` (a directed edge between two members), and `Event` (with optional recurring instances).
 
-> The system uses a graph-based approach (adjacency list) to represent family structures. `FamilyMember` acts as a node (a person) and `Relationship` acts as a directed edge between two nodes, defining the connection (e.g., PARENT, SPOUSE). This allows for flexible and scalable modeling of complex family ties.
-
-Here's a simplified representation of the data schema:
+> The tree uses a graph-based approach (adjacency list). `FamilyMember` acts as a node (a person) and `Relationship` acts as a directed edge (`PARENT`, `SPOUSE`, `CHILD`) between two nodes, allowing flexible modeling of complex family ties. Members also store `generation` and canvas `positionX/positionY` for layout.
 
 ```mermaid
 classDiagram
+    class GroupFamily {
+        +String id
+        +String name
+        +String? description
+        +GroupMember[] members
+        +Invite[] invites
+        +Event[] events
+    }
+
     class Family {
         +String id
         +String name
-        +User owner
-        +FamilyMember[] members
+        +String description
+        +GroupFamily groupFamily
+        +FamilyMember[] familyMembers
         +Relationship[] relationships
     }
 
@@ -59,11 +77,12 @@ classDiagram
         +String id
         +String fullName
         +GENDER gender
-        +DateTime dateOfBirth
-        +Float positionX
-        +Float positionY
-        +Relationship[] relationshipsFrom
-        +Relationship[] relationshipsTo
+        +DateTime? dateOfBirth
+        +DateTime? dateOfDeath
+        +Boolean isAlive
+        +Int generation
+        +Float? positionX
+        +Float? positionY
     }
 
     class Relationship {
@@ -73,29 +92,40 @@ classDiagram
         +TYPE_RELATIONSHIP type
     }
 
+    class Event {
+        +String id
+        +String title
+        +EVENT_TYPE type
+        +Boolean isRecurring
+        +DateTime startTime
+        +DateTime endTime
+        +EventRecurrence? recurrence
+    }
+
+    GroupFamily "1" *-- "0..*" Family
+    GroupFamily "1" *-- "0..*" Event
     Family "1" *-- "0..*" FamilyMember
     Family "1" *-- "0..*" Relationship
-    FamilyMember "1" -- "0..*" Relationship : relationshipsFrom
-    FamilyMember "1" -- "0..*" Relationship : relationshipsTo
+    FamilyMember "1" -- "0..*" Relationship : from/to
 ```
 
 ### Frontend (Next.js)
 
 The frontend, located in `project/frontend`, is a modern, server-rendered application built with Next.js and React.
 
--   **Framework:** Next.js / React
+-   **Framework:** Next.js 16 (App Router, Server Components, Turbopack)
 -   **Styling:** Tailwind CSS & Radix UI
 -   **State Management:** Redux Toolkit
 -   **Tree Visualization:** React Flow (`@xyflow/react`)
 -   **Layout Engine:** Dagre.js
+-   **Forms/Validation:** React Hook Form + Zod
+-   **Blog Editor:** Editor.js
 
-All data access is done through **server actions** that call the backend from the Next.js server. This keeps the browser from talking to the backend directly, so the frontend can be deployed on its own without sharing CORS setup with any other client.
+All data access goes through **server actions** that call the backend from the Next.js server. This keeps the browser from talking to the backend directly, so the frontend can be deployed independently.
 
 #### Tree Visualization Engine
 
-The family tree is rendered using the powerful **React Flow** library, which provides a flexible and interactive canvas.
-
-> The rendering logic is centered around the `group-content.tsx` component. It fetches family data and transforms it into `nodes` and `edges` compatible with React Flow. The layout of the tree is not hardcoded; instead, the **Dagre.js** library is used to algorithmically determine the optimal position of each node (`family-member-node.tsx`) based on their relationships and generation, creating a clean and readable "tight-tree" structure. The calculated positions are then stored back to the database.
+The family tree is rendered with **React Flow**, centered around the `group-content.tsx` component. It fetches family data and transforms it into React Flow `nodes`/`edges`. Node positions are computed algorithmically by **Dagre.js** (`group-content.tsx`) based on relationships and generation (a clean "tight-tree" layout), and the calculated positions are stored back to the database.
 
 ## 🛠️ Getting Started
 
@@ -117,7 +147,7 @@ The family tree is rendered using the powerful **React Flow** library, which pro
     cd project/backend
     pnpm install
     cp .env.example .env
-    # Update .env with your database credentials
+    # Update .env with your database credentials and secrets
     pnpm prisma migrate dev
     pnpm start:dev
     ```
@@ -131,7 +161,7 @@ The family tree is rendered using the powerful **React Flow** library, which pro
     pnpm dev
     ```
 
-The application should now be running, with the frontend accessible at `http://localhost:3000` and the backend at `http://localhost:3001`.
+The application should now be running: frontend at `http://localhost:3000`, backend at `http://localhost:3001`, and Swagger docs at `http://localhost:3001/api/docs`.
 
 ## 🔐 Environment Variables
 
@@ -153,8 +183,12 @@ REFRESH_TOKEN_EXPIRES_IN=604800 # seconds, e.g., 7 days
 # File Upload Configuration
 MAX_FILE_SIZE=2 # MB
 
-# Cloudinary Configuration
-CLOUDINARY_NAME="your_cloudinary_cloud_name"
+# Resend (email notifications - optional)
+RESEND_API_KEY="your_resend_api_key"
+MAIL_FROM="Family Management <onboarding@resend.dev>"
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME="your_cloudinary_cloud_name"
 CLOUDINARY_API_KEY="your_cloudinary_api_key"
 CLOUDINARY_API_SECRET="your_cloudinary_api_secret"
 CLOUDINARY_URL="cloudinary://your_api_key:your_api_secret@your_cloud_name"
@@ -215,4 +249,4 @@ PORT=3000
 The frontend and backend are deployed independently:
 
 -   **Frontend → Vercel:** Deploy `project/frontend` as its own project. Set `BACKEND_API_URL` to the production backend URL and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` to the production Google OAuth client ID. Add every frontend origin (e.g. `https://app.your-domain.com`) to the Google Cloud OAuth client's **Authorized JavaScript origins**.
--   **Backend → any Node hosting (Render/Railway/Vercel):** Deploy `project/backend`. Set `CORS_ORIGINS` (comma-separated) to the production frontend origin(s) and `CLIENT_DOMAIN` accordingly.
+-   **Backend → any Node hosting (Render/Railway/Vercel):** Deploy `project/backend`. Set `CORS_ORIGINS` (comma-separated) to the production frontend origin(s), `CLIENT_DOMAIN` accordingly, and run `pnpm prisma migrate deploy` before `pnpm start:prod`. Enable a persistent scheduler (cron jobs) by keeping the app running long-term.
