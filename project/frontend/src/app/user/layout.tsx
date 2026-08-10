@@ -6,6 +6,8 @@ import {
 } from "@/components/ui/sidebar";
 import { SideBarProfile } from "./_components/sidebar/sidebar-profile";
 
+export const dynamic = "force-dynamic";
+
 const ProfileLayout = ({
   children,
 }: Readonly<{

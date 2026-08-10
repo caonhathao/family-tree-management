@@ -1,98 +1,104 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Family-Tree Management System — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+[![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The REST API backend of the Family-Tree Management System, built with NestJS, Prisma, and PostgreSQL. It exposes a documented API (global prefix `/api`) consumed by the frontend in `../frontend`.
 
-## Description
+## ✨ Highlights
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+-   Controller–Service–Repository architecture
+-   JWT authentication (access/refresh tokens) via Passport strategies
+-   Role-based access control (`owner` / `editor` / `viewer`) on family groups
+-   Recurring events with a scheduled roll-forward job and event notifications
+-   Cloudinary integration for file uploads
+-   Swagger documentation at `/api/docs`
 
-## Project setup
+## 🛠️ Project Setup
+
+### Prerequisites
+
+-   Node.js (v20+)
+-   pnpm
+-   PostgreSQL
+
+### Installation & Configuration
 
 ```bash
-$ pnpm install
+pnpm install
+cp .env.example .env
 ```
 
-## Compile and run the project
+Fill in `.env` with your database credentials and secrets (see [Environment Variables](#environment-variables)).
+
+Run the database migration:
 
 ```bash
-# development
-$ pnpm run start
+pnpm prisma migrate dev
+```
 
-# watch mode
-$ pnpm run start:dev
+### Compile and run the project
+
+```bash
+# watch mode (development)
+pnpm start:dev
 
 # production mode
-$ pnpm run start:prod
+pnpm build && pnpm start:prod
 ```
 
-## Run tests
+### Run tests
 
 ```bash
 # unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
+pnpm test
 
 # test coverage
-$ pnpm run test:cov
+pnpm test -- --coverage
+
+# e2e tests
+pnpm test:e2e
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Code quality
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+pnpm lint    # run ESLint with auto-fix
+pnpm format  # format with Prettier
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Environment Variables
 
-## Resources
+| Variable | Required | Description |
+| --- | --- | --- |
+| `PORT` | No | Server port (default `3001`) |
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `JWT_ACCESS_SECRET_KEY` | Yes | Access-token signing secret |
+| `JWT_REFRESH_SECRET_KEY` | Yes | Refresh-token signing secret |
+| `ACCESS_TOKEN_EXPIRES_IN` | Yes | Access-token lifetime in seconds |
+| `REFRESH_TOKEN_EXPIRES_IN` | Yes | Refresh-token lifetime in seconds |
+| `MAX_FILE_SIZE` | Yes | Max upload size in MB |
+| `CLOUDINARY_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` / `CLOUDINARY_URL` | Yes | Cloudinary credentials |
+| `FOLDER_ALBUM` / `FOLDER_USER` / `FOLDER_FAMILY` / `FOLDER_BLOG` | Yes | Cloudinary folder names |
+| `CLIENT_DOMAIN` | No | Legacy single frontend origin |
+| `CORS_ORIGINS` | Yes* | Comma-separated list of allowed frontend origins (falls back to `CLIENT_DOMAIN`) |
+| `GOOGLE_CLIENT_ID` | Yes | Google OAuth client ID used to verify Google login tokens |
 
-Check out a few resources that may come in handy when working with NestJS:
+A complete sample with placeholder values is provided in `.env.example`.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 🔌 API & CORS
 
-## Support
+-   All endpoints are prefixed with `/api` (e.g. `POST /api/auth/login-base`).
+-   Interactive Swagger docs are available at `/api/docs`.
+-   CORS accepts the origins listed in `CORS_ORIGINS` (comma-separated), with `credentials: true`. When deploying, add every production frontend origin there.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 🌐 Deployment
 
-## Stay in touch
+Deploy this directory as an **independent service** on any Node host (Render, Railway, a VPS, or Vercel):
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+1.  Set the environment variables above, most importantly `DATABASE_URL` and `CORS_ORIGINS`.
+2.  Run migrations: `pnpm prisma migrate deploy`.
+3.  Start with `pnpm start:prod` (or the platform's default build/start commands).
 
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+The backend does not depend on the frontend being on the same platform or domain.

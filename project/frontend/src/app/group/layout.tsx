@@ -7,6 +7,8 @@ import SidebarGroupClient from "./_components/sidebar/sidebar-group-client";
 import { SidebarGroupServer } from "./_components/sidebar/sidebar-group-server";
 import { Separator } from "@/components/ui/separator";
 
+export const dynamic = "force-dynamic";
+
 const GroupLayout = ({
   children,
 }: Readonly<{
