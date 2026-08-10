@@ -3,6 +3,7 @@ import {
   ICreateGroupFamilyDto,
   IResponseGroupFamiliesDto,
   IResponseGroupFamilyDetailDto,
+  IResponseInviteGroupInfoDto,
   IResponseJoinGroupDto,
   IUpdateGroupFamilyDto,
 } from "./group-family.dto";
@@ -62,6 +63,31 @@ export async function joinGroupAction(
       apiClient.groupFamily.joinGroup.url(tokenCode),
       {
         method: apiClient.groupFamily.joinGroup.method,
+      },
+    );
+
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+    return null;
+  } catch (err: unknown) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
+export async function getInviteGroupInfoAction(
+  tokenCode: string,
+): Promise<
+  | IResponseInviteGroupInfoDto
+  | ApiResponse<IResponseInviteGroupInfoDto, unknown>
+  | null
+> {
+  try {
+    const res = await apiRequest<IResponseInviteGroupInfoDto>(
+      apiClient.invite.getInviteInfo.url(tokenCode),
+      {
+        method: apiClient.invite.getInviteInfo.method,
+        auth: false,
       },
     );
 

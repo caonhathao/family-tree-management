@@ -75,4 +75,46 @@ export class InviteService {
     const inviteLink = `/invite?token=${inviteToken}`;
     return { inviteLink: inviteLink };
   }
+
+  async getInviteInfo(token: string) {
+    const invite = await this.prisma.invite.findUnique({
+      where: { token },
+      select: {
+        expiresAt: true,
+        sender: {
+          select: {
+            userProfile: {
+              select: {
+                fullName: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        group: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            _count: {
+              select: {
+                groupMembers: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!invite) throw new NotFoundException(Exception.NOT_EXIST);
+    if (new Date() > invite.expiresAt) {
+      throw new ForbiddenException(Exception.EXPIRED);
+    }
+
+    return {
+      ...invite.group,
+      memberCount: invite.group._count.groupMembers,
+      sender: invite.sender.userProfile ?? null,
+    };
+  }
 }

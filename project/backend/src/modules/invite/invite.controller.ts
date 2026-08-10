@@ -1,9 +1,10 @@
-import { Controller, Post, UseGuards, Body } from '@nestjs/common';
+import { Controller, Post, Get, Param, UseGuards, Body } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiParam,
 } from '@nestjs/swagger';
 import { InviteService } from './invite.service';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
@@ -14,12 +15,11 @@ import { AtGuard } from '../auth/guards/auth.guard';
 import { HttpStatus } from 'src/common/constants/api';
 
 @ApiTags('invite')
-@ApiBearerAuth()
 @Controller('invite')
-@UseGuards(AtGuard)
 export class InviteController {
   constructor(private readonly inviteService: InviteService) {}
   @Post()
+  @ApiBearerAuth()
   @UseGuards(AtGuard)
   @ApiOperation({ summary: 'Create a new invitation' })
   @ApiResponse({ status: 201, description: 'Invitation created successfully' })
@@ -34,6 +34,23 @@ export class InviteController {
       data: invite,
       code: HttpStatus.CREATED,
       message: ValidMessageResponse.CREATED,
+    });
+  }
+
+  @Get(':token')
+  @ApiOperation({ summary: 'Get group info by invitation token' })
+  @ApiParam({ name: 'token', description: 'Invitation token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Group info retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Invitation not found' })
+  @ApiResponse({ status: 403, description: 'Invitation expired' })
+  async getInviteInfo(@Param('token') token: string) {
+    const info = await this.inviteService.getInviteInfo(token);
+    return ResponseFactory.success({
+      data: info,
+      message: ValidMessageResponse.GETTED,
     });
   }
 }

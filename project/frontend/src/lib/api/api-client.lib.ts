@@ -102,6 +102,10 @@ export const apiClient = {
   },
   invite: {
     createInvite: { url: "/api/invite", method: "POST" as HttpMethod },
+    getInviteInfo: {
+      url: (token: string) => `/api/invite/${token}`,
+      method: "GET" as HttpMethod,
+    },
   },
   blog: {
     upsert: "/api/blog",
