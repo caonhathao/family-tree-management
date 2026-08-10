@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import {
   BadRequestException,
   ForbiddenException,
@@ -7,15 +8,11 @@ import {
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { Exception } from 'src/common/messages/messages.response';
-import { EnvConfigService } from 'src/common/config/env/env-config.service';
 import { isUUID } from 'class-validator';
 
 @Injectable()
 export class InviteService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly envConfig: EnvConfigService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async createInvite(userId: string, data: CreateInviteDto) {
     // console.log('body at invite controller: ', data);
@@ -62,9 +59,7 @@ export class InviteService {
       return { inviteLink: inviteLink };
     }
     //generate invite token
-    //using userId (sender) and goupId to generate unique token
-    const payload = `${userId}-${data.groupId}-${Date.now()}`;
-    const inviteToken = Buffer.from(payload).toString('base64');
+    const inviteToken = randomBytes(32).toString('base64url');
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
     //store invite in db
@@ -77,7 +72,7 @@ export class InviteService {
       },
     });
 
-    const inviteLink = `${this.envConfig.clientDomain}/invite?token=${inviteToken}`;
+    const inviteLink = `/invite?token=${inviteToken}`;
     return { inviteLink: inviteLink };
   }
 }

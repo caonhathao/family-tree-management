@@ -1,13 +1,17 @@
+import { Type } from 'class-transformer';
 import {
-  Allow,
-  IsDate,
+  IsArray,
+  IsBoolean,
+  IsDateString,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
-  MaxLength,
-  MinLength,
+  ValidateIf,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
@@ -28,8 +32,7 @@ export class IFamilyMemberDto {
     example: 'David',
     required: true,
   })
-  @MinLength(6, { message: InvalidMessageResponse.NAME_MIN })
-  @MaxLength(30, { message: InvalidMessageResponse.NAME_MAX })
+  @IsString({ message: InvalidMessageResponse.NAME_EMPTY })
   @IsNotEmpty({ message: InvalidMessageResponse.NAME_EMPTY })
   fullName: string;
 
@@ -46,23 +49,34 @@ export class IFamilyMemberDto {
     description: `Family member's DOB`,
     required: false,
   })
-  @IsOptional()
-  @IsDate()
-  dateOfBirth?: Date;
+  @ValidateIf(
+    (o: IFamilyMemberDto) =>
+      o.dateOfBirth !== undefined &&
+      o.dateOfBirth !== null &&
+      o.dateOfBirth !== '',
+  )
+  @IsDateString()
+  dateOfBirth?: string;
 
   @ApiProperty({
     description: `Family member's DOD`,
     required: false,
   })
-  @IsOptional()
-  @IsDate()
-  dateOfDeath?: Date;
+  @ValidateIf(
+    (o: IFamilyMemberDto) =>
+      o.dateOfDeath !== undefined &&
+      o.dateOfDeath !== null &&
+      o.dateOfDeath !== '',
+  )
+  @IsDateString()
+  dateOfDeath?: string;
 
   @ApiProperty({
     description: `Confirm live/death of family member`,
     required: false,
   })
   @IsOptional()
+  @IsBoolean()
   isAlive?: boolean;
 
   @ApiProperty({
@@ -84,6 +98,7 @@ export class IFamilyMemberDto {
     required: false,
   })
   @IsOptional()
+  @IsNumber()
   positionX?: number;
 
   @ApiProperty({
@@ -91,6 +106,7 @@ export class IFamilyMemberDto {
     required: false,
   })
   @IsOptional()
+  @IsNumber()
   positionY?: number;
 }
 
@@ -140,8 +156,7 @@ export class IFamilyDto {
     required: true,
     example: 'Johnson Family',
   })
-  @MinLength(6, { message: InvalidMessageResponse.NAME_MIN })
-  @MaxLength(30, { message: InvalidMessageResponse.NAME_MAX })
+  @IsString({ message: InvalidMessageResponse.NAME_EMPTY })
   @IsNotEmpty({ message: InvalidMessageResponse.NAME_EMPTY })
   name: string;
 
@@ -163,11 +178,19 @@ export class IFamilyDto {
   lineageType: string;
 }
 export class FamilyDto {
-  @Allow()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => IFamilyMemberDto)
   members: IFamilyMemberDto[];
-  @Allow()
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => IRelationshipDto)
   relationships: IRelationshipDto[];
-  @Allow()
+
+  @IsObject()
+  @ValidateNested()
+  @Type(() => IFamilyDto)
   family: IFamilyDto;
 }
 

@@ -1,5 +1,4 @@
 "use server";
-import { UserService } from "./user.service";
 import { headers } from "next/headers";
 import {
   IResponseAuthLog,
@@ -12,25 +11,31 @@ import { cache } from "react";
 import { IPaginationBase } from "@/types/base.types";
 import { ResponseFactory } from "@/lib/res/response.factory";
 import { ApiResponse } from "@/types/api.types";
+import { apiRequest } from "@/lib/api/http.client";
+import { apiClient } from "@/lib/api/api-client.lib";
 
 export async function UpdateUserInfoAction(
   userId: string,
   data: IUserInfoDto,
 ): Promise<IResponseUserDto | ApiResponse<IResponseUserDto, unknown>> {
   try {
-    const headerList = await headers();
-    const currentUserId = headerList.get("X-User-Id");
-    if (!currentUserId) {
+    if (!userId) {
       throw new Error("Unauthorized");
     }
 
-    const res: IResponseUserDto = await UserService.updateUserInfo(
-      userId,
-      currentUserId,
-      data,
+    const res = await apiRequest<IResponseUserDto>(
+      apiClient.user.updateUser.url(userId),
+      {
+        method: apiClient.user.updateUser.method,
+        body: data,
+      },
     );
 
-    return res as IResponseUserDto;
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+
+    return res;
   } catch (err) {
     return ResponseFactory.handleError(err);
   }
@@ -49,12 +54,26 @@ export const getUserDetailAction = cache(
         throw new Error("Unauthorized");
       }
 
-      const res: IResponseUserDto = await UserService.getUserDetail(
-        type,
-        currentUserId,
-        userId,
+      const targetId = type === "self" ? currentUserId : userId;
+      if (!targetId) {
+        throw new Error("Unauthorized");
+      }
+
+      const res = await apiRequest<IResponseUserDto>(
+        apiClient.user.getDetail.url(targetId),
+        {
+          method: apiClient.user.getDetail.method,
+          query: { type },
+        },
       );
-      return res;
+
+      if (res && "data" in res && res.data != undefined) {
+        return res.data;
+      }
+      return ResponseFactory.error({
+        message: "User not found",
+        code: 404,
+      });
     } catch (err) {
       return ResponseFactory.handleError(err);
     }
@@ -71,19 +90,21 @@ export const getUserListAction = cache(
     IPaginationBase<IUserList[]> | ApiResponse<IUserList[], unknown>
   > => {
     try {
-      const headerList = await headers();
-      const currentUserId = headerList.get("X-User-Id");
-      if (!currentUserId) {
-        throw new Error("Unauthorized");
-      }
-      const res: IPaginationBase<IUserList[]> = await UserService.getAllUser(
-        currentUserId,
-        page,
-        limit,
-        filter,
-        filterType,
+      const res = await apiRequest<IPaginationBase<IUserList[]>>(
+        apiClient.user.getAll.url,
+        {
+          method: apiClient.user.getAll.method,
+          query: { page, limit, filter, filterType },
+        },
       );
-      return res;
+
+      if (res && "data" in res && res.data != undefined) {
+        return res.data;
+      }
+      return ResponseFactory.error({
+        message: "Users not found",
+        code: 404,
+      });
     } catch (err) {
       return ResponseFactory.handleError(err);
     }
@@ -98,11 +119,17 @@ export const getAllLinkedAuthProviders = cache(async () => {
     if (!currentUserId) {
       throw new Error("Unauthorized");
     }
-    const res:
-      | IResponseLinkProvidersDto[]
-      | ApiResponse<IResponseLinkProvidersDto[], unknown> =
-      await UserService.getAllAuthProviders(currentUserId);
-    return res;
+    const res = await apiRequest<IResponseLinkProvidersDto[]>(
+      apiClient.user.getAuthProviders.url(currentUserId),
+      {
+        method: apiClient.user.getAuthProviders.method,
+      },
+    );
+
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+    return [] as IResponseLinkProvidersDto[];
   } catch (err) {
     return ResponseFactory.handleError(err);
   }
@@ -115,12 +142,25 @@ export const getAllAuthLogs = cache(async (page: number, limit: number) => {
     if (!currentUserId) {
       throw new Error("Unauthorized");
     }
-    const res = await UserService.getAllAuthLog({
-      userId: currentUserId,
-      page: page,
-      limit: limit,
-    });
-    return res as IPaginationBase<IResponseAuthLog[]>;
+    const res = await apiRequest<IPaginationBase<IResponseAuthLog[]>>(
+      apiClient.user.getAuthLogs.url(currentUserId),
+      {
+        method: apiClient.user.getAuthLogs.method,
+        query: { page, limit },
+      },
+    );
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+    return {
+      data: [],
+      pagination: {
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: page,
+        pageSize: limit,
+      },
+    } as IPaginationBase<IResponseAuthLog[]>;
   } catch (err) {
     return ResponseFactory.handleError(err);
   }

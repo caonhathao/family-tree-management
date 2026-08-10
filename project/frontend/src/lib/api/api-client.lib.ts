@@ -20,11 +20,23 @@ export const apiClient = {
     },
   },
   family: {
-    syncFamily: (groupId: string) => `/api/family/sync-data/${groupId}`,
-    updateFamily: (groupId: string) => `/api/family/${groupId}`,
-    getFamily: (groupId: string) => `/api/family/${groupId}`,
-    deleteFamily: (familyId: string, groupId: string) =>
-      `/api/family/${groupId}/${familyId}`,
+    syncFamily: {
+      url: (groupId: string) => `/api/family/sync-data/${groupId}`,
+      method: "POST" as HttpMethod,
+    },
+    getFamily: {
+      url: (groupId: string) => `/api/family/${groupId}`,
+      method: "GET" as HttpMethod,
+    },
+    updateFamily: {
+      url: (groupId: string) => `/api/family/${groupId}`,
+      method: "PUT" as HttpMethod,
+    },
+    deleteFamily: {
+      url: (familyId: string, groupId: string) =>
+        `/api/family/${groupId}/${familyId}`,
+      method: "DELETE" as HttpMethod,
+    },
   },
   groupFamily: {
     createGroup: { url: "/api/group-family", method: "POST" as HttpMethod },
@@ -55,22 +67,41 @@ export const apiClient = {
     },
   },
   user: {
-    updateUser: (userId: string) => `/api/users/${userId}`,
-    getDetail: (userId: string) => `/api/users/${userId}`,
-    getAll: "/api/users",
-    getAuthProviders: (userId: string) => `/api/users/${userId}/auth-providers`,
-    getAuthLogs: (userId: string) => `/api/users/${userId}/auth-logs`,
+    updateUser: {
+      url: (userId: string) => `/api/users/${userId}`,
+      method: "PATCH" as HttpMethod,
+    },
+    getDetail: {
+      url: (userId: string) => `/api/users/${userId}`,
+      method: "GET" as HttpMethod,
+    },
+    getAll: { url: "/api/users", method: "GET" as HttpMethod },
+    getAuthProviders: {
+      url: (userId: string) => `/api/users/${userId}/auth-providers`,
+      method: "GET" as HttpMethod,
+    },
+    getAuthLogs: {
+      url: (userId: string) => `/api/users/${userId}/auth-logs`,
+      method: "GET" as HttpMethod,
+    },
   },
   groupMember: {
-    updateRole: (groupId: string) => `/api/group-member/${groupId}`,
-    changeLeader: (groupId: string) => `/api/group-member/leader/${groupId}`,
-    deleteGroupMember: (groupId: string, memberId: string) =>
-      `/api/group-member/${groupId}/${memberId}`,
-    removeFromGroup: (groupId: string, memberId: string) =>
-      `/api/group-member/${groupId}/${memberId}`,
+    updateRole: {
+      url: (groupId: string) => `/api/group-member/${groupId}`,
+      method: "PATCH" as HttpMethod,
+    },
+    changeLeader: {
+      url: (groupId: string) => `/api/group-member/leader/${groupId}`,
+      method: "PATCH" as HttpMethod,
+    },
+    deleteGroupMember: {
+      url: (groupId: string, memberId: string) =>
+        `/api/group-member/${groupId}/${memberId}`,
+      method: "DELETE" as HttpMethod,
+    },
   },
   invite: {
-    createInvite: "/api/invite",
+    createInvite: { url: "/api/invite", method: "POST" as HttpMethod },
   },
   blog: {
     upsert: "/api/blog",

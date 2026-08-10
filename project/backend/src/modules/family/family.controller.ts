@@ -127,7 +127,7 @@ export class FamilyController {
     );
     return ResponseFactory.success({
       data: familyData,
-      message: ValidMessageResponse.UPDATED,
+      message: ValidMessageResponse.DELETED,
     });
   }
 }

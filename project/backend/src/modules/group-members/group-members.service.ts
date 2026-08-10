@@ -132,8 +132,6 @@ export class GroupMemberService {
     throw new UnauthorizedException(Exception.PEMRISSION);
   }
   async removeMember(userId: string, groupId: string, memberId: string) {
-    console.log('groupId:', groupId);
-    console.log('memberId:', memberId);
     try {
       if (!isUUID(groupId, 'all'))
         throw new NotFoundException(Exception.NOT_EXIST);
@@ -148,7 +146,12 @@ export class GroupMemberService {
         },
       });
 
-      if (!members) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!members || members.length === 0)
+        throw new NotFoundException(Exception.NOT_EXIST);
+
+      const target = members.find((m) => m.memberId === memberId);
+      if (target && target.isLeader)
+        throw new ForbiddenException(Exception.PEMRISSION);
 
       return await this.prisma.groupMember.deleteMany({
         where: {

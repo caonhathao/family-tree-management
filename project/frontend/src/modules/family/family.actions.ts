@@ -2,28 +2,30 @@
 import { IFamilyDto } from "./family.dto";
 import { revalidatePath } from "next/cache";
 import { IDraftFamilyData } from "@/types/draft.types";
-import { headers } from "next/headers";
-import { FamilyService } from "./family.service";
-import { FamilyDto } from "./family.service-validator";
+import { SyncFamilyDtoSchema } from "./family.service-validator";
 import { ResponseFactory } from "@/lib/res/response.factory";
 import { ApiResponse } from "@/types/api.types";
+import { apiRequest } from "@/lib/api/http.client";
+import { apiClient } from "@/lib/api/api-client.lib";
 
 export async function SyncFamilyAction(
   groupId: string,
   data: IDraftFamilyData,
 ) {
   try {
-    const headerList = await headers();
-    const userId = headerList.get("X-User-Id");
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
-    const res = await FamilyService.syncFamily(
-      userId,
-      groupId,
-      data as FamilyDto,
+    const validated = SyncFamilyDtoSchema.parse(data);
+    const res = await apiRequest<IDraftFamilyData>(
+      apiClient.family.syncFamily.url(groupId),
+      {
+        method: apiClient.family.syncFamily.method,
+        body: validated,
+      },
     );
-    return res;
+
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+    return null;
   } catch (err: unknown) {
     return ResponseFactory.handleError(err);
   }
@@ -33,8 +35,20 @@ export async function GetFamilyData(
   groupId: string,
 ): Promise<IDraftFamilyData | ApiResponse<IDraftFamilyData, unknown>> {
   try {
-    const res = await FamilyService.getFamily(groupId);
-    return res;
+    const res = await apiRequest<IDraftFamilyData>(
+      apiClient.family.getFamily.url(groupId),
+      {
+        method: apiClient.family.getFamily.method,
+      },
+    );
+
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+    return ResponseFactory.error({
+      message: "Family not found",
+      code: 404,
+    });
   } catch (err: unknown) {
     return ResponseFactory.handleError(err);
   }
@@ -42,9 +56,13 @@ export async function GetFamilyData(
 
 export async function UpdatefamilyInfo(groupId: string, data: IFamilyDto) {
   try {
-    const res = await FamilyService.updateFamily(groupId, data);
-    if (res) {
+    const res = await apiRequest(apiClient.family.updateFamily.url(groupId), {
+      method: apiClient.family.updateFamily.method,
+      body: data,
+    });
+    if (res && "data" in res && res.data != undefined) {
       revalidatePath(`/group/${groupId}`);
+      return res.data;
     }
     return res;
   } catch (err) {
@@ -54,9 +72,15 @@ export async function UpdatefamilyInfo(groupId: string, data: IFamilyDto) {
 
 export async function DeleteFamilyAction(familyId: string, groupId: string) {
   try {
-    const res = await FamilyService.deleteFamily(groupId, familyId);
-    if (res) {
+    const res = await apiRequest<{ id: string }>(
+      apiClient.family.deleteFamily.url(familyId, groupId),
+      {
+        method: apiClient.family.deleteFamily.method,
+      },
+    );
+    if (res && "data" in res && res.data != undefined) {
       revalidatePath(`/group/${groupId}`);
+      return res.data;
     }
     return res;
   } catch (err: unknown) {

@@ -1,66 +1,66 @@
-import { prisma } from "@/lib/prisma";
-import { CreateInviteDto } from "./invite.service-validator";
-import { ApiResponse } from "@/types/api.types";
-import { IResponseCreateInviteDto } from "./invite.dto";
+// import { prisma } from "@/lib/prisma";
+// import { CreateInviteDto } from "./invite.service-validator";
+// import { ApiResponse } from "@/types/api.types";
+// import { IResponseCreateInviteDto } from "./invite.dto";
 
-export const InviteService = {
-  createInviteLink: async (
-    userId: string,
-    data: CreateInviteDto,
-  ): Promise<
-    IResponseCreateInviteDto | ApiResponse<IResponseCreateInviteDto, unknown>
-  > => {
-    const [user, group] = await Promise.all([
-      prisma.groupMember.findFirst({
-        where: {
-          memberId: userId,
-          groupId: data.groupId,
-        },
-      }),
+// export const InviteService = {
+//   createInviteLink: async (
+//     userId: string,
+//     data: CreateInviteDto,
+//   ): Promise<
+//     IResponseCreateInviteDto | ApiResponse<IResponseCreateInviteDto, unknown>
+//   > => {
+//     const [user, group] = await Promise.all([
+//       prisma.groupMember.findFirst({
+//         where: {
+//           memberId: userId,
+//           groupId: data.groupId,
+//         },
+//       }),
 
-      prisma.groupFamily.findFirst({
-        where: {
-          id: data.groupId,
-        },
-      }),
-    ]);
+//       prisma.groupFamily.findFirst({
+//         where: {
+//           id: data.groupId,
+//         },
+//       }),
+//     ]);
 
-    if (!user) {
-      throw new Error("Permission denied");
-    }
-    if (!group) {
-      throw new Error("Group not found");
-    }
+//     if (!user) {
+//       throw new Error("Permission denied");
+//     }
+//     if (!group) {
+//       throw new Error("Group not found");
+//     }
 
-    const invite = await prisma.invite.findFirst({
-      where: {
-        groupId: data.groupId,
-        senderId: userId,
-        expiresAt: { gt: new Date() },
-      },
-      select: {
-        token: true,
-      },
-    });
+//     const invite = await prisma.invite.findFirst({
+//       where: {
+//         groupId: data.groupId,
+//         senderId: userId,
+//         expiresAt: { gt: new Date() },
+//       },
+//       select: {
+//         token: true,
+//       },
+//     });
 
-    if (invite) {
-      const inviteLink = `/invite?token=${invite.token}`;
-      return { inviteLink: inviteLink } as IResponseCreateInviteDto;
-    }
-    const payload = `${userId}-${data.groupId}-${Date.now()}`;
-    const inviteToken = Buffer.from(payload).toString("base64");
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24);
-    await prisma.invite.create({
-      data: {
-        token: inviteToken,
-        groupId: data.groupId,
-        senderId: userId,
-        expiresAt: expiresAt,
-      },
-    });
+//     if (invite) {
+//       const inviteLink = `/invite?token=${invite.token}`;
+//       return { inviteLink: inviteLink } as IResponseCreateInviteDto;
+//     }
+//     const payload = `${userId}-${data.groupId}-${Date.now()}`;
+//     const inviteToken = Buffer.from(payload).toString("base64");
+//     const expiresAt = new Date();
+//     expiresAt.setHours(expiresAt.getHours() + 24);
+//     await prisma.invite.create({
+//       data: {
+//         token: inviteToken,
+//         groupId: data.groupId,
+//         senderId: userId,
+//         expiresAt: expiresAt,
+//       },
+//     });
 
-    const inviteLink = `/invite?token=${inviteToken}`;
-    return { inviteLink: inviteLink } as IResponseCreateInviteDto;
-  },
-};
+//     const inviteLink = `/invite?token=${inviteToken}`;
+//     return { inviteLink: inviteLink } as IResponseCreateInviteDto;
+//   },
+// };
