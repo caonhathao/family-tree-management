@@ -137,10 +137,21 @@ export function DataTable() {
         setData(logs);
         SetIsShow(true);
       } else {
-        console.log(logs.errors);
+        Toaster({
+          title: "Hành động thất bại",
+          description: (logs as ApiResponse<never, unknown>).message,
+          type: "error",
+          cancel: { label: "OK", onClick: () => {} },
+        });
       }
     } catch (err) {
       console.log(err);
+      Toaster({
+        title: "Hành động thất bại",
+        description: "Không thể tải lịch sử đăng nhập",
+        type: "error",
+        cancel: { label: "OK", onClick: () => {} },
+      });
     }
   };
 
@@ -164,7 +175,7 @@ export function DataTable() {
       } else {
         Toaster({
           title: "Hành động thất bại",
-          description: "Không thể sao chép vào bộ nhớ tạm",
+          description: (res as ApiResponse<never, unknown>).message,
           duration: 3000,
           icon: <IoMdCloseCircle />,
           cancel: { label: "OK", onClick: () => {} },
@@ -181,6 +192,12 @@ export function DataTable() {
       }
     } catch (error) {
       console.error("Failed to load table data:", error);
+      Toaster({
+        title: "Hành động thất bại",
+        description: "Không thể tải dữ liệu",
+        type: "error",
+        cancel: { label: "OK", onClick: () => {} },
+      });
     }
   };
 

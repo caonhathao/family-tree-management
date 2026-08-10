@@ -59,10 +59,10 @@ const FamilySettingDrawer = ({
       | ApiResponse<IResponseCreateInviteDto, unknown> =
       await CreateInviteLinkAction(payload);
     //console.log(res);
-    if (res && "error" in res) {
+    if (res && "errors" in res) {
       Toaster({
         title: "Lỗi",
-        description: res.error as string,
+        description: res.message,
         type: "error",
       });
     } else if (res && "inviteLink" in res) {

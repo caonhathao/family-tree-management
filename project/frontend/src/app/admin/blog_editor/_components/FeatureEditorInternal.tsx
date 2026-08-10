@@ -226,8 +226,19 @@ export default function FeatureEditorInternal({
       const savedData = await ejInstance.current.save();
       //console.log(savedData);
       //we get the header from saveData and slog from searchParams
-      const res: ApiResponse<IBlogDto, unknown> | IBlogDto | boolean =
-        await dispatch(saveBlogDraft(slug)).unwrap();
+      let res: ApiResponse<IBlogDto, unknown> | IBlogDto | boolean;
+      try {
+        res = await dispatch(saveBlogDraft(slug)).unwrap();
+      } catch (err) {
+        Toaster({
+          title: "Hành động thất bại",
+          description:
+            (typeof err === "string" && err) || "Failed to save blog",
+          type: "error",
+          cancel: { label: "OK", onClick: () => {} },
+        });
+        return;
+      }
       if (res && "id" in res && res.id?.length !== 0) {
         setData(savedData);
         ejInstance.current.readOnly.toggle(true);
@@ -239,8 +250,8 @@ export default function FeatureEditorInternal({
           cancel: { label: "OK", onClick: () => {} },
         });
         dispatch(syncSuccess(res));
-      } else if (res && "error" in res) {
-        if (res.error === "Unauthorized") {
+      } else if (res && "errors" in res) {
+        if (res.message === "Unauthorized") {
           const callbackUrl = encodeURIComponent(window.location.href);
           router.push(`/auth?mode=login&callbackUrl=${callbackUrl}`);
           return;
@@ -248,7 +259,7 @@ export default function FeatureEditorInternal({
 
         Toaster({
           title: "Hành động thất bại",
-          description: "Failed to save blog: " + res.error,
+          description: "Failed to save blog: " + res.message,
           type: "error",
           cancel: { label: "OK", onClick: () => {} },
         });

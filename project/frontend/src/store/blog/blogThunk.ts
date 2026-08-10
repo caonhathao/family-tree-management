@@ -22,8 +22,8 @@ export const saveBlogDraft = createAsyncThunk(
 
     const result = await updateBlogAction(draft);
 
-    if (result && "error" in result) {
-      return rejectWithValue(result.error);
+    if (result && "errors" in result) {
+      return rejectWithValue(result.message);
     } else dispatch(syncSuccess(result as IBlogDto));
 
     return result;

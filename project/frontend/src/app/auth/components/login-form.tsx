@@ -158,16 +158,33 @@ export function LoginForm({ className, callback, ...props }: LoginFormProps) {
                   <GoogleLogin
                     onSuccess={(credentialResponse) => {
                       startTransition(async () => {
-                        await loginGoogleAction(
+                        const res = await loginGoogleAction(
                           {
                             token: credentialResponse.credential!,
                           },
                           callback,
                         );
-                        // xử lý kết quả...
+                        if (res && "errors" in res) {
+                          Toaster({
+                            title: "Đăng nhập thất bại",
+                            description: res.message,
+                            type: "error",
+                            cancel: {
+                              label: "OK",
+                              onClick: () => {},
+                            },
+                          });
+                        }
                       });
                     }}
-                    onError={() => console.log("Login Failed")}
+                    onError={() =>
+                      Toaster({
+                        title: "Đăng nhập thất bại",
+                        description: "Đăng nhập Google thất bại",
+                        type: "error",
+                        cancel: { label: "OK", onClick: () => {} },
+                      })
+                    }
                   />
                 </GoogleOAuthProvider>
 

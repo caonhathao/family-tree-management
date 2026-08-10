@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { createNewBaseAuth } from "@/modules/auth/auth.actions";
 import { NewBaseAuthSchema } from "@/modules/auth/auth.client-schemas";
 import { INewBaseAuth } from "@/modules/auth/auth.dto";
-import { ISuccessResponse, IErrorResponse } from "@/types/base.types";
+import { ISuccessResponse } from "@/types/base.types";
+import { ApiResponse } from "@/types/api.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -48,22 +49,22 @@ export const BaseForm = () => {
     }
 
     startTransition(async () => {
-      const result: ISuccessResponse | IErrorResponse | undefined =
+      const result: ISuccessResponse | ApiResponse<never, unknown> | undefined =
         await createNewBaseAuth(values);
       // console.log(result);
 
       if (result) {
-        if (result.success == false && "error" in result) {
+        if (result.success == false) {
           Toaster({
             title: "Khởi tạo thất bại",
-            description: result.error as string,
+            description: result.message,
             type: "error",
             cancel: {
               label: "OK",
               onClick: () => {},
             },
           });
-        } else if (result.success == true && "message" in result) {
+        } else if (result.success == true) {
           Toaster({
             title: "Khởi tạo thành công",
             description: result.message,

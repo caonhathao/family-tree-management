@@ -12,10 +12,10 @@ export default async function ProfilePage() {
   const res: IResponseUserDto | ApiResponse<IResponseUserDto, unknown> =
     await getUserDetailAction("self");
 
-  if (!res || "error" in res) {
+  if (!res || "errors" in res) {
     return (
       <div className={"w-full h-full flex justify-center items-center"}>
-        <LoaderModule />
+        {res?.message || "Không thể tải thông tin người dùng"}
       </div>
     );
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Toaster } from "@/components/shared/toast";
 import { getUserDetailAction } from "@/modules/user/user.actions";
 import { IResponseUserDto } from "@/modules/user/user.dto";
 import { AppDispatch, RootState } from "@/store";
@@ -38,6 +39,13 @@ export function ProfileHydrator() {
             },
           };
           dispatch(setProfile(serializableProfile));
+        } else if (res && "errors" in res) {
+          Toaster({
+            title: "Có lỗi xảy ra",
+            description: res.message,
+            type: "error",
+            cancel: { label: "OK", onClick: () => {} },
+          });
         }
       } finally {
         inFlightRef.current = false;
