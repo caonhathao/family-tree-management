@@ -1,23 +1,43 @@
 "use client";
 
 import { Toaster } from "@/components/shared/toast";
+import { Button } from "@/components/ui/button";
+import { DeleteEventDialog } from "./forms/delete-event-dialog";
+import { EventForm } from "./forms/event-form";
 import { getEventsByGroupAction } from "@/modules/events/event.actions";
 import { EventType, IResponseEventDto } from "@/modules/events/event.dto";
+import { RootState } from "@/store";
 import { addDays, format, isToday, startOfDay } from "date-fns";
+import { Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FaRepeat } from "react-icons/fa6";
+import { useSelector } from "react-redux";
 import { ApiResponse } from "@/types/api.types";
 
-const EVENT_TYPE_LABEL: Record<EventType, string> = {
+export const EVENT_TYPE_LABEL: Record<EventType, string> = {
   DEATH_ANNIVERSARY: "Giỗ",
   BIRTHDAY: "Sinh nhật",
   WEDDING: "Kỷ niệm cưới",
   OTHER: "Khác",
 };
 
-export const FamilyEventsList = ({ groupId }: { groupId: string }) => {
+export const FamilyEventsList = ({
+  groupId,
+  canManage,
+}: {
+  groupId: string;
+  canManage: boolean;
+}) => {
   const [events, setEvents] = useState<IResponseEventDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openEventForm, setOpenEventForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<IResponseEventDto | null>(
+    null,
+  );
+  const [deletingEvent, setDeletingEvent] = useState<IResponseEventDto | null>(
+    null,
+  );
+  const refreshKey = useSelector((state: RootState) => state.events.refreshKey);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,7 +74,7 @@ export const FamilyEventsList = ({ groupId }: { groupId: string }) => {
     return () => {
       cancelled = true;
     };
-  }, [groupId]);
+  }, [groupId, refreshKey]);
 
   if (loading) {
     return (
@@ -87,11 +107,40 @@ export const FamilyEventsList = ({ groupId }: { groupId: string }) => {
                 "w-full flex flex-row justify-between items-center gap-2"
               }
             >
-              <p className={"text-sm font-medium sm:text-base"}>
-                {event.title}
-              </p>
-              {event.isRecurring ? (
-                <FaRepeat className={"text-muted-foreground"} />
+              <div className={"flex items-center gap-2"}>
+                <p className={"text-sm font-medium sm:text-base"}>
+                  {event.title}
+                </p>
+                {event.isRecurring ? (
+                  <FaRepeat className={"text-muted-foreground"} />
+                ) : null}
+              </div>
+              {canManage ? (
+                <div className={"flex items-center gap-1"}>
+                  <Button
+                    type={"button"}
+                    variant={"ghost"}
+                    size={"icon-sm"}
+                    title={"Chỉnh sửa"}
+                    className={"hover:cursor-pointer"}
+                    onClick={() => {
+                      setEditingEvent(event);
+                      setOpenEventForm(true);
+                    }}
+                  >
+                    <Pencil />
+                  </Button>
+                  <Button
+                    type={"button"}
+                    variant={"ghost"}
+                    size={"icon-sm"}
+                    title={"Xóa"}
+                    className={"text-destructive hover:cursor-pointer"}
+                    onClick={() => setDeletingEvent(event)}
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
               ) : null}
             </div>
             <div
@@ -109,6 +158,23 @@ export const FamilyEventsList = ({ groupId }: { groupId: string }) => {
           </div>
         );
       })}
+
+      <EventForm
+        groupId={groupId}
+        openState={openEventForm}
+        setOpenState={setOpenEventForm}
+        initialEvent={editingEvent}
+      />
+
+      {deletingEvent ? (
+        <DeleteEventDialog
+          event={deletingEvent}
+          openState={true}
+          setOpenState={(open) => {
+            if (!open) setDeletingEvent(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 };

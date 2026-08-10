@@ -94,7 +94,10 @@ export async function loginBaseAction(data: ILoginBaseDto) {
   }
 }
 
-export async function loginGoogleAction(token: IGoogleLoginDto) {
+export async function loginGoogleAction(
+  token: IGoogleLoginDto,
+  callback?: string,
+) {
   let isSuccess = false;
 
   try {
@@ -134,7 +137,7 @@ export async function loginGoogleAction(token: IGoogleLoginDto) {
     return ResponseFactory.handleError(err);
   }
   if (isSuccess) {
-    redirect("/");
+    redirect(callback || "/");
   }
 }
 

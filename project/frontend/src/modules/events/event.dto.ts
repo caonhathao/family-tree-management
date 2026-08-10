@@ -50,3 +50,31 @@ export interface IQueryEventsDto {
   page?: number;
   limit?: number;
 }
+
+export interface ICreateRecurrenceDto {
+  freq: RecurrenceFrequency;
+  interval?: number;
+  endsAt?: string;
+  count?: number;
+}
+
+export interface ICreateEventDto {
+  groupId: string;
+  title: string;
+  description?: string;
+  type?: EventType;
+  startTime: string;
+  endTime: string;
+  isRecurring?: boolean;
+  recurrence?: ICreateRecurrenceDto;
+}
+
+export interface IUpdateEventDto {
+  title?: string;
+  description?: string;
+  type?: EventType;
+  startTime?: string;
+  endTime?: string;
+  isRecurring?: boolean;
+  recurrence?: ICreateRecurrenceDto;
+}

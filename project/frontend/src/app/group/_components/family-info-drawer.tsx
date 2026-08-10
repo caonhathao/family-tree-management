@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { IResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
+import { MEMBER_ROLE } from "@prisma/client";
 import { RemoveFromGroupAction } from "@/modules/group-member/group-member.actions";
 import { RootState } from "@/store";
 import { useState } from "react";
@@ -41,6 +42,11 @@ export const FamilyInfoDrawer = ({
   const { profile } = useSelector((state: RootState) => state.user);
   const amILeader = data.groupMembers.some(
     (m) => m.member.userProfile.userId === profile.id && m.isLeader,
+  );
+  const canManage = data.groupMembers.some(
+    (m) =>
+      m.member.userProfile.userId === profile.id &&
+      (m.role === MEMBER_ROLE.OWNER || m.role === MEMBER_ROLE.EDITOR),
   );
 
   const [isUpdateInfo, setIsUpdateInfo] = useState<boolean>(false);
@@ -89,17 +95,19 @@ export const FamilyInfoDrawer = ({
                 <DrawerTitle className={"text-base sm:text-lg lg:text-xl"}>
                   {data.name || "Nhóm gia đình"}
                 </DrawerTitle>
-                <Button
-                  type={"button"}
-                  variant={"outline"}
-                  size={"icon"}
-                  className={
-                    "hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
-                  }
-                  onClick={() => setIsUpdateInfo(true)}
-                >
-                  <TbEdit />
-                </Button>
+                {amILeader ? (
+                  <Button
+                    type={"button"}
+                    variant={"outline"}
+                    size={"icon"}
+                    className={
+                      "hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
+                    }
+                    onClick={() => setIsUpdateInfo(true)}
+                  >
+                    <TbEdit />
+                  </Button>
+                ) : null}
                 {isUpdateInfo ? (
                   <FamilyInfoForm data={data} setIsUpdate={setIsUpdateInfo} />
                 ) : null}
@@ -223,7 +231,7 @@ export const FamilyInfoDrawer = ({
               </div>
             </TabsContent>
             <TabsContent value={"events"}>
-              <FamilyEventsList groupId={data.id} />
+              <FamilyEventsList groupId={data.id} canManage={canManage} />
             </TabsContent>
           </Tabs>
         </DrawerContent>

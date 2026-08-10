@@ -142,18 +142,7 @@ const FamilySettingDrawer = ({
             >
               Tạo lời mời
             </Button>
-            {amILeader === true || data.groupMembers.length != 1 ? (
-              <Button
-                type={"button"}
-                variant={"destructive"}
-                className={
-                  "hover:cursor-pointer border border-destructive/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
-                }
-                onClick={() => handleQuitGroup()}
-              >
-                Rời khỏi nhóm
-              </Button>
-            ) : (
+            {amILeader ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -194,6 +183,17 @@ const FamilySettingDrawer = ({
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            ) : (
+              <Button
+                type={"button"}
+                variant={"destructive"}
+                className={
+                  "hover:cursor-pointer border border-destructive/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+                }
+                onClick={() => handleQuitGroup()}
+              >
+                Rời khỏi nhóm
+              </Button>
             )}
             <DrawerClose asChild>
               <Button

@@ -2,13 +2,13 @@ import { MEMBER_ROLE } from "@prisma/client";
 
 export interface ICreateGroupFamilyDto {
   name: string;
-  description: string;
+  description?: string;
   role: MEMBER_ROLE;
 }
 
 export interface IUpdateGroupFamilyDto {
   name: string;
-  description: string;
+  description?: string;
 }
 
 export interface IResponseGroupFamilyDetailDto {

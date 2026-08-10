@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
 import { ServiceError } from "@/lib/res/service-error";
 import { ApiResponse, HttpStatus, StatusCode } from "@/types/api.types";
@@ -60,24 +60,26 @@ export async function apiRequest<T = unknown>(
     }
   }
 
-  const headers: Record<string, string> = { ...extraHeaders };
+  const requestHeaders: Record<string, string> = { ...extraHeaders };
 
   let bodyInit: BodyInit | undefined;
   if (formData) {
     bodyInit = formData;
   } else if (body !== undefined) {
-    headers["Content-Type"] = "application/json";
+    requestHeaders["Content-Type"] = "application/json";
     bodyInit = JSON.stringify(body);
   }
 
   if (auth) {
     let bearerToken = token;
     if (!bearerToken) {
-      const cookieStore = await cookies();
-      bearerToken = cookieStore.get("access_token")?.value;
+      const headerStore = await headers();
+      bearerToken =
+        headerStore.get("x-access-token") ||
+        (await cookies()).get("access_token")?.value;
     }
     if (bearerToken) {
-      headers["Authorization"] = `Bearer ${bearerToken}`;
+      requestHeaders["Authorization"] = `Bearer ${bearerToken}`;
     }
   }
 
@@ -85,13 +87,13 @@ export async function apiRequest<T = unknown>(
   try {
     response = await fetch(url, {
       method,
-      headers,
+      headers: requestHeaders,
       body: bodyInit,
       cache: "no-store",
     });
   } catch {
     throw new ServiceError(
-      "Không thể kết nối tới backend server",
+      "Không thể kết nối tới server",
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }

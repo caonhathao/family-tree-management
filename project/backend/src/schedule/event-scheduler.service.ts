@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { addDays } from 'date-fns';
 import { EVENT_INSTANCE_STATUS } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RecurrenceService } from '../modules/events/recurrence.service';
-import { EventNotificationService } from '../modules/notifications/event-notification.service';
+import { EventEmailService } from '../modules/notifications/event-email.service';
 
 const ROLL_FORWARD_DAYS = 365;
 
@@ -13,16 +13,19 @@ export class EventSchedulerService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly recurrenceService: RecurrenceService,
-    private readonly eventNotificationService: EventNotificationService,
+    private readonly eventEmailService: EventEmailService,
   ) {}
 
   private readonly logger = new Logger(EventSchedulerService.name);
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  // TEMP: chạy mỗi phút để test email.
+  // Revert về: @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, { timeZone: 'Asia/Ho_Chi_Minh' })
+  @Cron('*/1 * * * *', { timeZone: 'Asia/Ho_Chi_Minh' })
   async handleEventLifecycle() {
     await this.rollForwardRecurringInstances();
     await this.updateInstanceStatuses();
-    await this.eventNotificationService.notifyForTodayInstances();
+    await this.eventEmailService.sendReminderEmails();
+    await this.eventEmailService.sendTodayEmails();
   }
 
   async rollForwardRecurringInstances() {

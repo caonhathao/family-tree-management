@@ -273,14 +273,49 @@ export class AuthService {
       //if user is eixist, generate new token and session
       //if not, register account
       if (user) {
-        const payload = {
+        const jwtPayload = {
           id: user.id,
           role: user.role,
         };
-        const tokens = await this.getTokens(payload);
+        const tokens = await this.getTokens(jwtPayload);
         const safeUserAgent = userAgent || 'unknow';
-        await this.prisma.$transaction([
-          this.prisma.session.upsert({
+        let accountId = user.accounts[0]?.id;
+
+        await this.prisma.$transaction(async (tx) => {
+          // Nếu user đã đăng ký bằng email/password từ trước (chưa có tài khoản Google),
+          // liên kết thêm tài khoản Google để không crash ở user.accounts[0].id.
+          if (!accountId) {
+            const linked = await tx.account.create({
+              data: {
+                userId: user.id,
+                authProvider: {
+                  create: { provider: PROVIDERS.GOOGLE },
+                },
+              },
+              select: { id: true },
+            });
+            accountId = linked.id;
+
+            // Backfill profile từ Google nếu tài khoản thủ công còn thiếu
+            if (!user.userProfile?.fullName || !user.userProfile?.avatar) {
+              const profileData = {
+                ...(!user.userProfile?.fullName && payload.name
+                  ? { fullName: payload.name }
+                  : {}),
+                ...(!user.userProfile?.avatar && payload.picture
+                  ? { avatar: payload.picture }
+                  : {}),
+              };
+              if (Object.keys(profileData).length > 0) {
+                await tx.userProfile.update({
+                  where: { userId: user.id },
+                  data: profileData,
+                });
+              }
+            }
+          }
+
+          await tx.session.upsert({
             where: {
               userId_userAgent: {
                 userId: user.id,
@@ -302,18 +337,18 @@ export class AuthService {
               userAgent: safeUserAgent,
               ipAddress: ipAddress,
             },
-          }),
-          this.prisma.authLog.create({
+          });
+          await tx.authLog.create({
             data: {
               userId: user.id,
-              accountId: user.accounts[0].id,
+              accountId,
               authBy: PROVIDERS.GOOGLE,
               type: AUTH_TYPE.LOGIN,
               ipAddress: ipAddress,
               userAgent: userAgent,
             },
-          }),
-        ]);
+          });
+        });
         return {
           user: {
             id: user.id,

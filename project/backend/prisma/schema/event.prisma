@@ -34,6 +34,7 @@ model Event {
     creator            User                 @relation(fields: [createBy], references: [id], onDelete: Cascade)
     instances          EventInstance[]
     groupNotifications GroupNotification[]
+    emailLogs          EmailLog[]
     createdAt          DateTime             @default(now())
     updatedAt          DateTime             @updatedAt
 
@@ -64,6 +65,7 @@ model EventInstance {
     endTime            DateTime              @db.Timestamp(3)
     status             EVENT_INSTANCE_STATUS @default(SCHEDULED)
     groupNotifications GroupNotification[]
+    emailLogs          EmailLog[]
     createdAt          DateTime              @default(now())
     updatedAt          DateTime              @updatedAt
 

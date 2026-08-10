@@ -5,6 +5,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import 'tsconfig-paths/register';
 
+process.env.TZ = 'Asia/Ho_Chi_Minh';
+
 // console.log('--- TEST LOG ---'); // Đặt ở đây
 // console.log('PORT:', process.env.PORT);
 async function bootstrap() {

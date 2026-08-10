@@ -123,6 +123,20 @@ export class EnvConfigService {
       ''
     );
   }
+  get resendApiKey(): string {
+    return (
+      this.configService?.get<string>('resend.apiKey') ||
+      process.env.RESEND_API_KEY ||
+      ''
+    );
+  }
+  get resendFrom(): string {
+    return (
+      this.configService?.get<string>('resend.from') ||
+      process.env.MAIL_FROM ||
+      'Family Management <onboarding@resend.dev>'
+    );
+  }
   get allEnvVariables() {
     return {
       port: this.post,
@@ -142,6 +156,8 @@ export class EnvConfigService {
       cloudinaryName: this.cloudinaryName,
       clientDomain: this.clientDomain,
       googleClientId: this.googleClientId,
+      resendApiKey: this.resendApiKey,
+      resendFrom: this.resendFrom,
     };
   }
 }
