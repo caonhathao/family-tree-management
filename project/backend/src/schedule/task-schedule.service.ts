@@ -7,7 +7,9 @@ export class TasksService {
   constructor(private readonly prisma: PrismaService) {}
   private readonly logger = new Logger(TasksService.name);
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
+    timeZone: 'Asia/Ho_Chi_Minh',
+  })
   async handleCleanupInvites() {
     this.logger.debug('Starting to clean up exprired invite tokens');
     const deleteResult = await this.prisma.invite.deleteMany({

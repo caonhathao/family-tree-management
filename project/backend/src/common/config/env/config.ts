@@ -25,4 +25,8 @@ export default () => ({
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
   },
+  resend: {
+    apiKey: process.env.RESEND_API_KEY ?? '',
+    from: process.env.MAIL_FROM ?? 'Family Management <onboarding@resend.dev>',
+  },
 });

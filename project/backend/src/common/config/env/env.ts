@@ -28,4 +28,7 @@ export const envValidationSchema = Joi.object({
   CLOUDINARY_URL: Joi.string().required(),
   CLIENT_DOMAIN: Joi.string().uri().required(),
   GOOGLE_CLIENT_ID: Joi.string().required(),
+
+  RESEND_API_KEY: Joi.string().allow('').optional(),
+  MAIL_FROM: Joi.string().default('Family Management <onboarding@resend.dev>'),
 });

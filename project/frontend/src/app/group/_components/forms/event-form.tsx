@@ -526,17 +526,15 @@ export const EventForm = ({
                           type={"button"}
                           variant={"ghost"}
                           size={"icon-xs"}
-                          className={
-                            "hover:bg-transparent hover:cursor-help"
-                          }
+                          className={"hover:bg-transparent hover:cursor-help"}
                         >
                           <Info />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className={"max-w-xs text-left"}>
-                        Lặp lại cách N chu kỳ một lần theo tần suất đã chọn.
-                        Ví dụ: chọn &quot;Hằng tuần&quot; với N = 2 nghĩa là 2
-                        tuần 1 lần.
+                        Lặp lại cách N chu kỳ một lần theo tần suất đã chọn. Ví
+                        dụ: chọn &quot;Hằng tuần&quot; với N = 2 nghĩa là 2 tuần
+                        1 lần.
                       </TooltipContent>
                     </Tooltip>
                   </div>

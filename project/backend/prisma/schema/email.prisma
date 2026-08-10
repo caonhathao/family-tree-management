@@ -1,0 +1,31 @@
+enum EMAIL_KIND {
+    TODAY
+    REMINDER
+}
+
+enum EMAIL_STATUS {
+    SENT
+    FAILED
+}
+
+model EmailLog {
+    id              String         @id @default(uuid()) @db.Uuid
+    userId          String         @db.Uuid
+    user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+    eventId         String         @db.Uuid
+    event           Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    eventInstanceId String         @db.Uuid
+    eventInstance   EventInstance  @relation(fields: [eventInstanceId], references: [id], onDelete: Cascade)
+    kind            EMAIL_KIND
+    to              String
+    subject         String
+    status          EMAIL_STATUS
+    error           String?
+    sentAt          DateTime?
+    createdAt       DateTime       @default(now())
+
+    @@unique([eventInstanceId, userId, kind])
+    @@index([userId, kind])
+    @@index([eventInstanceId, kind])
+    @@map("email_log")
+}

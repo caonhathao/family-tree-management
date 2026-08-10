@@ -23,7 +23,8 @@ model User {
     events          Event[]
     activityLogs    ActivityLog[]
     groupNotifications GroupNotification[]
-    groupMembers    GroupMember[]
+    emailLogs          EmailLog[]
+    groupMembers       GroupMember[]
     sentInvites     Invite[]       @relation("SentInvites")
     receivedInvites Invite[]       @relation("ReceivedInvites")
     blogs           Blog[]
