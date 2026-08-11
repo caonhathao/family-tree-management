@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,9 +17,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { IResponseLinkProvidersDto } from "@/modules/user/user.dto";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { MdAddLink } from "react-icons/md";
 import { MdKeyboardArrowRight } from "react-icons/md";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { EnvConfig } from "@/lib/env/env-config.lib";
+import { linkGoogleAction } from "@/modules/auth/auth.actions";
+import { Toaster } from "@/components/shared/toast";
+import { useRouter } from "next/navigation";
 import { BaseForm } from "./base-auth";
 
 const items = [
@@ -29,6 +36,14 @@ const AddNewAuthForm = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
   const [provider, setProvider] = useState<string>("");
   const [open, setOpen] = useState<boolean>(false);
   const [move, setMove] = useState<boolean>(false);
+  const [, startTransition] = useTransition();
+  const router = useRouter();
+
+  const closeDialog = () => {
+    setOpen(false);
+    setProvider("");
+    setMove(false);
+  };
 
   return (
     <Dialog
@@ -98,8 +113,52 @@ const AddNewAuthForm = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
               </Button>
             ) : null}
           </div>
-        ) : (
+        ) : provider === "USER" ? (
           <BaseForm />
+        ) : (
+          <GoogleOAuthProvider clientId={EnvConfig.googleClientId}>
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                startTransition(async () => {
+                  const res = await linkGoogleAction({
+                    token: credentialResponse.credential!,
+                  });
+
+                  if (res && "success" in res && res.success === false) {
+                    Toaster({
+                      title: "Liên kết thất bại",
+                      description: res.message,
+                      type: "error",
+                      cancel: {
+                        label: "OK",
+                        onClick: () => {},
+                      },
+                    });
+                  } else {
+                    Toaster({
+                      title: "Liên kết thành công",
+                      description: res?.message,
+                      type: "success",
+                      cancel: {
+                        label: "OK",
+                        onClick: () => {},
+                      },
+                    });
+                    closeDialog();
+                    router.refresh();
+                  }
+                });
+              }}
+              onError={() =>
+                Toaster({
+                  title: "Liên kết thất bại",
+                  description: "Đăng nhập Google thất bại",
+                  type: "error",
+                  cancel: { label: "OK", onClick: () => {} },
+                })
+              }
+            />
+          </GoogleOAuthProvider>
         )}
       </DialogContent>
     </Dialog>

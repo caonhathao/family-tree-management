@@ -34,6 +34,21 @@ export interface INewBaseAuth {
   confirmPassword: string;
 }
 
+export interface IChangePasswordDto {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface IChangeEmailDto {
+  newEmail: string;
+  password: string;
+}
+
+export interface IUnlinkProviderDto {
+  accountId: string;
+}
+
 export interface IGoogleLoginDto {
   token: string;
 }

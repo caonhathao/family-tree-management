@@ -1,27 +1,7 @@
-import { IsDateString, IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 
 export class UpdateUserDto {
-  @ApiProperty({
-    description: 'User email',
-    example: 'user@example.com',
-    required: false,
-  })
-  @IsString()
-  @IsEmail({}, { message: InvalidMessageResponse.EMAIL_INCORRECT })
-  @IsOptional()
-  email?: string;
-
-  @ApiProperty({
-    description: 'User password',
-    example: 'newPassword123',
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  password?: string;
-
   @ApiProperty({
     description: 'User full name',
     example: 'John Doe',
@@ -47,4 +27,22 @@ export class UpdateUserDto {
   })
   @IsOptional()
   biography?: string;
+
+  @ApiProperty({
+    description: 'User memorable name',
+    example: 'Nicky',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  memorableName?: string;
+
+  @ApiProperty({
+    description: 'User address',
+    example: 'Ho Chi Minh City',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  address?: string;
 }

@@ -7,6 +7,9 @@ import {
   IAuthResponseDto,
   IGoogleLoginDto,
   INewBaseAuth,
+  IChangePasswordDto,
+  IChangeEmailDto,
+  IUnlinkProviderDto,
 } from "./auth.dto";
 import { cookies, headers } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
@@ -219,6 +222,80 @@ export async function createNewBaseAuth(data: INewBaseAuth) {
       body: data,
     });
     //console.log(res);
+    return res;
+  } catch (err) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
+export async function changePasswordAction(data: IChangePasswordDto) {
+  try {
+    const headerList = await headers();
+    const currentUserId = headerList.get("X-User-Id");
+    if (!currentUserId) {
+      throw new Error("Unauthorized");
+    }
+    const cookieStore = await cookies();
+    const refreshToken = cookieStore.get("refresh_token")?.value;
+    const res = await apiRequest(apiClient.auth.changePassword.url, {
+      method: apiClient.auth.changePassword.method,
+      body: data,
+      headers: refreshToken ? { "x-session-token": refreshToken } : {},
+    });
+    return res;
+  } catch (err) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
+export async function changeEmailAction(data: IChangeEmailDto) {
+  try {
+    const headerList = await headers();
+    const currentUserId = headerList.get("X-User-Id");
+    if (!currentUserId) {
+      throw new Error("Unauthorized");
+    }
+    const cookieStore = await cookies();
+    const refreshToken = cookieStore.get("refresh_token")?.value;
+    const res = await apiRequest(apiClient.auth.changeEmail.url, {
+      method: apiClient.auth.changeEmail.method,
+      body: data,
+      headers: refreshToken ? { "x-session-token": refreshToken } : {},
+    });
+    return res;
+  } catch (err) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
+export async function unlinkProviderAction(data: IUnlinkProviderDto) {
+  try {
+    const headerList = await headers();
+    const currentUserId = headerList.get("X-User-Id");
+    if (!currentUserId) {
+      throw new Error("Unauthorized");
+    }
+    const res = await apiRequest(apiClient.auth.unlinkProvider.url, {
+      method: apiClient.auth.unlinkProvider.method,
+      body: data,
+    });
+    return res;
+  } catch (err) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
+export async function linkGoogleAction(token: IGoogleLoginDto) {
+  try {
+    const headerList = await headers();
+    const currentUserId = headerList.get("X-User-Id");
+    if (!currentUserId) {
+      throw new Error("Unauthorized");
+    }
+    const res = await apiRequest(apiClient.auth.linkGoogle.url, {
+      method: apiClient.auth.linkGoogle.method,
+      body: token,
+    });
     return res;
   } catch (err) {
     return ResponseFactory.handleError(err);

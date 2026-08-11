@@ -4,6 +4,8 @@ export interface IUserInfoDto {
   fullName?: string;
   dateOfBirth?: string;
   biography?: string;
+  memorableName?: string;
+  address?: string;
 }
 
 export interface IUserSecuityDto {

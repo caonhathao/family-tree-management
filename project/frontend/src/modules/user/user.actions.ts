@@ -17,17 +17,26 @@ import { apiClient } from "@/lib/api/api-client.lib";
 export async function UpdateUserInfoAction(
   userId: string,
   data: IUserInfoDto,
+  avatar?: File,
 ): Promise<IResponseUserDto | ApiResponse<IResponseUserDto, unknown>> {
   try {
     if (!userId) {
       throw new Error("Unauthorized");
     }
 
+    const formData = new FormData();
+    if (data.fullName) formData.append("fullName", data.fullName);
+    if (data.dateOfBirth) formData.append("dateOfBirth", data.dateOfBirth);
+    if (data.biography) formData.append("biography", data.biography);
+    formData.append("memorableName", data.memorableName ?? "");
+    formData.append("address", data.address ?? "");
+    if (avatar) formData.append("avatar", avatar);
+
     const res = await apiRequest<IResponseUserDto>(
       apiClient.user.updateUser.url(userId),
       {
         method: apiClient.user.updateUser.method,
-        body: data,
+        formData,
       },
     );
 

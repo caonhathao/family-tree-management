@@ -1,5 +1,5 @@
 "use client";
-import { AppDispatch } from "@/store";
+import { AppDispatch, RootState } from "@/store";
 import Image from "next/image";
 import unknownImage from "../../../../public/img/unknow.webp";
 import { Button } from "@/components/ui/button";
@@ -10,15 +10,19 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import UpdateUserForm from "./components/forms/update-user";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { IResponseUserDto } from "@/modules/user/user.dto";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setProfile } from "@/store/user/userSlice";
 import { useRouter } from "next/navigation";
 import { navigateTo } from "@/lib/utils/navigate.utils";
 import { Separator } from "@/components/ui/separator";
 import { FaArrowRight } from "react-icons/fa6";
 import { ApiResponse } from "@/types/api.types";
+import { Toaster } from "@/components/shared/toast";
+
+const MAX_AVATAR_SIZE_MB = 2;
+const AVATAR_ALLOWED_TYPES = ["image/jpeg", "image/webp"];
 
 const ProfileContent = ({
   data,
@@ -26,6 +30,58 @@ const ProfileContent = ({
   data: IResponseUserDto | ApiResponse<IResponseUserDto, unknown>;
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const { profile } = useSelector((state: RootState) => state.user);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const clearAvatarSelection = () => {
+    setAvatarFile(null);
+    setAvatarPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    e.target.value = "";
+    if (!file) return;
+
+    if (!AVATAR_ALLOWED_TYPES.includes(file.type)) {
+      console.log("Invalid avatar type:", file.type);
+      Toaster({
+        title: "Không thể đổi ảnh",
+        description: "Chỉ chấp nhận ảnh .jpg, .jpeg hoặc .webp",
+        type: "error",
+        cancel: {
+          label: "OK",
+          onClick: () => {},
+        },
+      });
+      return;
+    }
+
+    if (file.size / (1024 * 1024) > MAX_AVATAR_SIZE_MB) {
+      console.log("Avatar too large:", file.size);
+      Toaster({
+        title: "Không thể đổi ảnh",
+        description: `Ảnh tối đa ${MAX_AVATAR_SIZE_MB}MB`,
+        type: "error",
+        cancel: {
+          label: "OK",
+          onClick: () => {},
+        },
+      });
+      return;
+    }
+
+    setAvatarPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+    setAvatarFile(file);
+  };
 
   useEffect(() => {
     if (data && "userProfile" in data) {
@@ -43,12 +99,10 @@ const ProfileContent = ({
   }, [data, dispatch]);
 
   const avatar = useMemo(() => {
-    if (data && "userProfile" in data && data.userProfile.avatar) {
-      return data.userProfile.avatar;
-    } else {
-      return unknownImage.src;
-    }
-  }, [data]);
+    if (avatarPreview) return avatarPreview;
+    if (profile?.userProfile?.avatar) return profile.userProfile.avatar;
+    return unknownImage.src;
+  }, [profile, avatarPreview]);
 
   const availableData = useMemo(() => {
     if (data && !("errors" in data)) {
@@ -90,12 +144,20 @@ const ProfileContent = ({
                 className={
                   "absolute top-0 right-0 z-10 hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
                 }
+                onClick={() => fileInputRef.current?.click()}
               >
                 <FaExchangeAlt />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Đổi ảnh</TooltipContent>
           </Tooltip>
+          <input
+            ref={fileInputRef}
+            type={"file"}
+            accept={".jpg,.jpeg,.webp,image/jpeg,image/webp"}
+            className={"hidden"}
+            onChange={handleAvatarChange}
+          />
           <Image
             src={avatar}
             sizes={"(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 30vw"}
@@ -110,6 +172,8 @@ const ProfileContent = ({
           <UpdateUserForm
             className={"w-full bg-background"}
             data={availableData}
+            avatar={avatarFile}
+            onAvatarCleared={clearAvatarSelection}
           />
         </div>
       </div>
@@ -172,6 +236,12 @@ const ProfileContent = ({
             <Button
               variant={"outline"}
               className={"border hover:shadow-md active:scale-[0.98]"}
+              onClick={() =>
+                navigateTo({
+                  router: router,
+                  url: "/user/secure",
+                })
+              }
             >
               <FaArrowRight />
             </Button>

@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "npx prisma generate && pnpm nest build",
+    "build": "npx prisma generate && node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && pnpm nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "pnpm nest start --watch",
@@ -93,10 +93,19 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)sx?$": "ts-jest"
+      "^.+\\.(t|j)sx?$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "module": "commonjs",
+            "moduleResolution": "node"
+          }
+        }
+      ]
     },
     "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/$1"
+      "^src/(.*)$": "<rootDir>/$1",
+      "event-notification\\.email\\.js$": "<rootDir>/modules/notifications/templates/event-notification.email.tsx"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

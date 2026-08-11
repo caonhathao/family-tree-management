@@ -1,7 +1,7 @@
 model Session {
     id             String   @id @default(uuid()) @db.Uuid
     expiresAt      DateTime
-    token          String
+    token          String   @unique
     ipAddress      String?
     userAgent      String?
     impersonatedBy String?
@@ -10,7 +10,6 @@ model Session {
     userId         String   @db.Uuid
     users          User     @relation(fields: [userId], references: [id])
 
-    @@unique([userId, userAgent])
     @@index([userId])
     @@map("session")
 }

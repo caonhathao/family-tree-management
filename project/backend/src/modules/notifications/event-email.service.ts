@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { addDays, endOfDay, format, startOfDay } from 'date-fns';
 import { createElement } from 'react';
-import { render } from 'react-email';
 import {
   EMAIL_KIND,
   EMAIL_STATUS,
@@ -11,7 +10,6 @@ import {
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ResendService } from 'src/common/config/resend/resend.service';
 import { EnvConfigService } from 'src/common/config/env/env-config.service';
-import { EventNotificationEmail } from './templates/event-notification.email';
 
 const EVENT_TYPE_LABEL: Record<EVENT_TYPE, string> = {
   DEATH_ANNIVERSARY: 'Giỗ',
@@ -128,6 +126,12 @@ export class EventEmailService {
 
     let html: string;
     try {
+      // Lazy-load react-email để không nằm trong dependency graph khi boot
+      const { render } = (await import('react-email')) as {
+        render: (element: ReturnType<typeof createElement>) => Promise<string>;
+      };
+      const { EventNotificationEmail } =
+        await import('./templates/event-notification.email.js');
       html = await render(
         createElement(EventNotificationEmail, {
           eventTitle: event.title,

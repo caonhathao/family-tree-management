@@ -22,6 +22,9 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { CreateBaseAuthDto } from './dto/create-base-auth.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ChangeEmailDto } from './dto/change-email.dto';
+import { UnlinkProviderDto } from './dto/unlink-provider.dto';
 
 // Verifies the username and password.
 
@@ -148,6 +151,88 @@ export class AuthController {
       data: result,
       code: HttpStatus.OK,
       message: ValidMessageResponse.CREATED,
+    });
+  }
+
+  @Post('change-password')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Change password of current user' })
+  @ApiResponse({ status: 200, description: 'Change password successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async changePassword(
+    @GetCurrentUserId() userId: string,
+    @Body() data: ChangePasswordDto,
+    @Headers('x-session-token') currentToken: string,
+  ) {
+    const result = await this.authService.changePassword(
+      userId,
+      data,
+      currentToken,
+    );
+
+    return ResponseFactory.success({
+      data: result,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.UPDATED,
+    });
+  }
+
+  @Post('change-email')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Change email of current user (base auth)' })
+  @ApiResponse({ status: 200, description: 'Change email successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async changeEmail(
+    @GetCurrentUserId() userId: string,
+    @Body() data: ChangeEmailDto,
+    @Headers('x-session-token') currentToken: string,
+  ) {
+    const result = await this.authService.changeEmail(
+      userId,
+      data,
+      currentToken,
+    );
+
+    return ResponseFactory.success({
+      data: result,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.UPDATED,
+    });
+  }
+
+  @Post('unlink-provider')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Unlink an auth provider of current user' })
+  @ApiResponse({ status: 200, description: 'Unlink provider successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async unlinkProvider(
+    @GetCurrentUserId() userId: string,
+    @Body() data: UnlinkProviderDto,
+  ) {
+    const result = await this.authService.unlinkProvider(userId, data);
+
+    return ResponseFactory.success({
+      data: result,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.UPDATED,
+    });
+  }
+
+  @Post('link-google')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Link a google account to current user' })
+  @ApiResponse({ status: 200, description: 'Link google successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async linkGoogle(
+    @GetCurrentUserId() userId: string,
+    @Body() data: GoogleLoginDto,
+  ) {
+    const result = await this.authService.linkGoogle(userId, data);
+
+    return ResponseFactory.success({
+      data: result,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.UPDATED,
     });
   }
 
