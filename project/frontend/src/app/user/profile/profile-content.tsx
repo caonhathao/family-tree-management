@@ -253,6 +253,12 @@ const ProfileContent = ({
               className={
                 "border border-destructive/20 hover:shadow-md active:scale-[0.98]"
               }
+              onClick={() =>
+                navigateTo({
+                  router: router,
+                  url: "/user/secure",
+                })
+              }
             >
               <FaArrowRight />
             </Button>

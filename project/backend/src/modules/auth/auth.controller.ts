@@ -8,6 +8,7 @@ import {
   Headers,
   HttpCode,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { ResponseFactory } from 'src/common/factories/response.factory';
@@ -25,6 +26,9 @@ import { CreateBaseAuthDto } from './dto/create-base-auth.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangeEmailDto } from './dto/change-email.dto';
 import { UnlinkProviderDto } from './dto/unlink-provider.dto';
+import { VerifyPasswordDto } from './dto/verify-password.dto';
+import { VerifyGoogleDto } from './dto/verify-google.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 
 // Verifies the username and password.
 
@@ -233,6 +237,68 @@ export class AuthController {
       data: result,
       code: HttpStatus.OK,
       message: ValidMessageResponse.UPDATED,
+    });
+  }
+
+  @Post('verify-password')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Verify current user password to view login info' })
+  @ApiResponse({ status: 200, description: 'Password verified successfully' })
+  @ApiResponse({ status: 401, description: 'Password incorrect' })
+  async verifyPassword(
+    @GetCurrentUserId() userId: string,
+    @Body() data: VerifyPasswordDto,
+  ) {
+    const result = await this.authService.verifyPassword(userId, data);
+
+    return ResponseFactory.success({
+      data: result,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.GETTED,
+    });
+  }
+
+  @Post('verify-google')
+  @UseGuards(AtGuard)
+  @ApiOperation({
+    summary: 'Verify current user google account to view login info',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Google account verified successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async verifyGoogle(
+    @GetCurrentUserId() userId: string,
+    @Body() data: VerifyGoogleDto,
+  ) {
+    const result = await this.authService.verifyGoogle(userId, data);
+
+    return ResponseFactory.success({
+      data: result,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.GETTED,
+    });
+  }
+
+  @Delete('account')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Delete current user account permanently' })
+  @ApiResponse({
+    status: 200,
+    description: 'Account deleted successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized or wrong password' })
+  async deleteAccount(
+    @GetCurrentUserId() userId: string,
+    @Body() data: DeleteAccountDto,
+  ) {
+    const result = await this.authService.deleteAccount(userId, data);
+
+    return ResponseFactory.success({
+      data: result,
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.DELETED,
     });
   }
 

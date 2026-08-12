@@ -34,6 +34,18 @@ export const apiClient = {
       url: "/api/auth/link-google",
       method: "POST" as HttpMethod,
     },
+    verifyPassword: {
+      url: "/api/auth/verify-password",
+      method: "POST" as HttpMethod,
+    },
+    verifyGoogle: {
+      url: "/api/auth/verify-google",
+      method: "POST" as HttpMethod,
+    },
+    deleteAccount: {
+      url: "/api/auth/account",
+      method: "DELETE" as HttpMethod,
+    },
   },
   family: {
     syncFamily: {

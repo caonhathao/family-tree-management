@@ -1,5 +1,5 @@
 "use server";
-import { getUserFromUserId, getUserFromToken } from "@/lib/middleware/auth.lib";
+import { getUserFromToken } from "@/lib/middleware/auth.lib";
 import { IUserSession } from "@/types/auth.types";
 import { cookies, headers } from "next/headers";
 import { AdminSidebarClient } from "./admin-sidebar-client";
@@ -9,7 +9,6 @@ export async function AdminSidebarServer() {
   const cookieStore = await cookies();
   const headersStore = await headers();
 
-  const userIdFromHeader = headersStore.get("x-user-id");
   let token =
     headersStore.get("x-access-token") ||
     cookieStore.get("access_token")?.value;

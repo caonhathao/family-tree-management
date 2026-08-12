@@ -16,7 +16,11 @@ import { CreateBaseAuthDto } from './dto/create-base-auth.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangeEmailDto } from './dto/change-email.dto';
 import { UnlinkProviderDto } from './dto/unlink-provider.dto';
-import { AUTH_TYPE, Prisma, PROVIDERS } from '@prisma/client';
+import { VerifyPasswordDto } from './dto/verify-password.dto';
+import { VerifyGoogleDto } from './dto/verify-google.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
+import { AUTH_TYPE, MEMBER_ROLE, Prisma, PROVIDERS } from '@prisma/client';
+import { CloudinaryService } from 'src/common/config/cloudinary/cloudinary.service';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +28,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private envConfig: EnvConfigService,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   async register(
@@ -725,6 +730,182 @@ export class AuthService {
       console.log('error at link google service:', err);
       throw err;
     }
+  }
+
+  async verifyPassword(userId: string, data: VerifyPasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        accounts: {
+          where: { authProvider: { provider: PROVIDERS.USER } },
+          select: { id: true, password: true },
+        },
+      },
+    });
+    if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
+
+    const baseAccount = user.accounts[0];
+    if (!baseAccount?.password)
+      throw new BusinessException(ErrorCode.NOT_EXIST);
+
+    const isMatch = await bcrypt.compare(data.password, baseAccount.password);
+    if (!isMatch)
+      throw new BusinessException(ErrorCode.PASSWORD_INCORRECT, {
+        httpStatus: HttpStatus.UNAUTHORIZED,
+      });
+
+    return this.getLoginInfo(userId);
+  }
+
+  async verifyGoogle(userId: string, data: VerifyGoogleDto) {
+    const payload = await this.verifyGoogleToken(data.token);
+    const googleEmail = payload.email as string;
+
+    const account = await this.prisma.account.findFirst({
+      where: {
+        userId,
+        email: { equals: googleEmail, mode: 'insensitive' },
+        authProvider: { provider: PROVIDERS.GOOGLE },
+      },
+      select: { id: true },
+    });
+    if (!account) throw new BusinessException(ErrorCode.NOT_EXIST);
+
+    return this.getLoginInfo(userId);
+  }
+
+  async deleteAccount(userId: string, data: DeleteAccountDto) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          userProfile: { select: { avatar: true } },
+          accounts: {
+            where: { authProvider: { provider: PROVIDERS.USER } },
+            select: { password: true },
+            take: 1,
+          },
+        },
+      });
+      if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
+
+      // Yêu cầu nhập mật khẩu nếu tài khoản có đăng nhập bằng mật khẩu
+      const baseAccount = user.accounts[0];
+      if (baseAccount?.password) {
+        if (!data.password) {
+          throw new BusinessException(ErrorCode.PASSWORD_INCORRECT, {
+            httpStatus: HttpStatus.UNAUTHORIZED,
+          });
+        }
+        const isMatch = await bcrypt.compare(
+          data.password,
+          baseAccount.password,
+        );
+        if (!isMatch) {
+          throw new BusinessException(ErrorCode.PASSWORD_INCORRECT, {
+            httpStatus: HttpStatus.UNAUTHORIZED,
+          });
+        }
+      }
+
+      await this.prisma.$transaction(async (tx) => {
+        // Chuyển quyền leader cho thành viên khác trước khi xóa
+        const ledGroups = await tx.groupMember.findMany({
+          where: { memberId: userId, isLeader: true },
+          select: {
+            group: {
+              select: {
+                id: true,
+                family: { select: { id: true, ownerId: true } },
+                groupMembers: {
+                  select: { id: true, memberId: true, role: true },
+                },
+              },
+            },
+          },
+        });
+
+        for (const { group } of ledGroups) {
+          const otherMembers = group.groupMembers.filter(
+            (member) => member.memberId !== userId,
+          );
+          const successor =
+            otherMembers.find((member) => member.role === MEMBER_ROLE.OWNER) ||
+            otherMembers.find((member) => member.role === MEMBER_ROLE.EDITOR) ||
+            otherMembers[0];
+
+          if (successor) {
+            await tx.groupMember.update({
+              where: { id: successor.id },
+              data: { role: MEMBER_ROLE.OWNER, isLeader: true },
+            });
+            if (group.family && group.family.ownerId === userId) {
+              await tx.family.update({
+                where: { id: group.family.id },
+                data: { ownerId: successor.memberId },
+              });
+            }
+          } else {
+            // Không còn ai trong nhóm → xóa luôn cả nhóm
+            await tx.groupFamily.delete({ where: { id: group.id } });
+          }
+        }
+
+        await tx.authLog.deleteMany({ where: { userId } });
+        await tx.activityLog.deleteMany({ where: { userId } });
+        await tx.session.deleteMany({ where: { userId } });
+        await tx.user.delete({ where: { id: userId } });
+      });
+
+      // Xóa media cá nhân trên Cloudinary (best-effort, không chặn việc xóa DB)
+      if (user.userProfile?.avatar) {
+        try {
+          await this.cloudinaryService.destroyFile(
+            user.userProfile.avatar,
+            this.envConfig.folderUserName,
+          );
+        } catch (avatarErr) {
+          console.log('failed to delete avatar on cloudinary:', avatarErr);
+        }
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.log('error at delete account service:', err);
+      throw err;
+    }
+  }
+
+  private async getLoginInfo(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        accounts: {
+          select: {
+            id: true,
+            email: true,
+            createdAt: true,
+            authProvider: {
+              select: {
+                provider: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+    if (!user) throw new BusinessException(ErrorCode.NOT_EXIST);
+
+    return {
+      accounts: user.accounts.map((account) => ({
+        id: account.id,
+        email: account.email,
+        provider: account.authProvider?.provider,
+        createdAt: account.createdAt,
+      })),
+    };
   }
 
   private async verifyGoogleToken(token: string): Promise<TokenPayload> {

@@ -1,5 +1,6 @@
-import { AUTH_TYPE, PROVIDERS } from '@prisma/client';
+import { AUTH_TYPE, MEMBER_ROLE, PROVIDERS } from '@prisma/client';
 import { AuthService } from './auth.service';
+import * as bcrypt from 'bcrypt';
 
 const mockVerifyIdToken = jest.fn();
 
@@ -19,9 +20,14 @@ interface TxMock {
   user: {
     create: jest.Mock;
     findUnique: jest.Mock;
+    delete: jest.Mock;
   };
   session: { create: jest.Mock; deleteMany: jest.Mock };
-  authLog: { create: jest.Mock };
+  authLog: { create: jest.Mock; deleteMany: jest.Mock };
+  activityLog: { deleteMany: jest.Mock };
+  groupMember: { findMany: jest.Mock; update: jest.Mock };
+  groupFamily: { delete: jest.Mock };
+  family: { update: jest.Mock };
   userProfile: { update: jest.Mock; updateMany: jest.Mock };
 }
 
@@ -40,7 +46,9 @@ describe('AuthService', () => {
     jwtRefreshKey: string;
     accessExpires: string;
     refreshExpires: number;
+    folderUserName: string;
   };
+  let cloudinaryService: { destroyFile: jest.Mock };
   let tx: TxMock;
 
   const googlePayload = {
@@ -66,9 +74,14 @@ describe('AuthService', () => {
       user: {
         create: jest.fn(),
         findUnique: jest.fn(),
+        delete: jest.fn(),
       },
       session: { create: jest.fn(), deleteMany: jest.fn() },
-      authLog: { create: jest.fn() },
+      authLog: { create: jest.fn(), deleteMany: jest.fn() },
+      activityLog: { deleteMany: jest.fn() },
+      groupMember: { findMany: jest.fn(), update: jest.fn() },
+      groupFamily: { delete: jest.fn() },
+      family: { update: jest.fn() },
       userProfile: { update: jest.fn(), updateMany: jest.fn() },
     };
 
@@ -97,12 +110,18 @@ describe('AuthService', () => {
       jwtRefreshKey: 'refresh-key',
       accessExpires: '15m',
       refreshExpires: 60 * 60 * 24 * 7,
+      folderUserName: 'users/',
+    };
+
+    cloudinaryService = {
+      destroyFile: jest.fn().mockResolvedValue({ result: 'ok' }),
     };
 
     service = new AuthService(
       prisma as never,
       jwtService as never,
       envConfig as never,
+      cloudinaryService as never,
     );
   });
 
@@ -287,6 +306,163 @@ describe('AuthService', () => {
         where: { userId: 'user-1', token: { not: 'current-rt' } },
       });
       expect(result).toEqual({ success: true, message: 'ok' });
+    });
+  });
+
+  describe('deleteAccount', () => {
+    it('deletes all related data when the user has no password provider', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        userProfile: { avatar: null },
+        accounts: [],
+      });
+      tx.groupMember.findMany.mockResolvedValue([]);
+
+      const result = await service.deleteAccount('user-1', {});
+
+      expect(tx.groupMember.findMany).toHaveBeenCalledWith({
+        where: { memberId: 'user-1', isLeader: true },
+        select: {
+          group: {
+            select: {
+              id: true,
+              family: { select: { id: true, ownerId: true } },
+              groupMembers: {
+                select: { id: true, memberId: true, role: true },
+              },
+            },
+          },
+        },
+      });
+      expect(tx.authLog.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+      });
+      expect(tx.activityLog.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+      });
+      expect(tx.session.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+      });
+      expect(tx.user.delete).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+      expect(result).toEqual({ success: true });
+    });
+
+    it('verifies the password when the user has a password provider', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        userProfile: { avatar: null },
+        accounts: [{ password: 'hashed' }],
+      });
+      tx.groupMember.findMany.mockResolvedValue([]);
+
+      await service.deleteAccount('user-1', { password: 'correct-pass' });
+
+      expect(bcrypt.compare).toHaveBeenCalledWith('correct-pass', 'hashed');
+      expect(tx.user.delete).toHaveBeenCalled();
+    });
+
+    it('throws when the password is required but not provided', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        userProfile: { avatar: null },
+        accounts: [{ password: 'hashed' }],
+      });
+
+      await expect(service.deleteAccount('user-1', {})).rejects.toThrow();
+      expect(tx.user.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws when the password is wrong', async () => {
+      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        userProfile: { avatar: null },
+        accounts: [{ password: 'hashed' }],
+      });
+
+      await expect(
+        service.deleteAccount('user-1', { password: 'wrong-pass' }),
+      ).rejects.toThrow();
+      expect(tx.user.delete).not.toHaveBeenCalled();
+    });
+
+    it('transfers leadership and family ownership to a successor', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        userProfile: { avatar: null },
+        accounts: [],
+      });
+      tx.groupMember.findMany.mockResolvedValue([
+        {
+          group: {
+            id: 'group-1',
+            family: { id: 'family-1', ownerId: 'user-1' },
+            groupMembers: [
+              { id: 'gm-user1', memberId: 'user-1', role: 'OWNER' },
+              { id: 'gm-user2', memberId: 'user-2', role: 'VIEWER' },
+              { id: 'gm-user3', memberId: 'user-3', role: 'EDITOR' },
+            ],
+          },
+        },
+      ]);
+
+      await service.deleteAccount('user-1', {});
+
+      expect(tx.groupMember.update).toHaveBeenCalledWith({
+        where: { id: 'gm-user3' },
+        data: { role: MEMBER_ROLE.OWNER, isLeader: true },
+      });
+      expect(tx.family.update).toHaveBeenCalledWith({
+        where: { id: 'family-1' },
+        data: { ownerId: 'user-3' },
+      });
+      expect(tx.groupFamily.delete).not.toHaveBeenCalled();
+      expect(tx.user.delete).toHaveBeenCalled();
+    });
+
+    it('deletes the group when the leader is the only member', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        userProfile: { avatar: null },
+        accounts: [],
+      });
+      tx.groupMember.findMany.mockResolvedValue([
+        {
+          group: {
+            id: 'group-1',
+            family: { id: 'family-1', ownerId: 'user-1' },
+            groupMembers: [
+              { id: 'gm-user1', memberId: 'user-1', role: 'OWNER' },
+            ],
+          },
+        },
+      ]);
+
+      await service.deleteAccount('user-1', {});
+
+      expect(tx.groupMember.update).not.toHaveBeenCalled();
+      expect(tx.groupFamily.delete).toHaveBeenCalledWith({
+        where: { id: 'group-1' },
+      });
+      expect(tx.user.delete).toHaveBeenCalled();
+    });
+
+    it('destroys the avatar on cloudinary when present', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        userProfile: {
+          avatar: 'https://res.cloudinary.com/ffm/users/abc.png',
+        },
+        accounts: [],
+      });
+      tx.groupMember.findMany.mockResolvedValue([]);
+
+      await service.deleteAccount('user-1', {});
+
+      expect(cloudinaryService.destroyFile).toHaveBeenCalledWith(
+        'https://res.cloudinary.com/ffm/users/abc.png',
+        'users/',
+      );
     });
   });
 });

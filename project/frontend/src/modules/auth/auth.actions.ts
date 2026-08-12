@@ -10,6 +10,11 @@ import {
   IChangePasswordDto,
   IChangeEmailDto,
   IUnlinkProviderDto,
+  IVerifyPasswordDto,
+  IVerifyGoogleDto,
+  IResponseLoginInfoDto,
+  IDeleteAccountDto,
+  IDeleteAccountResponseDto,
 } from "./auth.dto";
 import { cookies, headers } from "next/headers";
 import { EnvConfig } from "@/lib/env/env-config.lib";
@@ -297,6 +302,90 @@ export async function linkGoogleAction(token: IGoogleLoginDto) {
       body: token,
     });
     return res;
+  } catch (err) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
+export async function verifyPasswordAction(data: IVerifyPasswordDto) {
+  try {
+    const headerList = await headers();
+    const currentUserId = headerList.get("X-User-Id");
+    if (!currentUserId) {
+      throw new Error("Unauthorized");
+    }
+    const res = await apiRequest<IResponseLoginInfoDto>(
+      apiClient.auth.verifyPassword.url,
+      {
+        method: apiClient.auth.verifyPassword.method,
+        body: data,
+      },
+    );
+
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+    return ResponseFactory.error({
+      message: "Xác thực thất bại",
+      code: 401,
+    });
+  } catch (err) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
+export async function verifyGoogleAction(data: IVerifyGoogleDto) {
+  try {
+    const headerList = await headers();
+    const currentUserId = headerList.get("X-User-Id");
+    if (!currentUserId) {
+      throw new Error("Unauthorized");
+    }
+    const res = await apiRequest<IResponseLoginInfoDto>(
+      apiClient.auth.verifyGoogle.url,
+      {
+        method: apiClient.auth.verifyGoogle.method,
+        body: data,
+      },
+    );
+
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+    return ResponseFactory.error({
+      message: "Xác thực thất bại",
+      code: 401,
+    });
+  } catch (err) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
+export async function deleteAccountAction(data: IDeleteAccountDto) {
+  try {
+    const headerList = await headers();
+    const currentUserId = headerList.get("X-User-Id");
+    if (!currentUserId) {
+      throw new Error("Unauthorized");
+    }
+    const res = await apiRequest<IDeleteAccountResponseDto>(
+      apiClient.auth.deleteAccount.url,
+      {
+        method: apiClient.auth.deleteAccount.method,
+        body: data,
+      },
+    );
+
+    if (res && "data" in res && res.data != undefined) {
+      const cookieStore = await cookies();
+      cookieStore.delete("access_token");
+      cookieStore.delete("refresh_token");
+      return res.data;
+    }
+    return ResponseFactory.error({
+      message: "Xóa tài khoản thất bại",
+      code: 400,
+    });
   } catch (err) {
     return ResponseFactory.handleError(err);
   }

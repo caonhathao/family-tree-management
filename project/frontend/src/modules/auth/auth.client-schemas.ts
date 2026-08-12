@@ -41,3 +41,7 @@ export const ChangeEmailSchema = z.object({
   newEmail: z.string().email("Vui lòng nhập đúng định dạng email"),
   password: z.string().min(8, "Mật khẩu phải có ít nhất 8 kí tự"),
 });
+
+export const VerifyPasswordSchema = z.object({
+  password: z.string().min(8, "Mật khẩu phải có ít nhất 8 kí tự"),
+});

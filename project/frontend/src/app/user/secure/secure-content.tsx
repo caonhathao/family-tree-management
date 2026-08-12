@@ -5,12 +5,11 @@ import { BsFillPeopleFill } from "react-icons/bs";
 import { FaGoogle } from "react-icons/fa";
 import { IoTrashBin } from "react-icons/io5";
 import { MdAlternateEmail, MdOutlinePassword } from "react-icons/md";
-import { MdChangeCircle } from "react-icons/md";
 import { DataTable } from "./_components/table/data-table";
-import { Separator } from "@/components/ui/separator";
 import AddNewAuthForm from "./_components/forms/add-new-auth";
 import { ChangePasswordForm } from "./_components/forms/change-password";
 import { ChangeEmailForm } from "./_components/forms/change-email";
+import ViewLoginInfo from "./_components/forms/view-login-info";
 import {
   Dialog,
   DialogContent,
@@ -31,9 +30,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Toaster } from "@/components/shared/toast";
 import { LoaderModule } from "@/components/shared/loader-module";
-import { unlinkProviderAction } from "@/modules/auth/auth.actions";
+import {
+  unlinkProviderAction,
+  deleteAccountAction,
+} from "@/modules/auth/auth.actions";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 const renderIconProvider = (provider: string) => {
@@ -139,6 +142,40 @@ const SecureContent = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
     });
   };
 
+  const [isDeleting, startDeleteTransition] = useTransition();
+  const [deletePassword, setDeletePassword] = useState("");
+
+  const handleDeleteAccount = () => {
+    startDeleteTransition(async () => {
+      const res = await deleteAccountAction({
+        ...(hasPassword ? { password: deletePassword } : {}),
+      });
+
+      if (res && "success" in res && res.success === false) {
+        Toaster({
+          title: "Đã xóa tài khoản",
+          description: "Tài khoản và toàn bộ dữ liệu đã được xóa vĩnh viễn",
+          type: "success",
+          cancel: {
+            label: "OK",
+            onClick: () => {},
+          },
+        });
+        window.location.href = "/auth?mode=login";
+      } else if (res && "message" in res) {
+        Toaster({
+          title: "Xóa tài khoản thất bại",
+          description: res.message as string,
+          type: "error",
+          cancel: {
+            label: "OK",
+            onClick: () => {},
+          },
+        });
+      }
+    });
+  };
+
   return (
     <div
       className={cn(
@@ -230,6 +267,62 @@ const SecureContent = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
                 </DialogContent>
               </Dialog>
             )}
+            <ViewLoginInfo providers={data} />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant={"destructive"}
+                  className={cn(
+                    "w-full h-10 flex flex-row justify-self-center border border-destructive/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base",
+                  )}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <LoaderModule scale={0.4} className={"w-1 h-1"} />
+                  ) : (
+                    <IoTrashBin />
+                  )}
+                  Xóa tài khoản
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xóa tài khoản</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Hành động này không thể hoàn tác. Toàn bộ dữ liệu của bạn
+                    trong database (các nhóm đã tham gia, lịch sử đăng nhập,
+                    phiên đăng nhập, ...) sẽ bị xóa vĩnh viễn, đồng thời toàn bộ
+                    media cá nhân đã upload (avatar, ...) cũng sẽ bị xóa khỏi bộ
+                    lưu trữ Cloudinary.
+                    {hasPassword && (
+                      <span className={"block my-2"}>
+                        Nhập mật khẩu hiện tại để xác nhận:
+                      </span>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                {hasPassword && (
+                  <div className={"px-6 pb-2"}>
+                    <Input
+                      type={"password"}
+                      placeholder={"Mật khẩu của bạn"}
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                      disabled={isDeleting}
+                    />
+                  </div>
+                )}
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant={"destructive"}
+                    onClick={handleDeleteAccount}
+                  >
+                    Xóa tài khoản
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </section>
