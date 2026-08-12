@@ -21,7 +21,7 @@ const GroupsContent = ({ groups }: { groups: IResponseGroupFamiliesDto[] }) => {
       </div>
       <div
         className={
-          "grid w-full max-w-6xl grid-cols-2 place-content-start gap-4 px-4 pb-6 md:grid-cols-3 lg:grid-cols-4"
+          "grid w-full max-w-6xl grid-cols-2 place-content-start gap-4 md:grid-cols-3 lg:grid-cols-5"
         }
       >
         {groups.map((group) => (

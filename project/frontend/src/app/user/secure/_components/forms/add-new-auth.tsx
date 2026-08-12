@@ -26,6 +26,7 @@ import { linkGoogleAction } from "@/modules/auth/auth.actions";
 import { Toaster } from "@/components/shared/toast";
 import { useRouter } from "next/navigation";
 import { BaseForm } from "./base-auth";
+import { cn } from "@/lib/utils";
 
 const items = [
   { label: "Google", value: "GOOGLE" },
@@ -55,17 +56,16 @@ const AddNewAuthForm = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
       }}
     >
       <DialogTrigger asChild>
-        <div className={"w-full flex flex-row justify-start items-center"}>
-          <Button
-            className={
-              "w-3/5 flex flex-row border text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
-            }
-            variant={"outline"}
-          >
-            <MdAddLink />
-            Thêm mới
-          </Button>
-        </div>
+        <Button
+          className={cn(
+            "w-full h-full",
+            "flex flex-row border text-sm hover:shadow-md active:scale-[0.98] sm:text-base",
+          )}
+          variant={"outline"}
+        >
+          <MdAddLink />
+          Thêm mới
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogTitle>Thêm phương thức xác thực mới</DialogTitle>

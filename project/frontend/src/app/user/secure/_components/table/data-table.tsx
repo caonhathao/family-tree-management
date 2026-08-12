@@ -78,10 +78,6 @@ export function DataTable() {
               <DropdownMenuItem onClick={() => handleCopy(log.id)}>
                 Sao chép ID
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Thiết bị</DropdownMenuItem>
-              <DropdownMenuItem>Loại đăng nhập</DropdownMenuItem>
-              <DropdownMenuItem>Xác thực bởi </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -228,7 +224,7 @@ export function DataTable() {
           <DropdownMenuTrigger asChild>
             <Button variant={"outline"} className={"ml-auto h-8 gap-2"}>
               <Columns3 className={"h-4 w-4"} />
-              <span>Hiển thị cột</span>
+              <span>Hiển thị</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align={"end"}>

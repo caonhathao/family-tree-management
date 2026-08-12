@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { quitGroupFromListAction } from "@/modules/group-family/group-family.actions";
 import { IResponseGroupFamiliesDto } from "@/modules/group-family/group-family.dto";
 import Link from "next/link";
@@ -71,7 +72,10 @@ const GroupCard = ({ group }: { group: IResponseGroupFamiliesDto }) => {
         </p>
       </CardContent>
       <CardFooter
-        className={"flex w-full items-center justify-between gap-2 px-4"}
+        className={cn(
+          "grid grid-cols-1",
+          "w-full items-center justify-between gap-2 px-4",
+        )}
       >
         <Button asChild variant={"outline"} size={"sm"}>
           <Link href={`/group?groupId=${group.id}`}>Xem nhóm</Link>

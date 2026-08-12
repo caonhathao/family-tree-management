@@ -4,7 +4,7 @@ import { IResponseLinkProvidersDto } from "@/modules/user/user.dto";
 import { BsFillPeopleFill } from "react-icons/bs";
 import { FaGoogle } from "react-icons/fa";
 import { IoTrashBin } from "react-icons/io5";
-import { MdAlternateEmail } from "react-icons/md";
+import { MdAlternateEmail, MdOutlinePassword } from "react-icons/md";
 import { MdChangeCircle } from "react-icons/md";
 import { DataTable } from "./_components/table/data-table";
 import { Separator } from "@/components/ui/separator";
@@ -34,6 +34,7 @@ import { LoaderModule } from "@/components/shared/loader-module";
 import { unlinkProviderAction } from "@/modules/auth/auth.actions";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { cn } from "@/lib/utils";
 
 const renderIconProvider = (provider: string) => {
   switch (provider) {
@@ -56,10 +57,10 @@ const ProviderRow = ({
   onUnlink: (accountId: string) => void;
 }) => {
   return (
-    <div className={"w-full flex flex-row justify-start items-center"}>
+    <div className={"w-full h-10 flex flex-row justify-start items-stretch"}>
       <Button
         className={
-          "w-3/5 flex flex-row rounded-r-none border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
+          "flex-1 flex flex-row rounded-r-none border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base h-full"
         }
       >
         {renderIconProvider(value.provider)}
@@ -70,7 +71,7 @@ const ProviderRow = ({
           <Button
             variant={"destructive"}
             className={
-              "rounded-l-none border border-destructive/20 hover:shadow-md active:scale-[0.98]"
+              "h-full rounded-l-none border border-destructive/20 hover:shadow-md active:scale-[0.98]"
             }
             disabled={isPending}
           >
@@ -140,96 +141,107 @@ const SecureContent = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
 
   return (
     <div
-      className={
-        "w-full h-full flex flex-col justify-center items-center gap-3 p-5 md:p-5 lg:px-20 lg:py-10"
-      }
+      className={cn(
+        "w-full h-full flex flex-col justify-center items-center gap-3 p-5 md:p-5 lg:px-20 lg:py-10",
+        "lg:flex-row",
+      )}
     >
       {/* display link auth providers first */}
       <section
-        className={"w-full flex flex-col justify-start items-start gap-3 my-5"}
+        className={cn(
+          "w-full flex flex-col justify-center items-start gap-3",
+          "lg:w-[40%]",
+        )}
       >
-        <h3 className={"font-bold text-lg"}>Phương thức xác thực</h3>
         <div
           className={
-            " w-full grid grid-cols-1 md:grid-cols-2 justify-stretch gap-3"
+            "w-full flex flex-col justify-start items-center gap-3 my-5"
           }
         >
-          {data.map((value) => (
-            <ProviderRow
-              key={value.id}
-              value={value}
-              isPending={isUnlinking}
-              onUnlink={handleUnlink}
-            />
-          ))}
-          <AddNewAuthForm data={data} />
+          <h3 className={"font-bold text-lg"}>Phương thức xác thực</h3>
+          <div
+            className={cn(
+              "w-full grid grid-cols-2 justify-stretch items-stretch gap-3",
+            )}
+          >
+            {data.map((value) => (
+              <div key={value.id} className={"w-full"}>
+                <ProviderRow
+                  value={value}
+                  isPending={isUnlinking}
+                  onUnlink={handleUnlink}
+                />
+              </div>
+            ))}
+            <div className={"w-full h-10"}>
+              <AddNewAuthForm data={data} />
+            </div>
+          </div>
         </div>
-        <Separator />
-      </section>
-      {/* display history auth log */}
-      <section
-        className={
-          "w-full flex flex-col justify-center items-center gap-3 my-5"
-        }
-      >
-        <h3 className={"font-bold text-center text-lg"}>Lịch sử đăng nhập</h3>
-        <DataTable />
-      </section>
-      <Separator />
-
-      {/* display change password, delete account */}
-      <section
-        className={
-          "w-full flex flex-col justify-center items-center gap-3 my-5"
-        }
-      >
-        <h3 className={"font-bold text-center text-lg"}>Tùy chọn bảo mật</h3>
+        {/* display change password, delete account */}
         <div
           className={
-            "w-full flex flex-col md:grid md:grid-cols-2 md:grid-rows-1 gap-3 justify-center items-center"
+            "w-full flex flex-col justify-center items-center gap-3 my-5"
           }
         >
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                className={
-                  "w-4/5 flex flex-row justify-self-center border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
-                }
-              >
-                <MdChangeCircle />
-                Đổi mật khẩu
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogTitle>Đổi mật khẩu</DialogTitle>
-              <DialogDescription>
-                Nhập mật khẩu hiện tại và mật khẩu mới của bạn.
-              </DialogDescription>
-              <ChangePasswordForm />
-            </DialogContent>
-          </Dialog>
-          {hasPassword && (
+          <h3 className={"font-bold text-center text-lg"}>Tùy chọn bảo mật</h3>
+          <div
+            className={
+              "w-full grid grid-cols-2 gap-3 justify-center items-center"
+            }
+          >
             <Dialog>
               <DialogTrigger asChild>
                 <Button
-                  className={
-                    "w-4/5 flex flex-row justify-self-center border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base"
-                  }
+                  className={cn(
+                    "w-full h-10 flex flex-row justify-self-center border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base",
+                  )}
                 >
-                  <MdAlternateEmail />
-                  Đổi email
+                  <MdOutlinePassword />
+                  Đổi mật khẩu
                 </Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogTitle>Đổi email</DialogTitle>
+                <DialogTitle>Đổi mật khẩu</DialogTitle>
                 <DialogDescription>
-                  Email dùng để đăng nhập bằng mật khẩu sẽ được cập nhật.
+                  Nhập mật khẩu hiện tại và mật khẩu mới của bạn.
                 </DialogDescription>
-                <ChangeEmailForm />
+                <ChangePasswordForm />
               </DialogContent>
             </Dialog>
-          )}
+            {hasPassword && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    className={cn(
+                      "w-full h-10 flex flex-row justify-self-center border border-primary/20 text-sm hover:shadow-md active:scale-[0.98] sm:text-base",
+                    )}
+                  >
+                    <MdAlternateEmail />
+                    Đổi email
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogTitle>Đổi email</DialogTitle>
+                  <DialogDescription>
+                    Email dùng để đăng nhập bằng mật khẩu sẽ được cập nhật.
+                  </DialogDescription>
+                  <ChangeEmailForm />
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
         </div>
+      </section>
+      {/* display history auth log */}
+      <section
+        className={cn(
+          "w-full flex flex-col justify-center items-center gap-3 my-5",
+          "lg:max-w-[60%]",
+        )}
+      >
+        <h3 className={"font-bold text-center text-lg"}>Lịch sử đăng nhập</h3>
+        <DataTable />
       </section>
     </div>
   );
