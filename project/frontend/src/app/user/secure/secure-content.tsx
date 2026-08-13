@@ -151,7 +151,17 @@ const SecureContent = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
         ...(hasPassword ? { password: deletePassword } : {}),
       });
 
-      if (res && "success" in res && res.success === false) {
+      if (res && "message" in res) {
+        Toaster({
+          title: "Xóa tài khoản thất bại",
+          description: res.message as string,
+          type: "error",
+          cancel: {
+            label: "OK",
+            onClick: () => {},
+          },
+        });
+      } else {
         Toaster({
           title: "Đã xóa tài khoản",
           description: "Tài khoản và toàn bộ dữ liệu đã được xóa vĩnh viễn",
@@ -162,16 +172,6 @@ const SecureContent = ({ data }: { data: IResponseLinkProvidersDto[] }) => {
           },
         });
         window.location.href = "/auth?mode=login";
-      } else if (res && "message" in res) {
-        Toaster({
-          title: "Xóa tài khoản thất bại",
-          description: res.message as string,
-          type: "error",
-          cancel: {
-            label: "OK",
-            onClick: () => {},
-          },
-        });
       }
     });
   };
