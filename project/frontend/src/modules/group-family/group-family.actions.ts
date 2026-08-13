@@ -165,6 +165,21 @@ export async function quitGroupAction(groupId: string) {
   }
 }
 
+export async function quitGroupFromListAction(groupId: string) {
+  try {
+    const res = await apiRequest(apiClient.groupFamily.quitGroup.url(groupId), {
+      method: apiClient.groupFamily.quitGroup.method,
+    });
+
+    if (res && "data" in res && res.data != undefined) {
+      revalidatePath("/user/groups");
+      return { success: true, message: res.message } as ISuccessResponse;
+    }
+  } catch (err: unknown) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
 export async function destroyGroupAction(groupId: string) {
   let isSuccess = false;
 

@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -8,7 +7,6 @@ import {
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Exception } from 'src/common/messages/messages.response';
-import * as bcrypt from 'bcrypt';
 import { UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 import { CloudinaryService } from 'src/common/config/cloudinary/cloudinary.service';
 import { Prisma, USER_ROLE } from '@prisma/client';
@@ -36,10 +34,12 @@ export class UserService {
 
     const profileUpdate: Prisma.UserProfileUpdateInput = {};
     const userUpdate: Prisma.UserUpdateInput = {};
-    const accountUpdate: Prisma.AccountUpdateInput = {};
 
     if (data.fullName) profileUpdate.fullName = data.fullName;
     if (data.biography) profileUpdate.biography = data.biography;
+    if (data.memorableName !== undefined)
+      profileUpdate.memorableName = data.memorableName;
+    if (data.address !== undefined) profileUpdate.address = data.address;
     if (data.dateOfBirth) {
       const date = new Date(data.dateOfBirth);
       if (isNaN(date.getTime())) {
@@ -47,22 +47,6 @@ export class UserService {
       } else {
         profileUpdate.dateOfBirth = date;
       }
-    }
-
-    if (data.email && data.email.trim() !== '') {
-      const isEmailTaken = await this.prisma.user.findUnique({
-        where: {
-          email: data.email,
-        },
-      });
-      if (isEmailTaken && isEmailTaken.id !== targetId) {
-        throw new ConflictException(Exception.EXISTED);
-      }
-      userUpdate.email = data.email;
-    }
-
-    if (data.password && data.password.trim() !== '') {
-      accountUpdate.password = await bcrypt.hash(data.password, 10);
     }
 
     if (file) {
@@ -101,13 +85,6 @@ export class UserService {
           userResult = await tx.user.findUnique({
             where: { id: targetId },
             select: { email: true },
-          });
-        }
-
-        if (Object.keys(accountUpdate).length > 0) {
-          await tx.account.updateMany({
-            where: { userId: targetId },
-            data: accountUpdate,
           });
         }
 

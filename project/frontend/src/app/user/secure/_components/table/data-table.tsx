@@ -18,18 +18,20 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   useReactTable,
+  VisibilityState,
 } from "@tanstack/react-table";
 import { useState } from "react";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { MoreHorizontal } from "lucide-react";
+import { Columns3, MoreHorizontal } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -52,6 +54,7 @@ export function DataTable() {
   const [data, setData] =
     useState<IPaginationBase<IResponseAuthLog[] | null>>();
   const [rows, setRows] = useState<number>(10);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const handleCopy = useCopyToClipboard();
 
@@ -74,10 +77,6 @@ export function DataTable() {
               <DropdownMenuItem onClick={() => handleCopy(log.id)}>
                 Sao chép ID
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Thiết bị</DropdownMenuItem>
-              <DropdownMenuItem>Loại đăng nhập</DropdownMenuItem>
-              <DropdownMenuItem>Xác thực bởi </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -115,12 +114,28 @@ export function DataTable() {
       accessorKey: "authBy",
       header: "Xác thực bởi",
     },
+    {
+      accessorKey: "createdAt",
+      header: "Thời gian",
+      cell: ({ row }) => {
+        const value = row.getValue("createdAt") as string | Date;
+        return (
+          <span>
+            {value ? format(parseISO(String(value)), "dd/MM/yyyy HH:mm") : "—"}
+          </span>
+        );
+      },
+    },
   ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: data?.data || [],
     columns,
+    state: {
+      columnVisibility,
+    },
+    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
@@ -203,6 +218,38 @@ export function DataTable() {
 
   return (
     <div className={"w-full overflow-hidden rounded-none border"}>
+      <div className={"flex items-center justify-end border-b px-4 py-2"}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant={"outline"} className={"ml-auto h-8 gap-2"}>
+              <Columns3 className={"h-4 w-4"} />
+              <span>Hiển thị</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align={"end"}>
+            {table
+              .getAllLeafColumns()
+              .filter(
+                (column) => column.getCanHide() && column.id !== "actions",
+              )
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {typeof column.columnDef.header === "string"
+                      ? column.columnDef.header
+                      : column.id}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

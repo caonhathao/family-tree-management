@@ -83,6 +83,19 @@ export async function apiRequest<T = unknown>(
     }
   }
 
+  // Forward the real browser device info so the backend can tell devices apart.
+  // next/headers is unavailable in the middleware edge runtime (proxy.ts),
+  // where apiRequest is only used for silent refresh — guard with try/catch.
+  try {
+    const headerStore = await headers();
+    const browserUserAgent = headerStore.get("user-agent");
+    if (browserUserAgent) requestHeaders["user-agent"] = browserUserAgent;
+    const forwardedFor = headerStore.get("x-forwarded-for");
+    if (forwardedFor) requestHeaders["x-forwarded-for"] = forwardedFor;
+  } catch {
+    // Edge runtime (middleware) — skip forwarding
+  }
+
   let response: Response;
   try {
     response = await fetch(url, {

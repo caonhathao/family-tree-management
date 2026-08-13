@@ -43,7 +43,7 @@ const data: Record<string, dataProps> = {
       {
         icon: MdOutlinePeopleAlt,
         title: "Danh sách",
-        url: "/user/group",
+        url: "/user/groups",
       },
       {
         icon: CiBoxList,

@@ -1,4 +1,4 @@
-import { USER_ROLE } from "@prisma/client";
+import { PROVIDERS, USER_ROLE } from "@prisma/client";
 
 export interface IUserType {
   id: string;
@@ -34,6 +34,48 @@ export interface INewBaseAuth {
   confirmPassword: string;
 }
 
+export interface IChangePasswordDto {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface IChangeEmailDto {
+  newEmail: string;
+  password: string;
+}
+
+export interface IUnlinkProviderDto {
+  accountId: string;
+}
+
 export interface IGoogleLoginDto {
   token: string;
+}
+
+export interface IVerifyPasswordDto {
+  password: string;
+}
+
+export interface IVerifyGoogleDto {
+  token: string;
+}
+
+export interface IDeleteAccountDto {
+  password?: string;
+}
+
+export interface IDeleteAccountResponseDto {
+  success: boolean;
+}
+
+export interface ILoginInfoAccountDto {
+  id: string;
+  email: string | null;
+  provider: PROVIDERS | null;
+  createdAt: string;
+}
+
+export interface IResponseLoginInfoDto {
+  accounts: ILoginInfoAccountDto[];
 }

@@ -6,58 +6,46 @@ import { Toaster } from "@/components/shared/toast";
 import { Button } from "@/components/ui/button";
 import { FieldGroup, Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { createNewBaseAuth } from "@/modules/auth/auth.actions";
-import { NewBaseAuthSchema } from "@/modules/auth/auth.client-schemas";
-import { INewBaseAuth } from "@/modules/auth/auth.dto";
-import { ISuccessResponse } from "@/types/base.types";
+import { changePasswordAction } from "@/modules/auth/auth.actions";
+import { ChangePasswordSchema } from "@/modules/auth/auth.client-schemas";
+import { IChangePasswordDto } from "@/modules/auth/auth.dto";
 import { ApiResponse } from "@/types/api.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
 
-export const BaseForm = () => {
+export const ChangePasswordForm = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
-  } = useForm<INewBaseAuth>({
-    resolver: zodResolver(NewBaseAuthSchema),
+  } = useForm<IChangePasswordDto>({
+    resolver: zodResolver(ChangePasswordSchema),
     defaultValues: {
-      password: "",
+      oldPassword: "",
+      newPassword: "",
       confirmPassword: "",
     },
   });
 
-  const onSubmit = (values: INewBaseAuth, e?: React.BaseSyntheticEvent) => {
+  const onSubmit = (
+    values: IChangePasswordDto,
+    e?: React.BaseSyntheticEvent,
+  ) => {
     e?.preventDefault();
 
-    if (values.confirmPassword !== values.password) {
-      Toaster({
-        title: "Khởi tạo thất bại",
-        description: "Mật khẩu không khớp",
-        type: "warning",
-        cancel: {
-          label: "OK",
-          onClick: () => {},
-        },
-      });
-      return;
-    }
-
     startTransition(async () => {
-      const result: ISuccessResponse | ApiResponse<never, unknown> | undefined =
-        await createNewBaseAuth(values);
-      // console.log(result);
+      const result: ApiResponse<unknown> | undefined =
+        await changePasswordAction(values);
 
       if (result) {
         if (result.success == false) {
           Toaster({
-            title: "Khởi tạo thất bại",
+            title: "Đổi mật khẩu thất bại",
             description: result.message,
             type: "error",
             cancel: {
@@ -65,9 +53,10 @@ export const BaseForm = () => {
               onClick: () => {},
             },
           });
-        } else if (result.success == true) {
+        } else {
+          reset();
           Toaster({
-            title: "Khởi tạo thành công",
+            title: "Đổi mật khẩu thành công",
             description: result.message,
             type: "success",
             cancel: {
@@ -75,7 +64,6 @@ export const BaseForm = () => {
               onClick: () => {},
             },
           });
-          router.refresh();
         }
       }
     });
@@ -87,20 +75,36 @@ export const BaseForm = () => {
         <Field>
           <div className={"flex flex-row gap-1"}>
             <Input
-              id={"password"}
+              id={"old-password"}
               type={isPasswordVisible ? "text" : "password"}
-              placeholder={"Mật khẩu của bạn"}
+              placeholder={"Mật khẩu hiện tại"}
               required
-              {...register("password")}
+              {...register("oldPassword")}
             />
             <ShowHideButton
               isPasswordVisible={isPasswordVisible}
               setIsPasswordVisible={setIsPasswordVisible}
             />
           </div>
-          {errors.password && (
+          {errors.oldPassword && (
             <span className={"text-xs text-red-500"}>
-              {errors.password.message}
+              {errors.oldPassword.message}
+            </span>
+          )}
+        </Field>
+        <Field>
+          <div className={"flex flex-row gap-1"}>
+            <Input
+              id={"new-password"}
+              type={isPasswordVisible ? "text" : "password"}
+              placeholder={"Mật khẩu mới"}
+              required
+              {...register("newPassword")}
+            />
+          </div>
+          {errors.newPassword && (
+            <span className={"text-xs text-red-500"}>
+              {errors.newPassword.message}
             </span>
           )}
         </Field>
@@ -109,7 +113,7 @@ export const BaseForm = () => {
             <Input
               id={"confirm-password"}
               type={isPasswordVisible ? "text" : "password"}
-              placeholder={"Xác nhận lại mật khẩu"}
+              placeholder={"Xác nhận mật khẩu mới"}
               required
               {...register("confirmPassword")}
             />
@@ -127,7 +131,7 @@ export const BaseForm = () => {
           >
             {isPending ? (
               <>
-                <LoaderModule scale={0.4} className={"w-1 h-1"} /> Đang khởi tạo
+                <LoaderModule scale={0.4} className={"w-1 h-1"} /> Đang lưu
               </>
             ) : (
               "Xác nhận"

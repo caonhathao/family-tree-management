@@ -18,6 +18,34 @@ export const apiClient = {
       url: "/api/auth/create-base-auth",
       method: "POST" as HttpMethod,
     },
+    changePassword: {
+      url: "/api/auth/change-password",
+      method: "POST" as HttpMethod,
+    },
+    changeEmail: {
+      url: "/api/auth/change-email",
+      method: "POST" as HttpMethod,
+    },
+    unlinkProvider: {
+      url: "/api/auth/unlink-provider",
+      method: "POST" as HttpMethod,
+    },
+    linkGoogle: {
+      url: "/api/auth/link-google",
+      method: "POST" as HttpMethod,
+    },
+    verifyPassword: {
+      url: "/api/auth/verify-password",
+      method: "POST" as HttpMethod,
+    },
+    verifyGoogle: {
+      url: "/api/auth/verify-google",
+      method: "POST" as HttpMethod,
+    },
+    deleteAccount: {
+      url: "/api/auth/account",
+      method: "DELETE" as HttpMethod,
+    },
   },
   family: {
     syncFamily: {

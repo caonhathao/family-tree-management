@@ -28,9 +28,23 @@ import { ApiResponse } from "@/types/api.types";
 interface IUserFormProps {
   className: string;
   data: IResponseUserDto | ApiResponse<IResponseUserDto, unknown>;
+  avatar?: File | null;
+  onAvatarCleared?: () => void;
 }
 
-const UpdateUserForm = ({ className, data }: IUserFormProps) => {
+const toLocalISODate = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const UpdateUserForm = ({
+  className,
+  data,
+  avatar,
+  onAvatarCleared,
+}: IUserFormProps) => {
   type UserFormValues = z.input<typeof UserSchema>;
   const {
     register,
@@ -84,20 +98,23 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
 
     const payload: IUserInfoDto = {
       fullName: values.fullName,
-      dateOfBirth: date?.toString() || "",
+      dateOfBirth: date ? toLocalISODate(date) : "",
       biography: JSON.stringify(bio) || "",
+      memorableName: values.memorableName,
+      address: values.address,
     };
 
     //prepare data before update
     startTransition(async () => {
       if (data && "id" in data) {
         const res: IResponseUserDto | ApiResponse<IResponseUserDto, unknown> =
-          await UpdateUserInfoAction(data.id, payload);
+          await UpdateUserInfoAction(data.id, payload, avatar ?? undefined);
 
-        if (res && "errors" in res) {
+        if (res && !("userProfile" in res)) {
+          console.log("Update user info failed:", res);
           Toaster({
             title: "Hành động thất bại",
-            description: res.message,
+            description: res?.message || "Không thể cập nhật thông tin.",
             type: "error",
             cancel: {
               label: "OK",
@@ -115,18 +132,21 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
             },
           });
           const serializableProfile = {
+            ...data,
             ...res,
             userProfile: {
+              ...data.userProfile,
               ...res.userProfile,
-              dateOfBirth: res.userProfile.dateOfBirth,
             },
           };
 
           dispatch(setProfile(serializableProfile));
           setDateOverride(undefined);
           setBioOverride(null);
+          onAvatarCleared?.();
         }
       } else {
+        console.log("Update user info failed: missing user data");
         Toaster({
           title: "Failed to update",
           description: "Error has occurred! Please try again!",
@@ -223,7 +243,6 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
             <Input
               id={"memorableName"}
               type={"text"}
-              required
               {...register("memorableName")}
             />
             {errors.memorableName && (
@@ -234,12 +253,7 @@ const UpdateUserForm = ({ className, data }: IUserFormProps) => {
           </Field>
           <Field>
             <FieldLabel htmlFor={"address"}>Bạn sống ở đâu?:</FieldLabel>
-            <Input
-              id={"address"}
-              type={"text"}
-              required
-              {...register("address")}
-            />
+            <Input id={"address"} type={"text"} {...register("address")} />
             {errors.address && (
               <span className={"text-xs text-red-500"}>
                 {errors.address.message}
