@@ -1,54 +1,61 @@
+import { GENDER, LINEAGE_TYPE, TYPE_RELATIONSHIP } from '@prisma/client';
 import { ApiDataResponse } from 'src/common/constants/api';
 
-export interface FamilyData {
+export interface FamilyInfo {
   id: string;
   name: string;
   description: string;
+  lineageType: LINEAGE_TYPE;
 }
 
-export interface FamilyOwner {
+export interface FamilyMemberData {
   id: string;
+  familyId: string;
+  fullName: string;
+  gender: GENDER;
+  dateOfBirth?: Date | null;
+  dateOfDeath?: Date | null;
+  isAlive: boolean;
+  biography?: unknown;
+  generation: number;
+  positionX?: number | null;
+  positionY?: number | null;
+  localId: string;
+}
+
+export interface FamilyRelationData {
+  id?: string;
+  localId: string;
+  fromMemberId: string;
+  toMemberId: string;
+  type: TYPE_RELATIONSHIP;
+}
+
+export interface FamilySyncData {
+  family: FamilyInfo;
+  members: FamilyMemberData[];
+  relationships: FamilyRelationData[];
+}
+
+export type NewFamilyResponse = ApiDataResponse<FamilySyncData>;
+
+export interface FamilyMapInfo {
+  id?: string;
+  localId: string;
   name: string;
-  avatar: string;
-}
-
-export interface NewFamilyData {
-  family: FamilyData;
-  owner: FamilyOwner;
-}
-
-export type NewFamilyResponse = ApiDataResponse<NewFamilyData>;
-
-export interface FamilyCounts {
-  familyMembers: number;
-  albums: number;
-  events: number;
-  activityLogs: number;
-}
-
-export interface FamilyDetailOwner {
-  id: string;
-  userProfile: {
-    fullName: string;
-    avatar: string;
-  };
+  description: string;
+  lineageType: LINEAGE_TYPE;
 }
 
 export interface FamilyDetailData {
-  id: string;
-  name: string;
-  description: string;
-  owner: FamilyDetailOwner;
-  _count: FamilyCounts;
+  family: FamilyMapInfo;
+  members: FamilyMemberData[];
+  relationships: FamilyRelationData[];
 }
 
 export type FamilyDetailResponse = ApiDataResponse<FamilyDetailData>;
 
-export interface UpdateFamilyData {
-  id: string;
-  name: string;
-  description: string;
-}
+export type UpdateFamilyData = FamilyInfo;
 
 export type UpdateFamilyResponse = ApiDataResponse<UpdateFamilyData>;
 

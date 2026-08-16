@@ -1,5 +1,10 @@
 import { ZodError } from 'zod';
-import { ApiResponse, HttpStatus, StatusCode } from '../constants/api';
+import {
+  ApiResponse,
+  ApiDataResponse,
+  HttpStatus,
+  StatusCode,
+} from '../constants/api';
 import { ServiceError } from '../errors/service-error';
 import { BusinessException } from '../errors/business.exception';
 import {
@@ -22,12 +27,12 @@ export class ResponseFactory {
     message = 'success',
     code = HttpStatus.OK,
     meta,
-  }: SuccessOptions<T>): ApiResponse<T> {
+  }: SuccessOptions<T>): ApiDataResponse<T> {
     return {
       success: true,
       message,
       code,
-      data,
+      data: data as T,
       meta,
     };
   }

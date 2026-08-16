@@ -23,6 +23,12 @@ import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AtGuard } from '../auth/guards/auth.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import {
+  DeleteFamilyResponse,
+  FamilyDetailResponse,
+  NewFamilyResponse,
+  UpdateFamilyResponse,
+} from './types/family-response.type';
 
 @ApiTags('family')
 @ApiBearerAuth()
@@ -45,7 +51,7 @@ export class FamilyController {
     @GetCurrentUserId() userId: string,
     @Param('groupId') groupId: string,
     @Body() data: FamilyDto,
-  ) {
+  ): Promise<NewFamilyResponse> {
     const syncFamily = await this.familyService.syncFamilyData(
       userId,
       groupId,
@@ -70,7 +76,7 @@ export class FamilyController {
   async getFamilyData(
     @GetCurrentUserId() userId: string,
     @Param('groupId') groupId: string,
-  ) {
+  ): Promise<FamilyDetailResponse> {
     const familyData = await this.familyService.getFamilyData(userId, groupId);
     return ResponseFactory.success({
       data: familyData,
@@ -92,7 +98,7 @@ export class FamilyController {
     @GetCurrentUserId() userId: string,
     @Param('groupId') groupId: string,
     @Body() data: IFamilyDto,
-  ) {
+  ): Promise<UpdateFamilyResponse> {
     const familyData = await this.familyService.updateFamilyInfo(
       userId,
       groupId,
@@ -119,7 +125,7 @@ export class FamilyController {
     @GetCurrentUserId() userId: string,
     @Param('groupId') groupId: string,
     @Param('familyId') familyId: string,
-  ) {
+  ): Promise<DeleteFamilyResponse> {
     const familyData = await this.familyService.deleteFamilyData(
       userId,
       groupId,

@@ -10,6 +10,10 @@ import { UpdateGroupMemberDto } from './dto/update-group-member.dto';
 import { Exception } from 'src/common/messages/messages.response';
 import { MEMBER_ROLE } from '@prisma/client';
 import { isUUID } from 'class-validator';
+import {
+  GroupMemberData,
+  RemoveMemberData,
+} from './types/group-member-response.type';
 
 @Injectable()
 export class GroupMemberService {
@@ -19,7 +23,7 @@ export class GroupMemberService {
     userId: string,
     groupId: string,
     data: UpdateGroupMemberDto,
-  ) {
+  ): Promise<GroupMemberData> {
     console.log('updaterRole called with:', { userId, groupId, data });
     //check if member is in the same groupconst [requester, targetMember] = await Promise.all([
     try {
@@ -63,7 +67,7 @@ export class GroupMemberService {
     userId: string,
     groupId: string,
     data: UpdateGroupMemberDto,
-  ) {
+  ): Promise<GroupMemberData> {
     console.log('changeLeader called with:', { userId, groupId, data });
     if (!isUUID(groupId)) throw new ForbiddenException(Exception.ID_MISSING);
     if (!isUUID(data.id)) throw new ForbiddenException(Exception.ID_MISSING);
@@ -131,7 +135,11 @@ export class GroupMemberService {
     }
     throw new UnauthorizedException(Exception.PEMRISSION);
   }
-  async removeMember(userId: string, groupId: string, memberId: string) {
+  async removeMember(
+    userId: string,
+    groupId: string,
+    memberId: string,
+  ): Promise<RemoveMemberData> {
     try {
       if (!isUUID(groupId, 'all'))
         throw new NotFoundException(Exception.NOT_EXIST);

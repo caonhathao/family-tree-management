@@ -4,7 +4,7 @@ import { ApiDataResponse } from 'src/common/constants/api';
 export interface GroupData {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
 }
 
 export type GroupResponse = ApiDataResponse<GroupData>;
@@ -18,7 +18,7 @@ export interface GroupMemberUserProfile {
 
 export interface GroupMemberResponse {
   member: {
-    userProfile: GroupMemberUserProfile;
+    userProfile: GroupMemberUserProfile | null;
   };
   role: MEMBER_ROLE;
   isLeader: boolean;
@@ -29,11 +29,13 @@ export interface GroupDetail extends GroupData {
     id: string;
     name: string;
     description: string;
-  };
+  } | null;
   groupMembers: GroupMemberResponse[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type GroupDetailResponse = ApiDataResponse<GroupDetail>;
 
 export interface GroupListEntry extends GroupData {
   createdAt: Date;
@@ -41,6 +43,8 @@ export interface GroupListEntry extends GroupData {
   in_event: boolean;
   hasEventToday: boolean;
 }
+
+export type GroupListResponse = ApiDataResponse<GroupListEntry[]>;
 
 export interface JoinGroupData {
   id: string;
@@ -51,3 +55,17 @@ export interface JoinGroupData {
 }
 
 export type JoinGroupResponse = ApiDataResponse<JoinGroupData>;
+
+export interface QuitGroupData {
+  id: string;
+  memberId: string;
+}
+
+export type QuitGroupResponse = ApiDataResponse<QuitGroupData>;
+
+export interface DeletedGroupData extends GroupData {
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type DeletedGroupResponse = ApiDataResponse<DeletedGroupData>;

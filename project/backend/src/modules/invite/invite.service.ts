@@ -9,12 +9,16 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { Exception } from 'src/common/messages/messages.response';
 import { isUUID } from 'class-validator';
+import { InviteData, InviteInfoData } from './types/invite-response.type';
 
 @Injectable()
 export class InviteService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createInvite(userId: string, data: CreateInviteDto) {
+  async createInvite(
+    userId: string,
+    data: CreateInviteDto,
+  ): Promise<InviteData> {
     // console.log('body at invite controller: ', data);
     if (!isUUID(data.groupId))
       throw new BadRequestException(Exception.BAD_REQUEST);
@@ -76,7 +80,7 @@ export class InviteService {
     return { inviteLink: inviteLink };
   }
 
-  async getInviteInfo(token: string) {
+  async getInviteInfo(token: string): Promise<InviteInfoData> {
     const invite = await this.prisma.invite.findUnique({
       where: { token },
       select: {

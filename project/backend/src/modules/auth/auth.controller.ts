@@ -15,7 +15,16 @@ import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { AuthService } from './auth.service';
 import { LoginBaseDto } from './dto/login.dto';
-import { HttpStatus } from 'src/common/constants/api';
+import {
+  ApiResponse as ApiResponseType,
+  HttpStatus,
+} from 'src/common/constants/api';
+import {
+  AuthActionResponse,
+  AuthLoginInfoResponse,
+  AuthResponse,
+  AuthStatusResponse,
+} from './types/auth-response.type';
 import { AtGuard, RtGuard } from './guards/auth.guard';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { GetCurrentUser } from 'src/common/decorators/get-user.decorator';
@@ -51,7 +60,7 @@ export class AuthController {
   async refresh(
     @GetCurrentUserId() userId: string,
     @GetCurrentUser('refreshToken') refreshToken: string,
-  ) {
+  ): Promise<AuthResponse> {
     const auth = await this.authService.refresh(userId, refreshToken);
     return ResponseFactory.success({
       data: auth,
@@ -68,7 +77,7 @@ export class AuthController {
     @Body() registerDto: RegisterDto,
     @Ip() ip: string, // NestJS tự động lấy IP (xử lý luôn cả proxy)
     @Headers('user-agent') userAgent: string, // Lấy trực tiếp User-Agent từ header
-  ) {
+  ): Promise<AuthResponse> {
     const user = await this.authService.register(registerDto, {
       ipAddress: ip,
       userAgent: userAgent,
@@ -90,7 +99,7 @@ export class AuthController {
     @Body() loginBase: LoginBaseDto,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string,
-  ) {
+  ): Promise<AuthResponse> {
     const user = await this.authService.loginBase(loginBase, {
       ipAddress: ip,
       userAgent: userAgent,
@@ -112,7 +121,7 @@ export class AuthController {
     @Body() data: GoogleLoginDto,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string,
-  ) {
+  ): Promise<AuthResponse> {
     const user = await this.authService.loginGoogle(data, {
       ipAddress: ip,
       userAgent: userAgent,
@@ -130,7 +139,9 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async resetPassword(@Body() resetData: ResetPasswordDto) {
+  async resetPassword(
+    @Body() resetData: ResetPasswordDto,
+  ): Promise<ApiResponseType<void>> {
     const user = await this.authService.resetPassword(resetData);
 
     return ResponseFactory.success({
@@ -148,7 +159,7 @@ export class AuthController {
   async createBaseAuth(
     @GetCurrentUserId() userId: string,
     @Body() data: CreateBaseAuthDto,
-  ) {
+  ): Promise<AuthActionResponse> {
     const result = await this.authService.createBaseAuth(data, userId);
 
     return ResponseFactory.success({
@@ -167,7 +178,7 @@ export class AuthController {
     @GetCurrentUserId() userId: string,
     @Body() data: ChangePasswordDto,
     @Headers('x-session-token') currentToken: string,
-  ) {
+  ): Promise<AuthActionResponse> {
     const result = await this.authService.changePassword(
       userId,
       data,
@@ -190,7 +201,7 @@ export class AuthController {
     @GetCurrentUserId() userId: string,
     @Body() data: ChangeEmailDto,
     @Headers('x-session-token') currentToken: string,
-  ) {
+  ): Promise<AuthActionResponse> {
     const result = await this.authService.changeEmail(
       userId,
       data,
@@ -212,7 +223,7 @@ export class AuthController {
   async unlinkProvider(
     @GetCurrentUserId() userId: string,
     @Body() data: UnlinkProviderDto,
-  ) {
+  ): Promise<AuthActionResponse> {
     const result = await this.authService.unlinkProvider(userId, data);
 
     return ResponseFactory.success({
@@ -230,7 +241,7 @@ export class AuthController {
   async linkGoogle(
     @GetCurrentUserId() userId: string,
     @Body() data: GoogleLoginDto,
-  ) {
+  ): Promise<AuthActionResponse> {
     const result = await this.authService.linkGoogle(userId, data);
 
     return ResponseFactory.success({
@@ -248,7 +259,7 @@ export class AuthController {
   async verifyPassword(
     @GetCurrentUserId() userId: string,
     @Body() data: VerifyPasswordDto,
-  ) {
+  ): Promise<AuthLoginInfoResponse> {
     const result = await this.authService.verifyPassword(userId, data);
 
     return ResponseFactory.success({
@@ -271,7 +282,7 @@ export class AuthController {
   async verifyGoogle(
     @GetCurrentUserId() userId: string,
     @Body() data: VerifyGoogleDto,
-  ) {
+  ): Promise<AuthLoginInfoResponse> {
     const result = await this.authService.verifyGoogle(userId, data);
 
     return ResponseFactory.success({
@@ -292,7 +303,7 @@ export class AuthController {
   async deleteAccount(
     @GetCurrentUserId() userId: string,
     @Body() data: DeleteAccountDto,
-  ) {
+  ): Promise<AuthStatusResponse> {
     const result = await this.authService.deleteAccount(userId, data);
 
     return ResponseFactory.success({
@@ -311,7 +322,7 @@ export class AuthController {
   async logout(
     @GetCurrentUserId() userId: string,
     @GetCurrentUser('refreshToken') refreshToken: string,
-  ) {
+  ): Promise<AuthStatusResponse> {
     const user = await this.authService.logout(userId, refreshToken);
 
     return ResponseFactory.success({

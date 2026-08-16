@@ -91,7 +91,7 @@ describe('User Management E2E Tests', () => {
       });
 
       expect(body.success).toBe(true);
-      expect(body.data.user.email).toBe(userData.email);
+      expect(body.data.user.id).toBeDefined();
       expect(body.data.user.userProfile.fullName).toBe(userData.fullName);
       expect(body.data.tokens.accessToken).toBeDefined();
       expect(body.data.tokens.refreshToken).toBeDefined();
@@ -123,7 +123,7 @@ describe('User Management E2E Tests', () => {
       });
 
       expect(body.success).toBe(true);
-      expect(body.data.user.email).toBe(userData.email);
+      expect(body.data.user.id).toBeDefined();
       expect(body.data.tokens.accessToken).toBeDefined();
       expect(body.data.tokens.refreshToken).toBeDefined();
 

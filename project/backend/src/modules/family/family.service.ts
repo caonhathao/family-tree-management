@@ -5,17 +5,26 @@ import {
   IBiographyContent,
   IFamilyDto,
   IFamilyMemberDto,
-  IRelationshipDto,
 } from './dto/create-family.dto';
 import { Exception } from 'src/common/messages/messages.response';
 import { isUUID } from 'class-validator';
 import { GENDER, LINEAGE_TYPE, TYPE_RELATIONSHIP } from '@prisma/client';
+import {
+  FamilyDetailData,
+  FamilyRelationData,
+  FamilySyncData,
+  UpdateFamilyData,
+} from './types/family-response.type';
 
 @Injectable()
 export class FamilyService {
   constructor(private prisma: PrismaService) {}
 
-  async syncFamilyData(userId: string, groupId: string, data: FamilyDto) {
+  async syncFamilyData(
+    userId: string,
+    groupId: string,
+    data: FamilyDto,
+  ): Promise<FamilySyncData> {
     try {
       //check validation
       if (!isUUID(groupId, 'all')) {
@@ -120,7 +129,7 @@ export class FamilyService {
         //handle relation data
         await tx.relationship.deleteMany({ where: { familyId: family.id } });
 
-        const savedRelations: IRelationshipDto[] = [];
+        const savedRelations: FamilyRelationData[] = [];
         for (const r of data.relationships) {
           const rel = await tx.relationship.create({
             data: {
@@ -154,7 +163,10 @@ export class FamilyService {
       throw err;
     }
   }
-  async getFamilyData(userId: string, groupId: string) {
+  async getFamilyData(
+    userId: string,
+    groupId: string,
+  ): Promise<FamilyDetailData> {
     try {
       //check validation
       if (!isUUID(groupId, 'all'))
@@ -174,6 +186,7 @@ export class FamilyService {
           where: { familyId: family.id },
           select: {
             id: true,
+            familyId: true,
             fullName: true,
             gender: true,
             biography: true,
@@ -225,7 +238,11 @@ export class FamilyService {
       throw err;
     }
   }
-  async updateFamilyInfo(userId: string, groupId: string, data: IFamilyDto) {
+  async updateFamilyInfo(
+    userId: string,
+    groupId: string,
+    data: IFamilyDto,
+  ): Promise<UpdateFamilyData> {
     try {
       //check validation
       if (!isUUID(groupId, 'all'))
@@ -261,7 +278,11 @@ export class FamilyService {
     }
   }
 
-  async deleteFamilyData(userId: string, groupId: string, familyId: string) {
+  async deleteFamilyData(
+    userId: string,
+    groupId: string,
+    familyId: string,
+  ): Promise<{ id: string }> {
     try {
       const family = await this.prisma.$transaction(async (tx) => {
         //delete family

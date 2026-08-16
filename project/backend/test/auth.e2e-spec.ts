@@ -108,7 +108,7 @@ describe('Authentication E2E Tests', () => {
       });
 
       expect(body.success).toBe(true);
-      expect(body.data.user.email).toBe(validUser.email);
+      expect(body.data.user.id).toBeDefined();
       expect(body.data.user.userProfile.fullName).toBe(validUser.fullName);
       expect(body.data.tokens.accessToken).toBeDefined();
       expect(body.data.tokens.refreshToken).toBeDefined();
@@ -127,7 +127,7 @@ describe('Authentication E2E Tests', () => {
       );
 
       expect(body.success).toBe(true);
-      expect(body.data.user.email).toBe(validUser.email);
+      expect(body.data.user.id).toBeDefined();
       expect(body.data.tokens.accessToken).toBeDefined();
       expect(body.data.tokens.refreshToken).toBeDefined();
     });
@@ -150,7 +150,7 @@ describe('Authentication E2E Tests', () => {
       expect(body.success).toBe(true);
       expect(body.data.tokens.accessToken).toBeDefined();
       expect(body.data.tokens.refreshToken).toBeDefined();
-      expect(body.data.user.email).toBe(validUser.email);
+      expect(body.data.user.id).toBeDefined();
     });
   });
 
@@ -415,7 +415,7 @@ describe('Authentication E2E Tests', () => {
 
       expect(refreshBody.data.tokens.accessToken).toBeDefined();
       expect(refreshBody.data.tokens.refreshToken).toBeDefined();
-      expect(refreshBody.data.user.email).toBe(flowUser.email);
+      expect(refreshBody.data.user.id).toBeDefined();
 
       testUsers.push({ email: flowUser.email });
     });

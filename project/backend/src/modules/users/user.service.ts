@@ -12,6 +12,12 @@ import { CloudinaryService } from 'src/common/config/cloudinary/cloudinary.servi
 import { Prisma, USER_ROLE } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { EnvConfigService } from 'src/common/config/env/env-config.service';
+import {
+  AuthLogListData,
+  AuthProviderData,
+  UserListData,
+  UserResponseData,
+} from './types/user-response.type';
 
 @Injectable()
 export class UserService {
@@ -26,7 +32,7 @@ export class UserService {
     userId: string,
     data: UpdateUserDto,
     file?: Express.Multer.File,
-  ) {
+  ): Promise<UserResponseData> {
     console.log('data in update user service:', data);
     console.log('file in user update serivce:', file);
     if (!isUUID(targetId)) throw new NotFoundException(Exception.NOT_EXIST);
@@ -91,7 +97,10 @@ export class UserService {
         return {
           id: targetId,
           email: userResult?.email,
-          userProfile: userProfileResult,
+          userProfile: {
+            ...userProfileResult,
+            dateOfBirth: userProfileResult.dateOfBirth?.toISOString() ?? null,
+          },
         };
       });
 
@@ -102,7 +111,11 @@ export class UserService {
     }
   }
 
-  async get(targetId: string, userId: string, type = 'self') {
+  async get(
+    targetId: string,
+    userId: string,
+    type = 'self',
+  ): Promise<UserResponseData> {
     // console.log(targetId, userId);
     if (!isUUID(targetId, 'all'))
       throw new NotFoundException(Exception.NOT_EXIST);
@@ -132,6 +145,7 @@ export class UserService {
       });
 
       if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!user.userProfile) throw new NotFoundException(Exception.NOT_EXIST);
 
       const [groups, invites] = await this.prisma.$transaction([
         this.prisma.groupFamily.count({
@@ -154,7 +168,12 @@ export class UserService {
       ]);
 
       return {
-        ...user,
+        id: user.id,
+        email: user.email,
+        userProfile: {
+          ...user.userProfile,
+          dateOfBirth: user.userProfile.dateOfBirth?.toISOString() ?? null,
+        },
         groups,
         invites,
       };
@@ -179,8 +198,16 @@ export class UserService {
       });
 
       if (!target) throw new NotFoundException(Exception.NOT_EXIST);
+      if (!target.userProfile) throw new NotFoundException(Exception.NOT_EXIST);
 
-      return target;
+      return {
+        id: target.id,
+        email: target.email,
+        userProfile: {
+          ...target.userProfile,
+          dateOfBirth: target.userProfile.dateOfBirth?.toISOString() ?? null,
+        },
+      };
     } else {
       throw new BadRequestException(Exception.BAD_REQUEST);
     }
@@ -192,7 +219,7 @@ export class UserService {
     limit?: number,
     filter?: string,
     filterType?: string,
-  ) {
+  ): Promise<UserListData> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, email: true, role: true },
@@ -249,7 +276,10 @@ export class UserService {
     };
   }
 
-  async getAuthProviders(targetId: string, userId: string) {
+  async getAuthProviders(
+    targetId: string,
+    userId: string,
+  ): Promise<AuthProviderData[]> {
     if (!isUUID(targetId, 'all'))
       throw new BadRequestException(Exception.ID_INVALID);
     if (targetId !== userId) throw new ForbiddenException(Exception.PEMRISSION);
@@ -280,7 +310,12 @@ export class UserService {
     });
   }
 
-  async getAuthLogs(targetId: string, userId: string, page = 1, limit = 10) {
+  async getAuthLogs(
+    targetId: string,
+    userId: string,
+    page = 1,
+    limit = 10,
+  ): Promise<AuthLogListData> {
     if (!isUUID(targetId, 'all'))
       throw new BadRequestException(Exception.ID_INVALID);
     if (targetId !== userId) throw new ForbiddenException(Exception.PEMRISSION);

@@ -230,8 +230,8 @@ describe('Family E2E Tests', () => {
       const getRes = await getFamily(token, familyId);
 
       expect(getRes.code).toBe(200);
-      expect(getRes.data.name).toBe(familyName);
-      expect(getRes.data.description).toBe(familyDescription);
+      expect(getRes.data.family.name).toBe(familyName);
+      expect(getRes.data.family.description).toBe(familyDescription);
     });
   });
 
@@ -308,7 +308,7 @@ describe('Family E2E Tests', () => {
       const updateRes = await updateFamily(
         token,
         groupId,
-        getRes.data.id,
+        getRes.data.family.id!,
         updatedName,
         familyDescription,
       );

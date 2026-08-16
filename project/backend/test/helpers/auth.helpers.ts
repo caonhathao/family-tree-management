@@ -36,7 +36,7 @@ export const createTestUser = async (
   });
   return {
     id: body.data.user.id,
-    email: body.data.user.email,
+    email: dto.email,
     fullName: body.data.user.userProfile.fullName,
     accessToken: body.data.tokens.accessToken,
     refreshToken: body.data.tokens.refreshToken,
