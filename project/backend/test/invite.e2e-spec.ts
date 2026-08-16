@@ -1,170 +1,50 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
+import { INestApplication } from '@nestjs/common';
+import { TestApi } from './api.client';
+import { createTestApp } from './test-app';
 import { PrismaService } from '../prisma/prisma.service';
+import { register } from './helpers/auth.helpers';
+import { createGroup, createInvite, joinGroup } from './helpers/group.helpers';
+import {
+  deleteGroupsByIds,
+  deleteUsersByEmails,
+} from './helpers/cleanup.helpers';
+import { generateRandomSuffix } from './helpers/common.helpers';
+import { AuthResponse } from 'src/modules/auth/types/auth-response.type';
 
-import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
-//passed
-interface IUserType {
-  data: {
-    user: {
-      id: string;
-      email: string;
-      userProfile: {
-        fullName: string;
-        avatar?: string;
-      };
-    };
-    tokens: {
-      accessToken: string;
-      refreshToken: string;
-    };
-  };
-  code: number;
-}
-interface INewGroup {
-  data: {
-    id: string;
-    name: string;
-    description: string;
-  };
-  code: number;
-}
-interface IInviteType {
-  data: {
-    inviteLink: string;
-  };
-  code: number;
-}
-interface IJoinUserType {
-  data: {
-    id: string;
-    groupId: string;
-    memberId: string;
-    role: string;
-    isLeader: string;
-  };
-  code: number;
-}
 describe('Invite E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  const testUsers: any[] = [];
-  const testGroups: any[] = [];
-
-  const generateRandomSuffix = () =>
-    `${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-  const registerUser = async (
-    email: string,
-    password: string,
-    fullName: string,
-  ) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const response = await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({ email, password, fullName });
-
-    if (response.status !== 201) {
-      console.log(
-        `[${expect.getState().currentTestName}] Register member failed:`,
-        response.body,
-      );
-    }
-    return response.body as IUserType;
-  };
-
-  // const loginUser = async (email: string, password: string) => {
-  //   return await request(app.getHttpServer())
-  //     .post('/auth/login-base')
-  //     .send({ email, password });
-  // };
-
-  const createGroup = async (token: string, groupName: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const response = await request(app.getHttpServer())
-      .post('/group-family')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ name: groupName, description: 'Test group description' });
-    if (response.status !== 201) {
-      console.log(
-        `[${expect.getState().currentTestName}] Create group failed:`,
-        response.body,
-      );
-    }
-    return response.body as INewGroup;
-  };
-
-  const createInvite = async (token: string, groupId: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const response = await request(app.getHttpServer())
-      .post('/invite')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ groupId });
-    if (response.status !== 201) {
-      console.log(
-        `[${expect.getState().currentTestName}] Create invite failed:`,
-        response.body,
-      );
-    }
-    return response.body as IInviteType;
-  };
-
-  const joinGroup = async (token: string, inviteToken: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const response = await request(app.getHttpServer())
-      .post('/group-family/join')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ token: inviteToken });
-
-    if (response.status !== 201 && response.status !== 200) {
-      console.log(
-        `[${expect.getState().currentTestName}] Join group failed:`,
-        response.body,
-      );
-    }
-    return response.body as IJoinUserType;
-  };
+  let api: TestApi;
+  const testUsers: { email: string }[] = [];
+  const testGroups: { id: string }[] = [];
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    const {
+      app: testApp,
+      prisma: testPrisma,
+      httpServer,
+    } = await createTestApp({
+      globalPrefix: false,
+      allExceptionsFilter: true,
+    });
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-    prisma = moduleFixture.get<PrismaService>(PrismaService);
-    await app.init();
+    app = testApp;
+    prisma = testPrisma;
+    api = new TestApi(httpServer);
   });
 
   afterAll(async () => {
     if (testUsers.length > 0) {
-      await prisma.user.deleteMany({
-        where: {
-          email: {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-            in: testUsers.map((user) => user.email),
-          },
-        },
-      });
+      await deleteUsersByEmails(
+        prisma,
+        testUsers.map((user) => user.email),
+      );
     }
     if (testGroups.length > 0) {
-      await prisma.groupFamily.deleteMany({
-        where: {
-          id: {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-            in: testGroups.map((group) => group.id),
-          },
-        },
-      });
+      await deleteGroupsByIds(
+        prisma,
+        testGroups.map((group) => group.id),
+      );
     }
     await app.close();
   });
@@ -185,19 +65,17 @@ describe('Invite E2E Tests', () => {
         fullName: 'Member User',
       };
 
-      const registerOwnerResponse = await registerUser(
-        ownerData.email,
-        ownerData.password,
-        ownerData.fullName,
+      const registerOwnerResponse: AuthResponse = await register(
+        api,
+        ownerData,
       );
 
       expect(registerOwnerResponse.code).toBe(201);
       testUsers.push({ email: ownerData.email });
 
-      const registerMemberResponse = await registerUser(
-        memberData.email,
-        memberData.password,
-        memberData.fullName,
+      const registerMemberResponse: AuthResponse = await register(
+        api,
+        memberData,
       );
 
       expect(registerMemberResponse.code).toBe(201);
@@ -206,20 +84,23 @@ describe('Invite E2E Tests', () => {
       const ownerToken = registerOwnerResponse.data.tokens.accessToken;
       const memberToken = registerMemberResponse.data.tokens.accessToken;
 
-      const createGroupResponse = await createGroup(ownerToken, `TG${suffix}`);
+      const createGroupResponse = await createGroup(api, ownerToken, {
+        name: `TG${suffix}`,
+        description: 'Test group description',
+      });
 
       expect(createGroupResponse.code).toBe(201);
       const groupId = createGroupResponse.data.id;
       testGroups.push({ id: groupId });
 
-      const createInviteResponse = await createInvite(ownerToken, groupId);
+      const createInviteResponse = await createInvite(api, ownerToken, groupId);
 
       expect(createInviteResponse.code).toBe(201);
       expect(createInviteResponse.data.inviteLink).toBeDefined();
       const inviteLink = createInviteResponse.data.inviteLink;
       const inviteCode = inviteLink.split('token=')[1];
 
-      const joinGroupResponse = await joinGroup(memberToken, inviteCode);
+      const joinGroupResponse = await joinGroup(api, memberToken, inviteCode);
 
       expect([201, 200]).toContain(joinGroupResponse.code);
     });
@@ -238,29 +119,34 @@ describe('Invite E2E Tests', () => {
         password: 'password123',
         fullName: 'Non Member',
       };
-      const registerOwnerResponse = await registerUser(
-        groupOwnerData.email,
-        groupOwnerData.password,
-        groupOwnerData.fullName,
+      const registerOwnerResponse: AuthResponse = await register(
+        api,
+        groupOwnerData,
       );
       expect(registerOwnerResponse.code).toBe(201);
       testUsers.push({ email: groupOwnerData.email });
-      const registerNonMemberResponse = await registerUser(
-        nonMemberData.email,
-        nonMemberData.password,
-        nonMemberData.fullName,
+      const registerNonMemberResponse: AuthResponse = await register(
+        api,
+        nonMemberData,
       );
       expect(registerNonMemberResponse.code).toBe(201);
 
       testUsers.push({ email: nonMemberData.email });
       const ownerToken = registerOwnerResponse.data.tokens.accessToken;
       const nonMemberToken = registerNonMemberResponse.data.tokens.accessToken;
-      const createGroupResponse = await createGroup(ownerToken, `TG${suffix}`);
+      const createGroupResponse = await createGroup(api, ownerToken, {
+        name: `TG${suffix}`,
+        description: 'Test group description',
+      });
       expect(createGroupResponse.code).toBe(201);
 
       const groupId = createGroupResponse.data.id;
       testGroups.push({ id: groupId });
-      const createInviteResponse = await createInvite(nonMemberToken, groupId);
+      const createInviteResponse = await createInvite(
+        api,
+        nonMemberToken,
+        groupId,
+      );
       expect(createInviteResponse.code).toBe(403);
     });
   });
@@ -275,11 +161,7 @@ describe('Invite E2E Tests', () => {
         fullName: 'Test User',
       };
 
-      const registerResponse = await registerUser(
-        userData.email,
-        userData.password,
-        userData.fullName,
-      );
+      const registerResponse: AuthResponse = await register(api, userData);
       expect(registerResponse.code).toBe(201);
       testUsers.push({ email: userData.email });
 
@@ -292,7 +174,7 @@ describe('Invite E2E Tests', () => {
       ];
 
       for (const token of invalidTokens) {
-        const joinResponse = await joinGroup(userToken, token);
+        const joinResponse = await joinGroup(api, userToken, token);
 
         expect([400, 404]).toContain(joinResponse.code);
       }
@@ -321,26 +203,23 @@ describe('Invite E2E Tests', () => {
         fullName: 'Member User',
       };
 
-      const registerOwnerAResponse = await registerUser(
-        ownerAData.email,
-        ownerAData.password,
-        ownerAData.fullName,
+      const registerOwnerAResponse: AuthResponse = await register(
+        api,
+        ownerAData,
       );
       expect(registerOwnerAResponse.code).toBe(201);
       testUsers.push({ email: ownerAData.email });
 
-      const registerOwnerBResponse = await registerUser(
-        ownerBData.email,
-        ownerBData.password,
-        ownerBData.fullName,
+      const registerOwnerBResponse: AuthResponse = await register(
+        api,
+        ownerBData,
       );
       expect(registerOwnerBResponse.code).toBe(201);
       testUsers.push({ email: ownerBData.email });
 
-      const registerMemberResponse = await registerUser(
-        memberData.email,
-        memberData.password,
-        memberData.fullName,
+      const registerMemberResponse: AuthResponse = await register(
+        api,
+        memberData,
       );
       expect(registerMemberResponse.code).toBe(201);
       testUsers.push({ email: memberData.email });
@@ -349,28 +228,33 @@ describe('Invite E2E Tests', () => {
       const ownerBToken = registerOwnerBResponse.data.tokens.accessToken;
       const memberToken = registerMemberResponse.data.tokens.accessToken;
 
-      const createGroupAResponse = await createGroup(
-        ownerAToken,
-        `GA${suffix}`,
-      );
+      const createGroupAResponse = await createGroup(api, ownerAToken, {
+        name: `GA${suffix}`,
+        description: 'Test group description',
+      });
       expect(createGroupAResponse.code).toBe(201);
       const groupAId = createGroupAResponse.data.id;
       testGroups.push({ id: groupAId });
 
-      const createGroupBResponse = await createGroup(
-        ownerBToken,
-        `GB${suffix}`,
-      );
+      const createGroupBResponse = await createGroup(api, ownerBToken, {
+        name: `GB${suffix}`,
+        description: 'Test group description',
+      });
       expect(createGroupBResponse.code).toBe(201);
       const groupBId = createGroupBResponse.data.id;
       testGroups.push({ id: groupBId });
 
-      const createInviteAResponse = await createInvite(ownerAToken, groupAId);
+      const createInviteAResponse = await createInvite(
+        api,
+        ownerAToken,
+        groupAId,
+      );
       expect(createInviteAResponse.code).toBe(201);
       const inviteALink = createInviteAResponse.data.inviteLink;
       const inviteACode = inviteALink.split('token=')[1];
 
       const joinBWithInviteAResponse = await joinGroup(
+        api,
         memberToken,
         inviteACode,
       );
@@ -397,18 +281,16 @@ describe('Invite E2E Tests', () => {
         fullName: 'Member User',
       };
 
-      const registerOwnerResponse = await registerUser(
-        ownerData.email,
-        ownerData.password,
-        ownerData.fullName,
+      const registerOwnerResponse: AuthResponse = await register(
+        api,
+        ownerData,
       );
       expect(registerOwnerResponse.code).toBe(201);
       testUsers.push({ email: ownerData.email });
 
-      const registerMemberResponse = await registerUser(
-        memberData.email,
-        memberData.password,
-        memberData.fullName,
+      const registerMemberResponse: AuthResponse = await register(
+        api,
+        memberData,
       );
       expect(registerMemberResponse.code).toBe(201);
       testUsers.push({ email: memberData.email });
@@ -416,20 +298,23 @@ describe('Invite E2E Tests', () => {
       const ownerToken = registerOwnerResponse.data.tokens.accessToken;
       const memberToken = registerMemberResponse.data.tokens.accessToken;
 
-      const createGroupResponse = await createGroup(ownerToken, `TG${suffix}`);
+      const createGroupResponse = await createGroup(api, ownerToken, {
+        name: `TG${suffix}`,
+        description: 'Test group description',
+      });
       expect(createGroupResponse.code).toBe(201);
       const groupId = createGroupResponse.data.id;
       testGroups.push({ id: groupId });
 
-      const createInviteResponse = await createInvite(ownerToken, groupId);
+      const createInviteResponse = await createInvite(api, ownerToken, groupId);
       expect(createInviteResponse.code).toBe(201);
       const inviteLink = createInviteResponse.data.inviteLink;
       const inviteCode = inviteLink.split('token=')[1];
 
-      const firstJoinResponse = await joinGroup(memberToken, inviteCode);
+      const firstJoinResponse = await joinGroup(api, memberToken, inviteCode);
       expect([201, 200]).toContain(firstJoinResponse.code);
 
-      const secondJoinResponse = await joinGroup(memberToken, inviteCode);
+      const secondJoinResponse = await joinGroup(api, memberToken, inviteCode);
 
       expect([400, 409]).toContain(secondJoinResponse.code);
     });

@@ -1,9 +1,26 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { PrismaService } from '../prisma/prisma.service';
+import { INestApplication } from '@nestjs/common';
 import { MEMBER_ROLE } from '@prisma/client';
+import { TestApi } from './api.client';
+import { createTestApp } from './test-app';
+import { PrismaService } from '../prisma/prisma.service';
+import {
+  RegisteredUser,
+  createTestUser as createRegisteredUser,
+} from './helpers/auth.helpers';
+import { createGroup, joinGroup } from './helpers/group.helpers';
+import {
+  deleteGroupMembersByGroupIds,
+  deleteGroupsByIds,
+  deleteInvitesByTokens,
+  deleteUsersByEmails,
+} from './helpers/cleanup.helpers';
+import { ApiDataResponse } from 'src/common/constants/api';
+import {
+  GroupData,
+  GroupDetail,
+  GroupListEntry,
+  GroupResponse,
+} from 'src/modules/group-family/types/group-family-response.type';
 
 /**
  * E2E Tests for Group Family Module
@@ -26,44 +43,35 @@ import { MEMBER_ROLE } from '@prisma/client';
  * - Non-Member: 404 for group-specific operations
  */
 
-//passed
 describe('Group Family E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let api: TestApi;
 
   // Test data storage for cleanup
-  const testUsers: any[] = [];
-  const testGroups: any[] = [];
-  const testInvites: any[] = [];
+  const testUsers: { email: string }[] = [];
+  const testGroups: GroupData[] = [];
+  const testInvites: { token: string }[] = [];
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    const {
+      app: testApp,
+      prisma: testPrisma,
+      httpServer,
+    } = await createTestApp();
 
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api'); // Match main.ts configuration
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-    prisma = moduleFixture.get<PrismaService>(PrismaService);
-    await app.init();
+    app = testApp;
+    prisma = testPrisma;
+    api = new TestApi(httpServer, '/api');
   });
 
   afterAll(async () => {
     // Final cleanup of users
     if (testUsers.length > 0) {
-      await prisma.user.deleteMany({
-        where: {
-          email: {
-            in: testUsers.map((user) => user.email),
-          },
-        },
-      });
+      await deleteUsersByEmails(
+        prisma,
+        testUsers.map((user) => user.email),
+      );
     }
 
     await app.close();
@@ -72,31 +80,22 @@ describe('Group Family E2E Tests', () => {
   afterEach(async () => {
     // Clean up test data after each test to avoid P2002 unique constraint errors
     if (testGroups.length > 0) {
-      await prisma.groupMember.deleteMany({
-        where: {
-          groupId: {
-            in: testGroups.map((group) => group.id),
-          },
-        },
-      });
+      await deleteGroupMembersByGroupIds(
+        prisma,
+        testGroups.map((group) => group.id),
+      );
 
-      await prisma.groupFamily.deleteMany({
-        where: {
-          id: {
-            in: testGroups.map((group) => group.id),
-          },
-        },
-      });
+      await deleteGroupsByIds(
+        prisma,
+        testGroups.map((group) => group.id),
+      );
     }
 
     if (testInvites.length > 0) {
-      await prisma.invite.deleteMany({
-        where: {
-          token: {
-            in: testInvites.map((invite) => invite.token),
-          },
-        },
-      });
+      await deleteInvitesByTokens(
+        prisma,
+        testInvites.map((invite) => invite.token),
+      );
     }
 
     // Clear arrays
@@ -105,28 +104,25 @@ describe('Group Family E2E Tests', () => {
   });
 
   // Helper functions
-  const createTestUser = async (userData: any) => {
-    const response = await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send(userData)
-      .expect(201);
+  const createTestUser = async (userData: {
+    email: string;
+    password: string;
+    fullName: string;
+  }): Promise<RegisteredUser> => {
+    const user = await createRegisteredUser(api, userData);
 
     testUsers.push({ email: userData.email });
-    return {
-      user: response.body.data.user,
-      tokens: response.body.data.tokens,
-    };
+    return user;
   };
 
-  const createTestGroup = async (leaderToken: string, groupData: any) => {
-    const response = await request(app.getHttpServer())
-      .post('/api/group-family')
-      .set('Authorization', `Bearer ${leaderToken}`)
-      .send(groupData)
-      .expect(201);
+  const createTestGroup = async (
+    leaderToken: string,
+    groupData: { name: string; description?: string },
+  ): Promise<GroupData> => {
+    const body = await createGroup(api, leaderToken, groupData, 201);
 
-    testGroups.push(response.body.data);
-    return response.body.data;
+    testGroups.push(body.data);
+    return body.data;
   };
 
   describe('1. GROUP CREATION (POST /api/group-family)', () => {
@@ -137,26 +133,22 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Group Leader Test',
       };
 
-      const { tokens } = await createTestUser(leaderData);
+      const leader = await createTestUser(leaderData);
       const groupData = {
         name: 'Test Group Family',
         description: 'A test group for E2E testing',
       };
 
-      const response = await request(app.getHttpServer())
-        .post('/api/group-family')
-        .set('Authorization', `Bearer ${tokens.accessToken}`)
-        .send(groupData)
-        .expect(201);
+      const body = await createGroup(api, leader.accessToken, groupData, 201);
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe(groupData.name);
-      expect(response.body.data.description).toBe(groupData.description);
+      expect(body.success).toBe(true);
+      expect(body.data.name).toBe(groupData.name);
+      expect(body.data.description).toBe(groupData.description);
 
       // Verify leader was added to group in database
       const groupMember = await prisma.groupMember.findFirst({
         where: {
-          groupId: response.body.data.id,
+          groupId: body.data.id,
           member: {
             email: leaderData.email,
           },
@@ -180,10 +172,7 @@ describe('Group Family E2E Tests', () => {
         description: 'Should not be created',
       };
 
-      await request(app.getHttpServer())
-        .post('/api/group-family')
-        .send(groupData)
-        .expect(401);
+      await api.post('/group-family', groupData, { expect: 401 });
     });
 
     it('should reject group creation with invalid name (too short)', async () => {
@@ -193,17 +182,13 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Invalid Name User',
       };
 
-      const { tokens } = await createTestUser(userData);
+      const user = await createTestUser(userData);
       const groupData = {
         name: 'abc', // Too short (minimum 6)
         description: 'Should fail validation',
       };
 
-      await request(app.getHttpServer())
-        .post('/api/group-family')
-        .set('Authorization', `Bearer ${tokens.accessToken}`)
-        .send(groupData)
-        .expect(400);
+      await createGroup(api, user.accessToken, groupData, 400);
     });
 
     it('should reject group creation with invalid name (too long)', async () => {
@@ -213,17 +198,13 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Long Name User',
       };
 
-      const { tokens } = await createTestUser(userData);
+      const user = await createTestUser(userData);
       const groupData = {
         name: 'a'.repeat(31), // Too long (maximum 30)
         description: 'Should fail validation',
       };
 
-      await request(app.getHttpServer())
-        .post('/api/group-family')
-        .set('Authorization', `Bearer ${tokens.accessToken}`)
-        .send(groupData)
-        .expect(400);
+      await createGroup(api, user.accessToken, groupData, 400);
     });
 
     it('should create group without optional description', async () => {
@@ -233,25 +214,21 @@ describe('Group Family E2E Tests', () => {
         fullName: 'No Description User',
       };
 
-      const { tokens } = await createTestUser(userData);
+      const user = await createTestUser(userData);
       const groupData = {
         name: 'Group Without Description',
       };
 
-      const response = await request(app.getHttpServer())
-        .post('/api/group-family')
-        .set('Authorization', `Bearer ${tokens.accessToken}`)
-        .send(groupData)
-        .expect(201);
+      const body = await createGroup(api, user.accessToken, groupData, 201);
 
-      expect(response.body.data.description).toBeNull();
+      expect(body.data.description).toBeNull();
     });
   });
 
   describe('2. GROUP RETRIEVAL (GET /api/group-family)', () => {
     let leaderToken: string;
     let memberToken: string;
-    let testGroup: any;
+    let testGroup: GroupData;
 
     beforeEach(async () => {
       // Setup test users and group for each test
@@ -267,11 +244,11 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Retrieve Member',
       };
 
-      const leaderResult = await createTestUser(leaderData);
-      const memberResult = await createTestUser(memberData);
+      const leader = await createTestUser(leaderData);
+      const member = await createTestUser(memberData);
 
-      leaderToken = leaderResult.tokens.accessToken;
-      memberToken = memberResult.tokens.accessToken;
+      leaderToken = leader.accessToken;
+      memberToken = member.accessToken;
 
       testGroup = await createTestGroup(leaderToken, {
         name: 'Retrieve Test Group',
@@ -282,7 +259,7 @@ describe('Group Family E2E Tests', () => {
       const invite = await prisma.invite.create({
         data: {
           groupId: testGroup.id,
-          senderId: leaderResult.user.id,
+          senderId: leader.id,
           token: `test-invite-${Date.now()}`,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
         },
@@ -290,43 +267,37 @@ describe('Group Family E2E Tests', () => {
 
       testInvites.push(invite);
 
-      await request(app.getHttpServer())
-        .post('/api/group-family/join')
-        .set('Authorization', `Bearer ${memberToken}`)
-        .query({ token: invite.token })
-        .expect(200);
+      await joinGroup(api, memberToken, invite.token, 200);
     });
 
     it('should get all groups for authenticated user', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/api/group-family')
-        .set('Authorization', `Bearer ${leaderToken}`)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(Array.isArray(response.body.data)).toBe(true);
-      expect(response.body.data.length).toBeGreaterThan(0);
-
-      const foundGroup = response.body.data.find(
-        (group: any) => group.id === testGroup.id,
+      const body = await api.get<ApiDataResponse<GroupListEntry[]>>(
+        '/group-family',
+        { token: leaderToken, expect: 200 },
       );
+
+      expect(body.success).toBe(true);
+      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.data.length).toBeGreaterThan(0);
+
+      const foundGroup = body.data.find((group) => group.id === testGroup.id);
       expect(foundGroup).toBeDefined();
-      expect(foundGroup.name).toBe(testGroup.name);
+      expect(foundGroup?.name).toBe(testGroup.name);
     });
 
     it('should get specific group by ID for member', async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/api/group-family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leaderToken}`)
-        .expect(200);
+      const body = await api.get<ApiDataResponse<GroupDetail>>(
+        `/group-family/${testGroup.id}`,
+        { token: leaderToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.id).toBe(testGroup.id);
-      expect(response.body.data.name).toBe(testGroup.name);
-      expect(response.body.data.description).toBe(testGroup.description);
-      expect(response.body.data.groupMembers).toBeDefined();
-      expect(response.body.data.createdAt).toBeDefined();
-      expect(response.body.data.updatedAt).toBeDefined();
+      expect(body.success).toBe(true);
+      expect(body.data.id).toBe(testGroup.id);
+      expect(body.data.name).toBe(testGroup.name);
+      expect(body.data.description).toBe(testGroup.description);
+      expect(body.data.groupMembers).toBeDefined();
+      expect(body.data.createdAt).toBeDefined();
+      expect(body.data.updatedAt).toBeDefined();
     });
 
     it('should reject getting group for non-member', async () => {
@@ -336,30 +307,30 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Non Member User',
       };
 
-      const { tokens } = await createTestUser(nonMemberData);
+      const user = await createTestUser(nonMemberData);
 
-      await request(app.getHttpServer())
-        .get(`/api/group-family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${tokens.accessToken}`)
-        .expect(404);
+      await api.get(`/group-family/${testGroup.id}`, {
+        token: user.accessToken,
+        expect: 404,
+      });
     });
 
     it('should reject getting group with invalid UUID', async () => {
-      await request(app.getHttpServer())
-        .get('/api/group-family/invalid-uuid')
-        .set('Authorization', `Bearer ${leaderToken}`)
-        .expect(404);
+      await api.get('/group-family/invalid-uuid', {
+        token: leaderToken,
+        expect: 404,
+      });
     });
 
     it('should reject getting groups without authentication', async () => {
-      await request(app.getHttpServer()).get('/api/group-family').expect(401);
+      await api.get('/group-family', { expect: 401 });
     });
   });
 
   describe('3. GROUP UPDATE (PATCH /api/group-family/:id)', () => {
     let leaderToken: string;
     let memberToken: string;
-    let testGroup: any;
+    let testGroup: GroupData;
 
     beforeEach(async () => {
       // Setup test users and group for each test
@@ -375,11 +346,11 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Update Member',
       };
 
-      const leaderResult = await createTestUser(leaderData);
-      const memberResult = await createTestUser(memberData);
+      const leader = await createTestUser(leaderData);
+      const member = await createTestUser(memberData);
 
-      leaderToken = leaderResult.tokens.accessToken;
-      memberToken = memberResult.tokens.accessToken;
+      leaderToken = leader.accessToken;
+      memberToken = member.accessToken;
 
       testGroup = await createTestGroup(leaderToken, {
         name: 'Update Test Group',
@@ -390,7 +361,7 @@ describe('Group Family E2E Tests', () => {
       const invite = await prisma.invite.create({
         data: {
           groupId: testGroup.id,
-          senderId: leaderResult.user.id,
+          senderId: leader.id,
           token: `test-invite-${Date.now()}`,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
         },
@@ -398,11 +369,7 @@ describe('Group Family E2E Tests', () => {
 
       testInvites.push(invite);
 
-      await request(app.getHttpServer())
-        .post('/api/group-family/join')
-        .set('Authorization', `Bearer ${memberToken}`)
-        .query({ token: invite.token })
-        .expect(200);
+      await joinGroup(api, memberToken, invite.token, 200);
     });
 
     it('should allow leader to update group', async () => {
@@ -411,15 +378,15 @@ describe('Group Family E2E Tests', () => {
         description: 'Updated description',
       };
 
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leaderToken}`)
-        .send(updateData)
-        .expect(200);
+      const body = await api.patch<GroupResponse>(
+        `/group-family/${testGroup.id}`,
+        updateData,
+        { token: leaderToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe(updateData.name);
-      expect(response.body.data.description).toBe(updateData.description);
+      expect(body.success).toBe(true);
+      expect(body.data.name).toBe(updateData.name);
+      expect(body.data.description).toBe(updateData.description);
     });
 
     it('should reject group update by non-leader member', async () => {
@@ -427,19 +394,18 @@ describe('Group Family E2E Tests', () => {
         name: 'Unauthorized Update',
       };
 
-      await request(app.getHttpServer())
-        .patch(`/api/group-family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${memberToken}`)
-        .send(updateData)
-        .expect(404); // Service returns 404 for non-leader
+      await api.patch(`/group-family/${testGroup.id}`, updateData, {
+        token: memberToken,
+        expect: 404, // Service returns 404 for non-leader
+      });
     });
 
     it('should reject group update with empty name', async () => {
-      await request(app.getHttpServer())
-        .patch(`/api/group-family/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leaderToken}`)
-        .send({ name: '' })
-        .expect(400);
+      await api.patch(
+        `/group-family/${testGroup.id}`,
+        { name: '' },
+        { token: leaderToken, expect: 400 },
+      );
     });
 
     it('should reject group update for non-existent group', async () => {
@@ -447,18 +413,21 @@ describe('Group Family E2E Tests', () => {
         name: 'Non-existent Group',
       };
 
-      await request(app.getHttpServer())
-        .patch('/api/group-family/00000000-0000-0000-0000-000000000000')
-        .set('Authorization', `Bearer ${leaderToken}`)
-        .send(updateData)
-        .expect(404);
+      await api.patch(
+        '/group-family/00000000-0000-0000-0000-000000000000',
+        updateData,
+        {
+          token: leaderToken,
+          expect: 404,
+        },
+      );
     });
   });
 
   describe('4. GROUP JOIN (POST /api/group-family/join)', () => {
     let leaderToken: string;
-    let testGroup: any;
-    let validInvite: any;
+    let testGroup: GroupData;
+    let validInvite: { token: string };
 
     beforeEach(async () => {
       const leaderData = {
@@ -467,8 +436,8 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Join Leader',
       };
 
-      const leaderResult = await createTestUser(leaderData);
-      leaderToken = leaderResult.tokens.accessToken;
+      const leader = await createTestUser(leaderData);
+      leaderToken = leader.accessToken;
 
       testGroup = await createTestGroup(leaderToken, {
         name: 'Join Test Group',
@@ -478,7 +447,7 @@ describe('Group Family E2E Tests', () => {
       validInvite = await prisma.invite.create({
         data: {
           groupId: testGroup.id,
-          senderId: leaderResult.user.id,
+          senderId: leader.id,
           token: `valid-join-${Date.now()}`,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         },
@@ -494,26 +463,27 @@ describe('Group Family E2E Tests', () => {
         fullName: 'New Member',
       };
 
-      const { tokens } = await createTestUser(userData);
+      const user = await createTestUser(userData);
 
-      const response = await request(app.getHttpServer())
-        .post('/api/group-family/join')
-        .set('Authorization', `Bearer ${tokens.accessToken}`)
-        .query({ token: validInvite.token })
-        .expect(200);
+      const body = await joinGroup(
+        api,
+        user.accessToken,
+        validInvite.token,
+        200,
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.groupId).toBe(testGroup.id);
-      expect(response.body.data.memberId).toBeDefined();
-      expect(response.body.data.role).toBe(MEMBER_ROLE.VIEWER);
-      expect(response.body.data.isLeader).toBe(false);
+      expect(body.success).toBe(true);
+      expect(body.data.groupId).toBe(testGroup.id);
+      expect(body.data.memberId).toBeDefined();
+      expect(body.data.role).toBe(MEMBER_ROLE.VIEWER);
+      expect(body.data.isLeader).toBe(false);
 
       // Verify membership in database
       const membership = await prisma.groupMember.findUnique({
         where: {
           memberId_groupId: {
             groupId: testGroup.id,
-            memberId: response.body.data.memberId,
+            memberId: body.data.memberId,
           },
         },
       });
@@ -532,20 +502,16 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Invalid Token User',
       };
 
-      const { tokens } = await createTestUser(userData);
+      const user = await createTestUser(userData);
 
-      await request(app.getHttpServer())
-        .post('/api/group-family/join')
-        .set('Authorization', `Bearer ${tokens.accessToken}`)
-        .query({ token: 'invalid-token-123' })
-        .expect(404);
+      await joinGroup(api, user.accessToken, 'invalid-token-123', 404);
     });
 
     it('should reject joining without authentication', async () => {
-      await request(app.getHttpServer())
-        .post('/api/group-family/join')
-        .query({ token: validInvite.token })
-        .expect(401);
+      await api.post('/group-family/join', undefined, {
+        query: { token: validInvite.token },
+        expect: 401,
+      });
     });
   });
 
@@ -557,24 +523,23 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Leader Check User',
       };
 
-      const leaderResult = await createTestUser(leaderData);
+      const leader = await createTestUser(leaderData);
 
-      const response = await request(app.getHttpServer())
-        .post('/api/group-family')
-        .set('Authorization', `Bearer ${leaderResult.tokens.accessToken}`)
-        .send({
-          name: 'Leader Check Group',
-        })
-        .expect(201);
+      const body = await createGroup(
+        api,
+        leader.accessToken,
+        { name: 'Leader Check Group' },
+        201,
+      );
 
-      const groupId = response.body.data.id;
+      const groupId = body.data.id;
 
       // Verify actual database state
       const membership = await prisma.groupMember.findUnique({
         where: {
           memberId_groupId: {
             groupId: groupId,
-            memberId: leaderResult.user.id,
+            memberId: leader.id,
           },
         },
         select: {
@@ -597,14 +562,13 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Error Test User',
       };
 
-      const { tokens } = await createTestUser(userData);
+      const user = await createTestUser(userData);
 
-      await request(app.getHttpServer())
-        .post('/api/group-family')
-        .set('Authorization', `Bearer ${tokens.accessToken}`)
-        .set('Content-Type', 'application/json')
-        .send('{"invalid": json}')
-        .expect(400);
+      await api.post('/group-family', '{"invalid": json}', {
+        token: user.accessToken,
+        headers: { 'Content-Type': 'application/json' },
+        expect: 400,
+      });
     });
 
     it('should add debug logging for 400/500 errors', async () => {
@@ -614,19 +578,18 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Debug User',
       };
 
-      const { tokens } = await createTestUser(userData);
+      const user = await createTestUser(userData);
 
-      const response = await request(app.getHttpServer())
-        .post('/api/group-family')
-        .set('Authorization', `Bearer ${tokens.accessToken}`)
-        .send({
-          name: 'abc', // Invalid - too short
-        })
-        .expect(400);
+      const body = await createGroup(
+        api,
+        user.accessToken,
+        { name: 'abc' }, // Invalid - too short
+        400,
+      );
 
       // Console log the response body for debugging
-      console.log('400 Error Response:', response.body);
-      expect(response.body).toBeDefined();
+      console.log('400 Error Response:', body);
+      expect(body).toBeDefined();
     });
   });
 
@@ -639,25 +602,26 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Lifecycle Leader',
       };
 
-      const leaderResult = await createTestUser(leaderData);
+      const leader = await createTestUser(leaderData);
 
       // Create group
-      const groupResponse = await request(app.getHttpServer())
-        .post('/api/group-family')
-        .set('Authorization', `Bearer ${leaderResult.tokens.accessToken}`)
-        .send({
+      const groupBody = await createGroup(
+        api,
+        leader.accessToken,
+        {
           name: 'Lifecycle Test Group',
           description: 'Testing complete lifecycle',
-        })
-        .expect(201);
+        },
+        201,
+      );
 
-      const groupId = groupResponse.body.data.id;
+      const groupId = groupBody.data.id;
 
       // Create invite
       const invite = await prisma.invite.create({
         data: {
           groupId: groupId,
-          senderId: leaderResult.user.id,
+          senderId: leader.id,
           token: `lifecycle-${Date.now()}`,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         },
@@ -672,35 +636,31 @@ describe('Group Family E2E Tests', () => {
         fullName: 'Lifecycle Member',
       };
 
-      const memberResult = await createTestUser(memberData);
+      const member = await createTestUser(memberData);
 
       // Member joins group
-      await request(app.getHttpServer())
-        .post('/api/group-family/join')
-        .set('Authorization', `Bearer ${memberResult.tokens.accessToken}`)
-        .query({ token: invite.token })
-        .expect(200);
+      await joinGroup(api, member.accessToken, invite.token, 200);
 
       // Leader updates group
-      const updateResponse = await request(app.getHttpServer())
-        .patch(`/api/group-family/${groupId}`)
-        .set('Authorization', `Bearer ${leaderResult.tokens.accessToken}`)
-        .send({
+      await api.patch<GroupResponse>(
+        `/group-family/${groupId}`,
+        {
           name: 'Updated Lifecycle Group',
           description: 'Updated description',
-        })
-        .expect(200);
+        },
+        { token: leader.accessToken, expect: 200 },
+      );
 
       // Verify final state
-      const finalGroup = await request(app.getHttpServer())
-        .get(`/api/group-family/${groupId}`)
-        .set('Authorization', `Bearer ${leaderResult.tokens.accessToken}`)
-        .expect(200);
+      const finalGroup = await api.get<ApiDataResponse<GroupDetail>>(
+        `/group-family/${groupId}`,
+        { token: leader.accessToken, expect: 200 },
+      );
 
-      expect(finalGroup.body.data.name).toBe('Updated Lifecycle Group');
-      expect(finalGroup.body.data.description).toBe('Updated description');
-      expect(finalGroup.body.data.groupMembers).toBeDefined();
-      expect(finalGroup.body.data.groupMembers.length).toBe(2); // Leader + Member
+      expect(finalGroup.data.name).toBe('Updated Lifecycle Group');
+      expect(finalGroup.data.description).toBe('Updated description');
+      expect(finalGroup.data.groupMembers).toBeDefined();
+      expect(finalGroup.data.groupMembers.length).toBe(2); // Leader + Member
     });
   });
 });

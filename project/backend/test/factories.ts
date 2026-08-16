@@ -1,3 +1,4 @@
+// @ts-expect-error @faker-js/faker is ESM-only; ts-jest resolves it via CommonJS semantics.
 import { faker } from '@faker-js/faker';
 import { GENDER } from '@prisma/client';
 
@@ -33,7 +34,7 @@ export const generateRandomMember = (familyId: string) => ({
     GENDER.FEMALE,
     GENDER.OTHER,
   ]),
-  dateOfBirth: faker.date.past(50),
+  dateOfBirth: faker.date.past({ years: 50 }),
   dateOfDeath: null,
   isAlive: true,
   biography: faker.lorem.paragraph(),

@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
+import { INestApplication } from '@nestjs/common';
+import { TestApi } from './api.client';
+import { createTestApp } from './test-app';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthResponse } from 'src/modules/auth/types/auth-response.type';
 
 /**
  * E2E Tests for Authentication Module
@@ -21,12 +21,11 @@ import { PrismaService } from '../prisma/prisma.service';
  * - Authentication bypass attempts
  */
 
-//passed
-
 describe('Authentication E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  const testUsers: any[] = [];
+  let api: TestApi;
+  const testUsers: { email: string }[] = [];
 
   // Test data templates
   const validUser = {
@@ -75,20 +74,17 @@ describe('Authentication E2E Tests', () => {
   ];
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    const {
+      app: testApp,
+      prisma: testPrisma,
+      httpServer,
+    } = await createTestApp({
+      globalPrefix: false,
+    });
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-    prisma = moduleFixture.get<PrismaService>(PrismaService);
-    await app.init();
+    app = testApp;
+    prisma = testPrisma;
+    api = new TestApi(httpServer);
   });
 
   afterAll(async () => {
@@ -107,63 +103,54 @@ describe('Authentication E2E Tests', () => {
 
   describe('1. SUCCESS CASES (200 / 201)', () => {
     it('should register a new user successfully', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(validUser)
-        .expect(201);
+      const body = await api.post<AuthResponse>('/auth/register', validUser, {
+        expect: 201,
+      });
 
-      console.log('auth response test:', response.body);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.user.email).toBe(validUser.email);
-      expect(response.body.data.user.userProfile.fullName).toBe(
-        validUser.fullName,
-      );
-      expect(response.body.data.tokens.accessToken).toBeDefined();
-      expect(response.body.data.tokens.refreshToken).toBeDefined();
+      expect(body.success).toBe(true);
+      expect(body.data.user.email).toBe(validUser.email);
+      expect(body.data.user.userProfile.fullName).toBe(validUser.fullName);
+      expect(body.data.tokens.accessToken).toBeDefined();
+      expect(body.data.tokens.refreshToken).toBeDefined();
 
       testUsers.push({ email: validUser.email });
     });
 
     it('should login with valid credentials', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send({
+      const body = await api.post<AuthResponse>(
+        '/auth/login-base',
+        {
           email: validUser.email,
           password: validUser.password,
-        })
-        .expect(200);
+        },
+        { expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.user.email).toBe(validUser.email);
-      expect(response.body.data.tokens.accessToken).toBeDefined();
-      expect(response.body.data.tokens.refreshToken).toBeDefined();
+      expect(body.success).toBe(true);
+      expect(body.data.user.email).toBe(validUser.email);
+      expect(body.data.tokens.accessToken).toBeDefined();
+      expect(body.data.tokens.refreshToken).toBeDefined();
     });
 
     it('should refresh access token with valid refresh token', async () => {
       // First login to get tokens
-      const loginResponse = await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send({
-          email: validUser.email,
-          password: validUser.password,
-        });
+      const loginBody = await api.post<AuthResponse>('/auth/login-base', {
+        email: validUser.email,
+        password: validUser.password,
+      });
 
-      const { refreshToken } = loginResponse.body.data.tokens;
+      const { refreshToken } = loginBody.data.tokens;
 
       // Use refresh token to get new tokens
-      const response = await request(app.getHttpServer())
-        .post('/auth/refresh')
-        .set(
-          'Authorization',
-          `Bearer ${loginResponse.body.data.tokens.refreshToken}`,
-        )
-        .expect(200);
+      const body = await api.post<AuthResponse>('/auth/refresh', undefined, {
+        token: refreshToken,
+        expect: 200,
+      });
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.tokens.accessToken).toBeDefined();
-      expect(response.body.data.tokens.refreshToken).toBeDefined();
-      expect(response.body.data.user.email).toBe(validUser.email);
+      expect(body.success).toBe(true);
+      expect(body.data.tokens.accessToken).toBeDefined();
+      expect(body.data.tokens.refreshToken).toBeDefined();
+      expect(body.data.user.email).toBe(validUser.email);
     });
   });
 
@@ -171,81 +158,79 @@ describe('Authentication E2E Tests', () => {
     it.each(invalidUsers)(
       'should reject registration with $description',
       async ({ data }) => {
-        await request(app.getHttpServer())
-          .post('/auth/register')
-          .send(data)
-          .expect(400);
+        await api.post('/auth/register', data, { expect: 400 });
       },
     );
 
     it('should reject login with invalid email format', async () => {
-      await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send({
+      await api.post(
+        '/auth/login-base',
+        {
           email: 'invalid-email',
           password: validUser.password,
-        })
-        .expect(400);
+        },
+        { expect: 400 },
+      );
     });
 
     it('should reject login with short password', async () => {
-      await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send({
+      await api.post(
+        '/auth/login-base',
+        {
           email: validUser.email,
           password: '123',
-        })
-        .expect(400);
+        },
+        { expect: 400 },
+      );
     });
 
     it('should reject registration with duplicate email', async () => {
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(validUser)
-        .expect(409); // Conflict - email already exists
+      await api.post('/auth/register', validUser, { expect: 409 }); // Conflict - email already exists
     });
   });
 
   describe('3. AUTHORIZATION CASES', () => {
     describe('3.1 Không đăng nhập (401)', () => {
       it('should reject refresh token without authorization header', async () => {
-        await request(app.getHttpServer()).post('/auth/refresh').expect(401);
+        await api.post('/auth/refresh', undefined, { expect: 401 });
       });
 
       it('should reject refresh token with invalid token format', async () => {
-        await request(app.getHttpServer())
-          .post('/auth/refresh')
-          .set('Authorization', 'InvalidFormat token')
-          .expect(401);
+        await api.post('/auth/refresh', undefined, {
+          token: 'InvalidFormat token',
+          expect: 401,
+        });
       });
 
       it('should reject refresh token with invalid JWT', async () => {
-        await request(app.getHttpServer())
-          .post('/auth/refresh')
-          .set('Authorization', 'Bearer invalid.jwt.token')
-          .expect(401);
+        await api.post('/auth/refresh', undefined, {
+          token: 'invalid.jwt.token',
+          expect: 401,
+        });
       });
     });
 
     describe('3.2 AUTHENTICATION FAILURES (401/404)', () => {
       it('should reject login with non-existent email', async () => {
-        await request(app.getHttpServer())
-          .post('/auth/login-base')
-          .send({
+        await api.post(
+          '/auth/login-base',
+          {
             email: 'nonexistent@example.com',
             password: validUser.password,
-          })
-          .expect(404); // User not found
+          },
+          { expect: 404 }, // User not found
+        );
       });
 
       it('should reject login with wrong password', async () => {
-        await request(app.getHttpServer())
-          .post('/auth/login-base')
-          .send({
+        await api.post(
+          '/auth/login-base',
+          {
             email: validUser.email,
             password: 'wrongpassword',
-          })
-          .expect(401); // Invalid credentials
+          },
+          { expect: 401 }, // Invalid credentials
+        );
       });
     });
   });
@@ -258,15 +243,12 @@ describe('Authentication E2E Tests', () => {
         fullName: 'Unique Profile User',
       };
 
-      const response = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(uniqueUser)
-        .expect(201);
+      const body = await api.post<AuthResponse>('/auth/register', uniqueUser, {
+        expect: 201,
+      });
 
-      expect(response.body.data.user.userProfile).toBeDefined();
-      expect(response.body.data.user.userProfile.fullName).toBe(
-        uniqueUser.fullName,
-      );
+      expect(body.data.user.userProfile).toBeDefined();
+      expect(body.data.user.userProfile.fullName).toBe(uniqueUser.fullName);
 
       testUsers.push({ email: uniqueUser.email });
     });
@@ -279,18 +261,19 @@ describe('Authentication E2E Tests', () => {
       };
 
       // Register and login to create session
-      const registerResponse = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(uniqueUser)
-        .expect(201);
+      const registerBody = await api.post<AuthResponse>(
+        '/auth/register',
+        uniqueUser,
+        { expect: 201 },
+      );
 
-      const { refreshToken } = registerResponse.body.data.tokens;
+      const { refreshToken } = registerBody.data.tokens;
 
       // Check if session exists in database
       const session = await prisma.session.findFirst({
         where: {
           token: refreshToken,
-          user: {
+          users: {
             email: uniqueUser.email,
           },
         },
@@ -311,12 +294,13 @@ describe('Authentication E2E Tests', () => {
       };
 
       // Register user
-      const registerResponse = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(uniqueUser)
-        .expect(201);
+      const registerBody = await api.post<AuthResponse>(
+        '/auth/register',
+        uniqueUser,
+        { expect: 201 },
+      );
 
-      const { accessToken, refreshToken } = registerResponse.body.data.tokens;
+      const { accessToken, refreshToken } = registerBody.data.tokens;
 
       // Manually expire the session in database
       await prisma.session.updateMany({
@@ -329,10 +313,10 @@ describe('Authentication E2E Tests', () => {
       });
 
       // Try to refresh with expired session
-      await request(app.getHttpServer())
-        .post('/auth/refresh')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(401); // Unauthorization - session expired
+      await api.post('/auth/refresh', undefined, {
+        token: accessToken,
+        expect: 401, // Unauthorization - session expired
+      });
 
       testUsers.push({ email: uniqueUser.email });
     });
@@ -340,49 +324,51 @@ describe('Authentication E2E Tests', () => {
 
   describe('5. SECURITY TESTS', () => {
     it('should not expose sensitive information in error responses', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send({
+      const body = await api.post<AuthResponse>(
+        '/auth/login-base',
+        {
           email: validUser.email,
           password: 'wrongpassword',
-        })
-        .expect(401);
+        },
+        { expect: 401 },
+      );
 
-      expect(response.body).not.toHaveProperty('password');
-      expect(response.body).not.toHaveProperty('hash');
-      expect(response.body).not.toHaveProperty('salt');
+      expect(body).not.toHaveProperty('password');
+      expect(body).not.toHaveProperty('hash');
+      expect(body).not.toHaveProperty('salt');
     });
 
     it('should handle malformed JSON requests gracefully', async () => {
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .set('Content-Type', 'application/json')
-        .send('{"invalid": json}')
-        .expect(400);
+      await api.post('/auth/register', '{"invalid": json}', {
+        headers: { 'Content-Type': 'application/json' },
+        expect: 400,
+      });
     });
 
     it('should handle very long email addresses', async () => {
       const longEmail = 'a'.repeat(300) + '@example.com';
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
+      await api.post(
+        '/auth/register',
+        {
           email: longEmail,
           password: 'password123',
           fullName: 'Long Email User',
-        })
-        .expect(400);
+        },
+        { expect: 400 },
+      );
     });
 
     it('should handle very long full names', async () => {
       const longName = 'a'.repeat(500);
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
+      await api.post(
+        '/auth/register',
+        {
           email: 'longname@example.com',
           password: 'password123',
           fullName: longName,
-        })
-        .expect(400);
+        },
+        { expect: 400 },
+      );
     });
   });
 
@@ -395,38 +381,41 @@ describe('Authentication E2E Tests', () => {
       };
 
       // Step 1: Register
-      const registerResponse = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(flowUser)
-        .expect(201);
+      const registerBody = await api.post<AuthResponse>(
+        '/auth/register',
+        flowUser,
+        { expect: 201 },
+      );
 
-      expect(registerResponse.body.data.tokens.accessToken).toBeDefined();
-      expect(registerResponse.body.data.tokens.refreshToken).toBeDefined();
+      expect(registerBody.data.tokens.accessToken).toBeDefined();
+      expect(registerBody.data.tokens.refreshToken).toBeDefined();
 
       // Step 2: Login
-      const loginResponse = await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send({
+      const loginBody = await api.post<AuthResponse>(
+        '/auth/login-base',
+        {
           email: flowUser.email,
           password: flowUser.password,
-        })
-        .expect(200);
+        },
+        { expect: 200 },
+      );
 
-      expect(loginResponse.body.data.tokens.accessToken).toBeDefined();
-      expect(loginResponse.body.data.tokens.refreshToken).toBeDefined();
+      expect(loginBody.data.tokens.accessToken).toBeDefined();
+      expect(loginBody.data.tokens.refreshToken).toBeDefined();
 
       // Step 3: Refresh token
-      const refreshResponse = await request(app.getHttpServer())
-        .post('/auth/refresh')
-        .set(
-          'Authorization',
-          `Bearer ${loginResponse.body.data.tokens.refreshToken}`,
-        )
-        .expect(200);
+      const refreshBody = await api.post<AuthResponse>(
+        '/auth/refresh',
+        undefined,
+        {
+          token: loginBody.data.tokens.refreshToken,
+          expect: 200,
+        },
+      );
 
-      expect(refreshResponse.body.data.tokens.accessToken).toBeDefined();
-      expect(refreshResponse.body.data.tokens.refreshToken).toBeDefined();
-      expect(refreshResponse.body.data.user.email).toBe(flowUser.email);
+      expect(refreshBody.data.tokens.accessToken).toBeDefined();
+      expect(refreshBody.data.tokens.refreshToken).toBeDefined();
+      expect(refreshBody.data.user.email).toBe(flowUser.email);
 
       testUsers.push({ email: flowUser.email });
     });

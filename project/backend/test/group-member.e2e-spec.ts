@@ -1,10 +1,32 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { PrismaService } from '../prisma/prisma.service';
+import { INestApplication } from '@nestjs/common';
 import { MEMBER_ROLE } from '@prisma/client';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
+import { TestApi } from './api.client';
+import { createTestApp } from './test-app';
+import { PrismaService } from '../prisma/prisma.service';
+import {
+  RegisteredUser,
+  createTestUser as createRegisteredUser,
+} from './helpers/auth.helpers';
+import {
+  addMemberToGroup,
+  createGroup,
+  setGroupLeader,
+} from './helpers/group.helpers';
+import {
+  deleteGroupMembersByGroupIds,
+  deleteGroupsByIds,
+  deleteUsersByEmails,
+} from './helpers/cleanup.helpers';
+import {
+  generateRandomSuffix,
+  generateTestEmail,
+  INVALID_UUID,
+  VALID_UUID,
+} from './helpers/common.helpers';
+import {
+  GroupMemberResponse,
+  RemoveMemberResponse,
+} from 'src/modules/group-members/types/group-member-response.type';
 
 /**
  * E2E Tests for Group Member Management Module
@@ -29,63 +51,38 @@ import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter
  * - Database consistency after operations
  */
 
-//passed
-
 describe('Group Member Management E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  const testUsers: any[] = [];
-  const testGroups: any[] = [];
-  const testMembers: any[] = [];
-
-  // Helper functions for test data generation
-  const generateTestEmail = (role: string): string => {
-    const timestamp = Date.now();
-    return `test.${role}.${timestamp}@example.com`;
-  };
-
-  const generateValidUUID = (): string => {
-    return '123e4567-e89b-12d3-a456-426614174000';
-  };
-
-  const generateInvalidUUID = (): string => {
-    return 'invalid-uuid-format';
-  };
+  let api: TestApi;
+  const testUsers: { email: string }[] = [];
+  const testGroups: { id: string; name: string; createdBy: string }[] = [];
 
   // Authentication helper
-  const createTestUser = async (userData: any) => {
-    const response = await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send(userData)
-      .expect(201);
+  const createTestUser = async (userData: {
+    email: string;
+    password: string;
+    fullName: string;
+  }): Promise<RegisteredUser> => {
+    const user = await createRegisteredUser(api, userData);
 
-    const user = {
-      id: response.body.data.user.id,
-      email: userData.email,
-      accessToken: response.body.data.tokens.accessToken,
-      refreshToken: response.body.data.tokens.refreshToken,
-      fullName: userData.fullName,
-    };
-
-    testUsers.push(user);
+    testUsers.push({ email: userData.email });
     return user;
   };
 
   // Group creation helper
-  const createTestGroup = async (user: any) => {
+  const createTestGroup = async (
+    user: RegisteredUser,
+  ): Promise<{ id: string; name: string; createdBy: string }> => {
     const groupData = {
-      name: `Test Group ${Date.now()}`,
+      name: `Test Group ${generateRandomSuffix()}`,
       description: 'Group for E2E testing',
     };
 
-    const response = await request(app.getHttpServer())
-      .post('/api/group-family')
-      .set('Authorization', `Bearer ${user.accessToken}`)
-      .send(groupData)
-      .expect(201);
+    const body = await createGroup(api, user.accessToken, groupData, 201);
 
     const group = {
-      id: response.body.data.id,
+      id: body.data.id,
       name: groupData.name,
       createdBy: user.id,
     };
@@ -94,139 +91,26 @@ describe('Group Member Management E2E Tests', () => {
     return group;
   };
 
-  // Add member to group helper
-  const addMemberToGroup = async (
-    group: any,
-    user: any,
-    role: MEMBER_ROLE = MEMBER_ROLE.VIEWER,
-  ) => {
-    // Check if member already exists (auto-created when group is created)
-    const existingMember = await prisma.groupMember.findUnique({
-      where: {
-        memberId_groupId: {
-          groupId: group.id,
-          memberId: user.id,
-        },
-      },
-    });
-
-    let member;
-    if (existingMember) {
-      // Member already exists, update it if needed
-      member = await prisma.groupMember.update({
-        where: {
-          memberId_groupId: {
-            groupId: group.id,
-            memberId: user.id,
-          },
-        },
-        data: {
-          role: role,
-          isLeader: false,
-        },
-      });
-    } else {
-      // Create new member
-      member = await prisma.groupMember.create({
-        data: {
-          groupId: group.id,
-          memberId: user.id,
-          role: role,
-          isLeader: false,
-        },
-      });
-    }
-
-    const testMember = {
-      id: member.id,
-      groupId: group.id,
-      memberId: user.id,
-      role: member.role,
-      isLeader: member.isLeader,
-      user: user,
-    };
-
-    testMembers.push(testMember);
-    return testMember;
-  };
-
-  // Set group leader helper
-  const setGroupLeader = async (group: any, user: any) => {
-    await prisma.groupMember.updateMany({
-      where: {
-        groupId: group.id,
-        memberId: user.id,
-      },
-      data: {
-        isLeader: true,
-        role: MEMBER_ROLE.OWNER,
-      },
-    });
-
-    // Update or add test member record
-    let memberIndex = testMembers.findIndex(
-      (m) => m.groupId === group.id && m.memberId === user.id,
-    );
-
-    if (memberIndex === -1) {
-      // Add to test members if not already there
-      const dbMember = await prisma.groupMember.findUnique({
-        where: {
-          memberId_groupId: {
-            groupId: group.id,
-            memberId: user.id,
-          },
-        },
-      });
-
-      if (dbMember) {
-        testMembers.push({
-          id: dbMember.id,
-          groupId: group.id,
-          memberId: user.id,
-          role: dbMember.role,
-          isLeader: dbMember.isLeader,
-          user: user,
-        });
-        memberIndex = testMembers.length - 1;
-      }
-    }
-
-    if (memberIndex !== -1) {
-      testMembers[memberIndex].isLeader = true;
-      testMembers[memberIndex].role = MEMBER_ROLE.OWNER;
-    }
-  };
-
   // Cleanup helpers
   const cleanupTestData = async () => {
     try {
       // Delete group members first (foreign key constraints)
-      await prisma.groupMember.deleteMany({
-        where: {
-          groupId: {
-            in: testGroups.map((g) => g.id),
-          },
-        },
-      });
+      await deleteGroupMembersByGroupIds(
+        prisma,
+        testGroups.map((g) => g.id),
+      );
 
       // Delete groups
-      await prisma.groupFamily.deleteMany({
-        where: {
-          id: {
-            in: testGroups.map((g) => g.id),
-          },
-        },
-      });
+      await deleteGroupsByIds(
+        prisma,
+        testGroups.map((g) => g.id),
+      );
 
       // Delete users
-      await prisma.user.deleteMany({
-        where: {
-          email: {
-            in: testUsers.map((u) => u.email),
-          },
-        },
-      });
+      await deleteUsersByEmails(
+        prisma,
+        testUsers.map((u) => u.email),
+      );
     } catch (error) {
       console.error('Cleanup error:', error);
     }
@@ -234,26 +118,24 @@ describe('Group Member Management E2E Tests', () => {
     // Clear arrays
     testUsers.length = 0;
     testGroups.length = 0;
-    testMembers.length = 0;
   };
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({
+    const {
+      app: testApp,
+      prisma: testPrisma,
+      httpServer,
+    } = await createTestApp({
+      validationPipe: {
         transform: true,
         whitelist: true,
-      }),
-    );
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.setGlobalPrefix('api');
+      },
+      allExceptionsFilter: true,
+    });
 
-    prisma = moduleFixture.get<PrismaService>(PrismaService);
-    await app.init();
+    app = testApp;
+    prisma = testPrisma;
+    api = new TestApi(httpServer, '/api');
   });
 
   afterAll(async () => {
@@ -267,11 +149,10 @@ describe('Group Member Management E2E Tests', () => {
   });
 
   describe('Group Member Role Management', () => {
-    let leader: any;
-    let editorUser: any;
-    let viewerUser: any;
-    let testGroup: any;
-    let memberToUpdate: any;
+    let leader: RegisteredUser;
+    let editorUser: RegisteredUser;
+    let viewerUser: RegisteredUser;
+    let testGroup: { id: string; name: string; createdBy: string };
 
     beforeEach(async () => {
       // Create test users
@@ -297,94 +178,106 @@ describe('Group Member Management E2E Tests', () => {
       testGroup = await createTestGroup(leader);
 
       // Add members to group
-      await addMemberToGroup(testGroup, leader, MEMBER_ROLE.OWNER);
-      await setGroupLeader(testGroup, leader);
-      memberToUpdate = await addMemberToGroup(
-        testGroup,
-        editorUser,
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        leader.id,
+        MEMBER_ROLE.OWNER,
+      );
+      await setGroupLeader(prisma, testGroup.id, leader.id);
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        editorUser.id,
         MEMBER_ROLE.EDITOR,
       );
-      await addMemberToGroup(testGroup, viewerUser, MEMBER_ROLE.VIEWER);
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        viewerUser.id,
+        MEMBER_ROLE.VIEWER,
+      );
     });
 
     it('should allow leader to update member role', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .send({
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/${testGroup.id}`,
+        {
           id: editorUser.id,
           role: MEMBER_ROLE.VIEWER,
-        })
-        .expect(200);
+        },
+        { token: leader.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.role).toBe(MEMBER_ROLE.VIEWER);
-      expect(response.body.data.memberId).toBe(editorUser.id);
-      expect(response.body.data.groupId).toBe(testGroup.id);
-      expect(response.body.data.isLeader).toBe(false); // Should preserve leader status
+      expect(body.success).toBe(true);
+      expect(body.data.role).toBe(MEMBER_ROLE.VIEWER);
+      expect(body.data.memberId).toBe(editorUser.id);
+      expect(body.data.groupId).toBe(testGroup.id);
+      expect(body.data.isLeader).toBe(false); // Should preserve leader status
     });
 
     it('should reject role update from non-leader user', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/${testGroup.id}`)
-        .set('Authorization', `Bearer ${editorUser.accessToken}`)
-        .send({
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/${testGroup.id}`,
+        {
           id: viewerUser.id,
           role: MEMBER_ROLE.EDITOR,
-        })
-        .expect(403);
+        },
+        { token: editorUser.accessToken, expect: 403 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Non-leader role update response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Non-leader role update response:', body);
     });
 
     it('should reject role update without authentication', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/${testGroup.id}`)
-        .send({
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/${testGroup.id}`,
+        {
           id: editorUser.id,
           role: MEMBER_ROLE.VIEWER,
-        })
-        .expect(401);
+        },
+        { expect: 401 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Unauthenticated role update response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Unauthenticated role update response:', body);
     });
 
     it('should return 404 when updating non-existent member', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .send({
-          id: generateValidUUID(), // Non-existent user ID
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/${testGroup.id}`,
+        {
+          id: VALID_UUID, // Non-existent user ID
           role: MEMBER_ROLE.EDITOR,
-        })
-        .expect(404);
+        },
+        { token: leader.accessToken, expect: 404 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Non-existent member update response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Non-existent member update response:', body);
     });
 
     it('should return 400 for invalid UUID format in role update', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .send({
-          id: generateInvalidUUID(),
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/${testGroup.id}`,
+        {
+          id: INVALID_UUID,
           role: MEMBER_ROLE.EDITOR,
-        })
-        .expect(400);
+        },
+        { token: leader.accessToken, expect: 400 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Invalid UUID role update response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Invalid UUID role update response:', body);
     });
   });
 
   describe('Group Leadership Transfer', () => {
-    let currentLeader: any;
-    let newLeader: any;
-    let regularMember: any;
-    let testGroup: any;
+    let currentLeader: RegisteredUser;
+    let newLeader: RegisteredUser;
+    let regularMember: RegisteredUser;
+    let testGroup: { id: string; name: string; createdBy: string };
 
     beforeEach(async () => {
       // Create test users
@@ -410,25 +303,40 @@ describe('Group Member Management E2E Tests', () => {
       testGroup = await createTestGroup(currentLeader);
 
       // Add members to group
-      await addMemberToGroup(testGroup, currentLeader, MEMBER_ROLE.OWNER);
-      await setGroupLeader(testGroup, currentLeader);
-      await addMemberToGroup(testGroup, newLeader, MEMBER_ROLE.EDITOR);
-      await addMemberToGroup(testGroup, regularMember, MEMBER_ROLE.VIEWER);
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        currentLeader.id,
+        MEMBER_ROLE.OWNER,
+      );
+      await setGroupLeader(prisma, testGroup.id, currentLeader.id);
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        newLeader.id,
+        MEMBER_ROLE.EDITOR,
+      );
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        regularMember.id,
+        MEMBER_ROLE.VIEWER,
+      );
     });
 
     it('should transfer leadership successfully', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/leader/${testGroup.id}`)
-        .set('Authorization', `Bearer ${currentLeader.accessToken}`)
-        .send({
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/leader/${testGroup.id}`,
+        {
           id: newLeader.id,
-        })
-        .expect(200);
+        },
+        { token: currentLeader.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.memberId).toBe(newLeader.id);
-      expect(response.body.data.role).toBe(MEMBER_ROLE.OWNER);
-      expect(response.body.data.isLeader).toBe(true);
+      expect(body.success).toBe(true);
+      expect(body.data.memberId).toBe(newLeader.id);
+      expect(body.data.role).toBe(MEMBER_ROLE.OWNER);
+      expect(body.data.isLeader).toBe(true);
 
       // Verify database state
       const oldLeaderRecord = await prisma.groupMember.findUnique({
@@ -458,77 +366,74 @@ describe('Group Member Management E2E Tests', () => {
     });
 
     it('should reject leadership transfer from non-leader', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/leader/${testGroup.id}`)
-        .set('Authorization', `Bearer ${regularMember.accessToken}`)
-        .send({
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/leader/${testGroup.id}`,
+        {
           id: newLeader.id,
-        })
-        .expect(403);
+        },
+        { token: regularMember.accessToken, expect: 403 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Non-leader leadership transfer response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Non-leader leadership transfer response:', body);
     });
 
     it('should return 404 when transferring leadership to non-existent member', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/leader/${testGroup.id}`)
-        .set('Authorization', `Bearer ${currentLeader.accessToken}`)
-        .send({
-          id: generateValidUUID(), // Non-existent user ID
-        })
-        .expect(409);
-
-      expect(response.body.success).toBe(false);
-      console.log(
-        'Non-existent member leadership transfer response:',
-        response.body,
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/leader/${testGroup.id}`,
+        {
+          id: VALID_UUID, // Non-existent user ID
+        },
+        { token: currentLeader.accessToken, expect: 409 },
       );
+
+      expect(body.success).toBe(false);
+      console.log('Non-existent member leadership transfer response:', body);
     });
 
     it('should return 400 for invalid UUID in leadership transfer', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/leader/${testGroup.id}`)
-        .set('Authorization', `Bearer ${currentLeader.accessToken}`)
-        .send({
-          id: generateInvalidUUID(),
-        })
-        .expect(400);
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/leader/${testGroup.id}`,
+        {
+          id: INVALID_UUID,
+        },
+        { token: currentLeader.accessToken, expect: 400 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Invalid UUID leadership transfer response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Invalid UUID leadership transfer response:', body);
     });
 
     it('should verify old leader token returns 403 after leadership transfer', async () => {
       // First transfer leadership
-      await request(app.getHttpServer())
-        .patch(`/api/group-member/leader/${testGroup.id}`)
-        .set('Authorization', `Bearer ${currentLeader.accessToken}`)
-        .send({
+      await api.patch<GroupMemberResponse>(
+        `/group-member/leader/${testGroup.id}`,
+        {
           id: newLeader.id,
-        })
-        .expect(200);
+        },
+        { token: currentLeader.accessToken, expect: 200 },
+      );
 
       // Now try to use old leader token for leader-only action
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/${testGroup.id}`)
-        .set('Authorization', `Bearer ${currentLeader.accessToken}`)
-        .send({
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/${testGroup.id}`,
+        {
           id: regularMember.id,
           role: MEMBER_ROLE.EDITOR,
-        })
-        .expect(403);
+        },
+        { token: currentLeader.accessToken, expect: 403 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Old leader token after transfer response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Old leader token after transfer response:', body);
     });
   });
 
   describe('Group Member Removal', () => {
-    let leader: any;
-    let memberToRemove: any;
-    let regularMember: any;
-    let testGroup: any;
+    let leader: RegisteredUser;
+    let memberToRemove: RegisteredUser;
+    let regularMember: RegisteredUser;
+    let testGroup: { id: string; name: string; createdBy: string };
 
     beforeEach(async () => {
       // Create test users
@@ -554,20 +459,35 @@ describe('Group Member Management E2E Tests', () => {
       testGroup = await createTestGroup(leader);
 
       // Add members to group
-      await addMemberToGroup(testGroup, leader, MEMBER_ROLE.OWNER);
-      await setGroupLeader(testGroup, leader);
-      await addMemberToGroup(testGroup, memberToRemove, MEMBER_ROLE.EDITOR);
-      await addMemberToGroup(testGroup, regularMember, MEMBER_ROLE.VIEWER);
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        leader.id,
+        MEMBER_ROLE.OWNER,
+      );
+      await setGroupLeader(prisma, testGroup.id, leader.id);
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        memberToRemove.id,
+        MEMBER_ROLE.EDITOR,
+      );
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        regularMember.id,
+        MEMBER_ROLE.VIEWER,
+      );
     });
 
     it('should allow leader to remove member', async () => {
-      const response = await request(app.getHttpServer())
-        .delete(`/api/group-member/${testGroup.id}/${memberToRemove.id}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .expect(200);
+      const body = await api.delete<RemoveMemberResponse>(
+        `/group-member/${testGroup.id}/${memberToRemove.id}`,
+        { token: leader.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.count).toBe(1);
+      expect(body.success).toBe(true);
+      expect(body.data.count).toBe(1);
 
       // Verify member is actually removed
       const removedMember = await prisma.groupMember.findUnique({
@@ -583,45 +503,43 @@ describe('Group Member Management E2E Tests', () => {
     });
 
     it('should reject member removal by non-leader', async () => {
-      const response = await request(app.getHttpServer())
-        .delete(`/api/group-member/${testGroup.id}/${memberToRemove.id}`)
-        .set('Authorization', `Bearer ${regularMember.accessToken}`)
-        .expect(403);
+      const body = await api.delete<RemoveMemberResponse>(
+        `/group-member/${testGroup.id}/${memberToRemove.id}`,
+        { token: regularMember.accessToken, expect: 403 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Non-leader member removal response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Non-leader member removal response:', body);
     });
 
     it('should return 404 when removing non-existent member', async () => {
-      const response = await request(app.getHttpServer())
-        .delete(`/api/group-member/${testGroup.id}/${generateValidUUID()}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .expect(200); // Service returns success with count: 0
+      const body = await api.delete<RemoveMemberResponse>(
+        `/group-member/${testGroup.id}/${VALID_UUID}`,
+        { token: leader.accessToken, expect: 200 }, // Service returns success with count: 0
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.count).toBe(0);
+      expect(body.success).toBe(true);
+      expect(body.data.count).toBe(0);
     });
 
     it('should return 400 for invalid UUID format in member removal', async () => {
-      const response = await request(app.getHttpServer())
-        .delete(`/api/group-member/${testGroup.id}/${generateInvalidUUID()}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .expect(404); // Service throws NotFoundException for invalid UUID
+      const body = await api.delete<RemoveMemberResponse>(
+        `/group-member/${testGroup.id}/${INVALID_UUID}`,
+        { token: leader.accessToken, expect: 404 }, // Service throws NotFoundException for invalid UUID
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Invalid UUID member removal response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Invalid UUID member removal response:', body);
     });
 
     it('should return 404 for invalid group UUID', async () => {
-      const response = await request(app.getHttpServer())
-        .delete(
-          `/api/group-member/${generateInvalidUUID()}/${memberToRemove.id}`,
-        )
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .expect(500);
+      const body = await api.delete<RemoveMemberResponse>(
+        `/group-member/${INVALID_UUID}/${memberToRemove.id}`,
+        { token: leader.accessToken, expect: 500 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Invalid group UUID removal response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Invalid group UUID removal response:', body);
     });
 
     it('should handle removal of member not in group gracefully', async () => {
@@ -631,20 +549,20 @@ describe('Group Member Management E2E Tests', () => {
         fullName: 'Outsider User',
       });
 
-      const response = await request(app.getHttpServer())
-        .delete(`/api/group-member/${testGroup.id}/${outsiderUser.id}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .expect(200); // Service returns success with count: 0
+      const body = await api.delete<RemoveMemberResponse>(
+        `/group-member/${testGroup.id}/${outsiderUser.id}`,
+        { token: leader.accessToken, expect: 200 }, // Service returns success with count: 0
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.count).toBe(0);
+      expect(body.success).toBe(true);
+      expect(body.data.count).toBe(0);
     });
   });
 
   describe('Composite Key and Constraint Testing', () => {
-    let leader: any;
-    let testGroup: any;
-    let member: any;
+    let leader: RegisteredUser;
+    let testGroup: { id: string; name: string; createdBy: string };
+    let member: RegisteredUser;
 
     beforeEach(async () => {
       // Create test users
@@ -664,9 +582,19 @@ describe('Group Member Management E2E Tests', () => {
       testGroup = await createTestGroup(leader);
 
       // Add members to group
-      await addMemberToGroup(testGroup, leader, MEMBER_ROLE.OWNER);
-      await setGroupLeader(testGroup, leader);
-      await addMemberToGroup(testGroup, member, MEMBER_ROLE.EDITOR);
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        leader.id,
+        MEMBER_ROLE.OWNER,
+      );
+      await setGroupLeader(prisma, testGroup.id, leader.id);
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        member.id,
+        MEMBER_ROLE.EDITOR,
+      );
     });
 
     it('should prevent duplicate group memberships', async () => {
@@ -681,30 +609,30 @@ describe('Group Member Management E2E Tests', () => {
         });
         fail('Expected database constraint violation');
       } catch (error) {
-        expect(error.code).toBe('P2002'); // Unique constraint violation
+        expect((error as { code: string }).code).toBe('P2002'); // Unique constraint violation
       }
     });
 
     it('should enforce UUID validation at service level', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .send({
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/${testGroup.id}`,
+        {
           id: 'not-a-uuid',
           role: MEMBER_ROLE.VIEWER,
-        })
-        .expect(400);
+        },
+        { token: leader.accessToken, expect: 400 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('UUID validation response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('UUID validation response:', body);
     });
   });
 
   describe('Data Consistency Validation', () => {
-    let leader: any;
-    let member1: any;
-    let member2: any;
-    let testGroup: any;
+    let leader: RegisteredUser;
+    let member1: RegisteredUser;
+    let member2: RegisteredUser;
+    let testGroup: { id: string; name: string; createdBy: string };
 
     beforeEach(async () => {
       // Create test users
@@ -730,23 +658,38 @@ describe('Group Member Management E2E Tests', () => {
       testGroup = await createTestGroup(leader);
 
       // Add members to group
-      await addMemberToGroup(testGroup, leader, MEMBER_ROLE.OWNER);
-      await setGroupLeader(testGroup, leader);
-      await addMemberToGroup(testGroup, member1, MEMBER_ROLE.EDITOR);
-      await addMemberToGroup(testGroup, member2, MEMBER_ROLE.VIEWER);
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        leader.id,
+        MEMBER_ROLE.OWNER,
+      );
+      await setGroupLeader(prisma, testGroup.id, leader.id);
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        member1.id,
+        MEMBER_ROLE.EDITOR,
+      );
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        member2.id,
+        MEMBER_ROLE.VIEWER,
+      );
     });
 
     it('should preserve data structure in API responses', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .send({
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/${testGroup.id}`,
+        {
           id: member1.id,
           role: MEMBER_ROLE.VIEWER,
-        })
-        .expect(200);
+        },
+        { token: leader.accessToken, expect: 200 },
+      );
 
-      const data = response.body.data;
+      const data = body.data;
 
       // Validate response structure matches Prisma model
       expect(data).toHaveProperty('id');
@@ -780,13 +723,13 @@ describe('Group Member Management E2E Tests', () => {
       expect(initialState.filter((m) => m.isLeader)).toHaveLength(1);
 
       // Transfer leadership
-      await request(app.getHttpServer())
-        .patch(`/api/group-member/leader/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .send({
+      await api.patch<GroupMemberResponse>(
+        `/group-member/leader/${testGroup.id}`,
+        {
           id: member1.id,
-        })
-        .expect(200);
+        },
+        { token: leader.accessToken, expect: 200 },
+      );
 
       // Verify final state
       const finalState = await prisma.groupMember.findMany({
@@ -810,8 +753,8 @@ describe('Group Member Management E2E Tests', () => {
   });
 
   describe('Edge Cases and Error Handling', () => {
-    let leader: any;
-    let testGroup: any;
+    let leader: RegisteredUser;
+    let testGroup: { id: string; name: string; createdBy: string };
 
     beforeEach(async () => {
       leader = await createTestUser({
@@ -822,46 +765,51 @@ describe('Group Member Management E2E Tests', () => {
 
       testGroup = await createTestGroup(leader);
 
-      await addMemberToGroup(testGroup, leader, MEMBER_ROLE.OWNER);
-      await setGroupLeader(testGroup, leader);
+      await addMemberToGroup(
+        prisma,
+        testGroup.id,
+        leader.id,
+        MEMBER_ROLE.OWNER,
+      );
+      await setGroupLeader(prisma, testGroup.id, leader.id);
     });
 
     it('should handle missing request body gracefully', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .send({})
-        .expect(400);
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/${testGroup.id}`,
+        {},
+        { token: leader.accessToken, expect: 400 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Missing body response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Missing body response:', body);
     });
 
     it('should handle missing ID field in request body', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .send({
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/${testGroup.id}`,
+        {
           role: MEMBER_ROLE.EDITOR,
-        })
-        .expect(400);
+        },
+        { token: leader.accessToken, expect: 400 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Missing ID response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Missing ID response:', body);
     });
 
     it('should handle empty string ID in request body', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/api/group-member/${testGroup.id}`)
-        .set('Authorization', `Bearer ${leader.accessToken}`)
-        .send({
+      const body = await api.patch<GroupMemberResponse>(
+        `/group-member/${testGroup.id}`,
+        {
           id: '',
           role: MEMBER_ROLE.EDITOR,
-        })
-        .expect(400);
+        },
+        { token: leader.accessToken, expect: 400 },
+      );
 
-      expect(response.body.success).toBe(false);
-      console.log('Empty ID response:', response.body);
+      expect(body.success).toBe(false);
+      console.log('Empty ID response:', body);
     });
   });
 });

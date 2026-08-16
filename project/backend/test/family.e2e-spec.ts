@@ -1,130 +1,35 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
-//passed
-interface newFamily {
-  data: {
-    family: {
-      id: string;
-      name: string;
-      description: string;
-    };
-    owner: {
-      id: string;
-      name: string;
-      avatar: string;
-    };
-  };
-  code: number;
-}
-
-interface userType {
-  data: {
-    user: {
-      id: string;
-      email: string;
-      userProfile: {
-        fullName: string;
-        avatar?: string;
-      };
-    };
-    tokens: {
-      accessToken: string;
-      refreshToken: string;
-    };
-  };
-  code: number;
-}
-
-interface newGroup {
-  data: {
-    id: string;
-    name: string;
-    description: string;
-  };
-  code: number;
-}
-
-interface updateFamilyType {
-  data: {
-    id: string;
-    name: string;
-    description: string;
-  };
-  code: number;
-}
-
-interface getFamily {
-  data: {
-    id: string;
-    name: string;
-    description: string;
-    owner: {
-      id: string;
-      userProfile: {
-        fullName: string;
-        avatar: string;
-      };
-    };
-
-    _count: {
-      familyMembers: number;
-      albums: number;
-      events: number;
-      activityLogs: number;
-    };
-  };
-  code: number;
-}
-
-interface deleteFamily {
-  data: { id: string };
-  code: number;
-}
-
-interface inviteType {
-  data: {
-    inviteLink: string;
-  };
-  code: number;
-}
-
-interface joinUserType {
-  data: {
-    id: string;
-    groupId: string;
-    memberId: string;
-    role: string;
-    isLeader: string;
-  };
-  code: number;
-}
-
+import { INestApplication } from '@nestjs/common';
+import { TestApi } from './api.client';
+import { createTestApp } from './test-app';
+import { AuthResponse } from 'src/modules/auth/types/auth-response.type';
+import {
+  GroupResponse,
+  JoinGroupResponse,
+} from 'src/modules/group-family/types/group-family-response.type';
+import {
+  DeleteFamilyResponse,
+  FamilyDetailResponse,
+  NewFamilyResponse,
+  UpdateFamilyResponse,
+} from 'src/modules/family/types/family-response.type';
+import { InviteResponse } from 'src/modules/invite/types/invite-response.type';
 describe('Family E2E Tests', () => {
   let app: INestApplication;
-  let baseUrl: string;
+  let api: TestApi;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('/api');
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalPipes(
-      new ValidationPipe({
+    const { app: testApp, httpServer } = await createTestApp({
+      globalPrefix: '/api',
+      validationPipe: {
         whitelist: true,
         forbidNonWhitelisted: true,
-        transform: true, // Tự động convert kiểu dữ liệu
-      }),
-    );
+        transform: true,
+      },
+      allExceptionsFilter: true,
+    });
 
-    await app.init();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    baseUrl = app.getHttpServer();
+    app = testApp;
+    api = new TestApi(httpServer, '/api');
 
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -136,136 +41,77 @@ describe('Family E2E Tests', () => {
   const generateSuffix = () =>
     `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-  const registerUser = async (
-    email: string,
-    password: string,
-    fullName: string,
-  ) => {
-    const response = await request(baseUrl).post('/api/auth/register').send({
+  const registerUser = (email: string, password: string, fullName: string) =>
+    api.post<AuthResponse>('/auth/register', {
       email,
       password,
       fullName,
     });
 
-    if (response.status !== 201) {
-      console.error(`FAILED AT ${expect.getState().currentTestName}`);
-      //console.dir(response.body, { depth: null });
-    }
-    return response.body as userType;
-  };
-
-  const loginUser = async (email: string, password: string) => {
-    const response = await request(baseUrl).post('/api/auth/login-base').send({
+  const loginUser = (email: string, password: string) =>
+    api.post<AuthResponse>('/auth/login-base', {
       email,
       password,
     });
-    if (response.status !== 200) {
-      console.error(`FAILED AT ${expect.getState().currentTestName}`);
-      //console.dir(response.body, { depth: null });
-    }
-    return response.body as userType;
-  };
 
-  const createGroup = async (token: string, name: string) => {
-    const response = await request(baseUrl)
-      .post('/api/group-family')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
+  const createGroup = (token: string, name: string) =>
+    api.post<GroupResponse>(
+      '/group-family',
+      {
         name,
         description: 'Test group description',
-      });
-    if (response.status !== 201) {
-      console.error(`FAILED AT ${expect.getState().currentTestName}`);
-      //console.dir(response.body, { depth: null });
-    }
-    return response.body as newGroup;
-  };
+      },
+      { token },
+    );
 
-  const createFamily = async (
+  const createFamily = (
     token: string,
     groupId: string,
     name: string,
     description: string,
-  ) => {
-    const response = await request(baseUrl)
-      .post(`/api/family/${groupId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
+  ) =>
+    api.post<NewFamilyResponse>(
+      `/family/${groupId}`,
+      {
         name,
         description,
-      });
-    if (response.status !== 201) {
-      console.error(`FAILED AT ${expect.getState().currentTestName}`);
-      //console.dir(response.body, { depth: null });
-    }
-    return response.body as newFamily;
-  };
+      },
+      { token },
+    );
 
-  const getFamily = async (token: string, familyId: string) => {
-    const response = await request(baseUrl)
-      .get(`/api/family/${familyId}`)
-      .set('Authorization', `Bearer ${token}`);
-    if (response.status !== 200) {
-      console.error(`FAILED AT ${expect.getState().currentTestName}`);
-      // console.dir(getRes.body, { depth: null });
-    }
-    return response.body as getFamily;
-  };
+  const getFamily = (token: string, familyId: string) =>
+    api.get<FamilyDetailResponse>(`/family/${familyId}`, { token });
 
-  const updateFamily = async (
+  const updateFamily = (
     token: string,
     groupId: string,
     familyId: string,
     name: string,
     description: string,
-  ) => {
-    const response = await request(baseUrl)
-      .patch(`/api/family/${groupId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({
+  ) =>
+    api.patch<UpdateFamilyResponse>(
+      `/family/${groupId}`,
+      {
         id: familyId,
-        name: name,
-        description: description,
-      });
-    if (response.status !== 200) {
-      console.error(`FAILED AT ${expect.getState().currentTestName}`);
-      // console.dir(updateRes.body, { depth: null });
-    }
-    console.log(response.body);
-    return response.body as updateFamilyType;
-  };
+        name,
+        description,
+      },
+      { token },
+    );
 
-  const deleteFamily = async (
-    token: string,
-    groupId: string,
-    familyId: string,
-  ) => {
-    const response = await request(baseUrl)
-      .delete(`/api/family/${groupId}/${familyId}`)
-      .set('Authorization', `Bearer ${token}`);
+  const deleteFamily = (token: string, groupId: string, familyId: string) =>
+    api.delete<DeleteFamilyResponse>(`/family/${groupId}/${familyId}`, {
+      token,
+    });
 
-    if (response.status !== 200) {
-      console.error(`FAILED AT ${expect.getState().currentTestName}`);
-      //   console.dir(deleteRes.body, { depth: null });
-    }
-    return response.body as deleteFamily;
-  };
-
-  const generateInviteCode = async (token: string, groupId: string) => {
-    const response = await request(baseUrl)
-      .post('/api/invite')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        groupId: groupId,
-      });
-
-    // console.log('res: ', response);
-    if (response.status !== 201) {
-      console.error(`FAILED AT ${expect.getState().currentTestName}`);
-      //console.dir(response.body, { depth: null });
-    }
-    return response.body as inviteType;
-  };
+  const generateInviteCode = (token: string, groupId: string) =>
+    api.post<InviteResponse>(
+      '/invite',
+      {
+        groupId,
+      },
+      { token },
+    );
 
   describe('FAMILY-01: Happy Path - Create Family', () => {
     it('should create family successfully with fresh user and group', async () => {
@@ -547,12 +393,16 @@ describe('Family E2E Tests', () => {
       const inviteRes = await generateInviteCode(ownerToken, groupId);
       expect(inviteRes.code).toBe(201);
 
-      const joinRes = await request(baseUrl)
-        .post('/api/group-family/join')
-        .set('Authorization', `Bearer ${joinerToken}`)
-        .query({ token: inviteRes.data.inviteLink.split('token=')[1] });
+      const joinBody = await api.post<JoinGroupResponse>(
+        '/group-family/join',
+        undefined,
+        {
+          token: joinerToken,
+          query: { token: inviteRes.data.inviteLink.split('token=')[1] },
+        },
+      );
 
-      expect((joinRes.body as joinUserType).code).toBe(200);
+      expect(joinBody.code).toBe(200);
 
       const familyRes = await createFamily(
         joinerToken,
@@ -607,12 +457,16 @@ describe('Family E2E Tests', () => {
       const inviteRes = await generateInviteCode(ownerToken, groupId);
       expect(inviteRes.code).toBe(201);
 
-      const joinRes = await request(baseUrl)
-        .post('/api/group-family/join')
-        .set('Authorization', `Bearer ${viewerToken}`)
-        .query({ token: inviteRes.data.inviteLink.split('token=')[1] });
+      const joinBody = await api.post<JoinGroupResponse>(
+        '/group-family/join',
+        undefined,
+        {
+          token: viewerToken,
+          query: { token: inviteRes.data.inviteLink.split('token=')[1] },
+        },
+      );
 
-      expect((joinRes.body as joinUserType).code).toBe(200);
+      expect(joinBody.code).toBe(200);
 
       const familyRes = await createFamily(
         viewerToken,
@@ -669,11 +523,16 @@ describe('Family E2E Tests', () => {
       const inviteRes = await generateInviteCode(ownerToken, groupId);
       expect(inviteRes.code).toBe(201);
 
-      const joinRes = await request(baseUrl)
-        .post('/api/group-family/join')
-        .set('Authorization', `Bearer ${memberToken}`)
-        .query({ token: inviteRes.data.inviteLink.split('token=')[1] });
-      expect((joinRes.body as joinUserType).code).toBe(200);
+      const joinBody = await api.post<JoinGroupResponse>(
+        '/group-family/join',
+        undefined,
+        {
+          token: memberToken,
+          query: { token: inviteRes.data.inviteLink.split('token=')[1] },
+        },
+      );
+
+      expect(joinBody.code).toBe(200);
 
       const familyRes = await createFamily(
         memberToken,
@@ -743,11 +602,15 @@ describe('Family E2E Tests', () => {
       const inviteRes = await generateInviteCode(ownerToken, groupId);
       expect(inviteRes.code).toBe(201);
 
-      const joinRes = await request(baseUrl)
-        .post('/api/group-family/join')
-        .set('Authorization', `Bearer ${viewerToken}`)
-        .query({ token: inviteRes.data.inviteLink.split('token=')[1] });
-      expect((joinRes.body as joinUserType).code).toBe(200);
+      const joinBody = await api.post<JoinGroupResponse>(
+        '/group-family/join',
+        undefined,
+        {
+          token: viewerToken,
+          query: { token: inviteRes.data.inviteLink.split('token=')[1] },
+        },
+      );
+      expect(joinBody.code).toBe(200);
 
       const updateRes = await updateFamily(
         viewerToken,
@@ -927,13 +790,14 @@ describe('Family E2E Tests', () => {
       expect(groupRes.code).toBe(201);
       const groupId = groupRes.data.id;
 
-      const familyRes = await request(baseUrl)
-        .post(`/api/family/${groupId}`)
-        .send({
+      await api.post<NewFamilyResponse>(
+        `/family/${groupId}`,
+        {
           name: familyName,
           description: familyDescription,
-        });
-      expect(familyRes.status).toBe(401);
+        },
+        { expect: 401 },
+      );
     });
   });
 
