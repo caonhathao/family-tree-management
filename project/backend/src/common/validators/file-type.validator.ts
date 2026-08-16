@@ -24,7 +24,7 @@ export class CustomFileExtensionValidator extends FileValidator<{
     return isExtensionValid && isMimeValid;
   }
 
-  buildErrorMessage(file: any): string {
+  buildErrorMessage(): string {
     return `File không hợp lệ. Chỉ chấp nhận các định dạng: ${this.validationOptions.allowedExtensions.join(', ')}`;
   }
 }
