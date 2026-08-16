@@ -29,6 +29,8 @@ jobs:
           cache-dependency-path: project/frontend/pnpm-lock.yaml
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client
+        run: pnpm exec prisma generate
       - name: Lint
         run: pnpm lint
       - name: Typecheck
