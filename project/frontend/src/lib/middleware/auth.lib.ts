@@ -1,25 +1,25 @@
 import { cache } from "react";
-
-import { prisma } from "@/lib/prisma";
-import { IJwtVerifyResult } from "@/types/base.types";
 import { IUserSession } from "@/types/auth.types";
-import { jwtVerify } from "jose";
-import { EnvConfig } from "../env/env-config.lib";
+import { apiClient } from "@/lib/api/api-client.lib";
+import { apiRequest } from "@/lib/api/http.client";
 
 export const getUserFromToken = cache(
   async (accessToken: string | undefined) => {
     if (!accessToken || accessToken.length === 0) return null;
 
     try {
-      const payload: IJwtVerifyResult = await jwtVerify(
-        accessToken,
-        new TextEncoder().encode(EnvConfig.jwtAccessSecret),
+      const res = await apiRequest<IUserSession>(
+        apiClient.user.getDetail.url("me"),
+        {
+          method: "GET",
+          token: accessToken,
+        },
       );
-      const userId = payload?.payload.id;
 
-      if (!userId) return null;
-
-      return await getUserFromUserId(userId);
+      if (res && "data" in res && res.data) {
+        return res.data;
+      }
+      return null;
     } catch (error) {
       console.error("Error getting user from token:", error);
       return null;
@@ -31,15 +31,18 @@ export const getRoleFromToken = cache(async (token: string | undefined) => {
   if (!token || token.length === 0) return null;
 
   try {
-    const payload: IJwtVerifyResult = await jwtVerify(
-      token,
-      new TextEncoder().encode(EnvConfig.jwtRefreshSecret),
+    const res = await apiRequest<{ role?: string }>(
+      apiClient.user.getDetail.url("me"),
+      {
+        method: "GET",
+        token,
+      },
     );
-    const role = payload.payload;
 
-    if (!role) return null;
-
-    return role;
+    if (res && "data" in res && res.data) {
+      return res.data;
+    }
+    return null;
   } catch (error) {
     console.error("Error getting role from token:", error);
     return null;
@@ -50,25 +53,17 @@ export const getUserFromUserId = cache(async (userId: string) => {
   if (!userId || userId.length === 0) return null;
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        userProfile: {
-          select: {
-            fullName: true,
-          },
-        },
+    const res = await apiRequest<IUserSession>(
+      apiClient.user.getDetail.url(userId),
+      {
+        method: "GET",
       },
-    });
+    );
 
-    if (!user) return null;
-
-    const res: IUserSession = {
-      fullName: user.userProfile?.fullName ?? "",
-    };
-
-    return res;
+    if (res && "data" in res && res.data) {
+      return res.data;
+    }
+    return null;
   } catch (error) {
     console.error("Error getting user from userId:", error);
     return null;

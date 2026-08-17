@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jwtVerify } from "jose";
-import { IJwtPayload } from "./types/base.types";
 import { IAuthResponseDto } from "./modules/auth/auth.dto";
 import { apiClient } from "./lib/api/api-client.lib";
 import { apiRequest } from "./lib/api/http.client";
@@ -28,21 +26,24 @@ const roleRights = {
   ],
   USER: ["/profile"],
 };
-const JWT_ACCESS_KEY = process.env.JWT_ACCESS_SECRET_KEY || "";
-const JWT_REFRESH_KEY = process.env.JWT_REFRESH_SECRET_KEY || "";
 
 function isPublicRoute(pathname: string): boolean {
   if (publicRoutes.includes(pathname)) return true;
   return false;
 }
 
-async function verifyAndGetPayload(token: string, secret: string) {
+async function verifyViaBackend(
+  token: string,
+): Promise<{ id: string; role: string } | null> {
   try {
-    const { payload } = await jwtVerify(
-      token,
-      new TextEncoder().encode(secret),
+    const res = await apiRequest<{ id: string; role: string }>(
+      apiClient.auth.me.url,
+      { method: "GET", token },
     );
-    return payload as unknown as IJwtPayload; // Trả về payload (chứa id, role...)
+    if (res && "data" in res && res.data) {
+      return res.data;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -54,14 +55,6 @@ async function refreshViaBackend(
   const baseUrl = process.env.BACKEND_API_URL || "";
   if (!baseUrl) return null;
   try {
-    // const res = await fetch(`${baseUrl}/api/auth/refresh`, {
-    //   method: "POST",
-    //   headers: {
-    //     Authorization: `Bearer ${refreshToken}`,
-    //   },
-    //   cache: "no-store",
-    // });
-
     const res = await apiRequest<IAuthResponseDto>(apiClient.auth.refresh.url, {
       method: apiClient.auth.refresh.method,
       token: refreshToken,
@@ -83,74 +76,58 @@ export async function proxy(req: NextRequest) {
   const accessToken = req.cookies.get("access_token")?.value;
   const refreshToken = req.cookies.get("refresh_token")?.value;
 
-  // const userAgent = req.headers.get("user-agent") || "unknown";
-  // const userIp = req.headers.get("x-forwarded-for") || "unknown";
-
   let userId: string | null = null;
   let userRole: string | null = null;
   let finalResponse: NextResponse | null = null;
 
-  // BƯỚC 1: Kiểm tra Access Token
+  // BƯỚC 1: Xác thực Access Token qua Backend
   if (accessToken) {
-    const payload = await verifyAndGetPayload(accessToken, JWT_ACCESS_KEY);
-    userId = payload?.id || null;
-    userRole = payload?.role || null;
+    const me = await verifyViaBackend(accessToken);
+    userId = me?.id || null;
+    userRole = me?.role || null;
   }
 
-  // BƯỚC 2: Silent Refresh
+  // BƯỚC 2: Silent Refresh (nếu access token hết hạn)
   let result: IAuthResponseDto | null = null;
   if (!userId && refreshToken) {
-    const refreshPayload = await verifyAndGetPayload(
-      refreshToken,
-      JWT_REFRESH_KEY,
-    );
-    const rUserId = refreshPayload?.id as string;
+    try {
+      result = await refreshViaBackend(refreshToken);
 
-    if (rUserId) {
-      try {
-        result = await refreshViaBackend(refreshToken);
+      if (result && result.tokens) {
+        userId = result.user.id;
+        userRole = result.user.role;
 
-        if (result && result.tokens) {
-          userId = result.user.id;
-          userRole = result.user.role; // QUAN TRỌNG: Cập nhật role mới vào đây [cite: 17, 49]
+        finalResponse = pathname.startsWith("/auth")
+          ? NextResponse.redirect(new URL("/", req.url))
+          : NextResponse.next();
 
-          finalResponse = pathname.startsWith("/auth")
-            ? NextResponse.redirect(new URL("/", req.url))
-            : NextResponse.next();
-
-          if (finalResponse.status >= 300 && finalResponse.status < 400) {
-            finalResponse.headers.set("x-middleware-cache", "no-cache");
-          }
-
-          const cookieOptions = {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax" as const,
-            path: "/",
-          };
-
-          finalResponse.cookies.set("access_token", result.tokens.accessToken, {
-            ...cookieOptions,
-            maxAge: 15 * 60,
-          });
-          finalResponse.cookies.set(
-            "refresh_token",
-            result.tokens.refreshToken,
-            {
-              ...cookieOptions,
-              maxAge: 7 * 24 * 60 * 60,
-            },
-          );
+        if (finalResponse.status >= 300 && finalResponse.status < 400) {
+          finalResponse.headers.set("x-middleware-cache", "no-cache");
         }
-      } catch (error) {
-        console.error("Refresh failed:", error);
+
+        const cookieOptions = {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax" as const,
+          path: "/",
+        };
+
+        finalResponse.cookies.set("access_token", result.tokens.accessToken, {
+          ...cookieOptions,
+          maxAge: result.tokens.accessTokenExpiresIn,
+        });
+        finalResponse.cookies.set("refresh_token", result.tokens.refreshToken, {
+          ...cookieOptions,
+          maxAge: result.tokens.refreshTokenExpiresIn,
+        });
       }
+    } catch (error) {
+      console.error("Refresh failed:", error);
     }
   }
 
   // BƯỚC 3: Kiểm tra quyền truy cập (RBAC)
   if (userId) {
-    // Kiểm tra các route Admin [cite: 4, 25, 26]
     const isAdminRoute =
       pathname.startsWith("/admin") ||
       roleRights.ADMIN.some((route) => pathname.startsWith(route));
@@ -179,7 +156,6 @@ export async function proxy(req: NextRequest) {
       request: { headers: requestHeaders },
     });
 
-    // Cập nhật Cookie mới cho trình duyệt (Nếu có refresh thành công)
     if (finalResponse) {
       const setCookie = finalResponse.headers.get("set-cookie");
       if (setCookie) {

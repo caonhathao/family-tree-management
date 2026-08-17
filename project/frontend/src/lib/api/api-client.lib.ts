@@ -2,6 +2,7 @@ import { HttpMethod } from "./http.client";
 
 export const apiClient = {
   auth: {
+    me: { url: "/api/auth/me", method: "GET" as HttpMethod },
     register: { url: "/api/auth/register", method: "POST" as HttpMethod },
     refresh: {
       url: "/api/auth/refresh",
