@@ -15,6 +15,8 @@ export interface AuthUser {
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
+  accessTokenExpiresIn: number;
+  refreshTokenExpiresIn: number;
 }
 
 export interface AuthResult {

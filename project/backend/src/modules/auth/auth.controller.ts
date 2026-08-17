@@ -5,6 +5,7 @@ import {
   Controller,
   Ip,
   Post,
+  Get,
   Headers,
   HttpCode,
   UseGuards,
@@ -49,6 +50,19 @@ import { DeleteAccountDto } from './dto/delete-account.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get('me')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Get current user info from access token' })
+  @ApiResponse({ status: 200, description: 'User info retrieved' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  getMe(@GetCurrentUser() user: { id: string; role: string }) {
+    return ResponseFactory.success({
+      data: { id: user.id, role: user.role },
+      code: HttpStatus.OK,
+      message: ValidMessageResponse.GETTED,
+    });
+  }
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh token authorization' })

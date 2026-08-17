@@ -1082,6 +1082,11 @@ export class AuthService {
         expiresIn: this.envConfig.refreshExpires,
       }),
     ]);
-    return { accessToken: at, refreshToken: rt };
+    return {
+      accessToken: at,
+      refreshToken: rt,
+      accessTokenExpiresIn: this.envConfig.accessExpires,
+      refreshTokenExpiresIn: this.envConfig.refreshExpires,
+    };
   }
 }
