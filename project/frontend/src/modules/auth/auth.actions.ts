@@ -28,6 +28,8 @@ import { apiClient } from "@/lib/api/api-client.lib";
 const setAuthCookies = async (tokens: {
   accessToken: string;
   refreshToken: string;
+  accessTokenExpiresIn: number;
+  refreshTokenExpiresIn: number;
 }) => {
   const cookieStore = await cookies();
   cookieStore.set("access_token", tokens.accessToken, {
@@ -35,20 +37,27 @@ const setAuthCookies = async (tokens: {
     secure: EnvConfig.nodeValue === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: EnvConfig.accessTokenExpireIn,
+    maxAge: tokens.accessTokenExpiresIn,
   });
   cookieStore.set("refresh_token", tokens.refreshToken, {
     httpOnly: true,
     secure: EnvConfig.nodeValue === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: EnvConfig.refreshTokenExpireIn,
+    maxAge: tokens.refreshTokenExpiresIn,
   });
 };
 
 export async function registerAction(data: IRegisterDto) {
   try {
-    let tokens: { accessToken: string; refreshToken: string } | undefined;
+    let tokens:
+      | {
+          accessToken: string;
+          refreshToken: string;
+          accessTokenExpiresIn: number;
+          refreshTokenExpiresIn: number;
+        }
+      | undefined;
 
     const res = await apiRequest<IAuthResponseDto>(
       apiClient.auth.register.url,
@@ -76,7 +85,14 @@ export async function registerAction(data: IRegisterDto) {
 
 export async function loginBaseAction(data: ILoginBaseDto) {
   try {
-    let tokens: { accessToken: string; refreshToken: string } | undefined;
+    let tokens:
+      | {
+          accessToken: string;
+          refreshToken: string;
+          accessTokenExpiresIn: number;
+          refreshTokenExpiresIn: number;
+        }
+      | undefined;
 
     const res = await apiRequest<IAuthResponseDto>(
       apiClient.auth.loginBase.url,
@@ -131,14 +147,14 @@ export async function loginGoogleAction(
         secure: EnvConfig.nodeValue === "production",
         sameSite: "lax",
         path: "/",
-        maxAge: EnvConfig.accessTokenExpireIn,
+        maxAge: res.data.tokens.accessTokenExpiresIn,
       });
       cookieStore.set("refresh_token", res.data.tokens.refreshToken, {
         httpOnly: true,
         secure: EnvConfig.nodeValue === "production",
         sameSite: "lax",
         path: "/",
-        maxAge: EnvConfig.refreshTokenExpireIn,
+        maxAge: res.data.tokens.refreshTokenExpiresIn,
       });
     }
   } catch (err) {
@@ -199,12 +215,12 @@ export async function refreshAction() {
 
         cookieStore.set("access_token", res.data.tokens.accessToken, {
           ...cookieOptions,
-          maxAge: EnvConfig.accessTokenExpireIn,
+          maxAge: res.data.tokens.accessTokenExpiresIn,
         });
 
         cookieStore.set("refresh_token", res.data.tokens.refreshToken, {
           ...cookieOptions,
-          maxAge: EnvConfig.refreshTokenExpireIn,
+          maxAge: res.data.tokens.refreshTokenExpiresIn,
         });
 
         return { success: true };

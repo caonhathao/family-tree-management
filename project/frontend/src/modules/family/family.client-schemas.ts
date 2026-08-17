@@ -1,4 +1,4 @@
-import { LINEAGE_TYPE } from "@prisma/client";
+import { LINEAGE_TYPE } from "@/types/enums";
 import z from "zod";
 
 export const FamilySchema = z.object({

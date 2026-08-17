@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LINEAGE_TYPE, TYPE_RELATIONSHIP } from "@prisma/client";
+import { LINEAGE_TYPE, TYPE_RELATIONSHIP } from "@/types/enums";
 
 export const BiographyContentSchema = z.object({
   education_level: z.string(),

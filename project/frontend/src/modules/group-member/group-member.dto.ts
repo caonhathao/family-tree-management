@@ -1,4 +1,4 @@
-import { MEMBER_ROLE } from "@prisma/client";
+import { MEMBER_ROLE } from "@/types/enums";
 
 export interface UpdateGroupMemberDto {
   id: string;

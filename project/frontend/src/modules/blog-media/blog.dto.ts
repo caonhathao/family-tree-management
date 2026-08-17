@@ -1,4 +1,4 @@
-import { BLOG_MEDIA_TYPE } from "@prisma/client";
+import { BLOG_MEDIA_TYPE } from "@/types/enums";
 
 export interface IBlogMediaDto {
   id: string;

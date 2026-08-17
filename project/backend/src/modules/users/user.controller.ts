@@ -97,6 +97,22 @@ export class UserController {
     });
   }
 
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getMe(@GetCurrentUserId() userId: string): Promise<UserResponse> {
+    const user = await this.userService.get(userId, userId, 'self');
+    return ResponseFactory.success({
+      data: user,
+      message: ValidMessageResponse.GETTED,
+    });
+  }
+
   @Get(':targetId')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({ name: 'targetId', description: 'User ID' })

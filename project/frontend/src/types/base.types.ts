@@ -1,5 +1,3 @@
-import { USER_ROLE } from "@prisma/client";
-import { CompactJWSHeaderParameters } from "jose";
 import { IconType } from "react-icons";
 
 export interface ResponseDataBase<T> {
@@ -26,17 +24,6 @@ export interface IErrorResponse {
 export interface ISuccessResponse {
   success: boolean;
   message: string;
-}
-
-export interface IJwtVerifyResult {
-  payload: IJwtPayload;
-  protectedHeader: CompactJWSHeaderParameters;
-}
-export interface IJwtPayload {
-  id: string;
-  role: USER_ROLE;
-  exp: number;
-  iat: number;
 }
 
 export interface dataProps {

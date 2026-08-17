@@ -1,216 +1,44 @@
-import { Exception } from "@/lib/messages/response.messages";
-import { BlogUpdateServiceDto } from "./blog.service-validator";
-import { prisma } from "@/lib/prisma";
-import { OutputBlockData, OutputData } from "@editorjs/editorjs";
+import { apiClient } from "@/lib/api/api-client.lib";
+import { apiRequest } from "@/lib/api/http.client";
 import { IBlogDto, IBlogList } from "./blog.dto";
-import { safeJsonParse } from "@/lib/utils/funcs.utils";
-import { validator } from "../_common/validator";
-import { Prisma } from "@prisma/client";
-import { ResponseFactory } from "@/lib/res/response.factory";
+import { BlogUpdateServiceDto } from "./blog.service-validator";
 
-const extractMediaUrls = (data: OutputData): string[] => {
-  const urls: string[] = [];
-  data.blocks.forEach((block) => {
-    if (block.type === "image") {
-      if (block.data.file && block.data.file.url) {
-        urls.push(block.data.file.url);
-      }
-    } else if (block.type === "embed") {
-      if (block.data.embed) {
-        urls.push(block.data.embed);
-      }
-    }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const updateBlog = async (data: BlogUpdateServiceDto, _userId: string) => {
+  const res = await apiRequest<IBlogDto>(apiClient.blog.upsert, {
+    method: "POST",
+    body: data,
   });
-  return urls;
-};
-
-const updateBlog = async (data: BlogUpdateServiceDto, userId: string) => {
-  try {
-    //check validation
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, role: true },
-    });
-    if (!user) {
-      throw new Error(Exception.NOT_EXIST);
-    }
-    if (user.role !== "ADMIN") {
-      throw new Error(Exception.PEMRISSION);
-    }
-
-    //check if blog exist
-    const blog = await prisma.blog.findUnique({
-      where: { slug: data.slug },
-      select: { id: true, slug: true, content: true },
-    });
-
-    //get title of content
-    const content = safeJsonParse(data.content);
-    const headerBlock = content.blocks.find(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (block: OutputBlockData<string, any>) => block.type === "header",
-    );
-    const extractedTitle = headerBlock
-      ? headerBlock.data.text
-      : "Tiêu đề mặc định";
-
-    //if the blog data is null, create new
-    if (!blog) {
-      const mediaUrls = extractMediaUrls(safeJsonParse(data.content as string));
-      const result = await prisma.$transaction(async (tx) => {
-        const newBlog = await tx.blog.create({
-          data: {
-            title: extractedTitle,
-            slug: data.slug,
-            content: data.content as string,
-            userId: userId,
-          },
-          select: { id: true, title: true, slug: true, content: true },
-        });
-        if (mediaUrls.length > 0) {
-          await tx.blogMedia.createMany({
-            data: mediaUrls.map((url) => ({
-              url,
-              isUsed: true,
-              blogId: newBlog.id,
-            })),
-          });
-        }
-        return newBlog;
-      });
-      return result as IBlogDto;
-    } else {
-      const mediaUrls = extractMediaUrls(safeJsonParse(data.content as string));
-      console.log(mediaUrls);
-
-      const result = await prisma.$transaction(async (tx) => {
-        const updatedBlog = await tx.blog.update({
-          where: { slug: data.slug },
-          data: {
-            title: extractedTitle,
-            slug: data.slug,
-            content: data.content as string,
-          },
-          select: { id: true, title: true, slug: true, content: true },
-        });
-
-        await Promise.all([
-          tx.blogMedia.updateMany({
-            where: { url: { in: mediaUrls } },
-            data: {
-              isUsed: true,
-              blogId: updatedBlog.id,
-            },
-          }),
-
-          tx.blogMedia.updateMany({
-            where: {
-              blogId: updatedBlog.id,
-              url: { notIn: mediaUrls },
-            },
-            data: {
-              isUsed: false,
-              blogId: null,
-            },
-          }),
-        ]);
-
-        return updatedBlog;
-      });
-
-      return result as IBlogDto;
-    }
-  } catch (err: unknown) {
-    console.log("error at update blog service:", err);
-    throw err;
-  }
+  return res.data;
 };
 
 const getBlog = async (slug: string) => {
-  try {
-    const blog = await prisma.blog.findUnique({
-      where: {
-        slug: slug,
-      },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        content: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    return blog as IBlogDto;
-  } catch (err: unknown) {
-    console.log("error at get blog service:", err);
-    return ResponseFactory.handleError(err);
-  }
+  const res = await apiRequest<IBlogDto>(apiClient.blog.get(slug), {
+    method: "GET",
+  });
+  return res;
 };
 
 const getBlogs = async (
-  userId: string,
+  _userId: string,
   page?: number,
   limit?: number,
   filter?: string,
   filterType?: string,
 ) => {
-  try {
-    const user = await validator(userId, (id) =>
-      prisma.user.findUnique({
-        where: { id },
-        select: { id: true, email: true, role: true },
-      }),
-    );
-    if (!user) throw new Error(Exception.NOT_EXIST);
-    if (user.role !== "ADMIN") throw new Error(Exception.PEMRISSION);
-
-    const whereClause: Prisma.BlogWhereInput = {};
-    if (filter && filterType) {
-      if (filterType === "slug") {
-        whereClause.slug = { contains: filter, mode: "insensitive" };
-      }
-      if (filterType === "title") {
-        whereClause.title = { contains: filter, mode: "insensitive" };
-      }
-    }
-
-    const currentPage = page && page > 0 ? page : 1;
-    const pageSize = limit && limit > 0 ? limit : 10;
-    const skip = (currentPage - 1) * pageSize;
-    const [totalCount, blogs] = await prisma.$transaction([
-      prisma.blog.count({ where: whereClause }),
-      prisma.blog.findMany({
-        where: whereClause,
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-        skip: skip,
-        take: pageSize,
-        orderBy: { id: "asc" },
-      }),
-    ]);
-
-    const totalPages = Math.ceil(totalCount / pageSize);
-
-    return {
-      data: blogs as IBlogList[],
-      pagination: {
-        totalItems: totalCount,
-        totalPages: totalPages,
-        currentPage: currentPage,
-        pageSize: pageSize,
-      },
+  const res = await apiRequest<{
+    data: IBlogList[];
+    pagination: {
+      totalItems: number;
+      totalPages: number;
+      currentPage: number;
+      pageSize: number;
     };
-  } catch (err: unknown) {
-    console.log("error at get blogs service:", err);
-    throw err;
-  }
+  }>(apiClient.blog.list, {
+    method: "GET",
+    query: { page, limit, filter, filterType },
+  });
+  return res.data;
 };
 
 export const BlogService = {

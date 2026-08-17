@@ -1,4 +1,4 @@
-import { LINEAGE_TYPE } from "@prisma/client";
+import { LINEAGE_TYPE } from "@/types/enums";
 
 export interface IFamilyDto {
   localId: string;

@@ -1,15 +1,7 @@
-import {
-  PrismaForeignKeyConstraintError,
-  PrismaOperationFailedError,
-  PrismaRecordDoesNotExistError,
-  PrismaUniqueConstraintError,
-  toTypedPrismaError,
-} from "@/lib/prisma-errors";
 import { ServiceError } from "./service-error";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { StatusCode, ApiResponse, HttpStatus } from "@/types/api.types";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 
 interface SuccessOptions<T> {
   data?: T;
@@ -134,54 +126,7 @@ export class ResponseFactory {
       return ResponseFactory.error({
         message: `Validation failed: ${firstErrorMessage}`,
         code: HttpStatus.UNPROCESSABLE_ENTITY,
-        // errors field is removed to return a single string message
       });
-    }
-
-    const prismaError = toTypedPrismaError(error);
-
-    if (prismaError) {
-      if (prismaError instanceof PrismaUniqueConstraintError) {
-        const meta = (prismaError as PrismaClientKnownRequestError).meta;
-        const target = (meta?.target as string[])?.join(", ") || "field";
-        return ResponseFactory.error({
-          message: `Value for ${target} already exists.`,
-          code: HttpStatus.CONFLICT,
-        });
-      }
-
-      if (
-        prismaError instanceof PrismaOperationFailedError ||
-        prismaError instanceof PrismaRecordDoesNotExistError
-      ) {
-        return ResponseFactory.error({
-          message: "Requested record not found.",
-          code: HttpStatus.NOT_FOUND,
-        });
-      }
-
-      if (prismaError instanceof PrismaForeignKeyConstraintError) {
-        const meta = (prismaError as PrismaClientKnownRequestError).meta;
-        const field = (meta?.field_name as string) || "reference";
-        return ResponseFactory.error({
-          message: `Invalid reference: ${field} does not exist.`,
-          code: HttpStatus.BAD_REQUEST,
-        });
-      }
-
-      if (prismaError.code === "P2000") {
-        return ResponseFactory.error({
-          message: "Input value is too long.",
-          code: HttpStatus.BAD_REQUEST,
-        });
-      }
-
-      if (prismaError.code === "P1008") {
-        return ResponseFactory.error({
-          message: "Database operation timed out.",
-          code: HttpStatus.GATEWAY_TIMEOUT,
-        });
-      }
     }
 
     // Default to 500

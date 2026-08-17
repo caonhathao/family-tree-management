@@ -24,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { IFamilyDto } from "@/modules/family/family.dto";
 import { FamilySchema } from "@/modules/family/family.client-schemas";
+import { LINEAGE_TYPE } from "@/types/enums";
 import { AppDispatch, RootState } from "@/store";
 import { setDraft } from "@/store/family/familySlice";
 
@@ -55,7 +56,7 @@ const NewFamilyForm = ({
       localId: "",
       name: "",
       description: "",
-      lineageType: "PATRIARCHAL",
+      lineageType: LINEAGE_TYPE.PATRIARCHAL,
     },
   });
   const { draft } = useSelector((state: RootState) => state.family);

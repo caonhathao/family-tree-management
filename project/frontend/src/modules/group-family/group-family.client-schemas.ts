@@ -1,4 +1,4 @@
-import { MEMBER_ROLE } from "@prisma/client";
+import { MEMBER_ROLE } from "@/types/enums";
 import z from "zod";
 
 export const CreateGroupFamilySchema = z.object({

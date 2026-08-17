@@ -7,7 +7,7 @@ import { ApiResponse } from "@/types/api.types";
 export async function uploadBlogMediaAction(
   type: string,
   file?: File,
-): Promise<IBlogMediaDto | ApiResponse<IBlogMediaDto, unknown>> {
+): Promise<IBlogMediaDto | ApiResponse<IBlogMediaDto>> {
   try {
     const res = await BlogMediaService.uploadBlogMedia(type, file);
 
