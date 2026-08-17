@@ -17,6 +17,20 @@ jobs:
       BACKEND_API_URL: http://localhost:3001
       JWT_ACCESS_SECRET_KEY: ci-access-secret
       JWT_REFRESH_SECRET_KEY: ci-refresh-secret
+      ACCESS_TOKEN_EXPIRES_IN: "600"
+      REFRESH_TOKEN_EXPIRES_IN: "604800"
+      MAX_FILE_SIZE: "2"
+      FOLDER_ALBUM: family-tree/albums
+      FOLDER_USER: family-tree/users
+      FOLDER_BLOG: family-tree/blogs
+      FOLDER_FAMILY: family-tree/families
+      CLOUDINARY_NAME: ci-cloudinary
+      CLOUDINARY_API_KEY: ci-api-key
+      CLOUDINARY_API_SECRET: ci-api-secret
+      CLOUDINARY_URL: "cloudinary://ci-api-key:ci-api-secret@ci-cloudinary"
+      CLIENT_DOMAIN: http://localhost:3000
+      SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ci-google-client-id.apps.googleusercontent.com
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
