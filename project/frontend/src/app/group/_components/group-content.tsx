@@ -31,7 +31,7 @@ import FamilySettingDrawer from "./family-setting-drawer";
 import { ApiResponse } from "@/types/api.types";
 import { EventCalendar } from "./event-calendar";
 import { DayEventsDialog } from "./day-events-dialog";
-import { MEMBER_ROLE } from "@prisma/client";
+import { MEMBER_ROLE } from "@/types/enums";
 
 const nodeTypes = {
   familyNode: FamilyMemberNode,

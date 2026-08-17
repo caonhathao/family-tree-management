@@ -1,0 +1,73 @@
+export enum USER_ROLE {
+  ADMIN = "ADMIN",
+  USER = "USER",
+}
+
+export enum GENDERS {
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  UNKNOWN = "UNKNOWN",
+}
+
+export enum PROVIDERS {
+  USER = "USER",
+  GOOGLE = "GOOGLE",
+  GITHUB = "GITHUB",
+}
+
+export enum BLOG_MEDIA_TYPE {
+  IMAGE = "IMAGE",
+  VIDEO = "VIDEO",
+  OTHER = "OTHER",
+}
+
+export enum LINEAGE_TYPE {
+  PATRIARCHAL = "PATRIARCHAL",
+  MATRIARCHAL = "MATRIARCHAL",
+  OTHER = "OTHER",
+}
+
+export enum GENDER {
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  OTHER = "OTHER",
+}
+
+export enum TYPE_RELATIONSHIP {
+  PARENT = "PARENT",
+  SPOUSE = "SPOUSE",
+  CHILD = "CHILD",
+}
+
+export enum MEMBER_ROLE {
+  OWNER = "OWNER",
+  EDITOR = "EDITOR",
+  VIEWER = "VIEWER",
+}
+
+export enum AUTH_TYPE {
+  LOGIN = "LOGIN",
+  REGISTER = "REGISTER",
+  PASSWORD = "PASSWORD",
+}
+
+export enum ACTION_TYPE {
+  UPDATE = "UPDATE",
+  DELETE = "DELETE",
+  NEW = "NEW",
+}
+
+export enum TARGET_TYPE {
+  ALBUM = "ALBUM",
+  FAMILY = "FAMILY",
+  EVENT_FAMILY = "EVENT_FAMILY",
+  EVENT_SELF = "EVENT_SELF",
+  USER = "USER",
+}
+
+export enum NOTIFICATION_TYPE {
+  NEW = "NEW",
+  UPDATE = "UPDATE",
+  DELETE = "DELETE",
+  OTHER = "OTHER",
+}

@@ -1,4 +1,4 @@
-import { PROVIDERS, USER_ROLE } from "@prisma/client";
+import { PROVIDERS, USER_ROLE } from "@/types/enums";
 
 export interface IUserType {
   id: string;

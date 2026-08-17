@@ -1,4 +1,4 @@
-import { AUTH_TYPE, GENDERS, PROVIDERS } from "@prisma/client";
+import { AUTH_TYPE, GENDERS, PROVIDERS } from "@/types/enums";
 
 export interface IUserInfoDto {
   fullName?: string;

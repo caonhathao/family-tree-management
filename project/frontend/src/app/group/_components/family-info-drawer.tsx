@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { IResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
-import { MEMBER_ROLE } from "@prisma/client";
+import { MEMBER_ROLE } from "@/types/enums";
 import { RemoveFromGroupAction } from "@/modules/group-member/group-member.actions";
 import { RootState } from "@/store";
 import { useState } from "react";

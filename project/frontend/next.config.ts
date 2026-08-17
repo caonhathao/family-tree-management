@@ -52,10 +52,7 @@ const nextConfig: NextConfig = {
   },
   reactCompiler: true,
   serverExternalPackages: [
-    "@prisma/client",
-    "@prisma/adapter-pg",
     "pg",
-    "@prisma/client-runtime-utils",
     "bcrypt",
   ],
   images: {

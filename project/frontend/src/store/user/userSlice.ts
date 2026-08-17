@@ -1,4 +1,5 @@
 import { IResponseUserDto } from "@/modules/user/user.dto";
+import { GENDERS } from "@/types/enums";
 import { createSlice } from "@reduxjs/toolkit";
 
 //storing user's profile
@@ -15,7 +16,7 @@ const initialState: UserState = {
       biography: "",
       dateOfBirth: "",
       fullName: "",
-      gender: "UNKNOWN",
+      gender: GENDERS.UNKNOWN,
     },
     groups: 0,
     invites: 0,

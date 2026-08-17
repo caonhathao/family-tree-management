@@ -1,5 +1,3 @@
-import { Prisma, PrismaClient } from "@prisma/client";
-
 export const HttpStatus = {
   OK: 200,
   CREATED: 201,
@@ -59,4 +57,3 @@ export interface CursorMeta {
   } & (ME extends Record<string, unknown> ? ME : unknown);
   errors?: Record<string, string[] | undefined> | null | object;
 }
-export type DbClient = Prisma.TransactionClient | PrismaClient;

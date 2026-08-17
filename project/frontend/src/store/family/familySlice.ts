@@ -1,7 +1,7 @@
 import { safeJsonParse } from "@/lib/utils/funcs.utils";
 import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import { IDraftFamilyData } from "@/types/draft.types";
-import { LINEAGE_TYPE } from "@prisma/client";
+import { LINEAGE_TYPE } from "@/types/enums";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface FamilyState {

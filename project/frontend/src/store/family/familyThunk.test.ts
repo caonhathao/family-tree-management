@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { configureStore } from "@reduxjs/toolkit";
-import { LINEAGE_TYPE } from "@prisma/client";
+import { LINEAGE_TYPE } from "@/types/enums";
 import familyReducer from "./familySlice";
 import { deleteFamily, saveFamilyDraft } from "./familyThunk";
 import type { IDraftFamilyData } from "@/types/draft.types";
@@ -13,14 +13,6 @@ const { SyncFamilyAction, DeleteFamilyAction } = vi.hoisted(() => ({
 vi.mock("@/modules/family/family.actions", () => ({
   SyncFamilyAction,
   DeleteFamilyAction,
-}));
-
-vi.mock("@prisma/client", () => ({
-  LINEAGE_TYPE: {
-    PATRIARCHAL: "PATRIARCHAL",
-    MATRIARCHAL: "MATRIARCHAL",
-    OTHER: "OTHER",
-  },
 }));
 
 const emptyDraft: IDraftFamilyData = {
