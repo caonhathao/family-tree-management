@@ -13,6 +13,10 @@ import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { AtGuard } from '../auth/guards/auth.guard';
 import { HttpStatus } from 'src/common/constants/api';
+import {
+  InviteInfoResponse,
+  InviteResponse,
+} from './types/invite-response.type';
 
 @ApiTags('invite')
 @Controller('invite')
@@ -28,7 +32,7 @@ export class InviteController {
   async createInvite(
     @GetCurrentUserId() userId: string,
     @Body() data: CreateInviteDto,
-  ) {
+  ): Promise<InviteResponse> {
     const invite = await this.inviteService.createInvite(userId, data);
     return ResponseFactory.success({
       data: invite,
@@ -46,7 +50,9 @@ export class InviteController {
   })
   @ApiResponse({ status: 404, description: 'Invitation not found' })
   @ApiResponse({ status: 403, description: 'Invitation expired' })
-  async getInviteInfo(@Param('token') token: string) {
+  async getInviteInfo(
+    @Param('token') token: string,
+  ): Promise<InviteInfoResponse> {
     const info = await this.inviteService.getInviteInfo(token);
     return ResponseFactory.success({
       data: info,

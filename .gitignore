@@ -8,6 +8,8 @@ dist/
 .next/
 out/
 build/
+coverage/
+.vercel/
 
 .env
 .env*.local

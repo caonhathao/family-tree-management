@@ -1,4 +1,5 @@
-import * as faker from 'faker';
+// @ts-expect-error @faker-js/faker is ESM-only; ts-jest resolves it via CommonJS semantics.
+import { faker } from '@faker-js/faker';
 import { GENDER } from '@prisma/client';
 
 /**
@@ -8,7 +9,7 @@ import { GENDER } from '@prisma/client';
 export const generateRandomUser = () => ({
   email: faker.internet.email(),
   password: faker.internet.password(),
-  fullName: faker.name.findName(),
+  fullName: faker.person.fullName(),
 });
 
 /**
@@ -16,7 +17,7 @@ export const generateRandomUser = () => ({
  * @returns A family object with a random name and description.
  */
 export const generateRandomFamily = () => ({
-  name: faker.company.companyName(),
+  name: faker.company.name(),
   description: faker.lorem.sentence(),
 });
 
@@ -27,11 +28,15 @@ export const generateRandomFamily = () => ({
  */
 export const generateRandomMember = (familyId: string) => ({
   familyId,
-  fullName: faker.name.findName(),
-  gender: faker.random.arrayElement([GENDER.MALE, GENDER.FEMALE, GENDER.OTHER]),
-  dateOfBirth: faker.date.past(50),
+  fullName: faker.person.fullName(),
+  gender: faker.helpers.arrayElement([
+    GENDER.MALE,
+    GENDER.FEMALE,
+    GENDER.OTHER,
+  ]),
+  dateOfBirth: faker.date.past({ years: 50 }),
   dateOfDeath: null,
   isAlive: true,
   biography: faker.lorem.paragraph(),
-  generation: faker.datatype.number({ min: 1, max: 5 }),
+  generation: faker.number.int({ min: 1, max: 5 }),
 });

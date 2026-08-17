@@ -1,148 +1,27 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, HttpStatus } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
+import { INestApplication } from '@nestjs/common';
+import { MEMBER_ROLE } from '@prisma/client';
+import { TestApi } from './api.client';
+import { createTestApp } from './test-app';
 import { PrismaService } from '../prisma/prisma.service';
-import { MEMBER_ROLE, GENDER, TYPE_RELATIONSHIP } from '@prisma/client';
-import { faker } from '@faker-js/faker';
-import { Server } from 'http';
-
-// ===========================================================================================
-// INTERFACES
-// ===========================================================================================
-
-interface LoginResponse {
-  data: {
-    user: {
-      id: string;
-      email: string;
-      userProfile: {
-        fullName: string;
-        avatar?: string;
-      };
-    };
-    tokens: {
-      accessToken: string;
-      refreshToken: string;
-    };
-  };
-  code: number;
-}
-
-interface GroupResponse {
-  data: {
-    id: string;
-    name: string;
-    description: string;
-  };
-  code: number;
-}
-
-interface FamilyResponse {
-  data: {
-    family: {
-      id: string;
-      name: string;
-      description: string;
-    };
-    owner: {
-      id: string;
-      name: string;
-      avatar: string;
-    };
-  };
-  code: number;
-}
-
-interface FamilyMember {
-  id: string;
-  familyId: string;
-  fullName: string;
-  gender: GENDER;
-  dateOfBirth: string;
-  generation: number;
-  isAlive: boolean;
-  avatarUrl: string | null;
-}
-
-interface FamilyMemberResponse {
-  data: FamilyMember;
-  code: number;
-}
-
-interface Relationship {
-  id: string;
-  familyId: string;
-  fromMemberId: string;
-  toMemberId: string;
-  type: TYPE_RELATIONSHIP;
-}
-
-interface RelationshipResponse {
-  data: Relationship;
-  code: number;
-}
-
-interface RelationshipCreationResponse {
-  data: {
-    count: number;
-  };
-  code: number;
-}
-
-interface RelationshipMapResponse {
-  data: {
-    generations: {
-      level: number;
-      members: any[]; // This can be more strictly typed if needed
-    }[];
-  };
-  code: number;
-}
-
-// ===========================================================================================
-// FACTORIES
-// ===========================================================================================
-
-/**
- * Generates a random user object for testing.
- * @returns A user object with random data.
- */
-export const generateRandomUser = () => ({
-  email: faker.internet.email(),
-  password: faker.internet.password(),
-  fullName: faker.person.fullName(),
-});
-
-/**
- * Generates a random family object for testing.
- * @returns A family object with a random name and description.
- */
-export const generateRandomFamily = () => ({
-  name: faker.company.name(),
-  description: faker.lorem.sentence(),
-});
-
-/**
- * Generates a random family member object for testing.
- * @param familyId - The ID of the family this member belongs to.
- * @returns A family member object with random data.
- */
-export const generateRandomMember = (familyId: string) => ({
-  familyId,
-  fullName: faker.person.fullName(),
-  gender: faker.helpers.arrayElement([
-    GENDER.MALE,
-    GENDER.FEMALE,
-    GENDER.OTHER,
-  ]),
-  dateOfBirth: faker.date.past({ years: 50 }).toISOString(),
-  dateOfDeath: null,
-  isAlive: true,
-  biography: faker.lorem.paragraph(),
-  generation: faker.number.int({ min: 1, max: 5 }),
-});
+import { ApiDataResponse } from 'src/common/constants/api';
+import { createTestUser } from './helpers/auth.helpers';
+import { createGroup as apiCreateGroup } from './helpers/group.helpers';
+import { GroupResponse } from 'src/modules/group-family/types/group-family-response.type';
+import { NewFamilyResponse } from 'src/modules/family/types/family-response.type';
+import {
+  FamilyMemberData,
+  FamilyMemberResponse,
+} from 'src/modules/family-members/types/family-member-response.type';
+import {
+  RelationshipCreationResponse,
+  RelationshipMapResponse,
+  RelationshipResponse,
+} from 'src/modules/relationships/types/relationship-response.type';
+import {
+  generateRandomFamily,
+  generateRandomMember,
+  generateRandomUser,
+} from './factories';
 
 // ===========================================================================================
 // TEST SUITE
@@ -151,7 +30,7 @@ export const generateRandomMember = (familyId: string) => ({
 describe('Relationships (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let httpServer: Server;
+  let api: TestApi;
 
   // ===========================================================================================
   // HELPER FUNCTIONS
@@ -160,55 +39,43 @@ describe('Relationships (e2e)', () => {
   const registerAndLogin = async (
     userDto = generateRandomUser(),
   ): Promise<{ token: string; userId: string }> => {
-    await request(httpServer).post('/api/auth/register').send(userDto);
-    const loginRes = await request(httpServer)
-      .post('/api/auth/login-base')
-      .send({ email: userDto.email, password: userDto.password });
-    const body = loginRes.body as LoginResponse;
+    const user = await createTestUser(api, userDto);
     return {
-      token: body.data.tokens.accessToken,
-      userId: body.data.user.id,
+      token: user.accessToken,
+      userId: user.id,
     };
   };
 
   const createGroup = async (
     token: string,
-    groupDto = { name: 'Test Group', description: 'A group for testing' },
-  ): Promise<GroupResponse> => {
-    const response = await request(httpServer)
-      .post('/api/group-family')
-      .set('Authorization', `Bearer ${token}`)
-      .send(groupDto);
-    return response.body as GroupResponse;
-  };
+    groupDto: { name: string; description: string } = {
+      name: 'Test Group',
+      description: 'A group for testing',
+    },
+  ): Promise<GroupResponse> => apiCreateGroup(api, token, groupDto);
 
   const createFamily = async (
     token: string,
     groupId: string,
-    familyDto = generateRandomFamily(),
-  ): Promise<FamilyResponse> => {
-    const response = await request(httpServer)
-      .post(`/api/family/${groupId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(familyDto);
-    return response.body as FamilyResponse;
-  };
+    familyDto: { name: string; description?: string } = generateRandomFamily(),
+  ): Promise<NewFamilyResponse> =>
+    api.post<NewFamilyResponse>(`/family/${groupId}`, familyDto, { token });
 
   const createMember = async (
     token: string,
     groupId: string,
     familyId: string,
     memberDataOverrides: Partial<ReturnType<typeof generateRandomMember>> = {},
-  ): Promise<FamilyMember> => {
+  ): Promise<FamilyMemberData> => {
     const memberData = {
       ...generateRandomMember(familyId),
       ...memberDataOverrides,
     };
-    const response = await request(httpServer)
-      .post(`/api/family-member/${groupId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(memberData);
-    const body = response.body as FamilyMemberResponse;
+    const body = await api.post<FamilyMemberResponse>(
+      `/family-member/${groupId}`,
+      memberData,
+      { token },
+    );
     return body.data;
   };
 
@@ -217,25 +84,17 @@ describe('Relationships (e2e)', () => {
   // ===========================================================================================
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    const {
+      app: testApp,
+      prisma: testPrisma,
+      httpServer,
+    } = await createTestApp({
+      allExceptionsFilter: true,
+    });
 
-    app = moduleFixture.createNestApplication();
-    prisma = app.get<PrismaService>(PrismaService);
-    httpServer = app.getHttpServer();
-
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-    app.useGlobalFilters(new AllExceptionsFilter());
-
-    await app.init();
+    app = testApp;
+    prisma = testPrisma;
+    api = new TestApi(httpServer, '/api');
   });
 
   afterAll(async () => {
@@ -287,13 +146,12 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      const res = await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
+      const body = await api.post<RelationshipCreationResponse>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token, expect: 201 },
+      );
 
-      expect(res.status).toBe(HttpStatus.CREATED);
-      const body = res.body as RelationshipCreationResponse;
       expect(body.data.count).toBe(1);
     });
 
@@ -312,29 +170,29 @@ describe('Relationships (e2e)', () => {
         family.data.family.id,
       );
 
-      await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send([
+      await api.post<RelationshipCreationResponse>(
+        `/relationship/${group.data.id}`,
+        [
           {
             familyId: family.data.family.id,
             fromMemberId: parent.id,
             toMemberId: child.id,
             type: 'PARENT',
           },
-        ]);
+        ],
+        { token },
+      );
 
-      const res = await request(httpServer)
-        .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
-        .set('Authorization', `Bearer ${token}`);
+      const body = await api.get<RelationshipMapResponse>(
+        `/relationship/${group.data.id}/${family.data.family.id}`,
+        { token, expect: 200 },
+      );
 
-      expect(res.status).toBe(HttpStatus.OK);
-      const body = res.body as RelationshipMapResponse;
       expect(body.data.generations).toHaveLength(1);
       const parentInMap = body.data.generations[0].members.find(
         (m) => m.id === parent.id,
       );
-      expect(parentInMap.children[0].id).toBe(child.id);
+      expect(parentInMap!.children[0].id).toBe(child.id);
     });
 
     it('1.3 should update a relationship successfully', async () => {
@@ -352,28 +210,28 @@ describe('Relationships (e2e)', () => {
         family.data.family.id,
       );
 
-      await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send([
+      await api.post<RelationshipCreationResponse>(
+        `/relationship/${group.data.id}`,
+        [
           {
             familyId: family.data.family.id,
             fromMemberId: member1.id,
             toMemberId: member2.id,
             type: 'PARENT',
           },
-        ]);
+        ],
+        { token },
+      );
 
       const rels = await prisma.relationship.findMany();
       const relationshipId = rels[0].id;
 
-      const res = await request(httpServer)
-        .patch(`/api/relationship/${group.data.id}/${relationshipId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send({ type: 'SPOUSE' });
+      const body = await api.patch<RelationshipResponse>(
+        `/relationship/${group.data.id}/${relationshipId}`,
+        { type: 'SPOUSE' },
+        { token, expect: 200 },
+      );
 
-      expect(res.status).toBe(HttpStatus.OK);
-      const body = res.body as RelationshipResponse;
       expect(body.data.id).toBe(relationshipId);
       expect(body.data.type).toBe('SPOUSE');
     });
@@ -393,28 +251,26 @@ describe('Relationships (e2e)', () => {
         family.data.family.id,
       );
 
-      await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send([
+      await api.post<RelationshipCreationResponse>(
+        `/relationship/${group.data.id}`,
+        [
           {
             familyId: family.data.family.id,
             fromMemberId: member1.id,
             toMemberId: member2.id,
             type: 'PARENT',
           },
-        ]);
+        ],
+        { token },
+      );
 
       const rels = await prisma.relationship.findMany();
       const relationshipId = rels[0].id;
 
-      const res = await request(httpServer)
-        .delete(
-          `/api/relationship/${group.data.id}/${family.data.family.id}/${relationshipId}`,
-        )
-        .set('Authorization', `Bearer ${token}`);
-
-      expect(res.status).toBe(HttpStatus.OK);
+      await api.delete<ApiDataResponse<unknown>>(
+        `/relationship/${group.data.id}/${family.data.family.id}/${relationshipId}`,
+        { token, expect: 200 },
+      );
 
       const findDeleted = await prisma.relationship.findUnique({
         where: { id: relationshipId },
@@ -446,12 +302,11 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      const res = await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
-
-      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      await api.post<ApiDataResponse<unknown>>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token, expect: 400 },
+      );
     });
 
     it('2.2 should fail to create a self-referencing relationship', async () => {
@@ -473,13 +328,13 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      const res = await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
+      const body = await api.post<ApiDataResponse<unknown>>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token, expect: 400 },
+      );
 
-      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
-      expect(res.body.message).toContain(
+      expect(body.message).toContain(
         'fromMemberId and toMemberId must be different',
       );
     });
@@ -508,12 +363,11 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      const res = await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
-
-      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      await api.post<ApiDataResponse<unknown>>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token, expect: 400 },
+      );
     });
 
     it('2.4 should fail to create a relationship with a non-UUID familyId', async () => {
@@ -540,12 +394,11 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      const res = await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
-
-      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      await api.post<ApiDataResponse<unknown>>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token, expect: 400 },
+      );
     });
   });
 
@@ -604,13 +457,13 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      const res = await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
+      const body = await api.post<ApiDataResponse<unknown>>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token, expect: 400 },
+      );
 
-      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
-      expect(res.body.message).toContain(
+      expect(body.message).toContain(
         'Business Logic Error: PARENT_LIMIT_EXCEEDED',
       );
     });
@@ -653,13 +506,13 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      const res = await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
+      const body = await api.post<ApiDataResponse<unknown>>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token, expect: 400 },
+      );
 
-      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
-      expect(res.body.message).toContain('Business Logic Error: SPOUSE_EXISTS');
+      expect(body.message).toContain('Business Logic Error: SPOUSE_EXISTS');
     });
 
     it('3.3 should fail to create a circular PARENT relationship', async () => {
@@ -697,13 +550,13 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      const res = await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
+      const body = await api.post<ApiDataResponse<unknown>>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token, expect: 400 },
+      );
 
-      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
-      expect(res.body.message).toContain(
+      expect(body.message).toContain(
         'Business Logic Error: CIRCULAR_DEPENDENCY',
       );
     });
@@ -732,18 +585,17 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      const createRes = await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
+      await api.post<RelationshipCreationResponse>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token, expect: 201 },
+      );
 
-      expect(createRes.status).toBe(HttpStatus.CREATED);
+      const body = await api.get<RelationshipMapResponse>(
+        `/relationship/${group.data.id}/${family.data.family.id}`,
+        { token, expect: 200 },
+      );
 
-      const mapRes = await request(httpServer)
-        .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
-        .set('Authorization', `Bearer ${token}`);
-
-      const body = mapRes.body as RelationshipMapResponse;
       const parentInMap = body.data.generations[0].members.find(
         (m) => m.id === parent.id,
       );
@@ -751,8 +603,8 @@ describe('Relationships (e2e)', () => {
         (m) => m.id === child.id,
       );
 
-      expect(parentInMap.children[0].id).toBe(child.id);
-      expect(childInMap.parents[0].id).toBe(parent.id);
+      expect(parentInMap!.children[0].id).toBe(child.id);
+      expect(childInMap!.parents[0].id).toBe(parent.id);
     });
   });
 
@@ -761,10 +613,11 @@ describe('Relationships (e2e)', () => {
   // ===========================================================================================
   describe('Category 4: Security & Auth', () => {
     it('4.1 should fail to create a relationship without a token', async () => {
-      const res = await request(httpServer)
-        .post('/api/relationship/some-group-id')
-        .send([]);
-      expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
+      await api.post<ApiDataResponse<unknown>>(
+        '/relationship/some-group-id',
+        [],
+        { expect: 401 },
+      );
     });
 
     it('4.2 should fail to create a relationship as a VIEWER', async () => {
@@ -785,7 +638,11 @@ describe('Relationships (e2e)', () => {
       );
 
       await prisma.groupMember.create({
-        data: { groupId: group.data.id, memberId: viewerId, role: 'VIEWER' },
+        data: {
+          groupId: group.data.id,
+          memberId: viewerId,
+          role: MEMBER_ROLE.VIEWER,
+        },
       });
 
       const payload = [
@@ -797,12 +654,11 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      const res = await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${viewerToken}`)
-        .send(payload);
-
-      expect(res.status).toBe(HttpStatus.FORBIDDEN);
+      await api.post<ApiDataResponse<unknown>>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token: viewerToken, expect: 403 },
+      );
     });
 
     it('4.3 should fail to get relationships for a family in a group the user is not part of', async () => {
@@ -812,11 +668,10 @@ describe('Relationships (e2e)', () => {
       const group = await createGroup(ownerToken);
       const family = await createFamily(ownerToken, group.data.id);
 
-      const res = await request(httpServer)
-        .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
-        .set('Authorization', `Bearer ${outsiderToken}`);
-
-      expect(res.status).toBe(HttpStatus.FORBIDDEN);
+      await api.get<RelationshipMapResponse>(
+        `/relationship/${group.data.id}/${family.data.family.id}`,
+        { token: outsiderToken, expect: 403 },
+      );
     });
 
     it('4.4 should fail to delete a relationship as a VIEWER', async () => {
@@ -845,16 +700,17 @@ describe('Relationships (e2e)', () => {
       });
 
       await prisma.groupMember.create({
-        data: { groupId: group.data.id, memberId: viewerId, role: 'VIEWER' },
+        data: {
+          groupId: group.data.id,
+          memberId: viewerId,
+          role: MEMBER_ROLE.VIEWER,
+        },
       });
 
-      const res = await request(httpServer)
-        .delete(
-          `/api/relationship/${group.data.id}/${family.data.family.id}/${rel.id}`,
-        )
-        .set('Authorization', `Bearer ${viewerToken}`);
-
-      expect(res.status).toBe(HttpStatus.FORBIDDEN);
+      await api.delete<ApiDataResponse<unknown>>(
+        `/relationship/${group.data.id}/${family.data.family.id}/${rel.id}`,
+        { token: viewerToken, expect: 403 },
+      );
     });
   });
 
@@ -903,13 +759,12 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      const res = await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
+      const body = await api.post<RelationshipCreationResponse>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token, expect: 201 },
+      );
 
-      expect(res.status).toBe(HttpStatus.CREATED);
-      const body = res.body as RelationshipCreationResponse;
       expect(body.data.count).toBe(3);
     });
 
@@ -919,12 +774,11 @@ describe('Relationships (e2e)', () => {
       const family = await createFamily(token, group.data.id);
       await createMember(token, group.data.id, family.data.family.id);
 
-      const res = await request(httpServer)
-        .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
-        .set('Authorization', `Bearer ${token}`);
+      const body = await api.get<RelationshipMapResponse>(
+        `/relationship/${group.data.id}/${family.data.family.id}`,
+        { token, expect: 200 },
+      );
 
-      expect(res.status).toBe(HttpStatus.OK);
-      const body = res.body as RelationshipMapResponse;
       expect(body.data.generations[0].members[0].parents).toEqual([]);
       expect(body.data.generations[0].members[0].spouse).toBeNull();
       expect(body.data.generations[0].members[0].children).toEqual([]);
@@ -935,12 +789,11 @@ describe('Relationships (e2e)', () => {
       const group = await createGroup(token);
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
 
-      const res = await request(httpServer)
-        .patch(`/api/relationship/${group.data.id}/${nonExistentId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send({ type: 'SPOUSE' });
-
-      expect(res.status).toBe(HttpStatus.NOT_FOUND);
+      await api.patch<ApiDataResponse<unknown>>(
+        `/relationship/${group.data.id}/${nonExistentId}`,
+        { type: 'SPOUSE' },
+        { token, expect: 404 },
+      );
     });
 
     it('5.4 should create a full family tree and verify the map structure', async () => {
@@ -1022,29 +875,24 @@ describe('Relationships (e2e)', () => {
         },
       ];
 
-      await request(httpServer)
-        .post(`/api/relationship/${group.data.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .send(payload);
+      await api.post<RelationshipCreationResponse>(
+        `/relationship/${group.data.id}`,
+        payload,
+        { token },
+      );
 
-      const res = await request(httpServer)
-        .get(`/api/relationship/${group.data.id}/${family.data.family.id}`)
-        .set('Authorization', `Bearer ${token}`);
-
-      expect(res.status).toBe(HttpStatus.OK);
-      const body = res.body as RelationshipMapResponse;
+      const body = await api.get<RelationshipMapResponse>(
+        `/relationship/${group.data.id}/${family.data.family.id}`,
+        { token, expect: 200 },
+      );
 
       // This test assumes generation is set correctly on member creation.
       // A more robust test would not rely on the order of members in the array.
-      const firstGen = body.data.generations[0].members;
       const secondGen = body.data.generations[1].members;
-      const thirdGen = body.data.generations[2].members;
-
-      // A simple check to see if relationships are linked
       const p1InMap = secondGen.find((m) => m.id === p1.id);
-      expect(p1InMap.parents).toHaveLength(2);
-      expect(p1InMap.spouse).not.toBeNull();
-      expect(p1InMap.children).toHaveLength(1);
+      expect(p1InMap!.parents).toHaveLength(2);
+      expect(p1InMap!.spouse).not.toBeNull();
+      expect(p1InMap!.children).toHaveLength(1);
     });
   });
 });

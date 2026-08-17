@@ -34,3 +34,7 @@ export interface ApiResponse<T = null> {
   };
   errors?: Record<string, string[] | undefined> | null | object;
 }
+
+export type ApiDataResponse<T> = Omit<ApiResponse<T>, 'data'> & {
+  data: T;
+};

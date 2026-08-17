@@ -1,95 +1,27 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, HttpStatus } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
-import { PrismaService } from '../prisma/prisma.service';
+import { INestApplication } from '@nestjs/common';
 import { MEMBER_ROLE } from '@prisma/client';
+import * as path from 'path';
+import * as fs from 'fs';
+import { TestApi } from './api.client';
+import { createTestApp } from './test-app';
+import { PrismaService } from '../prisma/prisma.service';
+import { ApiDataResponse } from 'src/common/constants/api';
+import { AuthResponse } from 'src/modules/auth/types/auth-response.type';
+import { RegisterDto } from 'src/modules/auth/dto/register.dto';
+import { register } from './helpers/auth.helpers';
+import { createGroup as apiCreateGroup } from './helpers/group.helpers';
+import { GroupResponse } from 'src/modules/group-family/types/group-family-response.type';
+import { NewFamilyResponse } from 'src/modules/family/types/family-response.type';
 import {
-  generateRandomUser,
+  FamilyMemberResponse,
+  FamilyMembersResponse,
+} from 'src/modules/family-members/types/family-member-response.type';
+import { NON_EXISTENT_UUID } from './helpers/common.helpers';
+import {
   generateRandomFamily,
   generateRandomMember,
+  generateRandomUser,
 } from './factories';
-
-import * as path from 'path';
-import { Server } from 'http';
-import * as fs from 'fs';
-import { error } from 'console';
-
-interface IUserType {
-  data: {
-    user: {
-      id: string;
-      email: string;
-      userProfile: {
-        fullName: string;
-        avatar?: string;
-      };
-    };
-    tokens: {
-      accessToken: string;
-      refreshToken: string;
-    };
-  };
-  code: number;
-}
-
-interface IGroupType {
-  data: {
-    id: string;
-    name: string;
-    description: string;
-  };
-  code: number;
-}
-
-interface INewFamily {
-  data: {
-    family: {
-      id: string;
-      name: string;
-      description: string;
-    };
-    owner: {
-      id: string;
-      name: string;
-      avatar: string;
-    };
-  };
-  code: number;
-}
-
-interface IFamilyMember {
-  id: string;
-  familyId: string;
-  fullName: string;
-  generation: string;
-  isAlive: string;
-  avatarUrl: string;
-}
-
-interface INewFamilyMember {
-  data: IFamilyMember;
-  code: number;
-}
-
-interface IGetFamilyMembers {
-  data: IFamilyMember[];
-  code: number;
-}
-
-interface RegisterDto {
-  email: string;
-  fullName: string;
-  password?: string;
-  isGoogle?: boolean;
-}
-
-interface LoginBaseDto {
-  email: string;
-  password?: string;
-  isGoogle?: boolean;
-}
 
 interface FamilyDto {
   name: string;
@@ -99,69 +31,37 @@ interface FamilyDto {
 describe('Family Members (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let httpServer: Server;
+  let api: TestApi;
 
   // Helper function to register a user
-  const registerUser = async (userDto: RegisterDto): Promise<IUserType> => {
-    const response = await request(httpServer)
-      .post('/api/auth/register')
-      .send(userDto);
-    return response.body as IUserType;
-  };
+  const registerUser = (userDto: RegisterDto): Promise<AuthResponse> =>
+    register(api, userDto);
 
-  // Helper function to log in a user
-  const loginUser = async (credentials: LoginBaseDto): Promise<IUserType> => {
-    const response = await request(httpServer)
-      .post('/api/auth/login-base')
-      .send(credentials);
-    return response.body as IUserType;
-  };
-
-  const createGroup = async (
+  const createGroup = (
     token: string,
     groupDto: { name: string; description: string },
-  ): Promise<IGroupType> => {
-    const response = await request(httpServer)
-      .post('/api/group-family')
-      .set('Authorization', `Bearer ${token}`)
-      .send(groupDto);
-    return response.body as IGroupType;
-  };
+  ): Promise<GroupResponse> => apiCreateGroup(api, token, groupDto);
 
   // Helper function to create a family
-  const createFamily = async (
+  const createFamily = (
     token: string,
     groupId: string,
     familyDto: FamilyDto,
-  ): Promise<INewFamily> => {
-    const response = await request(httpServer)
-      .post(`/api/family/${groupId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(familyDto);
-    return response.body as INewFamily;
-  };
+  ): Promise<NewFamilyResponse> =>
+    api.post<NewFamilyResponse>(`/family/${groupId}`, familyDto, { token });
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    const {
+      app: testApp,
+      prisma: testPrisma,
+      httpServer,
+    } = await createTestApp({
+      allExceptionsFilter: true,
+    });
 
-    app = moduleFixture.createNestApplication();
-    prisma = app.get<PrismaService>(PrismaService);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    httpServer = app.getHttpServer();
-
-    app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-    app.useGlobalFilters(new AllExceptionsFilter());
-
-    await app.init();
+    app = testApp;
+    prisma = testPrisma;
+    api = new TestApi(httpServer, '/api');
   });
 
   afterAll(async () => {
@@ -204,19 +104,22 @@ describe('Family Members (e2e)', () => {
 
     const memberData = generateRandomMember(familyRes.data.family.id);
 
-    const res = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${newUser.data.tokens.accessToken}`)
-      .field('familyId', memberData.familyId)
-      .field('fullName', memberData.fullName)
-      .field('gender', memberData.gender)
-      .field('dateOfBirth', memberData.dateOfBirth.toISOString())
-      .field('generation', memberData.generation);
+    const body = await api.upload<FamilyMemberResponse>(
+      'post',
+      `/family-member/${groupRes.data.id}`,
+      {
+        familyId: memberData.familyId,
+        fullName: memberData.fullName,
+        gender: memberData.gender,
+        dateOfBirth: memberData.dateOfBirth.toISOString(),
+        generation: String(memberData.generation),
+      },
+      [],
+      { token: newUser.data.tokens.accessToken, expect: 201 },
+    );
 
-    expect(res.status).toBe(HttpStatus.CREATED);
-    const responseBody: INewFamilyMember = res.body as INewFamilyMember;
-    expect(responseBody.data.fullName).toBe(memberData.fullName);
-    expect(responseBody.data.familyId).toBe(familyRes.data.family.id);
+    expect(body.data.fullName).toBe(memberData.fullName);
+    expect(body.data.familyId).toBe(familyRes.data.family.id);
   });
 
   it('1.2 should get all family members for a specific family', async () => {
@@ -235,29 +138,26 @@ describe('Family Members (e2e)', () => {
       groupRes.data.id,
       familyData,
     );
-    // console.log(familyRes);
 
     // Create two members
-    const memberOne = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${newUser.data.tokens.accessToken}`)
-      .send(generateRandomMember(familyRes.data.family.id));
-    // if (!memberOne) throw new error('member one can not init');
-    const memberTwo = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${newUser.data.tokens.accessToken}`)
-      .send(generateRandomMember(familyRes.data.family.id));
-    if (!memberTwo) throw new error('member one can not init');
-    console.log(memberOne);
+    await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      generateRandomMember(familyRes.data.family.id),
+      { token: newUser.data.tokens.accessToken },
+    );
+    await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      generateRandomMember(familyRes.data.family.id),
+      { token: newUser.data.tokens.accessToken },
+    );
 
-    const res = await request(httpServer)
-      .get(`/api/family-member/${familyRes.data.family.id}`)
-      .set('Authorization', `Bearer ${newUser.data.tokens.accessToken}`);
+    const body = await api.get<FamilyMembersResponse>(
+      `/family-member/${familyRes.data.family.id}`,
+      { token: newUser.data.tokens.accessToken, expect: 200 },
+    );
 
-    expect(res.status).toBe(HttpStatus.OK);
-    const responseBody: IGetFamilyMembers = res.body as IGetFamilyMembers;
-    expect(responseBody.data).toBeInstanceOf(Array);
-    expect(responseBody.data.length).toBe(2);
+    expect(body.data).toBeInstanceOf(Array);
+    expect(body.data.length).toBe(2);
   });
 
   it('1.3 should get a specific family member by ID', async () => {
@@ -271,28 +171,25 @@ describe('Family Members (e2e)', () => {
 
     const familyData = generateRandomFamily();
     const familyRes = await createFamily(token, groupRes.data.id, familyData);
-    //console.log('new family at 275:', familyRes);
 
     const memberData = generateRandomMember(familyRes.data.family.id);
 
     //create new family member
-    const createRes = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(memberData);
-    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
-    const member = memberBody.data;
+    const createBody = await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      memberData,
+      { token },
+    );
+    const member = createBody.data;
 
     //get family member detail (get one)
-    const res = await request(httpServer)
-      .get(`/api/family-member/${familyRes.data.family.id}/${member.id}`)
-      .set('Authorization', `Bearer ${token}`);
+    const body = await api.get<FamilyMemberResponse>(
+      `/family-member/${familyRes.data.family.id}/${member.id}`,
+      { token, expect: 200 },
+    );
 
-    expect(res.status).toBe(HttpStatus.OK);
-    const responseBody: INewFamilyMember = res.body as INewFamilyMember;
-    console.log(responseBody);
-    expect(responseBody.data.id).toBe(member.id);
-    expect(responseBody.data.fullName).toBe(memberData.fullName);
+    expect(body.data.id).toBe(member.id);
+    expect(body.data.fullName).toBe(memberData.fullName);
   });
 
   it('1.4 should update a family member successfully', async () => {
@@ -303,33 +200,27 @@ describe('Family Members (e2e)', () => {
 
     const groupData = { name: 'Test Group', description: 'Test Group Desc' };
     const groupRes = await createGroup(token, groupData);
-    console.log('group at 307:', groupRes);
 
     const familyData = generateRandomFamily();
     const familyRes = await createFamily(token, groupRes.data.id, familyData);
-    console.log('family at 311: ', familyRes);
 
     const memberData = generateRandomMember(familyRes.data.family.id);
-    const createRes = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(memberData);
-    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
-    const member = memberBody.data;
-    console.log('member at 320:', member);
+    const createBody = await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      memberData,
+      { token },
+    );
+    const member = createBody.data;
 
     const updatedName = 'Jane Doe Updated';
-    const res = await request(httpServer)
-      .patch(
-        `/api/family-member/${groupRes.data.id}/${familyRes.data.family.id}`,
-      )
-      .set('Authorization', `Bearer ${token}`)
-      .send({ memberId: member.id, fullName: updatedName });
+    const body = await api.patch<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}/${familyRes.data.family.id}`,
+      { memberId: member.id, fullName: updatedName },
+      { token, expect: 200 },
+    );
 
-    expect(res.status).toBe(HttpStatus.OK);
-    const responseBody: INewFamilyMember = res.body as INewFamilyMember;
-    expect(responseBody.data.id).toBe(member.id);
-    expect(responseBody.data.fullName).toBe(updatedName);
+    expect(body.data.id).toBe(member.id);
+    expect(body.data.fullName).toBe(updatedName);
   });
 
   // ===========================================================================================
@@ -347,14 +238,12 @@ describe('Family Members (e2e)', () => {
     const familyRes = await createFamily(token, groupRes.data.id, familyData);
 
     const memberData = generateRandomMember(familyRes.data.family.id);
-    delete memberData.fullName; // Remove required field
 
-    const res = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(memberData);
-
-    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+    await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      { ...memberData, fullName: undefined }, // Remove required field
+      { token, expect: 400 },
+    );
   });
 
   it('2.2 should fail to create a member with an invalid gender', async () => {
@@ -371,12 +260,11 @@ describe('Family Members (e2e)', () => {
 
     const memberData = generateRandomMember(familyRes.data.family.id);
 
-    const res = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ ...memberData, gender: 'INVALID_GENDER' });
-
-    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+    await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      { ...memberData, gender: 'INVALID_GENDER' },
+      { token, expect: 400 },
+    );
   });
 
   it('2.3 should fail to update a member with an invalid date of birth format', async () => {
@@ -387,27 +275,23 @@ describe('Family Members (e2e)', () => {
 
     const groupData = { name: 'Test Group', description: 'Test Group Desc' };
     const groupRes = await createGroup(token, groupData);
-    console.log('group at 386: ', groupRes);
 
     const familyData = generateRandomFamily();
     const familyRes = await createFamily(token, groupRes.data.id, familyData);
-    console.log('family at 390: ', familyRes);
 
     const memberData = generateRandomMember(familyRes.data.family.id);
-    const createRes = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(memberData);
-    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
-    const member = memberBody.data;
-    console.log('member at 399: ', member);
+    const createBody = await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      memberData,
+      { token },
+    );
+    const member = createBody.data;
 
-    const res = await request(httpServer)
-      .patch(`/api/family-member/${groupRes.data.id}/${member.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ id: member.id, dateOfBirth: 'not-a-date' });
-
-    expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+    await api.patch<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}/${member.id}`,
+      { id: member.id, dateOfBirth: 'not-a-date' },
+      { token, expect: 400 },
+    );
   });
 
   it('2.4 should fail to create a member with a non-existent familyId', async () => {
@@ -421,15 +305,13 @@ describe('Family Members (e2e)', () => {
 
     await createFamily(token, groupRes.data.id, generateRandomFamily());
 
-    const nonExistentFamilyId = '00000000-0000-0000-0000-000000000000';
-    const memberData = generateRandomMember(nonExistentFamilyId);
+    const memberData = generateRandomMember(NON_EXISTENT_UUID);
 
-    const res = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}/${nonExistentFamilyId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(memberData);
-
-    expect(res.status).toBe(HttpStatus.NOT_FOUND);
+    await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}/${NON_EXISTENT_UUID}`,
+      memberData,
+      { token, expect: 404 },
+    );
   });
   // ===========================================================================================
   // CATEGORY 3: Relationship & Integrity
@@ -458,13 +340,10 @@ describe('Family Members (e2e)', () => {
     const tokenB = newUserB.data.tokens.accessToken;
 
     // User B tries to get members from User A's family
-    const res = await request(httpServer)
-      .get(`/api/family-member/${familyA.id}`)
-      .set('Authorization', `Bearer ${tokenB}`);
-
-    console.log(res.body);
-
-    expect(res.status).toBe(HttpStatus.FORBIDDEN);
+    await api.get<FamilyMembersResponse>(`/family-member/${familyA.id}`, {
+      token: tokenB,
+      expect: 403,
+    });
   });
 
   it('3.2 should not add a member to a family using a wrong group id in params', async () => {
@@ -481,13 +360,11 @@ describe('Family Members (e2e)', () => {
 
     const memberData = generateRandomMember(familyRes.data.family.id);
 
-    const wrongGroupId = '00000000-0000-0000-0000-000000000000';
-    const res = await request(httpServer)
-      .post(`/api/family-member/${wrongGroupId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(memberData);
-
-    expect(res.status).toBe(HttpStatus.FORBIDDEN);
+    await api.post<FamilyMemberResponse>(
+      `/family-member/${NON_EXISTENT_UUID}`,
+      memberData,
+      { token, expect: 403 },
+    );
   });
 
   it('3.3 should successfully delete a family member as owner', async () => {
@@ -504,26 +381,23 @@ describe('Family Members (e2e)', () => {
 
     const memberData = generateRandomMember(familyRes.data.family.id);
 
-    const createRes = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send(memberData);
-    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
-    const member = memberBody.data;
+    const createBody = await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      memberData,
+      { token },
+    );
+    const member = createBody.data;
 
-    const res = await request(httpServer)
-      .delete(
-        `/api/family-member/${groupRes.data.id}/${familyRes.data.family.id}/${member.id}`,
-      )
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(HttpStatus.OK);
+    await api.delete<ApiDataResponse<{ count: number }>>(
+      `/family-member/${groupRes.data.id}/${familyRes.data.family.id}/${member.id}`,
+      { token, expect: 200 },
+    );
 
     // Verify it's gone
-    const getRes = await request(httpServer)
-      .get(`/api/family-member/${familyRes.data.family.id}/${member.id}`)
-      .set('Authorization', `Bearer ${token}`);
-    expect(getRes.status).toBe(HttpStatus.NOT_FOUND);
+    await api.get<FamilyMemberResponse>(
+      `/family-member/${familyRes.data.family.id}/${member.id}`,
+      { token, expect: 404 },
+    );
   });
 
   it('3.4 should create a member with an avatar successfully', async () => {
@@ -547,20 +421,28 @@ describe('Family Members (e2e)', () => {
       throw new Error('Test image not found');
     }
 
-    const res = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .field('familyId', memberData.familyId)
-      .field('fullName', memberData.fullName)
-      .field('gender', memberData.gender)
-      .field('dateOfBirth', memberData.dateOfBirth.toISOString())
-      .field('generation', memberData.generation)
-      .attach('avatar', imagePath);
+    const body = await api.upload<FamilyMemberResponse>(
+      'post',
+      `/family-member/${groupRes.data.id}`,
+      {
+        familyId: memberData.familyId,
+        fullName: memberData.fullName,
+        gender: memberData.gender,
+        dateOfBirth: memberData.dateOfBirth.toISOString(),
+        generation: String(memberData.generation),
+      },
+      [
+        {
+          fieldName: 'avatar',
+          buffer: fs.readFileSync(imagePath),
+          filename: path.basename(imagePath),
+        },
+      ],
+      { token, expect: 201 },
+    );
 
-    expect(res.status).toBe(HttpStatus.CREATED);
-    const responseBody: INewFamilyMember = res.body as IFamilyMember;
-    expect(responseBody.data.avatarUrl).not.toBeNull();
-    expect(responseBody.data.avatarUrl).toContain('cloudinary');
+    expect(body.data.avatarUrl).not.toBeNull();
+    expect(body.data.avatarUrl).toContain('cloudinary');
   });
 
   // ===========================================================================================
@@ -568,17 +450,19 @@ describe('Family Members (e2e)', () => {
   // ===========================================================================================
 
   it('4.1 should fail to create a member without a valid JWT token', async () => {
-    const res = await request(httpServer)
-      .post('/api/family-member/some-group-id')
-      .send({});
-    expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
+    await api.post<ApiDataResponse<unknown>>(
+      '/family-member/some-group-id',
+      {},
+      {
+        expect: 401,
+      },
+    );
   });
 
   it('4.2 should fail to get members without a valid JWT token', async () => {
-    const res = await request(httpServer).get(
-      '/api/family-member/some-family-id',
-    );
-    expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
+    await api.get<ApiDataResponse<unknown>>('/family-member/some-family-id', {
+      expect: 401,
+    });
   });
 
   it('4.3 should fail to update a member as a VIEWER', async () => {
@@ -600,12 +484,12 @@ describe('Family Members (e2e)', () => {
 
     // Create member
     const memberData = generateRandomMember(familyRes.data.family.id);
-    const createRes = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${ownerToken}`)
-      .send(memberData);
-    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
-    const member = memberBody.data;
+    const createBody = await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      memberData,
+      { token: ownerToken },
+    );
+    const member = createBody.data;
 
     // User B (Viewer)
     const viewerData = generateRandomUser();
@@ -624,14 +508,11 @@ describe('Family Members (e2e)', () => {
     });
 
     // Viewer tries to update
-    const res = await request(httpServer)
-      .patch(
-        `/api/family-member/${groupRes.data.id}/${familyRes.data.family.id}`,
-      )
-      .set('Authorization', `Bearer ${viewerToken}`)
-      .send({ id: member.id, fullName: 'New Name From Viewer' });
-
-    expect(res.status).toBe(HttpStatus.FORBIDDEN);
+    await api.patch<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}/${familyRes.data.family.id}`,
+      { id: member.id, fullName: 'New Name From Viewer' },
+      { token: viewerToken, expect: 403 },
+    );
   });
 
   it('4.4 should fail to delete a member as a VIEWER', async () => {
@@ -653,12 +534,12 @@ describe('Family Members (e2e)', () => {
 
     // Create member
     const memberData = generateRandomMember(familyRes.data.family.id);
-    const createRes = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${ownerToken}`)
-      .send(memberData);
-    const memberBody: INewFamilyMember = createRes.body as INewFamilyMember;
-    const member = memberBody.data;
+    const createBody = await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      memberData,
+      { token: ownerToken },
+    );
+    const member = createBody.data;
 
     // User B (Viewer)
     const viewerData = generateRandomUser();
@@ -670,18 +551,17 @@ describe('Family Members (e2e)', () => {
     // Owner invites viewer
     await prisma.groupMember.create({
       data: {
-        memberId: viewerId, // Hoặc userId tùy theo Schema của bạn
+        memberId: viewerId,
         groupId: groupRes.data.id,
-        role: 'VIEWER',
+        role: MEMBER_ROLE.VIEWER,
       },
     });
 
     // Viewer tries to delete
-    const res = await request(httpServer)
-      .delete(`/api/family-member/${familyRes.data.family.id}/${member.id}`)
-      .set('Authorization', `Bearer ${viewerToken}`);
-
-    expect(res.status).toBe(HttpStatus.NOT_FOUND);
+    await api.delete<ApiDataResponse<unknown>>(
+      `/family-member/${familyRes.data.family.id}/${member.id}`,
+      { token: viewerToken, expect: 404 },
+    );
   });
 
   // ===========================================================================================
@@ -699,13 +579,12 @@ describe('Family Members (e2e)', () => {
     const familyData = generateRandomFamily();
     const familyRes = await createFamily(token, groupRes.data.id, familyData);
 
-    const res = await request(httpServer)
-      .get(`/api/family-member/${familyRes.data.family.id}`)
-      .set('Authorization', `Bearer ${token}`);
+    const body = await api.get<FamilyMembersResponse>(
+      `/family-member/${familyRes.data.family.id}`,
+      { token, expect: 200 },
+    );
 
-    expect(res.status).toBe(HttpStatus.OK);
-    const responseBody: IGetFamilyMembers = res.body as IGetFamilyMembers;
-    expect(responseBody.data).toEqual([]);
+    expect(body.data).toEqual([]);
   });
 
   it('5.2 should fail to get a member with a non-UUID memberId', async () => {
@@ -720,13 +599,12 @@ describe('Family Members (e2e)', () => {
     const familyData = generateRandomFamily();
     const familyRes = await createFamily(token, groupRes.data.id, familyData);
 
-    const res = await request(httpServer)
-      .get(`/api/family-member/${familyRes.data.family.id}/not-a-uuid`)
-      .set('Authorization', `Bearer ${token}`);
-
     // This will be caught by AllExceptionsFilter and returned as a generic error
     // because no specific pipe is on the param in the controller
-    expect(res.status).toBe(HttpStatus.NOT_FOUND);
+    await api.get<FamilyMemberResponse>(
+      `/family-member/${familyRes.data.family.id}/not-a-uuid`,
+      { token, expect: 404 },
+    );
   });
 
   it('5.3 should fail to update a non-existent member', async () => {
@@ -740,14 +618,11 @@ describe('Family Members (e2e)', () => {
 
     await createFamily(token, groupRes.data.id, generateRandomFamily());
 
-    const nonExistentMemberId = '00000000-0000-0000-0000-000000000000';
-
-    const res = await request(httpServer)
-      .patch(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ id: nonExistentMemberId, fullName: 'Ghost' });
-
-    expect(res.status).toBe(HttpStatus.NOT_FOUND);
+    await api.patch<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      { id: NON_EXISTENT_UUID, fullName: 'Ghost' },
+      { token, expect: 404 },
+    );
   });
 
   it('5.4 should allow a user with EDITOR role to create a member', async () => {
@@ -786,13 +661,12 @@ describe('Family Members (e2e)', () => {
     const memberData = generateRandomMember(familyRes.data.family.id);
 
     // Editor creates member
-    const res = await request(httpServer)
-      .post(`/api/family-member/${groupRes.data.id}`)
-      .set('Authorization', `Bearer ${editorToken}`)
-      .send(memberData);
+    const body = await api.post<FamilyMemberResponse>(
+      `/family-member/${groupRes.data.id}`,
+      memberData,
+      { token: editorToken, expect: 201 },
+    );
 
-    expect(res.status).toBe(HttpStatus.CREATED);
-    const responseBody: INewFamilyMember = res.body as INewFamilyMember;
-    expect(responseBody.data.fullName).toBe(memberData.fullName);
+    expect(body.data.fullName).toBe(memberData.fullName);
   });
 });

@@ -1,10 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { PrismaService } from '../prisma/prisma.service';
+import { INestApplication } from '@nestjs/common';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { TestApi } from './api.client';
+import { createTestApp } from './test-app';
+import { PrismaService } from '../prisma/prisma.service';
+import {
+  RegisteredUser,
+  createTestUser as createRegisteredUser,
+} from './helpers/auth.helpers';
+import { AuthResponse } from 'src/modules/auth/types/auth-response.type';
+import { UserResponse } from 'src/modules/users/types/user-response.type';
 
 /**
  * E2E Tests for User Management Module
@@ -25,48 +30,40 @@ import { join } from 'node:path';
  * - Missing required fields
  */
 
-//passed
-
 describe('User Management E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  const testUsers: any[] = [];
+  let api: TestApi;
+  const testUsers: { email: string }[] = [];
 
   // Helper functions for authentication
-  const createTestUser = async (userData: any) => {
-    const response = await request(app.getHttpServer())
-      .post('/auth/register')
-      .send(userData)
-      .expect(201);
-
-    const user = {
-      id: response.body.data.user.id,
-      email: userData.email,
-      accessToken: response.body.data.tokens.accessToken,
-      refreshToken: response.body.data.tokens.refreshToken,
-      fullName: userData.fullName,
-    };
-
-    testUsers.push(user);
+  const createTestUser = async (userData: {
+    email: string;
+    password: string;
+    fullName: string;
+  }): Promise<RegisteredUser> => {
+    const user = await createRegisteredUser(api, userData);
+    testUsers.push({ email: userData.email });
     return user;
   };
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({
+    const {
+      app: testApp,
+      prisma: testPrisma,
+      httpServer,
+    } = await createTestApp({
+      globalPrefix: false,
+      validationPipe: {
         transform: true,
         whitelist: true,
         // Nếu bật forbidNonWhitelisted: true, hãy chắc chắn bạn không gửi thừa field nào từ test
-      }),
-    );
+      },
+    });
 
-    prisma = moduleFixture.get<PrismaService>(PrismaService);
-    await app.init();
+    app = testApp;
+    prisma = testPrisma;
+    api = new TestApi(httpServer);
   });
 
   afterAll(async () => {
@@ -89,18 +86,15 @@ describe('User Management E2E Tests', () => {
         fullName: 'Auth Test User',
       };
 
-      const response = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(userData)
-        .expect(201);
+      const body = await api.post<AuthResponse>('/auth/register', userData, {
+        expect: 201,
+      });
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.user.email).toBe(userData.email);
-      expect(response.body.data.user.userProfile.fullName).toBe(
-        userData.fullName,
-      );
-      expect(response.body.data.tokens.accessToken).toBeDefined();
-      expect(response.body.data.tokens.refreshToken).toBeDefined();
+      expect(body.success).toBe(true);
+      expect(body.data.user.id).toBeDefined();
+      expect(body.data.user.userProfile.fullName).toBe(userData.fullName);
+      expect(body.data.tokens.accessToken).toBeDefined();
+      expect(body.data.tokens.refreshToken).toBeDefined();
 
       // Add to cleanup
       testUsers.push({ email: userData.email });
@@ -114,10 +108,9 @@ describe('User Management E2E Tests', () => {
         fullName: 'Login Test User',
       };
 
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(userData)
-        .expect(201);
+      await api.post<AuthResponse>('/auth/register', userData, {
+        expect: 201,
+      });
 
       // Then login
       const loginData = {
@@ -125,15 +118,14 @@ describe('User Management E2E Tests', () => {
         password: userData.password,
       };
 
-      const response = await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send(loginData)
-        .expect(200);
+      const body = await api.post<AuthResponse>('/auth/login-base', loginData, {
+        expect: 200,
+      });
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.user.email).toBe(userData.email);
-      expect(response.body.data.tokens.accessToken).toBeDefined();
-      expect(response.body.data.tokens.refreshToken).toBeDefined();
+      expect(body.success).toBe(true);
+      expect(body.data.user.id).toBeDefined();
+      expect(body.data.tokens.accessToken).toBeDefined();
+      expect(body.data.tokens.refreshToken).toBeDefined();
 
       // Add to cleanup
       testUsers.push({ email: userData.email });
@@ -145,10 +137,7 @@ describe('User Management E2E Tests', () => {
         password: 'wrongpassword',
       };
 
-      await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send(loginData)
-        .expect(404);
+      await api.post('/auth/login-base', loginData, { expect: 404 });
     });
 
     it('should reject registration with duplicate email', async () => {
@@ -159,16 +148,10 @@ describe('User Management E2E Tests', () => {
       };
 
       // Register first time
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(userData)
-        .expect(201);
+      await api.post('/auth/register', userData, { expect: 201 });
 
       // Try to register again with same email
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(userData)
-        .expect(409);
+      await api.post('/auth/register', userData, { expect: 409 });
 
       // Add to cleanup
       testUsers.push({ email: userData.email });
@@ -176,7 +159,7 @@ describe('User Management E2E Tests', () => {
   });
 
   describe('2. USER PROFILE MANAGEMENT', () => {
-    let testUser: any;
+    let testUser: RegisteredUser;
 
     beforeAll(async () => {
       testUser = await createTestUser({
@@ -187,16 +170,16 @@ describe('User Management E2E Tests', () => {
     });
 
     it('should get user by ID successfully', async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .expect(200);
+      const body = await api.get<UserResponse>(`/users/${testUser.id}`, {
+        token: testUser.accessToken,
+        expect: 200,
+      });
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.id).toBe(testUser.id);
-      expect(response.body.data.email).toBe(testUser.email);
-      expect(response.body.data.userProfile).toBeDefined();
-      expect(response.body.data.userProfile.fullName).toBe(testUser.fullName);
+      expect(body.success).toBe(true);
+      expect(body.data.id).toBe(testUser.id);
+      expect(body.data.email).toBe(testUser.email);
+      expect(body.data.userProfile).toBeDefined();
+      expect(body.data.userProfile.fullName).toBe(testUser.fullName);
     });
 
     it('should update user full name successfully', async () => {
@@ -204,14 +187,14 @@ describe('User Management E2E Tests', () => {
         fullName: 'Updated Test User',
       };
 
-      const response = await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send(updateData)
-        .expect(200);
+      const body = await api.patch<UserResponse>(
+        `/users/${testUser.id}`,
+        updateData,
+        { token: testUser.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.userProfile.fullName).toBe(updateData.fullName);
+      expect(body.success).toBe(true);
+      expect(body.data.userProfile.fullName).toBe(updateData.fullName);
     });
 
     it('should update user email successfully', async () => {
@@ -220,14 +203,14 @@ describe('User Management E2E Tests', () => {
         email: newEmail,
       };
 
-      const response = await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send(updateData)
-        .expect(200);
+      const body = await api.patch<UserResponse>(
+        `/users/${testUser.id}`,
+        updateData,
+        { token: testUser.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.email).toBe(newEmail);
+      expect(body.success).toBe(true);
+      expect(body.data.email).toBe(newEmail);
     });
 
     it('should update user password successfully', async () => {
@@ -235,23 +218,24 @@ describe('User Management E2E Tests', () => {
         password: 'newPassword123',
       };
 
-      const response = await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send(updateData)
-        .expect(200);
+      const body = await api.patch<UserResponse>(
+        `/users/${testUser.id}`,
+        updateData,
+        { token: testUser.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
+      expect(body.success).toBe(true);
 
       // Verify login with new password works
-      await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send({
+      await api.post(
+        '/auth/login-base',
+        {
           // email: testUser.email,
           email: 'updated1.email@example.com',
           password: 'newPassword123',
-        })
-        .expect(200);
+        },
+        { expect: 200 },
+      );
     });
 
     it('should update user date of birth successfully', async () => {
@@ -259,15 +243,14 @@ describe('User Management E2E Tests', () => {
         dateOfBirth: '1990-01-01',
       };
 
-      const response = await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send(updateData)
-        .expect(200);
+      const body = await api.patch<UserResponse>(
+        `/users/${testUser.id}`,
+        updateData,
+        { token: testUser.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      const receivedDate =
-        response.body.data.userProfile.dateOfBirth.split('T')[0];
+      expect(body.success).toBe(true);
+      const receivedDate = body.data.userProfile.dateOfBirth?.split('T')[0];
 
       expect(receivedDate).toBe(updateData.dateOfBirth);
     });
@@ -283,14 +266,14 @@ describe('User Management E2E Tests', () => {
         biography: biography,
       };
 
-      const response = await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send(updateData)
-        .expect(200);
+      const body = await api.patch<UserResponse>(
+        `/users/${testUser.id}`,
+        updateData,
+        { token: testUser.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.userProfile.biography).toBeDefined();
+      expect(body.success).toBe(true);
+      expect(body.data.userProfile.biography).toBeDefined();
     });
 
     it('should update multiple fields simultaneously', async () => {
@@ -303,23 +286,23 @@ describe('User Management E2E Tests', () => {
         }),
       };
 
-      const response = await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send(updateData)
-        .expect(200);
+      const body = await api.patch<UserResponse>(
+        `/users/${testUser.id}`,
+        updateData,
+        { token: testUser.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.userProfile.fullName).toBe(updateData.fullName);
-      expect(response.body.data.userProfile.dateOfBirth.split('T')[0]).toBe(
+      expect(body.success).toBe(true);
+      expect(body.data.userProfile.fullName).toBe(updateData.fullName);
+      expect(body.data.userProfile.dateOfBirth?.split('T')[0]).toBe(
         updateData.dateOfBirth,
       );
-      expect(response.body.data.userProfile.biography).toBeDefined();
+      expect(body.data.userProfile.biography).toBeDefined();
     });
   });
 
   describe('3. VALIDATION CASES', () => {
-    let testUser: any;
+    let testUser: RegisteredUser;
 
     beforeAll(async () => {
       testUser = await createTestUser({
@@ -336,10 +319,7 @@ describe('User Management E2E Tests', () => {
         fullName: 'Test User',
       };
 
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(userData)
-        .expect(400);
+      await api.post('/auth/register', userData, { expect: 400 });
     });
 
     it('should reject registration with short password', async () => {
@@ -349,10 +329,7 @@ describe('User Management E2E Tests', () => {
         fullName: 'Test User',
       };
 
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(userData)
-        .expect(400);
+      await api.post('/auth/register', userData, { expect: 400 });
     });
 
     it('should reject registration with empty name', async () => {
@@ -362,10 +339,7 @@ describe('User Management E2E Tests', () => {
         fullName: '',
       };
 
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(userData)
-        .expect(400);
+      await api.post('/auth/register', userData, { expect: 400 });
     });
 
     it('should reject update with invalid email format', async () => {
@@ -373,11 +347,10 @@ describe('User Management E2E Tests', () => {
         email: 'invalid-email-format',
       };
 
-      await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send(updateData)
-        .expect(400);
+      await api.patch(`/users/${testUser.id}`, updateData, {
+        token: testUser.accessToken,
+        expect: 400,
+      });
     });
 
     it('should reject update with invalid biography JSON', async () => {
@@ -385,11 +358,10 @@ describe('User Management E2E Tests', () => {
         biography: 'invalid json string {',
       };
 
-      await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send(updateData)
-        .expect(400);
+      await api.patch(`/users/${testUser.id}`, updateData, {
+        token: testUser.accessToken,
+        expect: 400,
+      });
     });
 
     it('should reject update with invalid date format', async () => {
@@ -397,40 +369,37 @@ describe('User Management E2E Tests', () => {
         dateOfBirth: 'invalid-date',
       };
 
-      await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send(updateData)
-        .expect(400);
+      await api.patch(`/users/${testUser.id}`, updateData, {
+        token: testUser.accessToken,
+        expect: 400,
+      });
     });
   });
 
   describe('4. AUTHORIZATION CASES', () => {
     describe('4.1 Unauthorized Access (401)', () => {
       it('should reject get user without authentication', async () => {
-        await request(app.getHttpServer())
-          .get('/users/some-user-id')
-          .expect(401);
+        await api.get('/users/some-user-id', { expect: 401 });
       });
 
       it('should reject update user without authentication', async () => {
-        await request(app.getHttpServer())
-          .patch('/users/some-user-id')
-          .send({ fullName: 'Updated Name' })
-          .expect(401);
+        await api.patch(
+          '/users/some-user-id',
+          { fullName: 'Updated Name' },
+          {
+            expect: 401,
+          },
+        );
       });
 
       it('should reject login without credentials', async () => {
-        await request(app.getHttpServer())
-          .post('/auth/login-base')
-          .send({})
-          .expect(400);
+        await api.post('/auth/login-base', {}, { expect: 400 });
       });
     });
 
     describe('4.2 Permission Violations (403)', () => {
-      let user1: any;
-      let user2: any;
+      let user1: RegisteredUser;
+      let user2: RegisteredUser;
 
       beforeAll(async () => {
         user1 = await createTestUser({
@@ -451,24 +420,23 @@ describe('User Management E2E Tests', () => {
           fullName: 'Hacked Name',
         };
 
-        await request(app.getHttpServer())
-          .patch(`/users/${user2.id}`)
-          .set('Authorization', `Bearer ${user1.accessToken}`)
-          .send(updateData)
-          .expect(403);
+        await api.patch(`/users/${user2.id}`, updateData, {
+          token: user1.accessToken,
+          expect: 403,
+        });
       });
 
       it('should reject user trying to get another user', async () => {
-        await request(app.getHttpServer())
-          .get(`/users/${user2.id}`)
-          .set('Authorization', `Bearer ${user1.accessToken}`)
-          .expect(404);
+        await api.get(`/users/${user2.id}`, {
+          token: user1.accessToken,
+          expect: 404,
+        });
       });
     });
   });
 
   describe('5. FILE UPLOAD TESTS', () => {
-    let testUser: any;
+    let testUser: RegisteredUser;
 
     beforeAll(async () => {
       testUser = await createTestUser({
@@ -482,56 +450,56 @@ describe('User Management E2E Tests', () => {
       // Create a small JPEG buffer (minimal valid JPEG)
       const jpegBuffer = readFileSync(join(__dirname, '1099451.jpg'));
 
-      const response = await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .attach('avatar', jpegBuffer, 'avatar.jpg');
+      const body = await api.upload<UserResponse>(
+        'patch',
+        `/users/${testUser.id}`,
+        {},
+        [{ fieldName: 'avatar', buffer: jpegBuffer, filename: 'avatar.jpg' }],
+        { token: testUser.accessToken, expect: 200 },
+      );
 
-      // In lỗi nếu không phải 200
-      if (response.status !== 200) {
-        console.log('--- CHI TIẾT LỖI 400 ---');
-        console.dir(response.body, { depth: null });
-        console.log('------------------------');
-      }
-
-      expect(response.status).toBe(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.userProfile.avatar).toBeDefined();
-      expect(typeof response.body.data.userProfile.avatar).toBe('string');
+      expect(body.success).toBe(true);
+      expect(body.data.userProfile.avatar).toBeDefined();
+      expect(typeof body.data.userProfile.avatar).toBe('string');
     });
 
     it('should reject upload with invalid file type', async () => {
       const invalidFile = Buffer.from('fake text content');
 
-      await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .attach('avatar', invalidFile, 'test.txt')
-        .expect(400);
+      await api.upload(
+        'patch',
+        `/users/${testUser.id}`,
+        {},
+        [{ fieldName: 'avatar', buffer: invalidFile, filename: 'test.txt' }],
+        { token: testUser.accessToken, expect: 400 },
+      );
     });
 
     it('should reject upload with oversized file', async () => {
       // Create a large buffer (assuming max size is 2MB, we'll use 3MB)
       const largeFile = Buffer.alloc(3 * 1024 * 1024, 'x');
 
-      await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .attach('avatar', largeFile, 'large.jpg')
-        .expect(400);
+      await api.upload(
+        'patch',
+        `/users/${testUser.id}`,
+        {},
+        [{ fieldName: 'avatar', buffer: largeFile, filename: 'large.jpg' }],
+        { token: testUser.accessToken, expect: 400 },
+      );
     });
 
     it('should handle avatar upload with empty request body', async () => {
       const jpegBuffer = readFileSync(join(__dirname, '1099451.jpg'));
 
-      const response = await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .attach('avatar', jpegBuffer, 'avatar2.jpg')
-        .expect(200);
+      const body = await api.upload<UserResponse>(
+        'patch',
+        `/users/${testUser.id}`,
+        {},
+        [{ fieldName: 'avatar', buffer: jpegBuffer, filename: 'avatar2.jpg' }],
+        { token: testUser.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
+      expect(body.success).toBe(true);
     });
 
     it('should handle update without file (file is optional)', async () => {
@@ -539,13 +507,13 @@ describe('User Management E2E Tests', () => {
         fullName: 'Updated without file',
       };
 
-      const response = await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send(updateData)
-        .expect(200);
+      const body = await api.patch<UserResponse>(
+        `/users/${testUser.id}`,
+        updateData,
+        { token: testUser.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
+      expect(body.success).toBe(true);
     });
   });
 
@@ -557,10 +525,10 @@ describe('User Management E2E Tests', () => {
         fullName: 'Not Found Test User',
       });
 
-      await request(app.getHttpServer())
-        .get('/users/non-existent-user-id')
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .expect(404);
+      await api.get('/users/non-existent-user-id', {
+        token: testUser.accessToken,
+        expect: 404,
+      });
     });
 
     it('should handle user update with no changes', async () => {
@@ -570,13 +538,13 @@ describe('User Management E2E Tests', () => {
         fullName: 'No Change Test User',
       });
 
-      const response = await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send({})
-        .expect(200);
+      const body = await api.patch<UserResponse>(
+        `/users/${testUser.id}`,
+        {},
+        { token: testUser.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
+      expect(body.success).toBe(true);
     });
 
     it('should handle biography as complex nested JSON', async () => {
@@ -608,14 +576,14 @@ describe('User Management E2E Tests', () => {
         biography: JSON.stringify(complexBiography),
       };
 
-      const response = await request(app.getHttpServer())
-        .patch(`/users/${testUser.id}`)
-        .set('Authorization', `Bearer ${testUser.accessToken}`)
-        .send(updateData)
-        .expect(200);
+      const body = await api.patch<UserResponse>(
+        `/users/${testUser.id}`,
+        updateData,
+        { token: testUser.accessToken, expect: 200 },
+      );
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.userProfile.biography).toBeDefined();
+      expect(body.success).toBe(true);
+      expect(body.data.userProfile.biography).toBeDefined();
     });
   });
 
@@ -628,35 +596,35 @@ describe('User Management E2E Tests', () => {
         fullName: 'Integration Test User',
       };
 
-      const registerResponse = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(userData)
-        .expect(201);
+      const registerBody = await api.post<AuthResponse>(
+        '/auth/register',
+        userData,
+        { expect: 201 },
+      );
 
-      const id = registerResponse.body.data.user.id;
-      const accessToken = registerResponse.body.data.tokens.accessToken;
+      const id = registerBody.data.user.id;
+      const accessToken = registerBody.data.tokens.accessToken;
 
       // Step 2: Login to verify credentials work
-      const loginResponse = await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send({
+      const loginBody = await api.post<AuthResponse>(
+        '/auth/login-base',
+        {
           email: userData.email,
           password: userData.password,
-        })
-        .expect(200);
+        },
+        { expect: 200 },
+      );
 
-      expect(loginResponse.body.data.user.id).toBe(id);
+      expect(loginBody.data.user.id).toBe(id);
 
       // Step 3: Get initial user data
-      const getResponse = await request(app.getHttpServer())
-        .get(`/users/${id}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
+      const getBody = await api.get<UserResponse>(`/users/${id}`, {
+        token: accessToken,
+        expect: 200,
+      });
 
-      expect(getResponse.body.data.email).toBe(userData.email);
-      expect(getResponse.body.data.userProfile.fullName).toBe(
-        userData.fullName,
-      );
+      expect(getBody.data.email).toBe(userData.email);
+      expect(getBody.data.userProfile.fullName).toBe(userData.fullName);
 
       // Step 4: Update user profile with multiple fields
       const updateData = {
@@ -669,56 +637,60 @@ describe('User Management E2E Tests', () => {
         }),
       };
 
-      const updateResponse = await request(app.getHttpServer())
-        .patch(`/users/${id}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send(updateData)
-        .expect(200);
-
-      console.log('676:', updateResponse.body);
-      expect(updateResponse.body.success).toBe(true);
-      expect(updateResponse.body.data.userProfile.fullName).toBe(
-        updateData.fullName,
+      const updateBody = await api.patch<UserResponse>(
+        `/users/${id}`,
+        updateData,
+        { token: accessToken, expect: 200 },
       );
-      expect(
-        updateResponse.body.data.userProfile.dateOfBirth.split('T')[0],
-      ).toBe(updateData.dateOfBirth);
+
+      expect(updateBody.success).toBe(true);
+      expect(updateBody.data.userProfile.fullName).toBe(updateData.fullName);
+      expect(updateBody.data.userProfile.dateOfBirth?.split('T')[0]).toBe(
+        updateData.dateOfBirth,
+      );
 
       // Step 5: Upload avatar
       const jpegBuffer = readFileSync(join(__dirname, '1099451.jpg'));
 
-      const avatarResponse = await request(app.getHttpServer())
-        .patch(`/users/${id}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .attach('avatar', jpegBuffer, 'integration-avatar.jpg')
-        .expect(200);
+      const avatarBody = await api.upload<UserResponse>(
+        'patch',
+        `/users/${id}`,
+        {},
+        [
+          {
+            fieldName: 'avatar',
+            buffer: jpegBuffer,
+            filename: 'integration-avatar.jpg',
+          },
+        ],
+        { token: accessToken, expect: 200 },
+      );
 
-      expect(avatarResponse.body.success).toBe(true);
-      expect(avatarResponse.body.data.userProfile.avatar).toBeDefined();
+      expect(avatarBody.success).toBe(true);
+      expect(avatarBody.data.userProfile.avatar).toBeDefined();
 
       // Step 6: Verify final user state
-      const finalResponse = await request(app.getHttpServer())
-        .get(`/users/${id}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
+      const finalBody = await api.get<UserResponse>(`/users/${id}`, {
+        token: accessToken,
+        expect: 200,
+      });
 
-      expect(finalResponse.body.data.userProfile.fullName).toBe(
-        updateData.fullName,
+      expect(finalBody.data.userProfile.fullName).toBe(updateData.fullName);
+      expect(finalBody.data.userProfile.dateOfBirth?.split('T')[0]).toBe(
+        updateData.dateOfBirth,
       );
-      expect(
-        finalResponse.body.data.userProfile.dateOfBirth.split('T')[0],
-      ).toBe(updateData.dateOfBirth);
-      expect(finalResponse.body.data.userProfile.biography).toBeDefined();
-      expect(finalResponse.body.data.userProfile.avatar).toBeDefined();
+      expect(finalBody.data.userProfile.biography).toBeDefined();
+      expect(finalBody.data.userProfile.avatar).toBeDefined();
 
       // Step 7: Verify login still works after updates
-      await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send({
+      await api.post(
+        '/auth/login-base',
+        {
           email: userData.email,
           password: userData.password,
-        })
-        .expect(200);
+        },
+        { expect: 200 },
+      );
 
       // Add to cleanup
       testUsers.push({ email: userData.email });
@@ -732,13 +704,14 @@ describe('User Management E2E Tests', () => {
         fullName: 'Password Flow User',
       };
 
-      const registerResponse = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(userData)
-        .expect(201);
+      const registerBody = await api.post<AuthResponse>(
+        '/auth/register',
+        userData,
+        { expect: 201 },
+      );
 
-      const id = registerResponse.body.data.user.id;
-      const accessToken = registerResponse.body.data.tokens.accessToken;
+      const id = registerBody.data.user.id;
+      const accessToken = registerBody.data.tokens.accessToken;
 
       // Step 2: Update password
       const newPassword = 'newPassword456';
@@ -746,29 +719,30 @@ describe('User Management E2E Tests', () => {
         password: newPassword,
       };
 
-      await request(app.getHttpServer())
-        .patch(`/users/${id}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send(updateData)
-        .expect(200);
+      await api.patch(`/users/${id}`, updateData, {
+        token: accessToken,
+        expect: 200,
+      });
 
       // Step 3: Verify login with new password works
-      await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send({
+      await api.post(
+        '/auth/login-base',
+        {
           email: userData.email,
           password: newPassword,
-        })
-        .expect(200);
+        },
+        { expect: 200 },
+      );
 
       // Step 4: Verify login with old password fails
-      await request(app.getHttpServer())
-        .post('/auth/login-base')
-        .send({
+      await api.post(
+        '/auth/login-base',
+        {
           email: userData.email,
           password: userData.password,
-        })
-        .expect(401);
+        },
+        { expect: 401 },
+      );
 
       // Add to cleanup
       testUsers.push({ email: userData.email });

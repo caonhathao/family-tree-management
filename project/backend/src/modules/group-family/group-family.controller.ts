@@ -25,6 +25,14 @@ import { UpdateGroupFamilyDto } from './dto/update-group-family.dto';
 import { CreateGroupFamilyDto } from './dto/create-group-family.dto';
 import { AtGuard } from '../auth/guards/auth.guard';
 import { HttpStatus } from 'src/common/constants/api';
+import {
+  DeletedGroupResponse,
+  GroupDetailResponse,
+  GroupListResponse,
+  GroupResponse,
+  JoinGroupResponse,
+  QuitGroupResponse,
+} from './types/group-family-response.type';
 
 @ApiTags('group-family')
 @ApiBearerAuth()
@@ -44,7 +52,7 @@ export class GroupFamilyController {
   async createGroupFamily(
     @GetCurrentUserId() userId: string,
     @Body() data: CreateGroupFamilyDto,
-  ) {
+  ): Promise<GroupResponse> {
     // console.log('userId:', userId);
     // console.log('data:', data);
     const groupFamily = await this.groupFamilyService.create(userId, data);
@@ -70,7 +78,7 @@ export class GroupFamilyController {
     @GetCurrentUserId() userId: string,
     @Param('id') groupId: string,
     @Body() data: UpdateGroupFamilyDto,
-  ) {
+  ): Promise<GroupResponse> {
     const groupFamily = await this.groupFamilyService.update(
       userId,
       groupId,
@@ -95,7 +103,7 @@ export class GroupFamilyController {
   async getGroupFamily(
     @GetCurrentUserId() userId: string,
     @Param('id') groupId: string,
-  ) {
+  ): Promise<GroupDetailResponse> {
     const groupFamily = await this.groupFamilyService.getOne(userId, groupId);
     return ResponseFactory.success({
       data: groupFamily,
@@ -111,7 +119,9 @@ export class GroupFamilyController {
     description: 'Group families retrieved successfully',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getAllGroupFamilies(@GetCurrentUserId() userId: string) {
+  async getAllGroupFamilies(
+    @GetCurrentUserId() userId: string,
+  ): Promise<GroupListResponse> {
     const groupFamilies = await this.groupFamilyService.getAll(userId);
     return ResponseFactory.success({
       data: groupFamilies,
@@ -133,7 +143,7 @@ export class GroupFamilyController {
   async destroyGroupFamily(
     @GetCurrentUserId() userId: string,
     @Param('id') groupId: string,
-  ) {
+  ): Promise<DeletedGroupResponse> {
     const result = await this.groupFamilyService.delete(userId, groupId);
     return ResponseFactory.success({
       data: result,
@@ -155,7 +165,7 @@ export class GroupFamilyController {
   async quitGroupFamily(
     @GetCurrentUserId() userId: string,
     @Param('id') groupId: string,
-  ) {
+  ): Promise<QuitGroupResponse> {
     const result = await this.groupFamilyService.quitGroup(userId, groupId);
     return ResponseFactory.success({
       data: result,
@@ -178,7 +188,7 @@ export class GroupFamilyController {
   async joinGroupFamily(
     @GetCurrentUserId() userId: string,
     @Query('token') code: string,
-  ) {
+  ): Promise<JoinGroupResponse> {
     const groupFamily = await this.groupFamilyService.joinGroup(code, userId);
     return ResponseFactory.success({
       code: HttpStatus.OK,

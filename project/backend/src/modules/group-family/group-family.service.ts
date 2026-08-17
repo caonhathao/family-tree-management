@@ -12,11 +12,19 @@ import { CreateGroupFamilyDto } from './dto/create-group-family.dto';
 import { EVENT_INSTANCE_STATUS, MEMBER_ROLE } from '@prisma/client';
 import { isUUID } from 'class-validator';
 import { endOfDay, startOfDay } from 'date-fns';
+import {
+  DeletedGroupData,
+  GroupData,
+  GroupDetail,
+  GroupListEntry,
+  JoinGroupData,
+  QuitGroupData,
+} from './types/group-family-response.type';
 
 @Injectable()
 export class GroupFamilyService {
   constructor(private prisma: PrismaService) {}
-  async create(userId: string, data: CreateGroupFamilyDto) {
+  async create(userId: string, data: CreateGroupFamilyDto): Promise<GroupData> {
     //console.log(data);
     try {
       const newGroup = await this.prisma.groupFamily.create({
@@ -27,8 +35,7 @@ export class GroupFamilyService {
         select: { id: true, name: true, description: true },
       });
       // Add creator as owner and leader of the new group
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const newMember = await this.prisma.groupMember.create({
+      await this.prisma.groupMember.create({
         data: {
           groupId: newGroup.id,
           memberId: userId,
@@ -40,10 +47,14 @@ export class GroupFamilyService {
       return newGroup;
     } catch (err) {
       console.log('err at create group family service:', err);
-      // throw err;
+      throw err;
     }
   }
-  async update(userId: string, groupId: string, data: UpdateGroupFamilyDto) {
+  async update(
+    userId: string,
+    groupId: string,
+    data: UpdateGroupFamilyDto,
+  ): Promise<GroupData> {
     if (!isUUID(groupId, 'all')) {
       throw new NotFoundException(Exception.NOT_EXIST);
     }
@@ -77,7 +88,7 @@ export class GroupFamilyService {
 
     return updatedGroup;
   }
-  async getOne(userId: string, groupId: string) {
+  async getOne(userId: string, groupId: string): Promise<GroupDetail> {
     if (!isUUID(groupId, 'all')) {
       throw new NotFoundException(Exception.NOT_EXIST);
     }
@@ -126,7 +137,7 @@ export class GroupFamilyService {
     if (!group) throw new NotFoundException(Exception.NOT_EXIST);
     return group;
   }
-  async getAll(userId: string) {
+  async getAll(userId: string): Promise<GroupListEntry[]> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new UnauthorizedException(Exception.UNAUTHORIZED);
@@ -182,7 +193,7 @@ export class GroupFamilyService {
       hasEventToday: todayEventGroupIds.has(group.id),
     }));
   }
-  async delete(userId: string, groupId: string) {
+  async delete(userId: string, groupId: string): Promise<DeletedGroupData> {
     try {
       const groupMember = await this.prisma.groupMember.findFirst({
         where: {
@@ -215,9 +226,10 @@ export class GroupFamilyService {
       });
     } catch (err) {
       console.log('failed at delete of group-family service: ', err);
+      throw err;
     }
   }
-  async quitGroup(userId: string, groupId: string) {
+  async quitGroup(userId: string, groupId: string): Promise<QuitGroupData> {
     try {
       if (!isUUID(groupId, 'all')) {
         throw new NotFoundException(Exception.NOT_EXIST);
@@ -259,7 +271,7 @@ export class GroupFamilyService {
     }
   }
 
-  async joinGroup(token: string, getterId: string) {
+  async joinGroup(token: string, getterId: string): Promise<JoinGroupData> {
     //check token valid
     const invite = await this.prisma.invite.findUnique({
       where: { token },
@@ -298,7 +310,7 @@ export class GroupFamilyService {
     });
 
     if (existedGetter) {
-      return await this.prisma.groupMember.findFirst({
+      const member = await this.prisma.groupMember.findFirst({
         where: {
           memberId: getterId,
           groupId: invite.groupId,
@@ -311,6 +323,8 @@ export class GroupFamilyService {
           isLeader: true,
         },
       });
+      if (!member) throw new NotFoundException(Exception.NOT_EXIST);
+      return member;
     }
 
     //check group exist

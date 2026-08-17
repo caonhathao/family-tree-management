@@ -26,6 +26,12 @@ import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GetCurrentUserId } from 'src/common/decorators/get-user-id.decorator';
 import { CustomFileExtensionValidator } from 'src/common/validators/file-type.validator';
+import {
+  AuthLogListResponse,
+  UserListResponse,
+  UserProvidersResponse,
+  UserResponse,
+} from './types/user-response.type';
 const maxFileSize = Number(process.env.MAX_FILE_SIZE) || 2;
 
 @ApiTags('users')
@@ -58,7 +64,7 @@ export class UserController {
       }),
     )
     file?: Express.Multer.File,
-  ) {
+  ): Promise<UserResponse> {
     const user = await this.userService.update(id, userId, data, file);
     return ResponseFactory.success({
       data: user,
@@ -77,7 +83,7 @@ export class UserController {
     @Query('limit') limit?: number,
     @Query('filter') filter?: string,
     @Query('filterType') filterType?: string,
-  ) {
+  ): Promise<UserListResponse> {
     const users = await this.userService.getAll(
       userId,
       page,
@@ -101,7 +107,7 @@ export class UserController {
     @Param('targetId') id: string,
     @GetCurrentUserId() userId: string,
     @Query('type') type?: string,
-  ) {
+  ): Promise<UserResponse> {
     const user = await this.userService.get(id, userId, type);
     return ResponseFactory.success({
       data: user,
@@ -118,7 +124,7 @@ export class UserController {
   async getAuthProviders(
     @Param('targetId') id: string,
     @GetCurrentUserId() userId: string,
-  ) {
+  ): Promise<UserProvidersResponse> {
     const providers = await this.userService.getAuthProviders(id, userId);
     return ResponseFactory.success({
       data: providers,
@@ -137,7 +143,7 @@ export class UserController {
     @GetCurrentUserId() userId: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
-  ) {
+  ): Promise<AuthLogListResponse> {
     const logs = await this.userService.getAuthLogs(id, userId, page, limit);
     return ResponseFactory.success({
       data: logs,

@@ -21,6 +21,13 @@ import { VerifyGoogleDto } from './dto/verify-google.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { AUTH_TYPE, MEMBER_ROLE, Prisma, PROVIDERS } from '@prisma/client';
 import { CloudinaryService } from 'src/common/config/cloudinary/cloudinary.service';
+import {
+  AuthActionData,
+  AuthLoginInfoData,
+  AuthResult,
+  AuthStatusData,
+  AuthTokens,
+} from './types/auth-response.type';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +41,7 @@ export class AuthService {
   async register(
     data: RegisterDto,
     { ipAddress, userAgent }: { ipAddress: string; userAgent: string },
-  ) {
+  ): Promise<AuthResult> {
     // console.log(data);
     const email = await this.prisma.user.findFirst({
       where: {
@@ -128,7 +135,7 @@ export class AuthService {
   async loginBase(
     data: LoginBaseDto,
     { userAgent, ipAddress }: { userAgent: string; ipAddress: string },
-  ) {
+  ): Promise<AuthResult> {
     try {
       //console.log('login data:', data);
       const user = await this.prisma.user.findFirst({
@@ -215,7 +222,7 @@ export class AuthService {
   async loginGoogle(
     token: GoogleLoginDto,
     { userAgent, ipAddress }: { userAgent: string; ipAddress: string },
-  ) {
+  ): Promise<AuthResult> {
     try {
       const payload = await this.verifyGoogleToken(token.token);
       const googleEmail = payload.email as string;
@@ -395,7 +402,7 @@ export class AuthService {
     }
   }
 
-  async refresh(userId: string, refreshToken: string) {
+  async refresh(userId: string, refreshToken: string): Promise<AuthResult> {
     try {
       const sessions = await this.prisma.session.findMany({
         where: { userId: userId },
@@ -461,7 +468,7 @@ export class AuthService {
     }
   }
 
-  async resetPassword(data: ResetPasswordDto) {
+  async resetPassword(data: ResetPasswordDto): Promise<void> {
     try {
       //check user by email in database
       const user = await this.prisma.user.findFirst({
@@ -479,7 +486,10 @@ export class AuthService {
     }
   }
 
-  async createBaseAuth(data: CreateBaseAuthDto, userId: string) {
+  async createBaseAuth(
+    data: CreateBaseAuthDto,
+    userId: string,
+  ): Promise<AuthActionData> {
     try {
       if (data.password !== data.confirmPassword) {
         throw new BusinessException(ErrorCode.BAD_REQUEST);
@@ -541,7 +551,7 @@ export class AuthService {
     userId: string,
     data: ChangePasswordDto,
     currentToken: string,
-  ) {
+  ): Promise<AuthActionData> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -596,7 +606,7 @@ export class AuthService {
     userId: string,
     data: ChangeEmailDto,
     currentToken: string,
-  ) {
+  ): Promise<AuthActionData> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -661,7 +671,10 @@ export class AuthService {
     }
   }
 
-  async unlinkProvider(userId: string, data: UnlinkProviderDto) {
+  async unlinkProvider(
+    userId: string,
+    data: UnlinkProviderDto,
+  ): Promise<AuthActionData> {
     try {
       const account = await this.prisma.account.findFirst({
         where: { id: data.accountId, userId },
@@ -695,7 +708,10 @@ export class AuthService {
     }
   }
 
-  async linkGoogle(userId: string, data: GoogleLoginDto) {
+  async linkGoogle(
+    userId: string,
+    data: GoogleLoginDto,
+  ): Promise<AuthActionData> {
     try {
       const payload = await this.verifyGoogleToken(data.token);
       const googleEmail = payload.email as string;
@@ -732,7 +748,10 @@ export class AuthService {
     }
   }
 
-  async verifyPassword(userId: string, data: VerifyPasswordDto) {
+  async verifyPassword(
+    userId: string,
+    data: VerifyPasswordDto,
+  ): Promise<AuthLoginInfoData> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -757,7 +776,10 @@ export class AuthService {
     return this.getLoginInfo(userId);
   }
 
-  async verifyGoogle(userId: string, data: VerifyGoogleDto) {
+  async verifyGoogle(
+    userId: string,
+    data: VerifyGoogleDto,
+  ): Promise<AuthLoginInfoData> {
     const payload = await this.verifyGoogleToken(data.token);
     const googleEmail = payload.email as string;
 
@@ -774,7 +796,10 @@ export class AuthService {
     return this.getLoginInfo(userId);
   }
 
-  async deleteAccount(userId: string, data: DeleteAccountDto) {
+  async deleteAccount(
+    userId: string,
+    data: DeleteAccountDto,
+  ): Promise<AuthStatusData> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -877,7 +902,7 @@ export class AuthService {
     }
   }
 
-  private async getLoginInfo(userId: string) {
+  private async getLoginInfo(userId: string): Promise<AuthLoginInfoData> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -923,7 +948,7 @@ export class AuthService {
     userId: string,
     payload: TokenPayload,
     sessionOpts?: { userAgent: string; ipAddress: string },
-  ) {
+  ): Promise<AuthResult> {
     return this.prisma.$transaction(async (tx) => {
       const googleEmail = payload.email as string;
 
@@ -1023,7 +1048,7 @@ export class AuthService {
     });
   }
 
-  async logout(userId: string, token: string) {
+  async logout(userId: string, token: string): Promise<AuthStatusData> {
     try {
       return await this.prisma.$transaction(async (tx) => {
         const user = await tx.user.findUnique({ where: { id: userId } });
@@ -1044,7 +1069,9 @@ export class AuthService {
     }
   }
 
-  private async getTokens(payload: Record<string, string>) {
+  private async getTokens(
+    payload: Record<string, string>,
+  ): Promise<AuthTokens> {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: this.envConfig.jwtAccessKey,

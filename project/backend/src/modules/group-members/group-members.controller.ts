@@ -22,6 +22,10 @@ import { AtGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { IsLeader } from 'src/common/decorators/leader.decorator';
 import { GroupLeaderGuard } from 'src/common/guards/leader.guard';
+import {
+  GroupMemberResponse,
+  RemoveMemberResponse,
+} from './types/group-member-response.type';
 
 @ApiTags('group-member')
 @ApiBearerAuth()
@@ -48,7 +52,7 @@ export class GroupMemberController {
     @GetCurrentUserId() userId: string,
     @Param('groupId') groupId: string,
     @Body() data: UpdateGroupMemberDto,
-  ) {
+  ): Promise<GroupMemberResponse> {
     const result = await this.groupMemberService.updaterRole(
       userId,
       groupId,
@@ -78,7 +82,7 @@ export class GroupMemberController {
     @GetCurrentUserId() userId: string,
     @Param('groupId') groupId: string,
     @Body() data: UpdateGroupMemberDto,
-  ) {
+  ): Promise<GroupMemberResponse> {
     const result = await this.groupMemberService.changeLeader(
       userId,
       groupId,
@@ -106,7 +110,7 @@ export class GroupMemberController {
     @GetCurrentUserId() userId: string,
     @Param('groupId') groupId: string,
     @Param('memberId') memberId: string,
-  ) {
+  ): Promise<RemoveMemberResponse> {
     const result = await this.groupMemberService.removeMember(
       userId,
       groupId,
