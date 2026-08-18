@@ -51,10 +51,7 @@ const nextConfig: NextConfig = {
     ];
   },
   reactCompiler: true,
-  serverExternalPackages: [
-    "pg",
-    "bcrypt",
-  ],
+  serverExternalPackages: ["pg", "bcrypt"],
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 2592000,

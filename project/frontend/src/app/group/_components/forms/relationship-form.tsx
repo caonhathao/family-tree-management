@@ -37,11 +37,15 @@ const RelationshipForm = ({
   openState,
   setCurrentData,
   setOpenState,
+  prefillMemberIds,
+  memberNameMap,
 }: {
   currentData?: IRelationshipDto | null;
   openState: boolean;
   setOpenState: Dispatch<SetStateAction<boolean>>;
   setCurrentData: Dispatch<SetStateAction<IRelationshipDto | null>>;
+  prefillMemberIds?: { fromMemberId: string; toMemberId: string } | null;
+  memberNameMap?: Map<string, string>;
 }) => {
   const {
     handleSubmit,
@@ -52,8 +56,8 @@ const RelationshipForm = ({
     resolver: zodResolver(RelationshipSchema),
     defaultValues: currentData || {
       localId: "",
-      fromMemberId: "",
-      toMemberId: "",
+      fromMemberId: prefillMemberIds?.fromMemberId || "",
+      toMemberId: prefillMemberIds?.toMemberId || "",
       type: "",
     },
   });
@@ -64,12 +68,12 @@ const RelationshipForm = ({
     } else {
       reset({
         localId: "",
-        fromMemberId: "",
-        toMemberId: "",
+        fromMemberId: prefillMemberIds?.fromMemberId || "",
+        toMemberId: prefillMemberIds?.toMemberId || "",
         type: "",
       });
     }
-  }, [currentData, reset, openState]);
+  }, [currentData, reset, openState, prefillMemberIds]);
 
   const { draft } = useSelector((state: RootState) => state.family);
   // console.log(draft);
@@ -198,6 +202,11 @@ const RelationshipForm = ({
                       value={field.value}
                       onChange={field.onChange}
                       placeholder={"Chọn hoặc gõ tìm tên..."}
+                      displayLabel={
+                        field.value
+                          ? memberNameMap?.get(field.value)
+                          : undefined
+                      }
                     />
                   )}
                 />
@@ -223,6 +232,11 @@ const RelationshipForm = ({
                       value={field.value}
                       onChange={field.onChange}
                       placeholder={"Chọn hoặc gõ tìm tên..."}
+                      displayLabel={
+                        field.value
+                          ? memberNameMap?.get(field.value)
+                          : undefined
+                      }
                     />
                   )}
                 />

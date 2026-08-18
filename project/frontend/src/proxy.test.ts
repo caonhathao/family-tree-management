@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 import { proxy } from "@/proxy";
 
-const { jwtVerify } = vi.hoisted(() => ({ jwtVerify: vi.fn() }));
 const { apiRequest } = vi.hoisted(() => ({ apiRequest: vi.fn() }));
 
 vi.hoisted(() => {
@@ -10,8 +9,6 @@ vi.hoisted(() => {
   process.env.JWT_REFRESH_SECRET_KEY = "refresh-secret";
   process.env.BACKEND_API_URL = "http://localhost:3001";
 });
-
-vi.mock("jose", () => ({ jwtVerify }));
 
 vi.mock("@/lib/api/http.client", () => ({ apiRequest }));
 
@@ -30,6 +27,15 @@ vi.mock("next/server", () => {
     },
   };
 });
+
+const mockMeResponse = (id: string, role: string) => {
+  apiRequest.mockImplementation(async (url: string) => {
+    if (url === "/api/auth/me") {
+      return { data: { id, role } };
+    }
+    return undefined;
+  });
+};
 
 const createRequest = (
   pathname: string,
@@ -55,7 +61,6 @@ const createRequest = (
 
 describe("proxy middleware", () => {
   beforeEach(() => {
-    jwtVerify.mockReset();
     apiRequest.mockReset();
     vi.mocked(NextResponse.next).mockClear();
     vi.mocked(NextResponse.redirect).mockClear();
@@ -67,13 +72,13 @@ describe("proxy middleware", () => {
 
     const res = await proxy(req);
 
-    expect(jwtVerify).not.toHaveBeenCalled();
+    expect(apiRequest).not.toHaveBeenCalled();
     expect(res).toBeTruthy();
     expect(vi.mocked(NextResponse.next)).toHaveBeenCalled();
   });
 
   it("redirects a non-admin user away from /admin", async () => {
-    jwtVerify.mockResolvedValue({ payload: { id: "u1", role: "USER" } });
+    mockMeResponse("u1", "USER");
 
     await proxy(createRequest("/admin", { accessToken: "at" }));
 
@@ -86,7 +91,7 @@ describe("proxy middleware", () => {
   });
 
   it("allows an admin user on admin routes and injects identity headers", async () => {
-    jwtVerify.mockResolvedValue({ payload: { id: "u1", role: "ADMIN" } });
+    mockMeResponse("u1", "ADMIN");
 
     await proxy(createRequest("/admin/dashboard", { accessToken: "at" }));
 
@@ -99,7 +104,7 @@ describe("proxy middleware", () => {
   });
 
   it("redirects a logged-in user away from /auth", async () => {
-    jwtVerify.mockResolvedValue({ payload: { id: "u1", role: "USER" } });
+    mockMeResponse("u1", "USER");
 
     await proxy(createRequest("/auth", { accessToken: "at" }));
 
@@ -120,7 +125,6 @@ describe("proxy middleware", () => {
   });
 
   it("silently refreshes tokens via the backend when the access token is missing", async () => {
-    jwtVerify.mockResolvedValue({ payload: { id: "u1", role: "USER" } });
     apiRequest.mockResolvedValue({
       data: {
         tokens: { accessToken: "new-at", refreshToken: "new-rt" },
