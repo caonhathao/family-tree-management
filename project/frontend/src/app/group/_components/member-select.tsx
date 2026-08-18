@@ -24,11 +24,13 @@ export function MemberSelect({
   value,
   onChange,
   placeholder,
+  displayLabel,
 }: {
   members: IFamilyMemberDto[];
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  displayLabel?: string;
 }) {
   const [open, setOpen] = React.useState(false);
 
@@ -43,10 +45,11 @@ export function MemberSelect({
             "w-full justify-between font-normal text-sm hover:cursor-pointer hover:shadow-sm active:scale-[0.98] sm:text-base"
           }
         >
-          {value
-            ? members.find((m: IFamilyMemberDto) => m.localId === value)
-                ?.fullName
-            : placeholder}
+          {displayLabel ||
+            (value
+              ? members.find((m: IFamilyMemberDto) => m.localId === value)
+                  ?.fullName
+              : placeholder)}
           <ChevronsUpDown className={"ml-2 h-4 w-4 shrink-0 opacity-50"} />
         </Button>
       </PopoverTrigger>

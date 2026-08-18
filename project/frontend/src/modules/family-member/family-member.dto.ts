@@ -15,8 +15,8 @@ export interface IUpdateFamilyMemberDto {
   id: string;
   fullName: string;
   gender: string;
-  dateOfBirth: Date;
-  dateOfDeath: Date;
+  dateOfBirth?: string;
+  dateOfDeath?: string;
   isAlive: boolean;
   biography?: string;
   generation: number;

@@ -12,16 +12,6 @@
     "watch": "tsc --watch",
     "analyze": "next experimental-analyze"
   },
-  "scripts": {
-    "dev": "next dev --turbo",
-    "build": "next build",
-    "lint": "eslint",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "watch": "tsc --watch",
-    "analyze": "next experimental-analyze"
-  },
   "dependencies": {
     "@dagrejs/dagre": "^2.0.4",
     "@editorjs/editorjs": "^2.31.3",

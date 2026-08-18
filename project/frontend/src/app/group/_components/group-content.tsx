@@ -2,7 +2,7 @@
 import { IResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
 import { FamilyInfoDrawer } from "./family-info-drawer";
 import { PanelEditor } from "./menu-editor/panel-editor";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import NewFamilyMemberForm from "./forms/family-member-form";
 import { IDraftFamilyData } from "@/types/draft.types";
 import NewFamilyForm from "./forms/new-family-form";
@@ -13,6 +13,7 @@ import {
   Controls,
   Node,
   Edge,
+  Connection,
   BackgroundVariant,
   useNodesState,
   useEdgesState,
@@ -32,6 +33,7 @@ import { ApiResponse } from "@/types/api.types";
 import { EventCalendar } from "./event-calendar";
 import { DayEventsDialog } from "./day-events-dialog";
 import { MEMBER_ROLE } from "@/types/enums";
+import { Toaster } from "@/components/shared/toast";
 
 const nodeTypes = {
   familyNode: FamilyMemberNode,
@@ -63,7 +65,15 @@ export const GroupContentPage = ({
 
   const [editingRelation, setEditingRelation] =
     useState<IRelationshipDto | null>(null);
+
+  const [prefillRelation, setPrefillRelation] = useState<{
+    fromMemberId: string;
+    toMemberId: string;
+  } | null>(null);
+  const [tempEdgeId, setTempEdgeId] = useState<string | null>(null);
+  const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   if (!openRelationForm && editingRelation !== null) setEditingRelation(null);
+  if (!openRelationForm && prefillRelation !== null) setPrefillRelation(null);
 
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [openDayDialog, setOpenDayDialog] = useState<boolean>(false);
@@ -71,8 +81,19 @@ export const GroupContentPage = ({
   const { draft } = useSelector((state: RootState) => state.family);
   const { profile } = useSelector((state: RootState) => state.user);
 
+  const memberNameMap = useMemo(
+    () => new Map(draft.members.map((m) => [m.localId, m.fullName])),
+    [draft.members],
+  );
+
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+
+  if (!openRelationForm && tempEdgeId !== null) {
+    setEdges((eds) => eds.filter((e) => e.id !== tempEdgeId));
+    setTempEdgeId(null);
+    setConnectingFrom(null);
+  }
 
   const onNodeDoubleClick = (event: React.MouseEvent, node: Node) => {
     const member = draft.members.find((m) => m.localId === node.id);
@@ -89,6 +110,67 @@ export const GroupContentPage = ({
       setEditingRelation(relation);
       setOpenRelationForm(true);
     }
+  };
+
+  const onConnectStart = useCallback(
+    (_: MouseEvent | TouchEvent, params: { nodeId: string | null }) => {
+      setConnectingFrom(params.nodeId);
+    },
+    [],
+  );
+
+  const onConnectEnd = useCallback(() => {
+    setConnectingFrom(null);
+  }, []);
+
+  const onConnect = (connection: Connection) => {
+    if (!connection.source || !connection.target) return;
+
+    if (connection.source === connection.target) {
+      Toaster({
+        title: "Cảnh báo",
+        description: "Không thể tự kết nối chính mình.",
+        type: "warning",
+      });
+      return;
+    }
+
+    const isExist = draft.relationships.some(
+      (r) =>
+        (r.fromMemberId === connection.source &&
+          r.toMemberId === connection.target) ||
+        (r.fromMemberId === connection.target &&
+          r.toMemberId === connection.source),
+    );
+    if (isExist) {
+      Toaster({
+        title: "Cảnh báo",
+        description: "Mối quan hệ giữa 2 thành viên này đã tồn tại.",
+        type: "warning",
+      });
+      return;
+    }
+
+    const tempId = `temp_${connection.source}_${connection.target}`;
+    const tempEdge: Edge = {
+      id: tempId,
+      source: connection.source,
+      target: connection.target,
+      sourceHandle: connection.sourceHandle,
+      targetHandle: connection.targetHandle,
+      type: "smoothstep",
+      animated: true,
+      style: { stroke: "#eab308", strokeWidth: 2 },
+      label: "TẠM",
+    };
+
+    setEdges((eds) => [...eds, tempEdge]);
+    setTempEdgeId(tempId);
+    setPrefillRelation({
+      fromMemberId: connection.source,
+      toMemberId: connection.target,
+    });
+    setOpenRelationForm(true);
   };
 
   const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
@@ -204,6 +286,15 @@ export const GroupContentPage = ({
   }, [draft, setNodes, setEdges]);
 
   useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        data: { ...node.data, connectingFrom },
+      })),
+    );
+  }, [connectingFrom, setNodes]);
+
+  useEffect(() => {
     if (family) {
       dispatch(setOrigin(family));
     }
@@ -296,6 +387,8 @@ export const GroupContentPage = ({
             setOpenState={setOpenRelationForm}
             setCurrentData={setEditingRelation}
             currentData={editingRelation}
+            prefillMemberIds={prefillRelation}
+            memberNameMap={memberNameMap}
           />
         )}
         <div className={"w-full h-full border bg-slate-50"}>
@@ -304,6 +397,10 @@ export const GroupContentPage = ({
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onConnectStart={onConnectStart}
+            onConnectEnd={onConnectEnd}
+            connectionRadius={60}
             nodeTypes={nodeTypes}
             fitView
             onNodeDoubleClick={onNodeDoubleClick}

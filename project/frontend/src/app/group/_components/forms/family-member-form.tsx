@@ -28,7 +28,7 @@ import { AppDispatch, RootState } from "@/store";
 import { setDraft } from "@/store/family/familySlice";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 } from "uuid";
@@ -52,6 +52,7 @@ const NewFamilyMemberForm = ({
     control,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<IFamilyMemberDto>({
     resolver: zodResolver(FamilyMemberSchema),
@@ -61,7 +62,7 @@ const NewFamilyMemberForm = ({
       gender: "",
       dateOfBirth: "",
       dateOfDeath: "",
-      isAlive: false,
+      isAlive: true,
       biography: "",
       generation: 1,
     },
@@ -69,6 +70,13 @@ const NewFamilyMemberForm = ({
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const isAlive = watch("isAlive");
+
+  useEffect(() => {
+    if (isAlive) {
+      setValue("dateOfDeath", "");
+    }
+  }, [isAlive, setValue]);
+
   const { draft } = useSelector((state: RootState) => state.family);
   // console.log(draft);
   const dispatch = useDispatch<AppDispatch>();
