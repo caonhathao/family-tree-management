@@ -119,7 +119,7 @@ export class EnvConfigService {
   get googleClientId(): string {
     return (
       this.configService?.get<string>('google.clientId') ||
-      process.env.GOOGLECLIENT_ID ||
+      process.env.GOOGLE_CLIENT_ID ||
       ''
     );
   }
