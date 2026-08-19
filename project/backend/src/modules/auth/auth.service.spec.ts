@@ -170,7 +170,12 @@ describe('AuthService', () => {
         },
       });
 
-      expect(result.tokens).toEqual({ accessToken: 'at', refreshToken: 'rt' });
+      expect(result.tokens).toEqual({
+        accessToken: 'at',
+        refreshToken: 'rt',
+        accessTokenExpiresIn: '15m',
+        refreshTokenExpiresIn: 604800,
+      });
       expect(result.user).toEqual({
         id: 'user-1',
         role: 'owner',
@@ -202,7 +207,12 @@ describe('AuthService', () => {
           userAgent: 'ua',
         },
       });
-      expect(result.tokens).toEqual({ accessToken: 'at', refreshToken: 'rt' });
+      expect(result.tokens).toEqual({
+        accessToken: 'at',
+        refreshToken: 'rt',
+        accessTokenExpiresIn: '15m',
+        refreshTokenExpiresIn: 604800,
+      });
     });
 
     it('creates a new user when the email is not linked anywhere', async () => {
