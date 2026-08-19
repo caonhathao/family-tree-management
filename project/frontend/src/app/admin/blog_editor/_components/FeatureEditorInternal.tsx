@@ -201,14 +201,24 @@ export default function FeatureEditorInternal({
       ejInstance.current.readOnly.toggle(true);
       setIsReadOnly(true);
       try {
-        const originData = safeJsonParse(
-          blogs[slug].origin.content,
-        ) as OutputData;
+        if (blogs[slug]) {
+          const originData = safeJsonParse(
+            blogs[slug].origin.content,
+          ) as OutputData;
 
-        if (originData) {
-          setData(originData);
-          dispatch(syncSuccess(blogs[slug].origin));
-          ejInstance.current.render(originData);
+          if (originData) {
+            setData(originData);
+            dispatch(syncSuccess(blogs[slug].origin));
+            ejInstance.current.render(originData);
+          }
+        } else {
+          const emptyData: OutputData = {
+            time: Date.now(),
+            blocks: [],
+            version: "2.28.2",
+          };
+          setData(emptyData);
+          ejInstance.current.render(emptyData);
         }
       } catch (e) {
         setData({

@@ -12,10 +12,10 @@ export default async function FeaturesPage({
 }) {
   const { part } = await searchParams;
   const slug = part || "";
-  //console.log("slug:", slug);
 
-  const blog: IBlogDto | ApiResponse<IBlogDto, unknown> | null =
-    await getBlogAction(slug);
+  const blog: IBlogDto | ApiResponse<IBlogDto, unknown> | null = slug
+    ? await getBlogAction(slug)
+    : null;
   const blogList:
     | IPaginationBase<IBlogsDto[]>
     | ApiResponse<IBlogsDto[], unknown> = await getBlogsAction(1, 100);

@@ -11,8 +11,9 @@ export default async function FeaturesPage({
   const { part } = await searchParams;
   const slug = part || "";
 
-  const blog: IBlogDto | ApiResponse<IBlogDto, unknown> =
-    await getBlogAction(slug);
+  const blog: IBlogDto | ApiResponse<IBlogDto, unknown> | null = slug
+    ? await getBlogAction(slug)
+    : null;
 
   return <FeatureEditor blog={blog} slug={slug} />;
 }

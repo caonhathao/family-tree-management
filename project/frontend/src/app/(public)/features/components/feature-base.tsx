@@ -19,7 +19,7 @@ const EditorJSComponent = dynamic(() => import("./feature-editor-internal"), {
 });
 
 interface FeatureEditorProps {
-  blog: IBlogDto | ApiResponse<IBlogDto, unknown>;
+  blog: IBlogDto | ApiResponse<IBlogDto, unknown> | null;
   slug: string;
 }
 
