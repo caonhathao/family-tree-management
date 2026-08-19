@@ -20,9 +20,9 @@ const FeatureEditorInternal = dynamic(() => import("./FeatureEditorInternal"), {
 });
 
 interface FeatureEditorProps {
-  blog: IBlogDto | ApiResponse<IBlogDto, unknown>;
+  blog: ApiResponse<IBlogDto>;
   slug: string;
-  list: IPaginationBase<IBlogsDto[]> | ApiResponse<IBlogsDto[], unknown>;
+  list: ApiResponse<IBlogsDto[], unknown>;
 }
 
 export default function FeatureEditor({

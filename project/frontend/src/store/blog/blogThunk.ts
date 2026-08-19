@@ -24,7 +24,7 @@ export const saveBlogDraft = createAsyncThunk(
 
     if (result && "errors" in result) {
       return rejectWithValue(result.message);
-    } else dispatch(syncSuccess(result as IBlogDto));
+    } else dispatch(syncSuccess(result.data as IBlogDto));
 
     return result;
   },

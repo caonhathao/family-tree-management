@@ -100,7 +100,7 @@ export const AdminSidebarClient = ({
   }, [session, isLogin]);
 
   return (
-    <Sidebar collapsible={"icon"}>
+    <Sidebar collapsible={"icon"} className={"bg-background"}>
       <SidebarHeader>
         <SidebarMenu>
           <DropdownMenu>

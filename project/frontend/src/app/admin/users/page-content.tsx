@@ -39,6 +39,7 @@ export function UserContentPage<TData, TValue>({
           columns={columns}
           data={data.data}
           pagination={data.pagination}
+          defaultColumnVisibility={{ createdAt: false }}
         />
       ) : null}
     </div>

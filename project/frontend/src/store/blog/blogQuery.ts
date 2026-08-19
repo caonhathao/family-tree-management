@@ -12,8 +12,8 @@ export const blogApi = createApi({
         const result: IBlogDto | ApiResponse<IBlogDto, unknown> =
           await getBlogAction(slug);
 
-        if (result && "id" in result) {
-          return { data: result };
+        if (result && "data" in result && result.data) {
+          return { data: result.data };
         }
 
         return { error: result };

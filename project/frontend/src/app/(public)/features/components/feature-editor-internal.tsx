@@ -19,7 +19,7 @@ import FeatureStaticContent from "./feature-static-content";
 import { ApiResponse } from "@/types/api.types";
 
 interface FeatureEditorProps {
-  blog: IBlogDto | ApiResponse<IBlogDto, unknown> | null;
+  blog: IBlogDto | null | undefined;
   slug: string;
 }
 

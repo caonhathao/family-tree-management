@@ -1,16 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Allow, IsNotEmpty, IsString } from 'class-validator';
+import { Allow, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { InvalidMessageResponse } from 'src/common/messages/messages.response';
 
 export class UpdateBlogDto {
   @ApiProperty({
-    description: 'Blog title',
+    description: 'Blog title (auto-extracted from content header if empty)',
     example: 'Welcome to my blog',
-    required: true,
+    required: false,
   })
   @IsString()
-  @IsNotEmpty({ message: InvalidMessageResponse.FIELD_EMPTY })
-  title: string;
+  @IsOptional()
+  title?: string;
 
   @ApiProperty({
     description: 'Blog slug',

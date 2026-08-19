@@ -140,6 +140,7 @@ export const apiClient = {
     upsert: "/api/blog",
     list: "/api/blog/list",
     get: (slug: string) => `/api/blog/${slug}`,
+    delete: (slug: string) => `/api/blog/${slug}`,
   },
   blogMedia: {
     upload: "/api/blog-media/upload",

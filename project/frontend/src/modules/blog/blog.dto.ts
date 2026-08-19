@@ -3,21 +3,26 @@ export interface IBlogDto {
   slug: string;
   title: string;
   content: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 export interface IBlogsDto {
   id: string;
   slug: string;
   title: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IBlogList {
   id: string;
   title: string;
   slug: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IBlogDeleted {
+  id: string;
+  slug: string;
 }

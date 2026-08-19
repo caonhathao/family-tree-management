@@ -1,15 +1,16 @@
 "use server";
-import { IBlogDto, IBlogsDto } from "./blog.dto";
+import { IBlogDeleted, IBlogDto, IBlogsDto } from "./blog.dto";
 import { BlogService } from "./blog.service";
 import { headers } from "next/headers";
 import { IPaginationBase } from "@/types/base.types";
 import { cache } from "react";
 import { ResponseFactory } from "@/lib/res/response.factory";
 import { ApiResponse } from "@/types/api.types";
+import { IgnorableStackFrame } from "next/dist/next-devtools/server/shared";
 
 export async function updateBlogAction(
   data: IBlogDto,
-): Promise<IBlogDto | ApiResponse<IBlogDto, unknown>> {
+): Promise<ApiResponse<IBlogDto, unknown>> {
   try {
     const headerList = await headers();
     const userId = headerList.get("X-User-Id");
@@ -17,7 +18,7 @@ export async function updateBlogAction(
       throw new Error("Unauthorized");
     }
     const res = await BlogService.updateBlog(data, userId);
-    return res as IBlogDto;
+    return res;
   } catch (err: unknown) {
     return ResponseFactory.handleError(err);
   }
@@ -25,9 +26,25 @@ export async function updateBlogAction(
 
 export async function getBlogAction(
   slug: string,
-): Promise<IBlogDto | ApiResponse<IBlogDto, unknown>> {
+): Promise<ApiResponse<IBlogDto, unknown>> {
   try {
     const res = await BlogService.getBlog(slug);
+    return res;
+  } catch (err) {
+    return ResponseFactory.handleError(err);
+  }
+}
+
+export async function deleteBlogAction(
+  slug: string,
+): Promise<ApiResponse<IBlogDeleted, unknown>> {
+  try {
+    const headerList = await headers();
+    const userId = headerList.get("X-User-Id");
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+    const res = await BlogService.deleteBlog(slug);
     return res;
   } catch (err: unknown) {
     return ResponseFactory.handleError(err);
@@ -40,9 +57,7 @@ export const getBlogsAction = cache(
     limit?: number,
     filterType?: string,
     filter?: string,
-  ): Promise<
-    IPaginationBase<IBlogsDto[]> | ApiResponse<IBlogsDto[], unknown>
-  > => {
+  ): Promise<ApiResponse<IBlogsDto[], unknown>> => {
     try {
       const headerList = await headers();
       const currentUserId = headerList.get("X-User-Id");
@@ -56,7 +71,7 @@ export const getBlogsAction = cache(
         filter,
         filterType,
       );
-      return res as IPaginationBase<IBlogsDto[]>;
+      return res;
     } catch (err: unknown) {
       return ResponseFactory.handleError(err);
     }

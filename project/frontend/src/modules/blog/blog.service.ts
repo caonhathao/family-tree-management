@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api/api-client.lib";
 import { apiRequest } from "@/lib/api/http.client";
-import { IBlogDto, IBlogList } from "./blog.dto";
+import { IBlogDto, IBlogsDto } from "./blog.dto";
 import { BlogUpdateServiceDto } from "./blog.service-validator";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -9,7 +9,7 @@ const updateBlog = async (data: BlogUpdateServiceDto, _userId: string) => {
     method: "POST",
     body: data,
   });
-  return res.data;
+  return res;
 };
 
 const getBlog = async (slug: string) => {
@@ -26,23 +26,24 @@ const getBlogs = async (
   filter?: string,
   filterType?: string,
 ) => {
-  const res = await apiRequest<{
-    data: IBlogList[];
-    pagination: {
-      totalItems: number;
-      totalPages: number;
-      currentPage: number;
-      pageSize: number;
-    };
-  }>(apiClient.blog.list, {
+  const res = await apiRequest<IBlogsDto[]>(apiClient.blog.list, {
     method: "GET",
     query: { page, limit, filter, filterType },
   });
-  return res.data;
+  return res;
+};
+
+const deleteBlog = async (slug: string) => {
+  const res = await apiRequest<{ id: string; slug: string }>(
+    apiClient.blog.delete(slug),
+    { method: "DELETE" },
+  );
+  return res;
 };
 
 export const BlogService = {
   updateBlog,
   getBlog,
   getBlogs,
+  deleteBlog,
 };

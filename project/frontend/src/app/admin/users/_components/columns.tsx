@@ -72,6 +72,7 @@ export const columns: ColumnDef<IUserList>[] = [
   },
   {
     id: "actions",
+    enableHiding: false,
     cell: ({ row }) => {
       const data = row.original;
 
