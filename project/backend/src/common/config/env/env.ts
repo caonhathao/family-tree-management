@@ -22,6 +22,7 @@ export const envValidationSchema = Joi.object({
   FOLDER_ALBUM: Joi.string().required(),
   FOLDER_USER: Joi.string().required(),
   FOLDER_FAMILY: Joi.string().required(),
+  FOLDER_BLOG: Joi.string().required(),
   CLOUDINARY_NAME: Joi.string().required(),
   CLOUDINARY_API_KEY: Joi.string().required(),
   CLOUDINARY_API_SECRET: Joi.string().required(),

@@ -7,6 +7,10 @@ on:
   pull_request:
     paths: ["project/backend/**"]
 
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -27,9 +31,15 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
         run: pnpm exec prisma generate
+      - name: Format check
+        run: pnpm exec prettier --check "src/**/*.ts"
       - name: Lint
         run: pnpm lint:src
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
       - name: Test
         run: pnpm test
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high || true
       - name: Build
         run: pnpm build

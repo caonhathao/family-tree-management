@@ -7,6 +7,10 @@ on:
   pull_request:
     paths: ["project/frontend/**"]
 
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -15,8 +19,6 @@ jobs:
         working-directory: project/frontend
     env:
       BACKEND_API_URL: http://localhost:3001
-      # JWT_ACCESS_SECRET_KEY: ci-access-secret
-      # JWT_REFRESH_SECRET_KEY: ci-refresh-secret
       SITE_URL: http://localhost:3000
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ci-google-client-id.apps.googleusercontent.com
     steps:
@@ -31,11 +33,15 @@ jobs:
           cache-dependency-path: project/frontend/pnpm-lock.yaml
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Format check
+        run: pnpm exec prettier --check "src/**/*.{ts,tsx}"
       - name: Lint
         run: pnpm lint
       - name: Typecheck
         run: pnpm typecheck
       - name: Test
         run: pnpm test
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high || true
       - name: Build
         run: pnpm build
