@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Các Tính Năng Hệ Thống — Family Free Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .feature-card { transition: all 0.2s ease; cursor: pointer; }
+        .feature-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .feature-card.active { box-shadow: 0 0 0 3px rgba(99,102,241,0.5); }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-implemented { background: #dcfce7; color: #166534; }
+        .status-partial { background: #fef3c7; color: #92400e; }
+        .status-planned { background: #e5e7eb; color: #374151; }
+        .tab-btn { transition: all 0.2s ease; }
+        .tab-btn.active { background: #6366f1; color: white; }
+        .tab-btn:not(.active):hover { background: #e0e7ff; }
+        .tech-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #475569;
+        }
+        .module-link {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #ede9fe;
+            border: 1px solid #ddd6fe;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #6d28d9;
+            text-decoration: none;
+        }
+        .module-link:hover { background: #ddd6fe; }
+        .route-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #dbeafe;
+            border: 1px solid #bfdbfe;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #1e40af;
+            font-family: monospace;
+        }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+
+<!-- Header -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Các Tính Năng Hệ Thống</h1>
+                <p class="text-sm text-gray-500 mt-1">Family Free Management — Danh sách đầy đủ các tính năng với trạng thái triển khai</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="architecture_map.html" class="px-3 py-1.5 text-sm text-gray-600 hover:text-indigo-600 border border-gray-200 rounded-lg">Kiến Trúc Hệ Thống</a>
+                <a href="../README.md" class="px-3 py-1.5 text-sm text-gray-600 hover:text-indigo-600 border border-gray-200 rounded-lg">README Gốc</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Tab Navigation -->
+<div class="bg-white border-b border-gray-200 sticky top-18.25 z-30">
+    <div class="max-w-7xl mx-auto px-4">
+        <nav class="flex gap-1 py-2 overflow-x-auto" role="tablist">
+            <button class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap" onclick="switchTab('overview')" role="tab">Tổng Quan</button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-600 whitespace-nowrap" onclick="switchTab('auth')" role="tab">Xác Thực</button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-600 whitespace-nowrap" onclick="switchTab('family')" role="tab">Gia Phả</button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-600 whitespace-nowrap" onclick="switchTab('groups')" role="tab">Nhóm Gia Đình</button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-600 whitespace-nowrap" onclick="switchTab('events')" role="tab">Sự Kiện</button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-600 whitespace-nowrap" onclick="switchTab('media')" role="tab">Album & Hình Ảnh</button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-600 whitespace-nowrap" onclick="switchTab('blog')" role="tab">Blog</button>
+            <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-600 whitespace-nowrap" onclick="switchTab('admin')" role="tab">Quản Trị</button>
+        </nav>
+    </div>
+</div>
+
+<!-- Tab Content -->
+<main class="max-w-7xl mx-auto px-4 py-6">
+
+<!-- ==================== TAB: TỔNG QUAN ==================== -->
+<div id="tab-overview" class="tab-content fade-in">
+    <div class="mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Tổng Quan Tính Năng</h2>
+        <div class="flex gap-4 mb-6">
+            <div class="flex items-center gap-2">
+                <span class="status-badge status-implemented">Đã Triển Khai</span>
+                <span class="text-sm text-gray-500">10 tính năng</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="status-badge status-partial">Một Phần</span>
+                <span class="text-sm text-gray-500">1 tính năng</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="status-badge status-planned">Dự Kiến</span>
+                <span class="text-sm text-gray-500">8 tính năng</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="feature-grid">
+
+        <!-- Xác Thực -->
+        <div class="feature-card bg-white rounded-xl border border-indigo-200 p-5" data-feature="auth" onclick="switchTab('auth')">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-indigo-900">Xác Thực Người Dùng</h3>
+                <span class="status-badge status-implemented">Đã Triển Khai</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">Đăng ký và đăng nhập an toàn bằng email/mật khẩu + Google OAuth</p>
+            <div class="flex flex-wrap gap-1.5">
+                <span class="tech-tag">JWT</span>
+                <span class="tech-tag">Passport</span>
+                <span class="tech-tag">bcrypt</span>
+                <span class="tech-tag">Google OAuth</span>
+            </div>
+        </div>
+
+        <!-- Gia Phả -->
+        <div class="feature-card bg-white rounded-xl border border-emerald-200 p-5" data-feature="family" onclick="switchTab('family')">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-emerald-900">Gia Phả Động</h3>
+                <span class="status-badge status-implemented">Đã Triển Khai</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">Cây gia phả tương tác, có thể thu phóng với bố cục tự động</p>
+            <div class="flex flex-wrap gap-1.5">
+                <span class="tech-tag">React Flow</span>
+                <span class="tech-tag">Dagre.js</span>
+                <span class="tech-tag">Redux Toolkit</span>
+            </div>
+        </div>
+
+        <!-- Nhóm Gia Đình -->
+        <div class="feature-card bg-white rounded-xl border border-violet-200 p-5" data-feature="groups" onclick="switchTab('groups')">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-violet-900">Nhóm Gia Đình</h3>
+                <span class="status-badge status-implemented">Đã Triển Khai</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">Tạo nhóm, mời thành viên, quản lý vai trò</p>
+            <div class="flex flex-wrap gap-1.5">
+                <span class="tech-tag">RBAC</span>
+                <span class="tech-tag">JWT</span>
+                <span class="tech-tag">Token mời</span>
+            </div>
+        </div>
+
+        <!-- Sự Kiện -->
+        <div class="feature-card bg-white rounded-xl border border-cyan-200 p-5" data-feature="events" onclick="switchTab('events')">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-cyan-900">Sự Kiện & Thông Báo</h3>
+                <span class="status-badge status-implemented">Đã Triển Khai</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">Lên lịch sự kiện, nhận thông báo trong ứng dụng & email</p>
+            <div class="flex flex-wrap gap-1.5">
+                <span class="tech-tag">Cron jobs</span>
+                <span class="tech-tag">Resend</span>
+                <span class="tech-tag">react-email</span>
+            </div>
+        </div>
+
+        <!-- Album & Hình Ảnh -->
+        <div class="feature-card bg-white rounded-xl border border-teal-200 p-5" data-feature="media" onclick="switchTab('media')">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-teal-900">Album & Hình Ảnh</h3>
+                <span class="status-badge status-implemented">Đã Triển Khai</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">Quản lý album ảnh với tải lên Cloudinary</p>
+            <div class="flex flex-wrap gap-1.5">
+                <span class="tech-tag">Cloudinary</span>
+                <span class="tech-tag">Multer</span>
+            </div>
+        </div>
+
+        <!-- Blog -->
+        <div class="feature-card bg-white rounded-xl border border-amber-200 p-5" data-feature="blog" onclick="switchTab('blog')">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-amber-900">Quản Lý Blog</h3>
+                <span class="status-badge status-implemented">Đã Triển Khai</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">Trình soạn thảo blog phong phú với bản nháp</p>
+            <div class="flex flex-wrap gap-1.5">
+                <span class="tech-tag">Editor.js</span>
+                <span class="tech-tag">Redux Toolkit</span>
+            </div>
+        </div>
+
+        <!-- Quản Trị -->
+        <div class="feature-card bg-white rounded-xl border border-gray-200 p-5" data-feature="admin" onclick="switchTab('admin')">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-gray-900">Bảng Quản Trị</h3>
+                <span class="status-badge status-partial">Một Phần</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">Bảng điều khiển và giao diện quản lý</p>
+            <div class="flex flex-wrap gap-1.5">
+                <span class="tech-tag">React Table</span>
+                <span class="tech-tag">Redux Toolkit</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== TAB: XÁC THỰC ==================== -->
+<div id="tab-auth" class="tab-content hidden">
+    <div class="mb-6">
+        <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-lg font-semibold text-gray-900">Xác Thực Người Dùng</h2>
+            <span class="status-badge status-implemented">Đã Triển Khai</span>
+        </div>
+        <p class="text-sm text-gray-500">Đăng ký và đăng nhập an toàn bằng email/mật khẩu + Google OAuth</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Tính Năng -->
+        <div class="bg-white rounded-xl border border-indigo-200 p-6">
+            <h3 class="font-semibold text-indigo-900 mb-4">Tính Năng</h3>
+            <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-start gap-2">
+                    <span class="text-indigo-500 mt-1">&#10003;</span>
+                    <span>Đăng ký email/mật khẩu với mã hóa bcrypt (10 rounds)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-indigo-500 mt-1">&#10003;</span>
+                    <span>Xác minh token Google OAuth2 qua OAuth2Client</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-indigo-500 mt-1">&#10003;</span>
+                    <span>Cặp token JWT access/refresh (HS256)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-indigo-500 mt-1">&#10003;</span>
+                    <span>Cookie httpOnly, secure để lưu token</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-indigo-500 mt-1">&#10003;</span>
+                    <span>Quản lý phiên bản theo thiết bị (userId + userAgent độc nhất)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-indigo-500 mt-1">&#10003;</span>
+                    <span>Nhật ký xác thực (AuthLog với loại, IP, user agent)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-indigo-500 mt-1">&#10003;</span>
+                    <span>Làm mới token im lặng qua lớp proxy</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Tech Stack & Nguồn -->
+        <div class="space-y-4">
+            <div class="bg-white rounded-xl border border-indigo-200 p-6">
+                <h3 class="font-semibold text-indigo-900 mb-4">Công Nghệ Sử Dụng</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="tech-tag">JWT</span>
+                    <span class="tech-tag">Passport.js</span>
+                    <span class="tech-tag">bcrypt</span>
+                    <span class="tech-tag">Google OAuth</span>
+                    <span class="tech-tag">jose</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-indigo-200 p-6">
+                <h3 class="font-semibold text-indigo-900 mb-4">File Nguồn</h3>
+                <div class="space-y-2 text-sm">
+                    <div><span class="font-medium text-gray-700">Backend Module:</span> <a href="../project/backend/src/modules/auth/" class="text-indigo-600 hover:underline">src/modules/auth/</a></div>
+                    <div><span class="font-medium text-gray-700">Frontend Actions:</span> <a href="../project/frontend/src/modules/auth/" class="text-indigo-600 hover:underline">src/modules/auth/</a></div>
+                    <div><span class="font-medium text-gray-700">Proxy Middleware:</span> <a href="../project/frontend/src/proxy.ts" class="text-indigo-600 hover:underline">src/proxy.ts</a></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-indigo-200 p-6">
+                <h3 class="font-semibold text-indigo-900 mb-4">Đường Dẫn</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="route-tag">/auth</span>
+                    <span class="route-tag">/api/auth/login</span>
+                    <span class="route-tag">/api/auth/register</span>
+                    <span class="route-tag">/api/auth/refresh</span>
+                    <span class="route-tag">/api/auth/google</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TAB: GIA PHẢ ==================== -->
+<div id="tab-family" class="tab-content hidden">
+    <div class="mb-6">
+        <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-lg font-semibold text-gray-900">Gia Phả Động</h2>
+            <span class="status-badge status-implemented">Đã Triển Khai</span>
+        </div>
+        <p class="text-sm text-gray-500">Cây gia phả tương tác, có thể thu phóng với bố cục tự động và kéo thả</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-emerald-200 p-6">
+            <h3 class="font-semibold text-emerald-900 mb-4">Tính Năng</h3>
+            <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-start gap-2">
+                    <span class="text-emerald-500 mt-1">&#10003;</span>
+                    <span>Trực quan hóa React Flow với thành phần FamilyMemberNode tùy chỉnh</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-emerald-500 mt-1">&#10003;</span>
+                    <span>Thuật toán bố cục tự động Dagre.js (tight-tree layout)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-emerald-500 mt-1">&#10003;</span>
+                    <span>Kéo thả vị trí thành viên với lưu bố cục canvas</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-emerald-500 mt-1">&#10003;</span>
+                    <span>Hồ sơ thành viên (tiểu sử, ngày quan trọng, thế hệ, giới tính)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-emerald-500 mt-1">&#10003;</span>
+                    <span>Quản lý quan hệ (PARENT / SPOUSE / CHILD)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-emerald-500 mt-1">&#10003;</span>
+                    <span>Đồng bộ dựa trên sự khác biệt (Mẫu Draft/Origin với lodash.isequal)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-emerald-500 mt-1">&#10003;</span>
+                    <span>Đồng bộ toàn bộ cây qua Prisma $transaction</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-emerald-500 mt-1">&#10003;</span>
+                    <span>Thực thi vai trò (chỉ OWNER và EDITOR có thể sửa đổi)</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="space-y-4">
+            <div class="bg-white rounded-xl border border-emerald-200 p-6">
+                <h3 class="font-semibold text-emerald-900 mb-4">Công Nghệ Sử Dụng</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="tech-tag">React Flow (@xyflow/react)</span>
+                    <span class="tech-tag">Dagre.js</span>
+                    <span class="tech-tag">Redux Toolkit</span>
+                    <span class="tech-tag">lodash.isequal</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-emerald-200 p-6">
+                <h3 class="font-semibold text-emerald-900 mb-4">File Nguồn</h3>
+                <div class="space-y-2 text-sm">
+                    <div><span class="font-medium text-gray-700">Trình Chỉnh Sửa Gia Phả:</span> <a href="../project/frontend/src/app/group/" class="text-emerald-600 hover:underline">src/app/group/</a></div>
+                    <div><span class="font-medium text-gray-700">Module Gia Đình:</span> <a href="../project/frontend/src/modules/family/" class="text-emerald-600 hover:underline">src/modules/family/</a></div>
+                    <div><span class="font-medium text-gray-700">Redux Store:</span> <a href="../project/frontend/src/store/family/" class="text-emerald-600 hover:underline">src/store/family/</a></div>
+                    <div><span class="font-medium text-gray-700">Backend API:</span> <a href="../project/backend/src/modules/family/" class="text-emerald-600 hover:underline">src/modules/family/</a></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-emerald-200 p-6">
+                <h3 class="font-semibold text-emerald-900 mb-4">Đường Dẫn</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="route-tag">/group</span>
+                    <span class="route-tag">/api/family/:groupId/sync-family</span>
+                    <span class="route-tag">/api/family/:groupId/members</span>
+                    <span class="route-tag">/api/family/:groupId/relationships</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TAB: NHÓM GIA ĐÌNH ==================== -->
+<div id="tab-groups" class="tab-content hidden">
+    <div class="mb-6">
+        <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-lg font-semibold text-gray-900">Nhóm Gia Đình</h2>
+            <span class="status-badge status-implemented">Đã Triển Khai</span>
+        </div>
+        <p class="text-sm text-gray-500">Tạo nhóm, mời thành viên qua liên kết token, quản lý vai trò</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-violet-200 p-6">
+            <h3 class="font-semibold text-violet-900 mb-4">Tính Năng</h3>
+            <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-start gap-2">
+                    <span class="text-violet-500 mt-1">&#10003;</span>
+                    <span>Tạo và quản lý nhóm gia đình</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-violet-500 mt-1">&#10003;</span>
+                    <span>Truy cập dựa trên vai trò: OWNER / EDITOR / VIEWER</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-violet-500 mt-1">&#10003;</span>
+                    <span>Hệ thống mời với token hết hạn 24 giờ (base64-encoded)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-violet-500 mt-1">&#10003;</span>
+                    <span>Chuyển quyền lãnh đạo (chỉ OWNER)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-violet-500 mt-1">&#10003;</span>
+                    <span>Xóa thành viên bởi chủ nhóm</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-violet-500 mt-1">&#10003;</span>
+                    <span>Công việc tự động dọn dẹp lời mời (hàng ngày lúc nửa đêm)</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="space-y-4">
+            <div class="bg-white rounded-xl border border-violet-200 p-6">
+                <h3 class="font-semibold text-violet-900 mb-4">Công Nghệ Sử Dụng</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="tech-tag">RBAC</span>
+                    <span class="tech-tag">JWT Guards</span>
+                    <span class="tech-tag">Base64 tokens</span>
+                    <span class="tech-tag">@nestjs/schedule</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-violet-200 p-6">
+                <h3 class="font-semibold text-violet-900 mb-4">File Nguồn</h3>
+                <div class="space-y-2 text-sm">
+                    <div><span class="font-medium text-gray-700">Group Family:</span> <a href="../project/backend/src/modules/group-family/" class="text-violet-600 hover:underline">src/modules/group-family/</a></div>
+                    <div><span class="font-medium text-gray-700">Group Members:</span> <a href="../project/backend/src/modules/group-members/" class="text-violet-600 hover:underline">src/modules/group-members/</a></div>
+                    <div><span class="font-medium text-gray-700">Invite:</span> <a href="../project/backend/src/modules/invite/" class="text-violet-600 hover:underline">src/modules/invite/</a></div>
+                    <div><span class="font-medium text-gray-700">Frontend:</span> <a href="../project/frontend/src/modules/group-family/" class="text-violet-600 hover:underline">src/modules/group-family/</a></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-violet-200 p-6">
+                <h3 class="font-semibold text-violet-900 mb-4">Đường Dẫn</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="route-tag">/group</span>
+                    <span class="route-tag">/user/invite</span>
+                    <span class="route-tag">/api/group-family</span>
+                    <span class="route-tag">/api/group-members</span>
+                    <span class="route-tag">/api/invite</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TAB: SỰ KIỆN ==================== -->
+<div id="tab-events" class="tab-content hidden">
+    <div class="mb-6">
+        <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-lg font-semibold text-gray-900">Sự Kiện & Thông Báo</h2>
+            <span class="status-badge status-implemented">Đã Triển Khai</span>
+        </div>
+        <p class="text-sm text-gray-500">Lên lịch sự kiện, nhận thông báo trong ứng dụng & email</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-cyan-200 p-6">
+            <h3 class="font-semibold text-cyan-900 mb-4">Tính Năng</h3>
+            <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-start gap-2">
+                    <span class="text-cyan-500 mt-1">&#10003;</span>
+                    <span>Sự kiện một lần và định kỳ (hàng ngày/tuần/tháng)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-cyan-500 mt-1">&#10003;</span>
+                    <span>Loại sự kiện: SINH NHẬT, CƯỚI HÔN, KỶ NIỆM NGÀY MẤT, KHÁC</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-cyan-500 mt-1">&#10003;</span>
+                    <span>Xem lịch với hộp thoại ngày</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-cyan-500 mt-1">&#10003;</span>
+                    <span>Đ实例 sự kiện (cron-generated với vòng đời trạng thái)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-cyan-500 mt-1">&#10003;</span>
+                    <span>Thông báo trong ứng dụng (GroupNotification)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-cyan-500 mt-1">&#10003;</span>
+                    <span>Thông báo email qua Resend + mẫu react-email</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-cyan-500 mt-1">&#10003;</span>
+                    <span>Vòng đời instance: SCHEDULED → ONGOING → COMPLETED</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="space-y-4">
+            <div class="bg-white rounded-xl border border-cyan-200 p-6">
+                <h3 class="font-semibold text-cyan-900 mb-4">Công Nghệ Sử Dụng</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="tech-tag">@nestjs/schedule</span>
+                    <span class="tech-tag">Resend</span>
+                    <span class="tech-tag">react-email</span>
+                    <span class="tech-tag">date-fns</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-cyan-200 p-6">
+                <h3 class="font-semibold text-cyan-900 mb-4">File Nguồn</h3>
+                <div class="space-y-2 text-sm">
+                    <div><span class="font-medium text-gray-700">Events Module:</span> <a href="../project/backend/src/modules/events/" class="text-cyan-600 hover:underline">src/modules/events/</a></div>
+                    <div><span class="font-medium text-gray-700">Notifications:</span> <a href="../project/backend/src/modules/notifications/" class="text-cyan-600 hover:underline">src/modules/notifications/</a></div>
+                    <div><span class="font-medium text-gray-700">Scheduler:</span> <a href="../project/backend/src/schedule/" class="text-cyan-600 hover:underline">src/schedule/</a></div>
+                    <div><span class="font-medium text-gray-700">Frontend:</span> <a href="../project/frontend/src/modules/events/" class="text-cyan-600 hover:underline">src/modules/events/</a></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-cyan-200 p-6">
+                <h3 class="font-semibold text-cyan-900 mb-4">Đường Dẫn</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="route-tag">/group (lịch)</span>
+                    <span class="route-tag">/api/events</span>
+                    <span class="route-tag">/api/notifications</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TAB: ALBUM & HÌNH ẢNH ==================== -->
+<div id="tab-media" class="tab-content hidden">
+    <div class="mb-6">
+        <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-lg font-semibold text-gray-900">Album & Hình Ảnh</h2>
+            <span class="status-badge status-implemented">Đã Triển Khai</span>
+        </div>
+        <p class="text-sm text-gray-500">Quản lý album ảnh với tải lên Cloudinary CDN</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-teal-200 p-6">
+            <h3 class="font-semibold text-teal-900 mb-4">Tính Năng</h3>
+            <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-start gap-2">
+                    <span class="text-teal-500 mt-1">&#10003;</span>
+                    <span>Các hoạt động CRUD album</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-teal-500 mt-1">&#10003;</span>
+                    <span>Tải ảnh lên Cloudinary CDN</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-teal-500 mt-1">&#10003;</span>
+                    <span>Chèn media blog</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-teal-500 mt-1">&#10003;</span>
+                    <span>Dọn dẹp media mồ côi</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="space-y-4">
+            <div class="bg-white rounded-xl border border-teal-200 p-6">
+                <h3 class="font-semibold text-teal-900 mb-4">Công Nghệ Sử Dụng</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="tech-tag">Cloudinary</span>
+                    <span class="tech-tag">Multer</span>
+                    <span class="tech-tag">next-cloudinary</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-teal-200 p-6">
+                <h3 class="font-semibold text-teal-900 mb-4">File Nguồn</h3>
+                <div class="space-y-2 text-sm">
+                    <div><span class="font-medium text-gray-700">Albums Module:</span> <a href="../project/backend/src/modules/albums/" class="text-teal-600 hover:underline">src/modules/albums/</a></div>
+                    <div><span class="font-medium text-gray-700">Blog Media:</span> <a href="../project/backend/src/modules/blog-media/" class="text-teal-600 hover:underline">src/modules/blog-media/</a></div>
+                    <div><span class="font-medium text-gray-700">Cloudinary Config:</span> <a href="../project/backend/src/common/config/cloudinary/" class="text-teal-600 hover:underline">src/common/config/cloudinary/</a></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TAB: BLOG ==================== -->
+<div id="tab-blog" class="tab-content hidden">
+    <div class="mb-6">
+        <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-lg font-semibold text-gray-900">Quản Lý Blog</h2>
+            <span class="status-badge status-implemented">Đã Triển Khai</span>
+        </div>
+        <p class="text-sm text-gray-500">Trình soạn thảo blog phong phú với bản nháp</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-amber-200 p-6">
+            <h3 class="font-semibold text-amber-900 mb-4">Tính Năng</h3>
+            <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-start gap-2">
+                    <span class="text-amber-500 mt-1">&#10003;</span>
+                    <span>Trình soạn thảo Editor.js phong phú với block tùy chỉnh</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-amber-500 mt-1">&#10003;</span>
+                    <span>Định tuyến dựa trên slug cho bài viết blog</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-amber-500 mt-1">&#10003;</span>
+                    <span>Mẫu chỉnh sửa bản nháp (per-slug trong Redux)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-amber-500 mt-1">&#10003;</span>
+                    <span>Chèn media (hình ảnh, video, marker, danh sách, tiêu đề)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-amber-500 mt-1">&#10003;</span>
+                    <span>Danh sách cho phép slug an toàn cho bài viết có thể chỉnh sửa</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="space-y-4">
+            <div class="bg-white rounded-xl border border-amber-200 p-6">
+                <h3 class="font-semibold text-amber-900 mb-4">Công Nghệ Sử Dụng</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="tech-tag">Editor.js</span>
+                    <span class="tech-tag">@editorjs/header</span>
+                    <span class="tech-tag">@editorjs/image</span>
+                    <span class="tech-tag">@editorjs/list</span>
+                    <span class="tech-tag">@editorjs/marker</span>
+                    <span class="tech-tag">@editorjs/embed</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-amber-200 p-6">
+                <h3 class="font-semibold text-amber-900 mb-4">File Nguồn</h3>
+                <div class="space-y-2 text-sm">
+                    <div><span class="font-medium text-gray-700">Blog Module:</span> <a href="../project/backend/src/modules/blog/" class="text-amber-600 hover:underline">src/modules/blog/</a></div>
+                    <div><span class="font-medium text-gray-700">Blog Media:</span> <a href="../project/backend/src/modules/blog-media/" class="text-amber-600 hover:underline">src/modules/blog-media/</a></div>
+                    <div><span class="font-medium text-gray-700">Frontend:</span> <a href="../project/frontend/src/modules/blog/" class="text-amber-600 hover:underline">src/modules/blog/</a></div>
+                    <div><span class="font-medium text-gray-700">Redux Store:</span> <a href="../project/frontend/src/store/blog/" class="text-amber-600 hover:underline">src/store/blog/</a></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-amber-200 p-6">
+                <h3 class="font-semibold text-amber-900 mb-4">Đường Dẫn</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="route-tag">/admin/blogs</span>
+                    <span class="route-tag">/admin/blog_editor</span>
+                    <span class="route-tag">/api/blog</span>
+                    <span class="route-tag">/api/blog-media</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TAB: QUẢN TRỊ ==================== -->
+<div id="tab-admin" class="tab-content hidden">
+    <div class="mb-6">
+        <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-lg font-semibold text-gray-900">Bảng Quản Trị</h2>
+            <span class="status-badge status-partial">Một Phần</span>
+        </div>
+        <p class="text-sm text-gray-500">Bảng điều khiển và giao diện quản lý</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Đã Triển Khai</h3>
+            <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">&#10003;</span>
+                    <span>Tổng quan bảng điều khiển quản trị</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">&#10003;</span>
+                    <span>Quản lý người dùng (danh sách, xem)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-green-500 mt-1">&#10003;</span>
+                    <span>Quản lý blog (danh sách, trình soạn thảo)</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Dự Kiến</h3>
+            <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-start gap-2">
+                    <span class="text-gray-400 mt-1">&#9675;</span>
+                    <span>Xem phản hồi người dùng</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-gray-400 mt-1">&#9675;</span>
+                    <span>Quản lý vé hỗ trợ</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-gray-400 mt-1">&#9675;</span>
+                    <span>Xem nhật ký hoạt động</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="mt-6 bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="font-semibold text-gray-900 mb-4">File Nguồn</h3>
+        <div class="space-y-2 text-sm">
+            <div><span class="font-medium text-gray-700">Admin Pages:</span> <a href="../project/frontend/src/app/admin/" class="text-indigo-600 hover:underline">src/app/admin/</a></div>
+            <div><span class="font-medium text-gray-700">User Module:</span> <a href="../project/frontend/src/modules/user/" class="text-indigo-600 hover:underline">src/modules/user/</a></div>
+            <div><span class="font-medium text-gray-700">Backend Users:</span> <a href="../project/backend/src/modules/users/" class="text-indigo-600 hover:underline">src/modules/users/</a></div>
+        </div>
+    </div>
+</div>
+
+</main>
+
+<!-- Footer -->
+<footer class="bg-white border-t border-gray-200 mt-12">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="flex flex-wrap justify-center gap-4 text-sm">
+            <a href="../README.md" class="text-gray-500 hover:text-indigo-600">README Gốc</a>
+            <a href="../project/backend/README.md" class="text-gray-500 hover:text-emerald-600">Tài Liệu Backend</a>
+            <a href="../project/frontend/README.md" class="text-gray-500 hover:text-indigo-600">Tài Liệu Frontend</a>
+            <a href="architecture_map.html" class="text-gray-500 hover:text-violet-600">Kiến Trúc Hệ Thống</a>
+            <a href="en-features.html" class="text-gray-500 hover:text-violet-600">Features (EN)</a>
+        </div>
+        <div class="text-center text-xs text-gray-400 mt-3">
+            Family Free Management — Các Tính Năng Hệ Thống · Được tạo từ phân tích codebase
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Tab switching
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(function(el) {
+            el.classList.add('hidden');
+        });
+        document.querySelectorAll('.tab-btn').forEach(function(el) {
+            el.classList.remove('active');
+            el.classList.add('text-gray-600');
+        });
+        var tab = document.getElementById('tab-' + tabId);
+        if (tab) {
+            tab.classList.remove('hidden');
+            tab.classList.add('fade-in');
+        }
+        var btn = document.querySelector('[onclick="switchTab(\'' + tabId + '\')"]');
+        if (btn) {
+            btn.classList.add('active');
+            btn.classList.remove('text-gray-600');
+        }
+        // Highlight feature card in overview
+        document.querySelectorAll('.feature-card').forEach(function(card) {
+            card.classList.remove('active');
+            if (card.getAttribute('data-feature') === tabId) {
+                card.classList.add('active');
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
