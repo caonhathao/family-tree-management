@@ -11,8 +11,11 @@ export default async function FeaturesPage({
   const { part } = await searchParams;
   const slug = part || "";
 
-  const blog: IBlogDto | ApiResponse<IBlogDto, unknown> =
-    await getBlogAction(slug);
+  const blogFetch: ApiResponse<IBlogDto> | null = slug
+    ? await getBlogAction(slug)
+    : null;
 
-  return <FeatureEditor blog={blog} slug={slug} />;
+  if (blogFetch && "data" in blogFetch) {
+    return <FeatureEditor blog={blogFetch.data} slug={slug} />;
+  }
 }

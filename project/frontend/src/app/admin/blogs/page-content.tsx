@@ -40,6 +40,7 @@ export function BlogContentPage<TData, TValue>({
           columns={columns}
           data={data.data}
           pagination={data.pagination}
+          defaultColumnVisibility={{ createdAt: false, updatedAt: false }}
         />
       ) : null}
     </div>

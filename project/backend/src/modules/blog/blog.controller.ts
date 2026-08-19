@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -88,6 +89,25 @@ export class BlogController {
     return ResponseFactory.success({
       data: blog,
       message: ValidMessageResponse.GETTED,
+    });
+  }
+
+  @Delete(':slug')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Delete a blog (admin only)' })
+  @ApiParam({ name: 'slug', description: 'Blog slug' })
+  @ApiResponse({ status: 200, description: 'Blog deleted successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Blog not found' })
+  async deleteBlog(
+    @GetCurrentUserId() userId: string,
+    @Param('slug') slug: string,
+  ) {
+    const result = await this.blogService.delete(slug, userId);
+    return ResponseFactory.success({
+      data: result,
+      message: ValidMessageResponse.DELETED,
     });
   }
 }

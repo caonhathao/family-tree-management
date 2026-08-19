@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
   getPaginationRowModel,
+  VisibilityState,
 } from "@tanstack/react-table";
 
 import {
@@ -18,6 +19,14 @@ import {
 } from "@/components/ui/table";
 import { useState } from "react";
 import { FooterTable } from "./footer-table";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Columns3 } from "lucide-react";
 
 export interface IPagination {
   totalItems: number;
@@ -29,14 +38,19 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pagination?: IPagination;
+  defaultColumnVisibility?: VisibilityState;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   pagination,
+  defaultColumnVisibility = {},
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+    defaultColumnVisibility,
+  );
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -46,12 +60,46 @@ export function DataTable<TData, TValue>({
     onRowSelectionChange: setRowSelection,
     state: {
       rowSelection,
+      columnVisibility,
     },
+    onColumnVisibilityChange: setColumnVisibility,
     getPaginationRowModel: getPaginationRowModel(),
   });
 
   return (
     <div className={"w-full p-2"}>
+      <div className={"flex items-center justify-end pb-2"}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant={"outline"} className={"ml-auto h-8 gap-2"}>
+              <Columns3 className={"h-4 w-4"} />
+              <span>Hiển thị</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align={"end"}>
+            {table
+              .getAllLeafColumns()
+              .filter(
+                (column) => column.getCanHide() && column.id !== "actions",
+              )
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {typeof column.columnDef.header === "string"
+                      ? column.columnDef.header
+                      : column.id}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       <div className={"overflow-hidden rounded-md border"}>
         <Table>
           <TableHeader>
@@ -102,7 +150,6 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      {/* footer of table */}
       <FooterTable table={table} pagination={pagination} />
     </div>
   );

@@ -50,9 +50,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ApiResponse } from "@/types/api.types";
 
 interface FeatureEditorProps {
-  blog: IBlogDto | ApiResponse<IBlogDto, unknown>;
+  blog: ApiResponse<IBlogDto, unknown>;
   slug: string;
-  list: IPaginationBase<IBlogsDto[]> | ApiResponse<IBlogsDto[], unknown>;
+  list: ApiResponse<IBlogsDto[], unknown>;
 }
 
 const EDITOR_HOLDER_ID = "editorjs";
@@ -170,8 +170,8 @@ export default function FeatureEditorInternal({
         initEditor();
       }
     }
-    if (blog && "content" in blog && typeof blog.content === "string") {
-      dispatch(initializeBlog(blog));
+    if (blog && "data" in blog && blog.data) {
+      dispatch(initializeBlog(blog.data));
     }
 
     return () => {
@@ -189,6 +189,58 @@ export default function FeatureEditorInternal({
     // console.log(slug);
   }, [blog, data, slug]);
 
+  useEffect(() => {
+    const isModified = blogs[slug]?.isModified ?? false;
+    if (!isModified) return;
+
+    const message = "Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn thoát?";
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = message;
+      return message;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [blogs, slug]);
+
+  useEffect(() => {
+    const isModified = blogs[slug]?.isModified ?? false;
+    if (!isModified) return;
+
+    const message = "Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn thoát?";
+
+    const originalPush = router.push.bind(router);
+
+    // eslint-disable-next-line react-hooks/immutability, @typescript-eslint/no-explicit-any
+    (router as any).push = (href: string, options?: any) => {
+      if (window.confirm(message)) {
+        return originalPush(href, options);
+      }
+    };
+
+    return () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (router as any).push = originalPush;
+    };
+  }, [blogs, slug, router]);
+
+  useEffect(() => {
+    const isModified = blogs[slug]?.isModified ?? false;
+    if (!isModified) return;
+
+    const message = "Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn thoát?";
+
+    const handlePopState = () => {
+      if (!window.confirm(message)) {
+        history.pushState(null, "", location.href);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [blogs, slug]);
+
   const handleEdit = () => {
     if (ejInstance.current) {
       ejInstance.current.readOnly.toggle(false);
@@ -201,14 +253,24 @@ export default function FeatureEditorInternal({
       ejInstance.current.readOnly.toggle(true);
       setIsReadOnly(true);
       try {
-        const originData = safeJsonParse(
-          blogs[slug].origin.content,
-        ) as OutputData;
+        if (blogs[slug]) {
+          const originData = safeJsonParse(
+            blogs[slug].origin.content,
+          ) as OutputData;
 
-        if (originData) {
-          setData(originData);
-          dispatch(syncSuccess(blogs[slug].origin));
-          ejInstance.current.render(originData);
+          if (originData) {
+            setData(originData);
+            dispatch(syncSuccess(blogs[slug].origin));
+            ejInstance.current.render(originData);
+          }
+        } else {
+          const emptyData: OutputData = {
+            time: Date.now(),
+            blocks: [],
+            version: "2.28.2",
+          };
+          setData(emptyData);
+          ejInstance.current.render(emptyData);
         }
       } catch (e) {
         setData({
@@ -239,7 +301,7 @@ export default function FeatureEditorInternal({
         });
         return;
       }
-      if (res && "id" in res && res.id?.length !== 0) {
+      if (res && "data" in res && res.data) {
         setData(savedData);
         ejInstance.current.readOnly.toggle(true);
         setIsReadOnly(true);
@@ -249,7 +311,7 @@ export default function FeatureEditorInternal({
           type: "success",
           cancel: { label: "OK", onClick: () => {} },
         });
-        dispatch(syncSuccess(res));
+        dispatch(syncSuccess(res.data));
       } else if (res && "errors" in res) {
         if (res.message === "Unauthorized") {
           const callbackUrl = encodeURIComponent(window.location.href);
@@ -371,27 +433,35 @@ export default function FeatureEditorInternal({
                 </Tooltip>
               </form>
             ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    size={"icon"}
-                    className={
-                      "hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
-                    }
-                    onClick={() => handleEdit()}
-                  >
-                    <FaPen />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Chỉnh sửa</TooltipContent>
-              </Tooltip>
+              <>
+                <Field>
+                  <Input id={"new-slug-name"} value={slug} readOnly />
+                </Field>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      size={"icon"}
+                      className={
+                        "hover:cursor-pointer border hover:shadow-md active:scale-[0.98]"
+                      }
+                      onClick={() => handleEdit()}
+                    >
+                      <FaPen />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Chỉnh sửa</TooltipContent>
+                </Tooltip>
+              </>
             )}
           </div>
         ) : (
           <div className={"flex flex-row justify-between items-center gap-2"}>
+            <Field>
+              <Input id={"new-slug-name"} value={slug} readOnly />
+            </Field>
             <Button
-              variant={"outline"}
+              variant={"default"}
               onClick={() => handleSave()}
               className={
                 "hover:cursor-pointer text-sm hover:shadow-sm active:scale-[0.98] sm:text-base"
@@ -400,7 +470,7 @@ export default function FeatureEditorInternal({
               Lưu
             </Button>
             <Button
-              variant={"secondary"}
+              variant={"outline"}
               onClick={handleCancel}
               className={
                 "hover:cursor-pointer text-sm hover:shadow-sm active:scale-[0.98] sm:text-base"

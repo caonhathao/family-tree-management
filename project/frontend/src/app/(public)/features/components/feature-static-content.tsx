@@ -75,7 +75,7 @@ const FeatureStaticContent = () => {
             <Button
               variant={"link"}
               className={"hover:cursor-pointer text-sm sm:text-base"}
-              onClick={() => router.push("/features?part=event")}
+              onClick={() => router.push("/features?part=events")}
             >
               Xem thêm
             </Button>

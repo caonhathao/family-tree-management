@@ -13,15 +13,13 @@ interface BlogState {
   };
 }
 
-const safeSlug = ["build-flow", "group-family", "group-members", "events"];
-
 const createEmptyBlog = (slug: string): IBlogDto => ({
   id: "",
   slug: slug,
   title: "",
   content: "",
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  createdAt: "",
+  updatedAt: "",
 });
 
 const blogSlice = createSlice({
@@ -30,7 +28,7 @@ const blogSlice = createSlice({
   reducers: {
     initializeBlog: (state, action: PayloadAction<IBlogDto>) => {
       const { slug, content } = action.payload;
-      if (!state.blogs[slug] && safeSlug.includes(slug)) {
+      if (!state.blogs[slug]) {
         if (content.length !== 0) {
           state.blogs[slug] = {
             origin: action.payload,

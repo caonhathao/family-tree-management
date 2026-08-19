@@ -209,6 +209,34 @@ export class BlogService {
     }
   }
 
+  async delete(slug: string, userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, role: true },
+      });
+      if (!user) throw new NotFoundException(Exception.NOT_EXIST);
+      if (user.role !== USER_ROLE.ADMIN)
+        throw new ForbiddenException(Exception.PEMRISSION);
+
+      const blog = await this.prisma.blog.findUnique({
+        where: { slug },
+        select: { id: true },
+      });
+      if (!blog) throw new NotFoundException(Exception.NOT_EXIST);
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.blogMedia.deleteMany({ where: { blogId: blog.id } });
+        await tx.blog.delete({ where: { slug } });
+      });
+
+      return { id: blog.id, slug };
+    } catch (err) {
+      console.log('error at delete blog service:', err);
+      throw err;
+    }
+  }
+
   private extractMediaUrls(data: EditorData): string[] {
     const urls: string[] = [];
     data.blocks.forEach((block) => {
