@@ -26,6 +26,8 @@ export function Pagination<TData>({
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const currentPageSize = pagination?.pageSize ?? 10;
+
   return (
     <div className={"ml-auto flex items-center gap-2 lg:ml-0"}>
       <Button
@@ -35,7 +37,7 @@ export function Pagination<TData>({
         }
         onClick={() => {
           table.setPageIndex(0);
-          handleChangePage(10, 1);
+          handleChangePage(currentPageSize, 1);
         }}
         disabled={pagination ? pagination?.currentPage - 1 <= 0 : true}
       >
@@ -51,7 +53,7 @@ export function Pagination<TData>({
         size={"icon"}
         onClick={() => {
           table.previousPage();
-          handleChangePage(10, (pagination?.currentPage ?? 1) - 1);
+          handleChangePage(currentPageSize, (pagination?.currentPage ?? 1) - 1);
         }}
         disabled={pagination ? pagination?.currentPage - 1 <= 0 : true}
       >
@@ -66,7 +68,7 @@ export function Pagination<TData>({
         size={"icon"}
         onClick={() => {
           table.nextPage();
-          handleChangePage(10, (pagination?.currentPage ?? 1) + 1);
+          handleChangePage(currentPageSize, (pagination?.currentPage ?? 1) + 1);
         }}
         disabled={
           pagination ? pagination.currentPage + 1 > pagination.totalPages : true
@@ -83,7 +85,7 @@ export function Pagination<TData>({
         size={"icon"}
         onClick={() => {
           table.setPageIndex(table.getPageCount() - 1);
-          handleChangePage(10, pagination?.totalPages ?? 1);
+          handleChangePage(currentPageSize, pagination?.totalPages ?? 1);
         }}
         disabled={
           pagination ? pagination.currentPage + 1 > pagination.totalPages : true

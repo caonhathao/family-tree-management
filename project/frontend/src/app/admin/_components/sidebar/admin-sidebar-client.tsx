@@ -26,6 +26,7 @@ import { SidebarGroupContent } from "@/components/custom/sidebar-group";
 import { MdOutlineSpaceDashboard } from "react-icons/md";
 import { useRouter } from "next/navigation";
 import { ApiResponse } from "@/types/api.types";
+import { logoutAction } from "@/modules/auth/auth.actions";
 
 const data: Record<string, dataProps> = {
   general: {
@@ -144,7 +145,10 @@ export const AdminSidebarClient = ({
               </DropdownMenuItem>
               <DropdownMenuItem
                 className={"hover:cursor-pointer"}
-                onClick={() => router.push("/")}
+                onClick={async () => {
+                  await logoutAction();
+                  router.push("/");
+                }}
               >
                 <IoMdHome />
                 Đăng xuất
@@ -153,7 +157,7 @@ export const AdminSidebarClient = ({
           </DropdownMenu>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarGroupContent data={data.genetal} />
+      <SidebarGroupContent data={data.general} />
       <SidebarGroupContent data={data.user} />
       <SidebarGroupContent data={data.blog} />
       <SidebarGroupContent data={data.support} />
