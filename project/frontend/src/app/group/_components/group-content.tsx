@@ -2,7 +2,7 @@
 import { IResponseGroupFamilyDetailDto } from "@/modules/group-family/group-family.dto";
 import { FamilyInfoDrawer } from "./family-info-drawer";
 import { PanelEditor } from "./menu-editor/panel-editor";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import NewFamilyMemberForm from "./forms/family-member-form";
 import { IDraftFamilyData } from "@/types/draft.types";
 import NewFamilyForm from "./forms/new-family-form";
@@ -71,7 +71,6 @@ export const GroupContentPage = ({
     toMemberId: string;
   } | null>(null);
   const [tempEdgeId, setTempEdgeId] = useState<string | null>(null);
-  const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   if (!openRelationForm && editingRelation !== null) setEditingRelation(null);
   if (!openRelationForm && prefillRelation !== null) setPrefillRelation(null);
 
@@ -93,7 +92,6 @@ export const GroupContentPage = ({
   if (!openRelationForm && tempEdgeId !== null) {
     setEdges((eds) => eds.filter((e) => e.id !== tempEdgeId));
     setTempEdgeId(null);
-    setConnectingFrom(null);
   }
 
   const onNodeDoubleClick = (event: React.MouseEvent, node: Node) => {
@@ -112,17 +110,6 @@ export const GroupContentPage = ({
       setOpenRelationForm(true);
     }
   };
-
-  const onConnectStart = useCallback(
-    (_: MouseEvent | TouchEvent, params: { nodeId: string | null }) => {
-      setConnectingFrom(params.nodeId);
-    },
-    [],
-  );
-
-  const onConnectEnd = useCallback(() => {
-    setConnectingFrom(null);
-  }, []);
 
   const onConnect = (connection: Connection) => {
     if (!connection.source || !connection.target) return;
@@ -304,19 +291,14 @@ export const GroupContentPage = ({
         "familyNode",
         labels,
       );
-      setNodes(flowNodes);
+      const nodesWithPinned = flowNodes.map((node) => ({
+        ...node,
+        data: { ...node.data, isPinned: node.id === pinnedMemberId },
+      }));
+      setNodes(nodesWithPinned);
       setEdges(flowEdges);
     }
-  }, [draft, labels, setNodes, setEdges]);
-
-  useEffect(() => {
-    setNodes((nds) =>
-      nds.map((node) => ({
-        ...node,
-        data: { ...node.data, connectingFrom },
-      })),
-    );
-  }, [connectingFrom, setNodes]);
+  }, [draft, labels, pinnedMemberId, setNodes, setEdges]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -361,9 +343,6 @@ export const GroupContentPage = ({
           nodesDraggable={nodesDraggable}
           setNodesDraggable={setNodesDraggable}
           groupId={group.id}
-          pinnedMemberId={pinnedMemberId}
-          setPinnedMemberId={setPinnedMemberId}
-          members={draft.members}
         />
         {/* this section is for settings, info and other actions related to the family tree. It is fixed on the top right corner of the screen and contains drawers for family info and settings. */}
         <div className={"w-fit fixed top-20 right-5 z-50 flex flex-col gap-3"}>
@@ -394,6 +373,9 @@ export const GroupContentPage = ({
             setCurrentData={setEditingMember}
             openState={openFamilyMemberForm}
             setOpenState={setOpenFamilyMemberForm}
+            groupId={group.id}
+            pinnedMemberId={pinnedMemberId}
+            setPinnedMemberId={setPinnedMemberId}
           />
         )}
         {openFamilyForm && (
@@ -419,8 +401,6 @@ export const GroupContentPage = ({
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onConnectStart={onConnectStart}
-            onConnectEnd={onConnectEnd}
             connectionRadius={60}
             nodeTypes={nodeTypes}
             fitView
@@ -428,8 +408,6 @@ export const GroupContentPage = ({
             onEdgeClick={onEdgeClick}
             nodesDraggable={nodesDraggable}
             onNodeDragStop={onNodeDragStop}
-            // Vô hiệu hóa kéo node nếu bạn muốn chỉ dùng Panel để sửa
-            // nodesDraggable={true}
           >
             {showGrid && (
               <Background variant={BackgroundVariant.Dots} gap={20} />

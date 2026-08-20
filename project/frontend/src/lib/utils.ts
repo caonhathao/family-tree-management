@@ -15,11 +15,11 @@ function getParents(
 ): string[] {
   const parents: string[] = [];
   for (const r of rels) {
-    if (r.type === "PARENT" && r.fromMemberId === memberId) {
-      parents.push(r.toMemberId);
-    }
-    if (r.type === "CHILD" && r.toMemberId === memberId) {
+    if (r.type === "PARENT" && r.toMemberId === memberId) {
       parents.push(r.fromMemberId);
+    }
+    if (r.type === "CHILD" && r.fromMemberId === memberId) {
+      parents.push(r.toMemberId);
     }
   }
   return parents;
@@ -31,10 +31,10 @@ function getChildren(
 ): string[] {
   const children: string[] = [];
   for (const r of rels) {
-    if (r.type === "CHILD" && r.fromMemberId === memberId) {
+    if (r.type === "PARENT" && r.fromMemberId === memberId) {
       children.push(r.toMemberId);
     }
-    if (r.type === "PARENT" && r.toMemberId === memberId) {
+    if (r.type === "CHILD" && r.toMemberId === memberId) {
       children.push(r.fromMemberId);
     }
   }
@@ -99,14 +99,7 @@ export function computeLabels(
     }
   }
 
-  // If no grandparents found, try to infer from parents directly
-  if (grandparents.length === 0) {
-    for (const parent of parents) {
-      grandparents.push({ id: parent, side: grandparents.length === 0 ? "paternal" : "maternal" });
-    }
-  }
-
-  // If still nothing, label parents directly
+  // If no grandparents found, label parents directly
   if (grandparents.length === 0) {
     for (const pid of parents) {
       const p = memberMap.get(pid);

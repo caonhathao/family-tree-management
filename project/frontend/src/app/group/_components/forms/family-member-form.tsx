@@ -28,10 +28,11 @@ import { AppDispatch, RootState } from "@/store";
 import { setDraft } from "@/store/family/familySlice";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useCallback, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 } from "uuid";
+import { pinMemberAction } from "@/modules/group-family/group-family.actions";
 
 const NewFamilyMemberForm = ({
   currentData,
@@ -39,12 +40,18 @@ const NewFamilyMemberForm = ({
 
   setCurrentData,
   setOpenState,
+  groupId,
+  pinnedMemberId,
+  setPinnedMemberId,
 }: {
   currentData?: IFamilyMemberDto | null;
   openState: boolean;
 
   setOpenState: Dispatch<SetStateAction<boolean>>;
   setCurrentData: Dispatch<SetStateAction<IFamilyMemberDto | null>>;
+  groupId: string;
+  pinnedMemberId: string | null;
+  setPinnedMemberId: Dispatch<SetStateAction<string | null>>;
 }) => {
   const {
     register,
@@ -56,20 +63,54 @@ const NewFamilyMemberForm = ({
     formState: { errors },
   } = useForm<IFamilyMemberDto>({
     resolver: zodResolver(FamilyMemberSchema),
-    defaultValues: currentData || {
-      localId: "",
-      fullName: "",
-      gender: "",
-      dateOfBirth: "",
-      dateOfDeath: "",
-      isAlive: true,
-      biography: "",
-      generation: 1,
-    },
+    defaultValues: currentData
+      ? {
+          ...currentData,
+          dateOfBirth: currentData.dateOfBirth
+            ? currentData.dateOfBirth.split("T")[0]
+            : "",
+          dateOfDeath: currentData.dateOfDeath
+            ? currentData.dateOfDeath.split("T")[0]
+            : "",
+        }
+      : {
+          localId: "",
+          fullName: "",
+          gender: "",
+          dateOfBirth: "",
+          dateOfDeath: "",
+          isAlive: true,
+          biography: "",
+          generation: 1,
+        },
   });
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const isAlive = watch("isAlive");
+
+  const isPinned = currentData ? currentData.localId === pinnedMemberId : false;
+
+  const handlePin = useCallback(async () => {
+    if (!currentData) return;
+    try {
+      if (isPinned) {
+        const result = await pinMemberAction(groupId, null);
+        if (result && "pinnedMemberId" in result) {
+          setPinnedMemberId(null);
+          Toaster({ title: "Thành công", description: "Đã bỏ ghim.", type: "success" });
+        }
+      } else {
+        const result = await pinMemberAction(groupId, currentData.localId);
+        if (result && "pinnedMemberId" in result) {
+          setPinnedMemberId(currentData.localId);
+          Toaster({ title: "Thành công", description: "Đã ghim thành viên.", type: "success" });
+        }
+      }
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      Toaster({ title: "Lỗi", description: err?.message || "Không thể ghim thành viên.", type: "error" });
+    }
+  }, [currentData, groupId, isPinned, setPinnedMemberId]);
 
   useEffect(() => {
     if (isAlive) {
@@ -104,7 +145,7 @@ const NewFamilyMemberForm = ({
 
     const finalValues = {
       ...values,
-      localId: v4(),
+      localId: isUpdate && currentData ? currentData.localId : v4(),
       positionX: position.x,
       positionY: position.y,
     };
@@ -322,6 +363,25 @@ const NewFamilyMemberForm = ({
                   Thành viên này còn sống
                 </Label>
               </div>
+              {currentData && (
+                <div className={"flex items-center space-x-2 py-2"}>
+                  <input
+                    type={"checkbox"}
+                    id={"isMe"}
+                    className={
+                      "h-4 w-4 rounded border-gray-300 hover:cursor-pointer"
+                    }
+                    checked={isPinned}
+                    onChange={handlePin}
+                  />
+                  <Label
+                    htmlFor={"isMe"}
+                    className={"font-normal cursor-pointer text-sm sm:text-base"}
+                  >
+                    Đây là tôi
+                  </Label>
+                </div>
+              )}
               <Field>
                 <Label
                   htmlFor={"biography"}
@@ -354,7 +414,7 @@ const NewFamilyMemberForm = ({
                     "w-full md:w-4/5 lg:w-fit flex justify-center items-center gap-2 border border-primary/20 hover:shadow-md active:scale-[0.98] text-sm hover:cursor-pointer sm:text-base"
                   }
                 >
-                  Tạo
+                  {currentData ? "Cập nhật" : "Tạo"}
                 </Button>
                 <Button
                   type={"button"}
