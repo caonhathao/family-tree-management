@@ -127,6 +127,7 @@ export class GroupFamilyService {
             },
             role: true,
             isLeader: true,
+            pinnedMemberId: true,
           },
         },
         createdAt: true,
@@ -269,6 +270,37 @@ export class GroupFamilyService {
       console.log('failed at quitGroup of group-family service: ', err);
       throw err;
     }
+  }
+
+  async pinMember(
+    userId: string,
+    groupId: string,
+    familyMemberId: string | null,
+  ): Promise<{ pinnedMemberId: string | null }> {
+    if (!isUUID(groupId, 'all')) {
+      throw new NotFoundException(Exception.NOT_EXIST);
+    }
+
+    const groupMember = await this.prisma.groupMember.findFirst({
+      where: {
+        memberId: userId,
+        groupId: groupId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!groupMember) {
+      throw new NotFoundException(Exception.NOT_EXIST);
+    }
+
+    await this.prisma.groupMember.update({
+      where: { id: groupMember.id },
+      data: { pinnedMemberId: familyMemberId },
+    });
+
+    return { pinnedMemberId: familyMemberId };
   }
 
   async joinGroup(token: string, getterId: string): Promise<JoinGroupData> {

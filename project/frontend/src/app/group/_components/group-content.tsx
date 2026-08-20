@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import NewFamilyMemberForm from "./forms/family-member-form";
 import { IDraftFamilyData } from "@/types/draft.types";
 import NewFamilyForm from "./forms/new-family-form";
-import { mapDraftToFlow } from "@/lib/utils";
+import { mapDraftToFlow, computeLabels } from "@/lib/utils";
 import {
   ReactFlow,
   Background,
@@ -77,6 +77,7 @@ export const GroupContentPage = ({
 
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [openDayDialog, setOpenDayDialog] = useState<boolean>(false);
+  const [pinnedMemberId, setPinnedMemberId] = useState<string | null>(null);
 
   const { draft } = useSelector((state: RootState) => state.family);
   const { profile } = useSelector((state: RootState) => state.user);
@@ -275,15 +276,38 @@ export const GroupContentPage = ({
   };
 
   useEffect(() => {
+    if (family) {
+      dispatch(setOrigin(family));
+    }
+  }, [dispatch, family]);
+
+  useEffect(() => {
+    if (group && "id" in group) {
+      const myMember = group.groupMembers.find(
+        (m) => m.member.userProfile.userId === profile?.id,
+      );
+      if (myMember) {
+        setPinnedMemberId(myMember.pinnedMemberId ?? null);
+      }
+    }
+  }, [group, profile]);
+
+  const labels = useMemo(() => {
+    if (!pinnedMemberId) return new Map<string, string>();
+    return computeLabels(pinnedMemberId, draft);
+  }, [pinnedMemberId, draft]);
+
+  useEffect(() => {
     if (draft && draft.members && draft.family.localId.length !== 0) {
       const { nodes: flowNodes, edges: flowEdges } = mapDraftToFlow(
         draft,
         "familyNode",
+        labels,
       );
       setNodes(flowNodes);
       setEdges(flowEdges);
     }
-  }, [draft, setNodes, setEdges]);
+  }, [draft, labels, setNodes, setEdges]);
 
   useEffect(() => {
     setNodes((nds) =>
@@ -293,12 +317,6 @@ export const GroupContentPage = ({
       })),
     );
   }, [connectingFrom, setNodes]);
-
-  useEffect(() => {
-    if (family) {
-      dispatch(setOrigin(family));
-    }
-  }, [dispatch, family]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -343,6 +361,9 @@ export const GroupContentPage = ({
           nodesDraggable={nodesDraggable}
           setNodesDraggable={setNodesDraggable}
           groupId={group.id}
+          pinnedMemberId={pinnedMemberId}
+          setPinnedMemberId={setPinnedMemberId}
+          members={draft.members}
         />
         {/* this section is for settings, info and other actions related to the family tree. It is fixed on the top right corner of the screen and contains drawers for family info and settings. */}
         <div className={"w-fit fixed top-20 right-5 z-50 flex flex-col gap-3"}>

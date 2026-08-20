@@ -22,6 +22,7 @@ export interface GroupMemberResponse {
   };
   role: MEMBER_ROLE;
   isLeader: boolean;
+  pinnedMemberId: string | null;
 }
 
 export interface GroupDetail extends GroupData {

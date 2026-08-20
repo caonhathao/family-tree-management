@@ -14,12 +14,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AppDispatch, RootState } from "@/store";
 import { deleteFamily, saveFamilyDraft } from "@/store/family/familyThunk";
+import { pinMemberAction } from "@/modules/group-family/group-family.actions";
 
 import { motion, useDragControls } from "framer-motion";
 import isEqual from "lodash.isequal";
 import {
   Dispatch,
   SetStateAction,
+  useCallback,
   useRef,
   useState,
   useTransition,
@@ -29,10 +31,11 @@ import { FaPlus, FaRegSave, FaSort } from "react-icons/fa";
 import { IoCreateOutline, IoLink } from "react-icons/io5";
 import { LuLayoutPanelTop, LuGripVertical, LuEraser } from "react-icons/lu";
 import { MdOutlineGrid4X4 } from "react-icons/md";
-import { RiDragMoveFill } from "react-icons/ri";
+import { RiDragMoveFill, RiPushpinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { IDraftFamilyData } from "@/types/draft.types";
+import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 export interface IPanelEditorProps {
   groupId: string;
   constraintsRef: React.RefObject<HTMLDivElement | null>;
@@ -44,6 +47,9 @@ export interface IPanelEditorProps {
   onLayout: () => void;
   nodesDraggable: boolean;
   setNodesDraggable: Dispatch<SetStateAction<boolean>>;
+  pinnedMemberId: string | null;
+  setPinnedMemberId: Dispatch<SetStateAction<string | null>>;
+  members: IFamilyMemberDto[];
 }
 
 export const handleSaveFamilyDraft = async ({
@@ -149,6 +155,9 @@ export const PanelEditor = ({
   onLayout,
   nodesDraggable,
   setNodesDraggable,
+  pinnedMemberId,
+  setPinnedMemberId,
+  members,
 }: IPanelEditorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const controls = useDragControls();
@@ -161,6 +170,30 @@ export const PanelEditor = ({
   };
 
   const [isPending, startTransition] = useTransition();
+
+  const handlePin = useCallback(
+    async (memberId: string | null) => {
+      try {
+        const result = await pinMemberAction(groupId, memberId);
+        if (result && "pinnedMemberId" in result) {
+          setPinnedMemberId(result.pinnedMemberId);
+          Toaster({
+            title: "Thành công",
+            description: memberId ? "Đã ghim thành viên." : "Đã bỏ ghim.",
+            type: "success",
+          });
+        }
+      } catch (error: unknown) {
+        const err = error as { message?: string };
+        Toaster({
+          title: "Lỗi",
+          description: err?.message || "Không thể ghim thành viên.",
+          type: "error",
+        });
+      }
+    },
+    [groupId, setPinnedMemberId],
+  );
 
   return (
     <motion.div
@@ -277,6 +310,37 @@ export const PanelEditor = ({
               <BiDetail />
               Chi tiết
             </DropdownMenuCheckboxItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className={"text-xs sm:text-sm lg:text-base"}>
+              Ghim thành viên
+            </DropdownMenuLabel>
+            {pinnedMemberId && (
+              <DropdownMenuItem
+                className={
+                  "hover:cursor-pointer text-sm sm:text-base lg:text-base text-red-500"
+                }
+                onClick={() => handlePin(null)}
+              >
+                <RiPushpinLine />
+                Bỏ ghim
+              </DropdownMenuItem>
+            )}
+            {members
+              .filter((m) => m.localId !== pinnedMemberId)
+              .map((m) => (
+                <DropdownMenuItem
+                  key={m.localId}
+                  className={
+                    "hover:cursor-pointer text-sm sm:text-base lg:text-base"
+                  }
+                  onClick={() => handlePin(m.localId)}
+                >
+                  <RiPushpinLine />
+                  {m.fullName}
+                </DropdownMenuItem>
+              ))}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>

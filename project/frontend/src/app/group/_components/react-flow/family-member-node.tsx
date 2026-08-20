@@ -5,6 +5,7 @@ interface FamilyMemberNodeProps {
   id: string;
   data: IFamilyMemberDto & {
     connectingFrom?: string | null;
+    relationshipLabel?: string | null;
   };
 }
 
@@ -18,7 +19,7 @@ export const FamilyMemberNode = ({ id, data }: FamilyMemberNodeProps) => {
 
   return (
     <div
-      className={`px-4 py-2 shadow-md rounded-md border-2 bg-white transition-shadow hover:shadow-lg ${data.gender === "male" ? "border-blue-400" : "border-pink-400"}`}
+      className={`px-4 py-2 shadow-md rounded-md border-2 bg-white transition-shadow hover:shadow-lg ${data.gender === "MALE" ? "border-blue-400" : "border-pink-400"}`}
     >
       <div className={"flex items-center"}>
         <div
@@ -30,6 +31,11 @@ export const FamilyMemberNode = ({ id, data }: FamilyMemberNodeProps) => {
         </div>
         <div className={"ml-2"}>
           <div className={"text-sm font-bold"}>{data.fullName}</div>
+          {data.relationshipLabel && (
+            <div className={"text-xs font-semibold text-amber-600"}>
+              {data.relationshipLabel}
+            </div>
+          )}
           <div className={"text-gray-500 text-xs"}>{data.gender}</div>
         </div>
       </div>

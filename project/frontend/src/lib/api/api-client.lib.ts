@@ -94,6 +94,10 @@ export const apiClient = {
       url: (token: string) => `/api/group-family/join?token=${token}`,
       method: "POST" as HttpMethod,
     },
+    pinMember: {
+      url: (groupId: string) => `/api/group-family/${groupId}/pin`,
+      method: "PATCH" as HttpMethod,
+    },
   },
   user: {
     updateUser: {

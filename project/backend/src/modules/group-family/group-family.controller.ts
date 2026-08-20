@@ -23,6 +23,7 @@ import { ResponseFactory } from 'src/common/factories/response.factory';
 import { ValidMessageResponse } from 'src/common/messages/messages.response';
 import { UpdateGroupFamilyDto } from './dto/update-group-family.dto';
 import { CreateGroupFamilyDto } from './dto/create-group-family.dto';
+import { PinMemberDto } from './dto/pin-member.dto';
 import { AtGuard } from '../auth/guards/auth.guard';
 import { HttpStatus } from 'src/common/constants/api';
 import {
@@ -170,6 +171,29 @@ export class GroupFamilyController {
     return ResponseFactory.success({
       data: result,
       message: ValidMessageResponse.DELETED,
+    });
+  }
+
+  @Patch(':id/pin')
+  @UseGuards(AtGuard)
+  @ApiOperation({ summary: 'Pin a family member to current user in group' })
+  @ApiParam({ name: 'id', description: 'Group family ID' })
+  @ApiResponse({ status: 200, description: 'Member pinned successfully' })
+  @ApiResponse({ status: 404, description: 'Group not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async pinMember(
+    @GetCurrentUserId() userId: string,
+    @Param('id') groupId: string,
+    @Body() data: PinMemberDto,
+  ) {
+    const result = await this.groupFamilyService.pinMember(
+      userId,
+      groupId,
+      data.familyMemberId ?? null,
+    );
+    return ResponseFactory.success({
+      data: result,
+      message: ValidMessageResponse.UPDATED,
     });
   }
 
