@@ -238,7 +238,6 @@ export const GroupContentPage = ({
       if (visited.has(id)) return NODE_WIDTH;
       visited.add(id);
       const spouse = getSpouseOf(id);
-      const spouseExtra = spouse && !visited.has(spouse) ? NODE_WIDTH + SPOUSE_GAP : 0;
 
       const ownKids = getChildrenOf(id);
       if (spouse) {
@@ -251,14 +250,14 @@ export const GroupContentPage = ({
       );
 
       if (kids.length === 0) {
-        return NODE_WIDTH * 2 + SPOUSE_GAP + spouseExtra;
+        return spouse ? NODE_WIDTH * 2 + SPOUSE_GAP : NODE_WIDTH;
       }
 
       const childWidths = kids.map((c) => measureSubtree(c, visited));
       const childrenTotal =
         childWidths.reduce((a, b) => a + b, 0) +
         SIBLING_GAP * (childWidths.length - 1);
-      const selfWidth = NODE_WIDTH * 2 + SPOUSE_GAP + spouseExtra;
+      const selfWidth = spouse ? NODE_WIDTH * 2 + SPOUSE_GAP : NODE_WIDTH;
       return Math.max(childrenTotal, selfWidth);
     };
 
