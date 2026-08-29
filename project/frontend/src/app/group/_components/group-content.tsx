@@ -17,13 +17,14 @@ import {
   BackgroundVariant,
   useNodesState,
   useEdgesState,
+  ReactFlowProvider,
+  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { FamilyMemberNode } from "./react-flow/family-member-node";
 import { IFamilyMemberDto } from "@/modules/family-member/family-member.dto";
 import RelationshipForm from "./forms/relationship-form";
 import { IRelationshipDto } from "@/modules/relationships/relationship.dto";
-import dagre from "@dagrejs/dagre";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { setDraft, setOrigin } from "@/store/family/familySlice";
@@ -32,11 +33,28 @@ import FamilySettingDrawer from "./family-setting-drawer";
 import { ApiResponse } from "@/types/api.types";
 import { EventCalendar } from "./event-calendar";
 import { DayEventsDialog } from "./day-events-dialog";
-import { MEMBER_ROLE } from "@/types/enums";
+import { MEMBER_ROLE, GENDER } from "@/types/enums";
 import { Toaster } from "@/components/shared/toast";
 
 const nodeTypes = {
   familyNode: FamilyMemberNode,
+};
+
+const FlowFitView = ({
+  layoutVersion,
+  nodes,
+}: {
+  layoutVersion: number;
+  nodes: Node[];
+}) => {
+  const { fitView } = useReactFlow();
+  useEffect(() => {
+    if (layoutVersion > 0 && nodes.length > 0) {
+      fitView({ padding: 0.2, duration: 400 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layoutVersion]);
+  return null;
 };
 
 export const GroupContentPage = ({
@@ -71,6 +89,7 @@ export const GroupContentPage = ({
     toMemberId: string;
   } | null>(null);
   const [tempEdgeId, setTempEdgeId] = useState<string | null>(null);
+  const [layoutVersion, setLayoutVersion] = useState(0);
   if (!openRelationForm && editingRelation !== null) setEditingRelation(null);
   if (!openRelationForm && prefillRelation !== null) setPrefillRelation(null);
 
@@ -162,70 +181,204 @@ export const GroupContentPage = ({
   };
 
   const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
-    const dagreGraph = new dagre.graphlib.Graph();
-    dagreGraph.setDefaultEdgeLabel(() => ({}));
-    dagreGraph.setGraph({
-      rankdir: "TB",
-      nodesep: 50,
-      ranker: "tight-tree",
-    });
+    const NODE_WIDTH = 150;
+    const NODE_HEIGHT = 50;
+    const SPOUSE_GAP = 24;
+    const SIBLING_GAP = 40;
+    const RANK_SEP = 160;
 
-    const sortedNodes = [...nodes].sort((a, b) => {
-      if (a.data.gender === "MALE" && b.data.gender === "FEMALE") return -1;
-      if (a.data.gender === "FEMALE" && b.data.gender === "MALE") return 1;
-      return 0;
-    });
-    sortedNodes.forEach((node) => {
-      dagreGraph.setNode(node.id, {
-        width: 150,
-        height: 50,
-        rank: node.data.generation, // Sử dụng generation để ép hàng ngang
-      });
-    });
+    const memberMap = new Map(
+      draft.members.map((m) => [m.localId, m] as const),
+    );
 
-    edges.forEach((edge) => {
-      // Lưu ý: React Flow Edge dùng 'source' và 'target'
-      if (edge.label === "SPOUSE") {
-        const virtualNodeId = `v_${edge.source}_${edge.target}`;
-        dagreGraph.setNode(virtualNodeId, { width: 1, height: 1 });
-
-        // Tìm node cha (Male) để ưu tiên vị trí
-        const sourceNode = nodes.find((n) => n.id === edge.source);
-        const isMaleSource = sourceNode?.data.gender === "MALE";
-
-        // Tăng weight cho phía Male để Dagre ưu tiên kéo node này về gần trục giữa hơn
-        dagreGraph.setEdge(edge.source, virtualNodeId, {
-          weight: isMaleSource ? 20 : 10,
-          minlen: 1,
-        });
-        dagreGraph.setEdge(edge.target, virtualNodeId, {
-          weight: isMaleSource ? 10 : 20,
-          minlen: 1,
-        });
-
-        // Nối từ điểm ảo xuống con cái [cite: 23]
-        const children = draft.relationships.filter(
-          (r) =>
-            r.type === "CHILD" &&
-            (r.fromMemberId === edge.source || r.fromMemberId === edge.target),
-        );
-
-        children.forEach((child) => {
-          dagreGraph.setEdge(virtualNodeId, child.toMemberId);
-        });
-      } else if (edge.label !== "CHILD") {
-        // Nếu là các quan hệ khác không qua node trung gian
-        dagreGraph.setEdge(edge.source, edge.target);
+    const getSpouseOf = (id: string): string | null => {
+      for (const r of draft.relationships) {
+        if (r.type === "SPOUSE") {
+          if (r.fromMemberId === id) return r.toMemberId;
+          if (r.toMemberId === id) return r.fromMemberId;
+        }
       }
-    });
+      return null;
+    };
 
-    dagre.layout(dagreGraph);
+    const getChildrenOf = (id: string): string[] => {
+      const children: string[] = [];
+      for (const r of draft.relationships) {
+        if (r.type === "PARENT" && r.fromMemberId === id) {
+          children.push(r.toMemberId);
+        }
+        if (r.type === "CHILD" && r.toMemberId === id) {
+          children.push(r.fromMemberId);
+        }
+      }
+      return children;
+    };
+
+    const isMale = (id: string): boolean =>
+      memberMap.get(id)?.gender === GENDER.MALE;
+
+    const sortChildren = (ids: string[]): string[] => {
+      return [...ids].sort((a, b) => {
+        const ma = memberMap.get(a);
+        const mb = memberMap.get(b);
+        if (ma?.dateOfBirth && mb?.dateOfBirth) {
+          return (
+            new Date(ma.dateOfBirth).getTime() -
+            new Date(mb.dateOfBirth).getTime()
+          );
+        }
+        const genCompare = (Number(isMale(a)) - Number(isMale(b))) * -1;
+        if (genCompare !== 0) return genCompare;
+        return (ma?.fullName ?? "").localeCompare(mb?.fullName ?? "");
+      });
+    };
+
+    // Bề rộng ngang (px) của nhánh cây gốc tại node này (tính cả con cháu)
+    const measureSubtree = (id: string, visited: Set<string>): number => {
+      if (visited.has(id)) return NODE_WIDTH;
+      visited.add(id);
+      const spouse = getSpouseOf(id);
+      const spouseExtra = spouse && !visited.has(spouse) ? NODE_WIDTH + SPOUSE_GAP : 0;
+
+      const ownKids = getChildrenOf(id);
+      if (spouse) {
+        getChildrenOf(spouse).forEach((c) => {
+          if (!ownKids.includes(c)) ownKids.push(c);
+        });
+      }
+      const kids = sortChildren(
+        ownKids.filter((c) => c !== spouse && !visited.has(c)),
+      );
+
+      if (kids.length === 0) {
+        return NODE_WIDTH * 2 + SPOUSE_GAP + spouseExtra;
+      }
+
+      const childWidths = kids.map((c) => measureSubtree(c, visited));
+      const childrenTotal =
+        childWidths.reduce((a, b) => a + b, 0) +
+        SIBLING_GAP * (childWidths.length - 1);
+      const selfWidth = NODE_WIDTH * 2 + SPOUSE_GAP + spouseExtra;
+      return Math.max(childrenTotal, selfWidth);
+    };
+
+    const positions = new Map<string, { x: number; y: number }>();
+
+    // Xếp đệ quy một cụm (cặp vợ chồng + con cháu) với cha đặt tại trục x = cx
+    const layoutSubtree = (
+      id: string,
+      cx: number,
+      visited: Set<string>,
+    ): number => {
+      if (visited.has(id)) return 0;
+      visited.add(id);
+
+      const member = memberMap.get(id);
+      const gen = member?.generation ?? 0;
+      const y = gen * RANK_SEP;
+
+      const spouse = getSpouseOf(id);
+
+      // 1. Đặt cặp vợ chồng (cha male = anchor, vợ kề bên)
+      if (spouse && !visited.has(spouse)) {
+        visited.add(spouse);
+        if (isMale(id)) {
+          positions.set(id, { x: cx, y });
+          positions.set(spouse, { x: cx + NODE_WIDTH + SPOUSE_GAP, y });
+        } else {
+          positions.set(spouse, { x: cx - NODE_WIDTH - SPOUSE_GAP, y });
+          positions.set(id, { x: cx, y });
+        }
+      } else {
+        positions.set(id, { x: cx, y });
+      }
+
+      // 2. Tập hợp con của cặp
+      const ownKids = getChildrenOf(id);
+      if (spouse) {
+        getChildrenOf(spouse).forEach((c) => {
+          if (!ownKids.includes(c)) ownKids.push(c);
+        });
+      }
+      const kids = sortChildren(
+        ownKids.filter((c) => c !== id && c !== spouse && !visited.has(c)),
+      );
+
+      if (kids.length === 0) return NODE_HEIGHT;
+
+      // 3. Đo bề rộng từng nhánh con
+      const subs = kids.map((k) => {
+        const w = measureSubtree(k, new Set());
+        return { id: k, width: w };
+      });
+      const total =
+        subs.reduce((a, s) => a + s.width, 0) +
+        SIBLING_GAP * (subs.length - 1);
+
+      // 4. Căn giữa hàng con theo trục cha (cx)
+      let cursor = cx - total / 2;
+      for (const s of subs) {
+        const childCx = cursor + s.width / 2;
+        layoutSubtree(s.id, childCx, visited);
+        cursor += s.width + SIBLING_GAP;
+      }
+
+      return NODE_HEIGHT;
+    };
+
+    // Root = node không phải con của ai (không có PARENT tới / CHILD từ)
+    const hasParent = (id: string): boolean => {
+      for (const r of draft.relationships) {
+        if (r.type === "PARENT" && r.toMemberId === id) return true;
+        if (r.type === "CHILD" && r.fromMemberId === id) return true;
+      }
+      return false;
+    };
+
+    const allIds = nodes.map((n) => n.id);
+    const roots = allIds.filter((id) => !hasParent(id));
+
+    // Căn giữa toàn bộ các cụm root
+    let originX = 0;
+    const rootWidths = roots.map((r) => {
+      const w = measureSubtree(r, new Set());
+      return { id: r, width: w };
+    });
+    const rootsTotal =
+      rootWidths.reduce((a, s) => a + s.width, 0) +
+      SIBLING_GAP * Math.max(0, rootWidths.length - 1);
+
+    let rootCursor = -rootsTotal / 2;
+    const visitedGlobal = new Set<string>();
+    const rootList =
+      rootWidths.length > 0
+        ? rootWidths
+        : allIds.map((id) => ({ id, width: NODE_WIDTH * 2 }));
+
+    for (const r of rootList) {
+      const cx = rootCursor + r.width / 2;
+      rootCursor += r.width + SIBLING_GAP;
+      layoutSubtree(r.id, cx, visitedGlobal);
+    }
 
     const layoutedNodes = nodes.map((node) => {
-      const nodeWithPosition = dagreGraph.node(node.id);
+      const pos = positions.get(node.id);
+      if (!pos) {
+        const m = memberMap.get(node.id);
+        return {
+          ...node,
+          position: {
+            x: node.position.x ?? 0,
+            y: node.position.y ?? (m?.generation ?? 0) * RANK_SEP,
+          },
+        };
+      }
       return {
         ...node,
-        position: { x: nodeWithPosition.x - 75, y: nodeWithPosition.y - 25 },
+        position: {
+          x: pos.x - NODE_WIDTH / 2,
+          y: pos.y - NODE_HEIGHT / 2,
+        },
       };
     });
 
@@ -247,6 +400,8 @@ export const GroupContentPage = ({
     });
     dispatch(setDraft({ ...draft, members: updatedMembers }));
 
+    // Đợi nodes cập nhật vị trí mới rồi fit view vào toàn bộ sơ đồ
+    setLayoutVersion((v) => v + 1);
     //console.log("Sơ đồ đã được cập nhật tọa độ vào Draft!");
   };
 
@@ -395,25 +550,28 @@ export const GroupContentPage = ({
           />
         )}
         <div className={"w-full h-full border bg-slate-50"}>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            connectionRadius={60}
-            nodeTypes={nodeTypes}
-            fitView
-            onNodeDoubleClick={onNodeDoubleClick}
-            onEdgeClick={onEdgeClick}
-            nodesDraggable={nodesDraggable}
-            onNodeDragStop={onNodeDragStop}
-          >
-            {showGrid && (
-              <Background variant={BackgroundVariant.Dots} gap={20} />
-            )}{" "}
-            <Controls />
-          </ReactFlow>
+          <ReactFlowProvider>
+            <FlowFitView layoutVersion={layoutVersion} nodes={nodes} />
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              connectionRadius={60}
+              nodeTypes={nodeTypes}
+              fitView
+              onNodeDoubleClick={onNodeDoubleClick}
+              onEdgeClick={onEdgeClick}
+              nodesDraggable={nodesDraggable}
+              onNodeDragStop={onNodeDragStop}
+            >
+              {showGrid && (
+                <Background variant={BackgroundVariant.Dots} gap={20} />
+              )}{" "}
+              <Controls />
+            </ReactFlow>
+          </ReactFlowProvider>
         </div>
       </div>
     );
