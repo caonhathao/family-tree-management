@@ -104,7 +104,12 @@ export function computeLabels(
     for (const pid of parents) {
       const p = memberMap.get(pid);
       if (!p) continue;
-      labels.set(pid, p.gender === "MALE" ? "Cha" : "Mẹ");
+      const lbl = p.gender === "MALE" ? "Cha" : "Mẹ";
+      labels.set(pid, lbl);
+      const spouseId = getSpouse(pid, rels);
+      if (spouseId && !labels.has(spouseId)) {
+        labels.set(spouseId, lbl === "Cha" ? "Mẹ" : "Cha");
+      }
     }
     return labels;
   }
@@ -280,8 +285,13 @@ function determineLabel(
 
   // Parent's generation (depth=1)
   if (depth === 1) {
-    // Blood relative (spouseEdgeCount=0) → uncle/aunt or parent's sibling
+    // Blood relative (spouseEdgeCount=0) → parent / uncle/aunt or parent's sibling
     if (spouseEdgeCount === 0) {
+      const pinnedParents = getParents(pinnedId, rels);
+      // If this is a real parent of the pinned user, label directly
+      if (pinnedParents.includes(member.localId)) {
+        return gender === "MALE" ? "Cha" : "Mẹ";
+      }
       if (parentSide === "paternal") {
         // Need age comparison with parent to determine Bác vs Chú/Cô
         const pinnedParents = getParents(pinnedId, rels);
@@ -302,8 +312,14 @@ function determineLabel(
       }
     }
 
-    // In-law (spouseEdgeCount=1) → uncle/aunt's spouse
+    // In-law (spouseEdgeCount=1) → parent's spouse / uncle/aunt's spouse
     if (spouseEdgeCount === 1) {
+      const spouseOf = getSpouse(member.localId, rels);
+      const pinnedParents = getParents(pinnedId, rels);
+      // If this person is the spouse of a real parent of the pinned user, label directly
+      if (spouseOf && pinnedParents.includes(spouseOf)) {
+        return gender === "MALE" ? "Cha" : "Mẹ";
+      }
       if (parentSide === "paternal") {
         // Find who this person is married to
         const spouseId = getSpouse(member.localId, rels);
