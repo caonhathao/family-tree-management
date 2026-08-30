@@ -278,16 +278,17 @@ export const GroupContentPage = ({
 
       const spouse = getSpouseOf(id);
 
-      // 1. Đặt cặp vợ chồng (cha male = anchor, vợ kề bên)
+      // 1. Đặt cặp vợ chồng căn giữa quanh trục cx
       if (spouse && !visited.has(spouse)) {
         visited.add(spouse);
-        if (isMale(id)) {
-          positions.set(id, { x: cx, y });
-          positions.set(spouse, { x: cx + NODE_WIDTH + SPOUSE_GAP, y });
-        } else {
-          positions.set(spouse, { x: cx - NODE_WIDTH - SPOUSE_GAP, y });
-          positions.set(id, { x: cx, y });
-        }
+        positions.set(id, {
+          x: cx - (NODE_WIDTH + SPOUSE_GAP) / 2,
+          y,
+        });
+        positions.set(spouse, {
+          x: cx + (NODE_WIDTH + SPOUSE_GAP) / 2,
+          y,
+        });
       } else {
         positions.set(id, { x: cx, y });
       }

@@ -340,7 +340,7 @@ function determineLabel(
             if (gender === "FEMALE") {
               return "Thím"; // Wife of Chú
             } else {
-              return "Chú"; // Husband of Cô
+              return "Dượng"; // Husband of Cô
             }
           }
         }
