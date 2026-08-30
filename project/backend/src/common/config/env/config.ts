@@ -12,6 +12,7 @@ export default () => ({
   maxFileSize: Number(process.env.MAX_FILE_SIZE),
   cloudinary: {
     folderAlbum: process.env.FOLDER_ALBUM,
+    folderBlog: process.env.FOLDER_BLOG,
     folderUser: process.env.FOLDER_USER,
     folderFamily: process.env.FOLDER_FAMILY,
     cloudName: process.env.CLOUDINARY_NAME,

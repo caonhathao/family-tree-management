@@ -32,6 +32,40 @@ import { v4 } from "uuid";
 import { MemberSelect } from "../member-select";
 import { setDraft } from "@/store/family/familySlice";
 
+const getChildrenOf = (
+  memberId: string,
+  rels: IRelationshipDto[],
+): string[] => {
+  const children: string[] = [];
+  for (const r of rels) {
+    if (r.type === "PARENT" && r.fromMemberId === memberId) {
+      children.push(r.toMemberId);
+    }
+    if (r.type === "CHILD" && r.toMemberId === memberId) {
+      children.push(r.fromMemberId);
+    }
+  }
+  return children;
+};
+
+const collectSubtree = (
+  memberId: string,
+  rels: IRelationshipDto[],
+): Set<string> => {
+  const visited = new Set<string>();
+  const queue: string[] = [memberId];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    getChildrenOf(current, rels).forEach((child) => {
+      if (!visited.has(child)) {
+        visited.add(child);
+        queue.push(child);
+      }
+    });
+  }
+  return visited;
+};
+
 const RelationshipForm = ({
   currentData,
   openState,
@@ -119,10 +153,8 @@ const RelationshipForm = ({
 
     if (!memberA || !memberB) return;
 
-    // 2. Xác định ai là cấp trên (Parent) dựa vào Generation
-    // Giả sử generation thấp hơn là đời cha chú (ví dụ: Gen 1 là cha Gen 2)
-    const parentMember =
-      memberA.generation <= memberB.generation ? memberA : memberB;
+    // 2. Xác định ai là cấp trên (Parent) — theo quy tắc A, cha luôn là node nguồn (fromMemberId)
+    const parentMember = values.type === "PARENT" ? memberA : memberB;
 
     const lineage = draft.family.lineageType;
 
@@ -150,8 +182,45 @@ const RelationshipForm = ({
       values.localId = v4();
     }
 
+    const membersById = new Map(
+      draft.members.map((m) => [m.localId, m] as const),
+    );
+    const fromMember = membersById.get(values.fromMemberId);
+    const toMember = membersById.get(values.toMemberId);
+    const genChanges = new Map<string, number>();
+
+    if (fromMember && toMember) {
+      if (values.type === "PARENT") {
+        // Đích (con) tự cập nhật gen = gen nguồn (cha) + 1
+        const newTargetGen = fromMember.generation + 1;
+        if (toMember.generation !== newTargetGen) {
+          genChanges.set(values.toMemberId, newTargetGen);
+        }
+      } else if (values.type === "SPOUSE") {
+        // Đích lấy gen bằng nguồn, và toàn bộ con cháu của đích tịnh tiến theo delta
+        const delta = fromMember.generation - toMember.generation;
+        const subtree = collectSubtree(values.toMemberId, draft.relationships);
+        subtree.add(values.toMemberId);
+        subtree.forEach((id) => {
+          const member = membersById.get(id);
+          if (!member) return;
+          const newGen = member.generation + delta;
+          if (member.generation !== newGen) {
+            genChanges.set(id, newGen);
+          }
+        });
+      }
+    }
+
+    const updatedMembers = draft.members.map((m) =>
+      genChanges.has(m.localId)
+        ? { ...m, generation: genChanges.get(m.localId)! }
+        : m,
+    );
+
     const updatedDraft = {
       ...draft,
+      members: updatedMembers,
       relationships: isUpdate
         ? draft.relationships.map((r) =>
             r.localId === values.localId ? values : r,

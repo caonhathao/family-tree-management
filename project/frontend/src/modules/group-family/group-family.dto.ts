@@ -28,6 +28,7 @@ export interface IResponseGroupFamilyDetailDto {
     };
     role: MEMBER_ROLE;
     isLeader: boolean;
+    pinnedMemberId: string | null;
   }[];
 }
 

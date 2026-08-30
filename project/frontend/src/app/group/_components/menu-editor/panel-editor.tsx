@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AppDispatch, RootState } from "@/store";
 import { deleteFamily, saveFamilyDraft } from "@/store/family/familyThunk";
-
 import { motion, useDragControls } from "framer-motion";
 import isEqual from "lodash.isequal";
 import {

@@ -9,6 +9,7 @@ export interface IFamilyMemberDto {
   generation: number;
   positionX?: number;
   positionY?: number;
+  createdAt?: string;
 }
 
 export interface IUpdateFamilyMemberDto {

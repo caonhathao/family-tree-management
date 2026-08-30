@@ -203,3 +203,25 @@ export async function destroyGroupAction(groupId: string) {
     redirect("/group");
   }
 }
+
+export async function pinMemberAction(
+  groupId: string,
+  familyMemberId: string | null,
+) {
+  try {
+    const res = await apiRequest<{ pinnedMemberId: string | null }>(
+      apiClient.groupFamily.pinMember.url(groupId),
+      {
+        method: apiClient.groupFamily.pinMember.method,
+        body: { familyMemberId },
+      },
+    );
+
+    if (res && "data" in res && res.data != undefined) {
+      return res.data;
+    }
+    return null;
+  } catch (err: unknown) {
+    return ResponseFactory.handleError(err);
+  }
+}
