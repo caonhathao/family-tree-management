@@ -9,10 +9,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-function getParents(
-  memberId: string,
-  rels: IRelationshipDto[],
-): string[] {
+function getParents(memberId: string, rels: IRelationshipDto[]): string[] {
   const parents: string[] = [];
   for (const r of rels) {
     if (r.type === "PARENT" && r.toMemberId === memberId) {
@@ -25,10 +22,7 @@ function getParents(
   return parents;
 }
 
-function getChildren(
-  memberId: string,
-  rels: IRelationshipDto[],
-): string[] {
+function getChildren(memberId: string, rels: IRelationshipDto[]): string[] {
   const children: string[] = [];
   for (const r of rels) {
     if (r.type === "PARENT" && r.fromMemberId === memberId) {
@@ -41,10 +35,7 @@ function getChildren(
   return children;
 }
 
-function getSpouse(
-  memberId: string,
-  rels: IRelationshipDto[],
-): string | null {
+function getSpouse(memberId: string, rels: IRelationshipDto[]): string | null {
   for (const r of rels) {
     if (r.type === "SPOUSE") {
       if (r.fromMemberId === memberId) return r.toMemberId;
@@ -54,10 +45,7 @@ function getSpouse(
   return null;
 }
 
-function isOlder(
-  a: IFamilyMemberDto,
-  b: IFamilyMemberDto,
-): boolean {
+function isOlder(a: IFamilyMemberDto, b: IFamilyMemberDto): boolean {
   if (a.dateOfBirth && b.dateOfBirth) {
     return new Date(a.dateOfBirth) < new Date(b.dateOfBirth);
   }
@@ -95,7 +83,10 @@ export function computeLabels(
   for (const parent of parents) {
     const gp = getParents(parent, rels);
     if (gp.length > 0) {
-      grandparents.push({ id: gp[0], side: grandparents.length === 0 ? "paternal" : "maternal" });
+      grandparents.push({
+        id: gp[0],
+        side: grandparents.length === 0 ? "paternal" : "maternal",
+      });
     }
   }
 
@@ -138,7 +129,14 @@ export function computeLabels(
       visited.add(`${current.node}_${current.spouseEdgeCount}`);
 
       // Determine label
-      const label = determineLabel(current, member, pinnedId, myGender, memberMap, rels);
+      const label = determineLabel(
+        current,
+        member,
+        pinnedId,
+        myGender,
+        memberMap,
+        rels,
+      );
       if (label) {
         labels.set(current.node, label);
       }
@@ -171,7 +169,11 @@ export function computeLabels(
       }
 
       // Maternal pruning: stop at Mẹ (depth=1 from ông bà ngoại)
-      if (current.parentSide === "maternal" && current.depth === 1 && current.spouseEdgeCount === 0) {
+      if (
+        current.parentSide === "maternal" &&
+        current.depth === 1 &&
+        current.spouseEdgeCount === 0
+      ) {
         const isMother = parents.includes(current.node);
         if (isMother) {
           labels.set(current.node, "Mẹ");
@@ -299,7 +301,9 @@ function determineLabel(
           const gpOfParent = getParents(pid, rels);
           return gpOfParent.some((g) => getChildren(g, rels).includes(pid));
         });
-        const parentMember = parentOnPaternalSide ? memberMap.get(parentOnPaternalSide) : undefined;
+        const parentMember = parentOnPaternalSide
+          ? memberMap.get(parentOnPaternalSide)
+          : undefined;
 
         if (parentMember && isOlder(member, parentMember)) {
           return "Bác";
@@ -329,10 +333,16 @@ function determineLabel(
             const gpOfParent = getParents(pid, rels);
             return gpOfParent.some((g) => getChildren(g, rels).includes(pid));
           });
-          const parentMember = parentOnPaternalSide ? memberMap.get(parentOnPaternalSide) : undefined;
+          const parentMember = parentOnPaternalSide
+            ? memberMap.get(parentOnPaternalSide)
+            : undefined;
           const spouseMember = memberMap.get(spouseId);
 
-          if (parentMember && spouseMember && isOlder(spouseMember, parentMember)) {
+          if (
+            parentMember &&
+            spouseMember &&
+            isOlder(spouseMember, parentMember)
+          ) {
             // Married to older sibling → Bác gái or Dượng
             return gender === "FEMALE" ? "Bác gái" : "Dượng";
           } else {
@@ -366,7 +376,9 @@ function determineLabel(
   if (depth === 3 && spouseEdgeCount === 0) {
     // Check if this is a child's spouse
     const pinnedChildren = getChildren(pinnedId, rels);
-    const childSpouses = pinnedChildren.map((c) => getSpouse(c, rels)).filter(Boolean);
+    const childSpouses = pinnedChildren
+      .map((c) => getSpouse(c, rels))
+      .filter(Boolean);
     if (childSpouses.includes(member.localId)) {
       // This is a child's spouse
       // Find which child they're married to

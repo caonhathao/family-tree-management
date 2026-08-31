@@ -201,6 +201,9 @@ importers:
       knip:
         specifier: ^6.24.0
         version: 6.24.0
+      prettier:
+        specifier: ^3.4.2
+        version: 3.8.1
       redux-mock-store:
         specifier: ^1.5.5
         version: 1.5.5(redux@5.0.1)

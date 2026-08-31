@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { IBlogDto, IBlogsDto } from "@/modules/blog/blog.dto";
-import { IPaginationBase } from "@/types/base.types";
 import { LoaderModule } from "@/components/shared/loader-module";
 import { ApiResponse } from "@/types/api.types";
 
