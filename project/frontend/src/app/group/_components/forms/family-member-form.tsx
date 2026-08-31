@@ -97,18 +97,30 @@ const NewFamilyMemberForm = ({
         const result = await pinMemberAction(groupId, null);
         if (result && "pinnedMemberId" in result) {
           setPinnedMemberId(null);
-          Toaster({ title: "Thành công", description: "Đã bỏ ghim.", type: "success" });
+          Toaster({
+            title: "Thành công",
+            description: "Đã bỏ ghim.",
+            type: "success",
+          });
         }
       } else {
         const result = await pinMemberAction(groupId, currentData.localId);
         if (result && "pinnedMemberId" in result) {
           setPinnedMemberId(currentData.localId);
-          Toaster({ title: "Thành công", description: "Đã ghim thành viên.", type: "success" });
+          Toaster({
+            title: "Thành công",
+            description: "Đã ghim thành viên.",
+            type: "success",
+          });
         }
       }
     } catch (error: unknown) {
       const err = error as { message?: string };
-      Toaster({ title: "Lỗi", description: err?.message || "Không thể ghim thành viên.", type: "error" });
+      Toaster({
+        title: "Lỗi",
+        description: err?.message || "Không thể ghim thành viên.",
+        type: "error",
+      });
     }
   }, [currentData, groupId, isPinned, setPinnedMemberId]);
 
@@ -376,7 +388,9 @@ const NewFamilyMemberForm = ({
                   />
                   <Label
                     htmlFor={"isMe"}
-                    className={"font-normal cursor-pointer text-sm sm:text-base"}
+                    className={
+                      "font-normal cursor-pointer text-sm sm:text-base"
+                    }
                   >
                     Đây là tôi
                   </Label>

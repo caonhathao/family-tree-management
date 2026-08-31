@@ -2,11 +2,9 @@
 import { IBlogDeleted, IBlogDto, IBlogsDto } from "./blog.dto";
 import { BlogService } from "./blog.service";
 import { headers } from "next/headers";
-import { IPaginationBase } from "@/types/base.types";
 import { cache } from "react";
 import { ResponseFactory } from "@/lib/res/response.factory";
 import { ApiResponse } from "@/types/api.types";
-import { IgnorableStackFrame } from "next/dist/next-devtools/server/shared";
 
 export async function updateBlogAction(
   data: IBlogDto,

@@ -278,16 +278,17 @@ export const GroupContentPage = ({
 
       const spouse = getSpouseOf(id);
 
-      // 1. Đặt cặp vợ chồng (cha male = anchor, vợ kề bên)
+      // 1. Đặt cặp vợ chồng căn giữa quanh trục cx
       if (spouse && !visited.has(spouse)) {
         visited.add(spouse);
-        if (isMale(id)) {
-          positions.set(id, { x: cx, y });
-          positions.set(spouse, { x: cx + NODE_WIDTH + SPOUSE_GAP, y });
-        } else {
-          positions.set(spouse, { x: cx - NODE_WIDTH - SPOUSE_GAP, y });
-          positions.set(id, { x: cx, y });
-        }
+        positions.set(id, {
+          x: cx - (NODE_WIDTH + SPOUSE_GAP) / 2,
+          y,
+        });
+        positions.set(spouse, {
+          x: cx + (NODE_WIDTH + SPOUSE_GAP) / 2,
+          y,
+        });
       } else {
         positions.set(id, { x: cx, y });
       }
@@ -311,8 +312,7 @@ export const GroupContentPage = ({
         return { id: k, width: w };
       });
       const total =
-        subs.reduce((a, s) => a + s.width, 0) +
-        SIBLING_GAP * (subs.length - 1);
+        subs.reduce((a, s) => a + s.width, 0) + SIBLING_GAP * (subs.length - 1);
 
       // 4. Căn giữa hàng con theo trục cha (cx)
       let cursor = cx - total / 2;
@@ -338,7 +338,6 @@ export const GroupContentPage = ({
     const roots = allIds.filter((id) => !hasParent(id));
 
     // Căn giữa toàn bộ các cụm root
-    let originX = 0;
     const rootWidths = roots.map((r) => {
       const w = measureSubtree(r, new Set());
       return { id: r, width: w };
@@ -422,16 +421,16 @@ export const GroupContentPage = ({
     }
   }, [dispatch, family]);
 
-  useEffect(() => {
-    if (group && "id" in group) {
-      const myMember = group.groupMembers.find(
-        (m) => m.member.userProfile.userId === profile?.id,
-      );
-      if (myMember) {
-        setPinnedMemberId(myMember.pinnedMemberId ?? null);
-      }
-    }
-  }, [group, profile]);
+  const serverPinnedMemberId =
+    group && "id" in group
+      ? (group.groupMembers.find(
+          (m) => m.member.userProfile.userId === profile?.id,
+        )?.pinnedMemberId ?? null)
+      : null;
+
+  if (serverPinnedMemberId !== pinnedMemberId) {
+    setPinnedMemberId(serverPinnedMemberId);
+  }
 
   const labels = useMemo(() => {
     if (!pinnedMemberId) return new Map<string, string>();

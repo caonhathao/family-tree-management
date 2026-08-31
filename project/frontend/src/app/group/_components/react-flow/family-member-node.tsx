@@ -9,7 +9,7 @@ interface FamilyMemberNodeProps {
   };
 }
 
-export const FamilyMemberNode = ({ id, data }: FamilyMemberNodeProps) => {
+export const FamilyMemberNode = ({ data }: FamilyMemberNodeProps) => {
   const nameParts = data.fullName.trim().split(/\s+/);
   const lastName = nameParts[nameParts.length - 1];
   const tempAvatar = lastName ? lastName[0].toUpperCase() : "?";
@@ -19,7 +19,11 @@ export const FamilyMemberNode = ({ id, data }: FamilyMemberNodeProps) => {
       className={`relative px-4 py-2 shadow-md rounded-md border-2 bg-white transition-shadow hover:shadow-lg ${data.gender === "MALE" ? "border-blue-400" : "border-pink-400"}`}
     >
       {data.isPinned && (
-        <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
+        <div
+          className={
+            "absolute -top-1.5 -right-1.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white"
+          }
+        />
       )}
       <div className={"flex items-center"}>
         <div
