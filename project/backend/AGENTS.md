@@ -12,33 +12,36 @@ This is a NestJS-based backend application for family tree management with Postg
 
 ```bash
 # Development
-npm run start:dev          # Start in watch mode (most common)
-npm run build              # Build for production
-npm run start:prod         # Start production build
+pnpm start:dev          # Start in watch mode (most common)
+pnpm build              # Build for production
+pnpm start:prod         # Start production build
 
 # Code Quality
-npm run lint               # Run ESLint with auto-fix
-npm run format             # Format code with Prettier
+pnpm lint               # ESLint check only (no --fix)
+pnpm lint:fix           # ESLint with --fix
+pnpm lint:src           # what CI runs
+pnpm format             # Prettier --write on src/ and test/ only (NOT prisma/)
+pnpm exec tsc --noEmit  # typecheck (no `typecheck` script exists)
 
-# Testing
-npm run test               # Run all unit tests
-npm run test:watch         # Run tests in watch mode
-npm run test:cov           # Run tests with coverage
-npm run test:e2e           # Run end-to-end tests
-npm run test:debug         # Run tests in debug mode
+# Testing — CI runs only `pnpm test`
+pnpm test               # unit specs in src/ (*.spec.ts, rootDir=src)
+pnpm test:watch         # Run tests in watch mode
+pnpm test:cov           # Run tests with coverage
+pnpm test:e2e           # test/*.e2e-spec.ts — needs live PostgreSQL + full .env
+pnpm test:debug         # Run tests in debug mode
 ```
 
 ### Running a Single Test
 
 ```bash
 # Run specific unit test file
-npm run test -- user.service.spec.ts
+pnpm test -- user.service.spec.ts
 
 # Run test with specific pattern
-npm run test -- --testNamePattern="should update user profile"
+pnpm test -- --testNamePattern="should update user profile"
 
 # Run single E2E test
-npm run test:e2e -- --testNamePattern="user registration flow"
+pnpm test:e2e -- --testNamePattern="user registration flow"
 ```
 
 ## Code Style & Conventions
@@ -73,7 +76,7 @@ import { CloudinaryService } from 'src/common/config/cloudinary/cloudinary.servi
 - Strict null checks enabled
 - Decorators enabled for NestJS
 - Target: ES2023
-- Path mapping available: `src/`, `prisma/`, `@/` → `src/`
+- Path mapping available: `src/*` only (see root `AGENTS.md` — `@/` and `prisma/` are NOT valid aliases here)
 
 ### Code Formatting (Prettier)
 
@@ -215,9 +218,9 @@ describe('UserService', () => {
 
 Use these import aliases consistently:
 
-- `src/` → direct path to src directory
-- `prisma/` → direct path to prisma directory
-- `@/` → src directory (alternative)
+- `src/...` → `src` directory (the only alias the backend tsconfig/jest define)
+- Relative imports (`./dto/x.dto`) for same-module files, as the existing code does
+- `prisma/...` and `@/...` appear in `test/jest-e2e.json` mappings only — they will fail `tsc --noEmit` in `src`
 
 ### Constants & Messages
 
@@ -233,15 +236,17 @@ Use these import aliases consistently:
 
 ## Development Workflow
 
-1. **Before making changes**: Run `npm run lint` to ensure code quality
-2. **During development**: Use `npm run start:dev` for hot reload
+1. **Before making changes**: Run `pnpm lint` to ensure code quality
+2. **During development**: Use `pnpm start:dev` for hot reload
 3. **Testing**: Write unit tests for new business logic
-4. **Final verification**: Run `npm run test` and `npm run lint` before committing
+4. **Final verification**: mirror CI order — `pnpm exec prettier --check "src/**/*.ts"`, `pnpm lint:src`, `pnpm exec tsc --noEmit`, `pnpm test`, `pnpm build`
 
 ## Important Notes
 
-- Package manager: npm (npm-lock.yaml present)
-- Database migrations: Use Prisma CLI for schema changes
+- Package manager: **pnpm** (`pnpm-lock.yaml`; no npm lockfile). Scripts shell out to `pnpm nest ...`
+- No `typecheck` script — use `pnpm exec tsc --noEmit` (this is what CI runs)
+- Prisma 7: multi-file schema in `prisma/schema/`, `url` only in `prisma.config.ts`, pg driver adapter, `postinstall` runs `prisma generate` (root `AGENTS.md` has details)
+- Database migrations: `pnpm prisma migrate dev` for schema changes; never hand-edit `prisma/migrations/`
 - Environment variables: Managed through EnvConfigService
 - API documentation: Available at `/api/docs` (Swagger)
 - Global API prefix: `/api`
