@@ -48,7 +48,14 @@ Vì vậy ngoài 4 danh sách việc (xoá / sửa / thêm / thứ tự), còn m
 | [03-pham-vi-them.md](./03-pham-vi-them.md) | 12 nhóm cần thêm — granular CRUD, upload ảnh, import/export, search, timeline |
 | [04-thu-tu-thuc-hien.md](./04-thu-tu-thuc-hien.md) | 5 phase, thứ tự phụ thuộc, tiêu chí nghiệm thu |
 | [05-pham-vi-tiem-do.md](./05-pham-vi-tiem-do.md) | **5 bất biến bắt buộc** — dùng làm review gate cho mọi PR, kèm danh sách vi phạm hiện tại |
+| [06-bo-sung-tu-khao-sat-fe.md](./06-bo-sung-tu-khao-sat-fe.md) | **Bổ sung từ khảo sát frontend** (2026-09-27) — 2 yêu cầu chặn tiến độ, nổi bật là `POST /family/:groupId/changes` (batch) |
 
 ## Ghi chú bắt buộc khi đọc
 
 Tài liệu `docs/pending_features.md` hiện có **đã lỗi thời** — nó mô tả events/notification là stub rỗng, nhưng thực tế 2 module đó đã implement đầy đủ. Không dùng nó làm nguồn sự thật. Xem `01-pham-vi-bo.md` B9.
+
+## Kế hoạch frontend đi kèm
+
+Khảo sát frontend ([`../planing-refactor-fe/README.md`](../planing-refactor-fe/README.md)) được làm sau và phát hiện **2 mục mà bộ kế hoạch này còn thiếu** — xem [06-bo-sung-tu-khao-sat-fe.md](./06-bo-sung-tu-khao-sat-fe.md). Nổi bật: frontend quyết định **giữ nút *Lưu* toàn cục**, nên bước 2.2 bên dưới chỉ có CRUD lẻ là chưa đủ.
+
+⚠️ **Hai bộ kế hoạch phải đọc cùng nhau.** Khi hai tài liệu mâu thuẫn, file này ăn và file kia phải sửa.
