@@ -49,13 +49,17 @@ Dữ liệu bị đụng là tên, ngày sinh, ngày mất, tiểu sử của ng
 
 ### Fix
 
-Theo hướng Hybrid đã chốt:
+Theo hướng **batch-first** đã chốt (D6):
 
 1. **Bỏ `localId` khỏi định danh.** `FamilyMember.id` do server sinh. Client dùng id server trả về. Xoá `localId` khỏi `IFamilyMemberDto` / `IRelationshipDto`.
+   > **Phân biệt 2 khái niệm — dễ nhầm nhất ở phần này.** `localId` là định danh client tự sinh, **loại bỏ hẳn**. `clientRef` là tham chiếu **chỉ sống trong 1 request** tới thành viên **chưa tồn tại** (để `RELATIONSHIP_CREATE` biết trỏ vào ai khi `MEMBER_CREATE` chưa trả id) — hợp lệ, và server thay bằng `id` thật trong `idMap`. Đừng dùng lại tên `localId` cho `clientRef`.
 2. **Mọi truy vấn scope theo group, không theo id client.** `where: { family: { groupFamilyId: groupId }, id }` — `groupFamilyId` phải nằm trong cùng câu `where`, không kiểm ở `if` riêng (tránh TOCTOU).
-3. **Tách đường ghi.**
-   - CRUD lẻ: `POST /family/:groupId/members`, `PATCH|DELETE /family/:groupId/members/:memberId` — mỗi request tự lấy `family` từ `groupId`, không nhận `familyId` từ client.
-   - Bulk/import: `POST /family/:groupId/import` với `dryRun` (trả về diff), `baseVersion`, `Idempotency-Key`. Endpoint này **không nhận primary key** — server tự sinh hết, trả về map `localId → id` để client re-key.
+3. **Tách đường ghi.** `POST /family/:groupId/changes` là **đường ghi chính** (contract đầy đủ ở `06` R1). Hai đường còn lại là **API cấp thấp** — cho script/CLI và e2e test, frontend không dùng:
+   - **Chính — batch:** `POST /family/:groupId/changes`, header `If-Match`, body `{ baseVersion, operations[] }` → `200 { version, tree, idMap, activityIds }`, xung đột → `409 { currentVersion, conflicts[], tree }`. **Một `$transaction` duy nhất**, `version++` đúng 1 lần (I4), ghi hết `ActivityLog` (I5).
+   - **Cấp thấp — CRUD lẻ:** `POST /family/:groupId/members`, `PATCH|DELETE /family/:groupId/members/:memberId` — mỗi request tự lấy `family` từ `groupId`, không nhận `familyId` từ client.
+   - **Cấp thấp — import:** `POST /family/:groupId/import` với `dryRun` (trả về diff), `baseVersion`, `Idempotency-Key`, và `mode`:
+     - `mode: 'create'` — mọi thành viên mới, tham chiếu trong payload bằng `clientRef`, server sinh id và trả `idMap` (`clientRef → id`) để client re-key.
+     - `mode: 'restore'` — giữ nguyên `id` trong file. Chỉ hợp lệ khi file do chính hệ thống này xuất (`03` §5). Nếu id đã tồn tại mà nội dung khác → `409` liệt kê `conflicts`, **không** tự ghi đè.
 4. **Xoá `POST /family/sync-data/:groupId`**, thay bằng 2 endpoint trên. Breaking change với frontend — `project/frontend/src/modules/family/family.actions.ts` chỉ có **1 call site** (`SyncFamilyAction`, dòng 11) nên viết lại được gọn.
 
 ### Kiểm chứng
@@ -177,7 +181,7 @@ enum TARGET_TYPE {
 }
 ```
 
-`ACTION_TYPE` mở rộng thêm: `MEMBER_RESTORED`, `OWNERSHIP_TRANSFERRED`, `MEMBER_ROLE_CHANGED`, `MEMBER_JOINED`, `MEMBER_LEFT`, `FAMILY_IMPORTED`, `FAMILY_DELETED`, `MEMBER_GENERATION_RECOMPUTED`.
+**Bảng chuẩn `ACTION_TYPE` nằm ở `03` §10 — dùng bảng đó, đừng liệt kê lần nữa ở đây.** Tổng cộng **15** giá trị. (Bản cũ của dòng này liệt kê 8 mục và nói "11 action type" — con số sai, và danh sách thiếu `MEMBER_CREATED`/`MEMBER_UPDATED`/`MEMBER_DELETED`/`RELATIONSHIP_*`/`FAMILY_UPDATED`.)
 
 Thêm index `(familyId, createdAt)` — chưa kiểm có sẵn hay không.
 

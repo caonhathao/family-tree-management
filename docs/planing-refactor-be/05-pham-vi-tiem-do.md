@@ -13,7 +13,7 @@
 | **I1** | **Không câu `where`/`connect`/`update`/`delete` nào tới `FamilyMember`, `Family`, `Relationship` mà không scope `groupFamilyId`** | Tenant là `GroupFamily`; không có RLS, nên mọi `where` là hàng phòng thủ duy nhất | `family.service.ts:35,71` — IDOR cross-tenant (nghiêm trọng nhất) |
 | **I2** | **Không method nào nhận `userId` mà không dùng nó** | Tham số không dùng = authz không ở tầng service = guard là hàng phòng thủ duy nhất | `family.service.ts:166-302` — `getFamilyData`/`updateFamilyInfo`/`deleteFamilyData` nhận `userId` rồi bỏ qua |
 | **I3** | **Không route nào đọc/ghi dữ liệu group mà thiếu `:groupId`** | `RolesGuard` (`roles.guard.ts:46-73`) chỉ tra được khi route có `groupId` trong `req.params`. Không có `groupId` thì guard không có gì để kiểm | `RolesGuard:48` `return false` khi thiếu `groupId` — dễ dẫn tới bỏ luôn `groupId` khỏi route để "cho qua" |
-| **I4** | **Mọi mutation phải `version++` trong cùng `$transaction`** | Hai người cùng sửa thì không có optimistic lock thì lần save sau âm thầm xoá việc của lần trước | `family.service.ts:62,130` — `deleteMany` xoá sạch thứ không có trong payload |
+| **I4** | **Mọi mutation = đúng 1 `version++`, trong cùng `$transaction`.** Không ngoại lệ — kể cả khi payload rỗng, kể cả khi thay đổi không đụng dữ liệu nghiệp vụ | Hai người cùng sửa thì không có optimistic lock thì lần save sau âm thầm xoá việc của lần trước. Hệ quả đã chốt: **1 lần bấm *Lưu* = +1 `version`**, và thay đổi chưa lưu thì **không tồn tại** — không cứu, không hợp nhất, không hỏi lại | `family.service.ts:62,130` — `deleteMany` xoá sạch thứ không có trong payload |
 | **I5** | **Mọi mutation phải ghi `ActivityLog` trong cùng `$transaction`** | Log tách khỏi transaction thì log sai; log sai tệ hơn không có log | `grep 'activityLog.create'` trong `src/` → **0 kết quả** — bảng có schema, không bao giờ có dữ liệu |
 
 ---
@@ -28,7 +28,7 @@ Ghép 5 dòng này vào mô tả PR hoặc checklist review:
 - [ ] I1  mọi `where` tới Family/FamilyMember/Relationship có `groupFamilyId`
 - [ ] I2  không method nào nhận `userId` mà bỏ qua
 - [ ] I3  mọi route đọc/ghi group data có `:groupId` trong path
-- [ ] I4  mutation có `version++` trong `$transaction`
+- [ ] I4  mutation có `version++` **đúng 1 lần** trong `$transaction`
 - [ ] I5  mutation có `ActivityLog` trong `$transaction`
 ```
 

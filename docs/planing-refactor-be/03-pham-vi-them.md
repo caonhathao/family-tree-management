@@ -77,10 +77,10 @@ Nguyên tắc: **không ghi kiểu "best effort" phía sau.** Mutation + `Activi
 Cần:
 
 - `TARGET_TYPE` đổi thành **thuần loại thực thể**: `FAMILY | MEMBER | RELATIONSHIP | ALBUM | PHOTO | EVENT | GROUP`
-- `ACTION_TYPE` mở rộng thêm: `MEMBER_RESTORED`, `OWNERSHIP_TRANSFERRED`, `MEMBER_ROLE_CHANGED`, `MEMBER_JOINED`, `MEMBER_LEFT`, `FAMILY_IMPORTED`, `FAMILY_DELETED`, `MEMBER_GENERATION_RECOMPUTED`
+- `ACTION_TYPE` mở rộng — **bảng chuẩn nằm ở bên dưới, đừng liệt kê lần nữa ở đây**
 - `@@index([familyId, createdAt])` — truy vấn lịch sử luôn theo family + thời gian
 
-**Bảng action phải ghi (tối thiểu):**
+**Bảng action phải ghi — 15 `ACTION_TYPE` phân biệt (chuẩn, dùng bảng này):**
 
 | Action | Ghi khi | `content` chứa |
 |---|---|---|
@@ -92,14 +92,22 @@ Cần:
 | `RELATIONSHIP_CREATED` / `RELATIONSHIP_DELETED` | thêm/xoá quan hệ | `{ fromMemberId, toMemberId, type }` |
 | `FAMILY_UPDATED` | sửa thông tin cây | diff field |
 | `FAMILY_DELETED` | xoá cả cây | `{ memberCount, relationshipCount }` |
-| `FAMILY_IMPORTED` | import GEDCOM / JSON | `{ source, memberCount, errorCount }` |
+| `FAMILY_IMPORTED` | import GEDCOM / JSON | `{ source, memberCount, errorCount, mode }` |
 | `OWNERSHIP_TRANSFERRED` | bàn giao OWNER | `{ fromUserId, toUserId }` |
 | `MEMBER_ROLE_CHANGED` | đổi role | `{ from, to }` |
 | `MEMBER_JOINED` / `MEMBER_LEFT` | vào / rời group | `{ userId }` |
+| `FAMILY_LAYOUT_CHANGED` | `LAYOUT_SAVE` — lưu hoặc auto-arrange bố cục | `{ movedCount, arranged: boolean }` (`arranged: true` = server tự sắp từ đầu, tức nút *Sắp xếp*) |
+| `MEMBER_GENERATION_RECOMPUTED` | BFS tính lại `generation` | `{ affectedCount, cycleDetected }` |
 
-⚠️ **Xoá một thành viên ghi 2 dòng** (dòng xoá + dòng ảnh hưởng dây chuyền). Một dòng là không đủ để biết mất bao nhiêu.
+⚠️ **`MEMBER_GENERATION_RECOMPUTED` chỉ ghi khi `cycleDetected: true`.** Đây là log *bất thường*, không phải log mỗi lần tính — ghi mỗi lần sẽ spam lịch sử mỗi lần mở cây. Khi phát hiện chu trình: đặt `generation = 0` cho các thành viên trong chu trình, ghi 1 dòng log, và **không** throw (xem D10 — server là nguồn sự thật, nhưng dữ liệu hỏng thì phải vẫn render được kèm cảnh báo).
 
-`content` lưu **diff + snapshot**, không lưu nguyên bản ghi — cắt được phần lớn 2KB/bản ghi mà vẫn đủ để audit.
+⚠️ **Xoá một thành viên ghi 2 dòng** (dòng xoá + dòng ảnh hưởng dây chuyền). Một dòng là không đủ để biết mất bao nhiêu. Vì vậy 14 dòng bảng = **15** `ACTION_TYPE`.
+
+> **Tuỳ chọn, chưa chốt:** `MEMBER_PHOTO_CHANGED` (đổi ảnh thành viên) — sẽ đưa tổng lên **16**. Frontend nên coi đây là giá trị *có thể* xuất hiện và có nhãn dự phòng, không hard-code danh sách đóng. Xem `06` R2.1.
+
+`content` lưu **diff + snapshot**, không lưu nguyên bản ghi — cắt được phần lớn 2KB/bản ghi mà vẫn đủ để audit. Với thao tác batch (`POST /family/:groupId/changes`, `06` R1), `content` ghi thêm `opIndex` để truy ngược dòng log về đúng operation nào trong request.
+
+⚠️ Trong `content` và trong mọi trường tham chiếu phía client dùng tên **`clientRef`** cho thành viên *chưa tồn tại* (xem `02` §1) — **không** dùng `localId`.
 
 **API đọc log:** `GET /family/:groupId/activity?cursor=&action=&targetType=&from=&to=`
 
@@ -145,13 +153,40 @@ Quyết định schema: theo khuyến nghị ở `02-pham-vi-sua.md` §5 — `Al
 
 **Đây là nhu cầu số 1 của người dùng app gia đình, và hiện tại hoàn toàn không có.** Grep `gedcom|pdf|export` trong `src/` → 0 kết quả.
 
-Ba thứ cần, theo thứ tự ưu tiên:
+Ba thứ cần, nhưng chúng **không cùng bản chất** — đừng gộp làm một:
 
-1. **Export JSON** — toàn bộ cây ra file. Rẻ, làm trước, cũng là chính là format của endpoint `POST /import` (§1). Đây là bản sao lưu thật sự.
-2. **Import GEDCOM** (`*.ged`) — nguồn dữ liệu có sẵn lớn nhất về cây gia đình. Thư viện: `gedcom` (Node). Cần map `INDI`/`FAM`/`HUSB`/`WIFE`/`CHIL` sang `FamilyMember` + quan hệ. Kèm báo cáo lỗi dòng theo dòng — dữ liệu GEDCOM thực tế rất bẩn.
-3. **Export ảnh cây** (PDF hoặc PNG server-side) — nhu cầu "in cây gia đình treo tường". Nặng nhất, làm cuối.
+| # | Nhu cầu | Bản chất | Ưu tiên |
+|---|---|---|---|
+| 1 | **Export JSON** | Chỉ đọc → file | **P1** |
+| 2 | **Import GEDCOM** (`*.ged`) | Ghi **hàng loạt** | **P1** |
+| 3 | **Export ảnh cây** (PDF/PNG) | Chỉ đọc, nặng, server-side | **P2** (mục 13) |
 
-Lưu ý an toàn: import là con đường duy nhất ghi hàng loạt. Phải chạy qua endpoint bulk ở §1 (`dryRun` → xem diff → xác nhận → ghi), không có đường import nào đi qua logic hiện tại.
+**1. Export JSON** — toàn bộ cây ra file. Rẻ, làm trước. Cùng format với `POST /import` mode `restore` → tạo thành **vòng bảo đảm dữ liệu thật**: xuất ra → nhập lại → cây y hệt, kể cả id.
+
+**2. Import GEDCOM** — nguồn dữ liệu có sẵn lớn nhất về cây gia đình. Thư viện: `gedcom` (Node). Map `INDI`/`FAM`/`HUSB`/`WIFE`/`CHIL` → `FamilyMember` + quan hệ. Kèm báo cáo lỗi dòng theo dòng — dữ liệu GEDCOM thực tế rất bẩn, nên `report` phải trả về danh sách `{ line, code, message }` chứ không chỉ tổng số lỗi.
+
+#### Hợp đồng `POST /family/:groupId/import` (xem `06` R2.5)
+
+Import là **con đường ghi hàng loạt duy nhất** ngoài `/changes`, và nó **không gộp được** với `/changes` vì nhận **file** và phải **parse + báo lỗi theo dòng**. Giữ là endpoint riêng.
+
+```
+headers: If-Match, Idempotency-Key
+body:    { mode: 'create' | 'restore', dryRun?: boolean, baseVersion, payload }
+
+  mode: 'create'   → mọi thành viên mới; tham chiếu trong file bằng clientRef
+  mode: 'restore'  → giữ nguyên id trong file (chỉ hợp lệ với file do hệ thống này xuất)
+
+200          → { version, tree, idMap, activityIds, report }
+dryRun: true → { dryRun: true, idMap, conflicts, report, tree }    // không ghi gì
+```
+
+Luồng UI: `dryRun: true` → xem diff + report → người dùng xác nhận → gửi lại không có `dryRun`. `Idempotency-Key` chống double-submit khi người dùng bấm nút nhiều lần.
+
+#### ⚠️ Gộp trùng: chưa hỗ trợ
+
+`mode: 'restore'` **không** phải là cơ chế gộp thông minh. Nếu `id` trong file đã tồn tại mà nội dung khác thì phải **409 liệt kê `conflicts`** và **không** tự ghi đè — ghi đè âm thầm là cách nhanh nhất để mất dữ liệu gia đình mà không ai nhận ra. Gộp trùng (merge theo tên + ngày sinh) là việc riêng, để đợt sau.
+
+Sau khi ghi, ghi log `FAMILY_IMPORTED` với `{ source, memberCount, errorCount, mode }` (xem §10) — **kể cả import thất bại một phần**, vì đó là lúc người dùng cần biết mình vừa làm hỏng gì.
 
 ### 6. Share link read-only
 
@@ -172,7 +207,9 @@ Không có endpoint tìm người. Cây vài trăm người thì frontend phải
 
 `Event` không có cột nào trỏ `FamilyMember` (`event.prisma:22-44`) — xem `02-pham-vi-sua.md` §6.
 
-Thêm `familyMemberId String?` + index. Mở ra: sinh nhật/nhật niên theo từng người, "kỷ niệm ngày cụ qua đời", timeline cá nhân. Đây là phần làm cho module Events trở nên hữu ích với gia đình thật — hiện nó chỉ là lịch chung.
+Thêm **đúng 1 cột** `familyMemberId String?` + index. Mở ra: sinh nhật/nhật niên theo từng người, "kỷ niệm ngày cụ qua đời", timeline cá nhân. Đây là phần làm cho module Events trở nên hữu ích với gia đình thật — hiện nó chỉ là lịch chung.
+
+**Cố ý KHÔNG thêm bảng `EventParticipant`** (xem `06` R2.3). Lý do: cột này trả lời "sự kiện này **thuộc về** người này" — quan hệ 1–1. Danh sách khách mời trả lời "những người **dự** sự kiện" — quan hệ nhiều–nhiều, cần bảng riêng. Dồn hai ý nghĩa vào 1 cột thì về sau sẽ không biết `familyMemberId` đang nói cái nào. Nhu cầu khách mời đã bị cắt khỏi phạm vi đợt này (chuyển P2, xem mục 13).
 
 ---
 
@@ -214,5 +251,17 @@ Cần giữ đúng: `project/backend/postman.json` + `.postman/`, `docs/api-resp
 
 Thêm vào danh sách phải cập nhật:
 
-- `docs/planing - refactor -be/05-pham-vi-tiem-do.md` — nhúng vào PR template / checklist review từ phase 1, và chính file này phải được sửa nếu một bất biến bị vi phạm (tức là bất biến sai, không phải code sai).
+- `docs/planing-refactor-be/05-pham-vi-tiem-do.md` — nhúng vào PR template / checklist review từ phase 1, và chính file này phải được sửa nếu một bất biến bị vi phạm (tức là bất biến sai, không phải code sai).
 - `docs/pending_features.md` — đã lỗi thời (xem `01-pham-vi-bo.md` B9).
+
+### 13. Export ảnh cây PDF/PNG (tách từ mục 5, hạ xuống P2)
+
+Nhu cầu "in cây gia đình treo tường". **Tách khỏi mục 5 có chủ đích** — vì nó là tác vụ **chỉ đọc**, không liên quan endpoint ghi, không cần `version`, không ghi `ActivityLog`, không cần `dryRun`. Nhối nó vào §5 khiến cả mục mang luôn baggage của đường ghi mà không dùng tới.
+
+Cần: dựng SVG từ cây → render PDF/PNG server-side. Cân nhắc:
+
+- **Font tiếng Việt** — bắt buộc phải nhúng font hỗ trợ dấu, không thì tên người Việt ra thành ô vuông. Đây là lỗi kinh điển của mọi thư viện render server.
+- **Chọn lọc thành viên** — cây 500 người không in nổi. Cần tham số `generationRange` hoặc `memberIds` để in một nhánh.
+- Quyền: `edit` (EDITOR+) — đây là dữ liệu gia đình, VIEWER không được tải ảnh cây ra máy mình.
+
+Trước khi làm, cân nhắc phương án rẻ hơn: **render bằng SVG ở frontend rồi in bằng trình duyệt**. Chất lượng tốt hơn server-side, không tốn CPU, không cần thư viện render headless. Chỉ chọn server-side khi thật sự cần nhúng ảnh vào email hoặc API trả về file cho app mobile dùng.

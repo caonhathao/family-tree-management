@@ -24,7 +24,7 @@ Hai việc song song, không tách rời:
 | **Q5** | Danh tính thành viên | **`localId` → `id`** (server sinh). `clientRef` chỉ tồn tại trong bộ nhớ, không bao giờ vào payload |
 | **Q6** | `generation` | **Server là nguồn sự thật.** Client chỉ tính **tạm để vẽ**, không gửi lên |
 | **Q7** | Quan hệ 2 chiều | Client **đọc 2 chiều** (không đổi, tầng hiển thị cần), **chỉ gửi 1 chiều**. Client tự sinh chiều ngược **để hiển thị**, không gửi |
-| **Q8** | Bố cục (`positionX/Y`) | **2 tầng** — cá nhân `localStorage` (kéo tay, không lên cloud) + chung trên server (chỉ ghi qua nút *Sắp xếp* hoặc *Lưu*, cả hai đều tự arrange) |
+| **Q8** | Bố cục (`positionX/Y`) | **2 tầng** — cá nhân `localStorage` (kéo tay, không lên cloud) + chung trên server (chỉ ghi qua nút *Sắp xếp* hoặc *Lưu*, cả hai đều tự arrange). **1 lần bấm = 1 `version`**: lớp phủ `localStorage` là thứ *chưa lưu*, bị xoá sau khi lưu là bình thường; kéo mà không bấm *Lưu* thì mất, không cứu |
 | **Q9** | Ai được ghi | *Lưu*/*Sắp xếp* = `OWNER\|EDITOR` (`canManage` sẵn có ở `group-content.tsx:477`). **VIEWER** chỉ dùng được tầng cá nhân — đó là thứ duy nhất họ làm được |
 | **Q10** | Menu chết | **Xoá 4 mục** không có trang: *Lời mời*, *Kho lưu trữ*, *Hỗ trợ*, *Phản hồi*. Giữ *Thùng rác* (có trang thật ở `03` §2) |
 | **Q11** | Trang gốc `/` | **Redirector**: 1 group → vào thẳng cây; ≥2 group → `/user/groups`; 0 group → tạo group. Không còn landing marketing |
@@ -58,7 +58,7 @@ Hai mục dưới đây là **tiền đề cứng** cho `04` stage 3. Chi tiết
 | # | Yêu cầu | Vì sao chặn |
 |---|---------|-----------|
 | **R1** | `POST /api/v1/family/:groupId/changes` — batch, `If-Match`, 1 `$transaction`, 1 lần `version++`, 1 loạt `ActivityLog`, mức quyền `edit` | Nếu chỉ có CRUD lẻ: lưu = N request, request 3/5 lỗi 409 thì 1-2 đã gửi rồi → **lưu không nguyên tử**, người dùng phải tự dò xem đã lưu được gì |
-| **R2** | Operation lưu bố cục trong cùng batch (`LAYOUT_SAVE`, hoặc gộp `positionX/Y` vào `MEMBER_UPDATE`) + action type `FAMILY_LAYOUT_CHANGED` | Nút *Sắp xếp* là một mutation → theo I4/I5 bắt buộc `version++` và ghi `ActivityLog`. Không có nó thì nút *Sắp xếp* là đường lách duy nhất qua 2 bất biến đó |
+| **R2** | Operation lưu bố cục trong cùng batch: **`LAYOUT_SAVE`** (✅ đã chốt, **không** gộp `positionX/Y` vào `MEMBER_UPDATE` — bố cục là 1 mutation riêng vì nó phải auto-arrange trước khi ghi) + action type `FAMILY_LAYOUT_CHANGED` | Nút *Sắp xếp* là một mutation → theo I4/I5 bắt buộc `version++` và ghi `ActivityLog`. Không có nó thì nút *Sắp xếp* là đường lách duy nhất qua 2 bất biến đó |
 
 ## Danh sách
 

@@ -16,9 +16,9 @@ Biến backend hiện tại (được dựng với hướng dẫn thương mại
 | D3 | Blog | **Bỏ hẳn** blog + blog-media + toàn bộ code liên quan |
 | D4 | Ảnh | **Giữ, có cả album** — build thật `AlbumsModule` (đang là stub) |
 | D5 | Phạm vi lần này | **Chỉ backend.** Frontend sẽ cần sửa theo, ghi rõ ở từng mục |
-| D6 | Write-path | **Hybrid** — CRUD lẻ là đường chính, 1 endpoint bulk riêng cho import/GEDCOM |
+| D6 | Write-path | **Batch-first** — `POST /family/:groupId/changes` là đường ghi **chính**; CRUD lẻ + `/import` giữ làm API **cấp thấp** cho e2e/CLI. Chi tiết ở [06](./06-bo-sung-tu-khao-sat-fe.md) R1 |
 | D7 | Phân quyền | **Giữ 3 vai `OWNER`/`EDITOR`/`VIEWER`**, chỉ bỏ `isLeader`. EDITOR **không** xoá được group. Thêm `PATCH /group-family/:groupId/transfer-ownership` |
-| D8 | Nhóm mồ côi | OWNER rời group → tự chuyển OWNER cho EDITOR lâu năm nhất + notification |
+| D8 | Nhóm mồ côi | OWNER rời group → tự chuyển OWNER cho **EDITOR lâu năm nhất** + notification. Không còn EDITOR thì xuống **VIEWER lâu năm nhất**; hết thành viên thì `GroupFamily` bị xoá theo cascade. OWNER cũ giữ `EDITOR`, **không** bị kick. Chi tiết ở [03](./03-pham-vi-them.md) §2 |
 | D9 | Quan hệ | **Giữ bảng `Relationship`.** Client gửi 1 chiều, server tự sinh chiều đối. `SPOUSE` là **cặp không thứ tự** (sort 2 id trước khi ghi), tầng đọc mới suy ra "ai là chồng" |
 | D10 | `generation` | **Server là nguồn sự thật** (BFS). Node trong chu trình → `generation = 0` + cảnh báo, **không throw**. Client gửi giá trị lệch → `409` |
 | D11 | Tài khoản | **Password reset làm thật** (bảng token lưu **hash**, Resend, rate limit, thu hồi mọi `Session`). Email verification = **pending** — không thêm `emailVerifiedAt` |
@@ -57,5 +57,7 @@ Tài liệu `docs/pending_features.md` hiện có **đã lỗi thời** — nó 
 ## Kế hoạch frontend đi kèm
 
 Khảo sát frontend ([`../planing-refactor-fe/README.md`](../planing-refactor-fe/README.md)) được làm sau và phát hiện **2 mục mà bộ kế hoạch này còn thiếu** — xem [06-bo-sung-tu-khao-sat-fe.md](./06-bo-sung-tu-khao-sat-fe.md). Nổi bật: frontend quyết định **giữ nút *Lưu* toàn cục**, nên bước 2.2 bên dưới chỉ có CRUD lẻ là chưa đủ.
+
+**Đã chốt (2026-09-27):** `/changes` được chấp nhận và là **đường ghi chính** — D6 ở trên đã sửa theo. `/changes` là bước **2.2b**, tách riêng khỏi 2.2 (CRUD lẻ, nay là API cấp thấp). R2.3, R2.4, R2.5 cũng đã có câu trả lời — xem mục "Câu hỏi đã trả lời" ở `06`.
 
 ⚠️ **Hai bộ kế hoạch phải đọc cùng nhau.** Khi hai tài liệu mâu thuẫn, file này ăn và file kia phải sửa.

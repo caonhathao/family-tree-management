@@ -36,13 +36,17 @@ Body:
       { "type": "RELATIONSHIP_CREATE", "data": { "fromRef": "r1", "toRef": "r2", "type": "PARENT" } },
       { "type": "RELATIONSHIP_DELETE", "id": "..." },
       { "type": "FAMILY_UPDATE",       "data": { ... } },
-      { "type": "LAYOUT_SAVE",         "data": { "members": [{ "id": "...", "positionX": 0, "positionY": 0 }] } }
+      { "type": "LAYOUT_SAVE",         "data": { "positions": [{ "id": "...", "x": 0, "y": 0 }] } }
     ]
   }
 
 200 → { "version": 43, "tree": { ... }, "idMap": { "r1": "uuid-thật" }, "activityIds": ["..."] }
 409 → { "currentVersion": 44, "conflicts": [{ "opIndex": 2, "memberId": "...", "reason": "STALE_VERSION" }] }
 ```
+
+⚠️ Với `LAYOUT_SAVE`: `positions` là bản người dùng **đã kéo**, nhưng **server tidy (auto-arrange) trước khi ghi**. `tree` trả về có `positionX/Y` là **bản đã sắp** → phải vẽ lại từ `tree`, không dùng lại `positions` đã gửi. Nút *Sắp xếp* gửi `positions: []` (server tự tính từ đầu, bỏ qua mọi kéo tay). Chi tiết ở backend `06` R1.4.
+
+⚠️ **Tên gọi:** ref phía client trong payload này tên là **`clientRef`** (không phải `localId` — bất biển **F1** nói bỏ hẳn `localId` khỏi body). `clientRef` chỉ hợp lệ ở đúng chỗ nó tham chiếu thành viên **chưa tồn tại**; thành viên đã có thì dùng `id`.
 
 Yêu cầu bắt buộc kèm theo:
 
@@ -58,12 +62,14 @@ Yêu cầu bắt buộc kèm theo:
 
 ### R2 — Bổ sung vào `03`/`04` backend
 
-`Event.familyMemberId` (đã có trong `03` §2.11) là đủ cho `03` §9 (gắn sự kiện vào người). Nhưng cần thêm 2 mục:
+`Event.familyMemberId` (đã có trong `03` §8) là đủ cho `03` §9 (gắn sự kiện vào người). Nhưng cần thêm 2 mục:
 
 | # | Yêu cầu | Vì sao |
 |---|---------|--------|
-| R2.1 | `ActivityLog` có đủ action type cho layout + membership | Theo R1.4: `FAMILY_LAYOUT_CHANGED`; và `MEMBER_JOINED`/`MEMBER_LEFT`/`MEMBER_ROLE_CHANGED`/`OWNERSHIP_TRANSFERRED` đã có sẵn trong `03` §10 nhưng FE cần đọc để hiển thị lịch sử |
-| R2.2 | `GET /api/v1/family/:groupId/activity` phân trang **bằng cursor** | Offset pagination sẽ trùng/mất dòng khi ai đó vừa ghi log. Xem `03` §1 |
+| R2.1 | `ActivityLog` có đủ action type cho layout + membership | Theo R1.4: `FAMILY_LAYOUT_CHANGED`. **Tổng 15 `ACTION_TYPE`** — bảng chuẩn ở backend `03` §10, đã chốt 2026-09-27; xét lại ở backend `06` R2.1 |
+| R2.2 | `GET /api/v1/family/:groupId/activity` phân trang **bằng cursor** | Offset pagination sẽ trùng/mất dòng khi ai đó vừa ghi log. Xem `03` §10 |
+
+✅ **Đã chốt 2026-09-27:** `Event.familyMemberId` là **đúng 1 cột** và là **đủ** cho `03` §9 (quan hệ 1–1 "sự kiện này thuộc về người này"). Backend **cố ý không** thêm bảng `EventParticipant` — nhu cầu "danh sách khách mời" (quan hệ n–n) bị **cắt khỏi phạm vi** và hạ xuống P2 ở `03` §10. Chi tiết ở backend `06` R2.3.
 
 ---
 
@@ -265,7 +271,7 @@ Và `family-member-form.tsx:303-321` còn **cho người dùng tự nhập số 
 
 ## §6 — `isLeader` → `MEMBER_ROLE.OWNER`, và nối 2 nút chết
 
-Sau `B3`, hai drawer phải đổi nguồn sự thật. `canManage` ở `group-content.tsx:477-481` **đã đúng** (`OWNER || EDITOR`) — chỉ cần dùng nó.
+Sau `FE-B3`, hai drawer phải đổi nguồn sự thật. `canManage` ở `group-content.tsx:477-481` **đã đúng** (`OWNER || EDITOR`) — chỉ cần dùng nó.
 
 | Vị trí | Hiện tại | Sau |
 |---|---|---|
@@ -281,7 +287,9 @@ Sau `B3`, hai drawer phải đổi nguồn sự thật. `canManage` ở `group-c
 | *Đổi vai trò* | `family-info-drawer.tsx:212-224` | Render **không có `onClick`** | Nối `UpdateGroupMemberRoleAction` (`PATCH /group-member/:groupId`) |
 | *Cài đặt nhóm* | `family-setting-drawer.tsx:126-134` | **Section rỗng** | Dựng UI chuyển quyền sở hữu |
 
-⚠️ **Chuyển quyền sở hữu** dùng `PATCH /group-family/:groupId/transfer-ownership` (backend `03` §2.9) — **không phải** `changeLeader` đang xoá ở `B6`.
+⚠️ **Chuyển quyền sở hữu** dùng `PATCH /group-family/:groupId/transfer-ownership` (backend `04` bước **2.9**, nguồn `03` §2) — **không phải** `changeLeader` đang xoá ở `FE-B6`.
+
+✅ **Đã chốt 2026-09-27** (backend `06` R2.4): endpoint **nhận `memberId` bắt buộc**; người nhận thừa kế `EDITOR`, không có `EDITOR` thì fallback `VIEWER`; **OWNER cũ còn `EDITOR`, không bị kick**. → UI cần 1 bước chọn người nhận trước khi gọi, và **không** được hiển thị "bạn sẽ mất quyền" như `changeLeader` cũ.
 
 ⚠️ Backend giữ `PATCH /group-member/:groupId` nhưng chỉ cho đổi **EDITOR ↔ VIEWER** (backend `02` §3). Nên UI phải **không** hiện lựa chọn lên `OWNER` — hiện trừ OWNER ra là chưa đủ, phải cả chặn chọn.
 
@@ -303,6 +311,16 @@ Hiện `group-family.service.ts:199` **không phân biệt vai trò** — cả E
 | **Dùng chung** | mọi thành viên | `FamilyMember.positionX/Y` | **chỉ** khi bấm *Sắp xếp* hoặc *Lưu* — cả hai đều tự arrange trước khi ghi |
 
 Kéo thả tay **không bao giờ** gửi lên server. Bấm *Lưu* sẽ ghi đè bố cục cá nhân bằng bản auto-arrange → cây chung luôn chỉnh chu.
+
+⚠️ **Mô hình lưu: 1 lần bấm = 1 `version`, không có ngoại lệ.** *Lưu* và *Sắp xếp* đều là mutation thật, mỗi cái bump `version` đúng 1 lần. Hệ quả bất biến — **lớp phủ `localStorage` không phải tài sản, nó là thứ _chưa lưu_**:
+
+| Tình huống | Kết quả |
+|---|---|
+| Bấm *Lưu* | `version +1`, bố cục chung được ghi, lớp phủ **xoá** — bình thường, không phải bug |
+| Kéo rồi đóng tab / không bấm *Lưu* | **Mất.** Không cứu, không hỏi, không cảnh báo trước |
+| Người khác vừa lưu, mình đang kéo | `If-Match` cũ → `409` → hộp thoại `03` §12. Không tự merge, không giữ lớp phủ để sau |
+
+Không cần `layoutKey`, không cần checksum — `version` là con số duy nhất quyết định lớp phủ còn hiệu lực hay không.
 
 ### Cạm bẫy bắt buộc xử lý: lớp phủ che mất thay đổi của người khác
 
@@ -345,14 +363,14 @@ Nhờ vậy lớp phủ **tự hết hạn đúng lúc cần**, và mọi thay �
 
 ### UI cần có
 
-- Băng chuyền: *"Bạn đang xem bố cục riêng — chưa lưu lên cây chung"* + nút *Xem bố cục chung* (xoá lớp phủ) + nút *Chỉnh sửa lại*.
+- Băng chuyền: *"Bạn đang xem bố cục riêng — chưa lưu lên cây chung"* + **1 nút duy nhất** *Xem bố cục chung* (xoá lớp phủ, vẽ lại từ `tree`, **0 request**). Không có nút ghi trong băng chuyền — xem `03` §11.
 - Bật/tắt *Cho phép kéo thả* ở `panel-editor.tsx` (menu *Hiển thị*) giữ nguyên, nhưng **không** gọi API.
 - Hiện tại `onNodeDragStop` (`group-content.tsx:406-416`) ghi `positionX/Y` **vào bản ghi member** → đổi thành ghi vào state bố cục riêng, debounce ~300ms.
 - Menu *Chi tiết* ở `panel-editor.tsx` không có handler → xoá (đã chết từ lâu).
 
 ### Cùng cơ chế: `pinnedMemberId`
 
-Theo `B4`, chuyển sang `localStorage` luôn, dùng chung cơ chế lớp phủ (`ff:pin:{groupId}`). Không cần `version` ở đây vì ghim là **lựa chọn cá nhân thuần tuý** — không ai khác quan tâm bạn ghim ai. Nhưng vẫn cần xoá khi đổi `groupId` để tránh rò giữa các cây.
+Theo `FE-B4`, chuyển sang `localStorage` luôn, dùng chung cơ chế lớp phủ (`ff:pin:{groupId}`). Không cần `version` ở đây vì ghim là **lựa chọn cá nhân thuần tuý** — không ai khác quan tâm bạn ghim ai. Nhưng vẫn cần xoá khi đổi `groupId` để tránh rò giữa các cây.
 
 ---
 
@@ -372,7 +390,7 @@ auth: {
 
 ⚠️ **Bất biến F3**: mọi URL phải dựng từ `API_PREFIX`. Lý do cụ thể: một chữ gõ sai trong 60 URL không lộ ra lúc build, chỉ lộ **runtime 404** trên màn hình của người dùng. Không có type nào bắt được.
 
-⚠️ `proxy.ts` cũng gọi `apiClient` — nó sẽ đổi theo, **nhưng** `publicRoutes` chứa 4 entry `/api/auth/*` phải đổi cùng (xem `B10`; sau đó xoá hẳn).
+⚠️ `proxy.ts` cũng gọi `apiClient` — nó sẽ đổi theo, **nhưng** `publicRoutes` chứa 4 entry `/api/auth/*` phải đổi cùng (xem `FE-B10`; sau đó xoá hẳn).
 
 ⚠️ Đổi prefix phải **cùng lúc** với deploy backend. Không tuần tự: FE đổi trước thì toàn bộ app 404; backend đổi trước thì toàn bộ app 401. Nên để ở stage 3, ngay sau khi backend phase 2 lên production.
 
@@ -382,7 +400,7 @@ auth: {
 
 `admin/layout.tsx` (32 dòng), `user/layout.tsx` (36), `group/layout.tsx` (39) — cùng một khung: `SidebarProvider` → `Sidebar` → `Separator` → header → `SidebarInset`, chỉ khác nhãn header và `--sidebar-width`.
 
-Sau `B2` còn lại 2. Gộp thành `<ShellSidebarLayout sidebar={...} title="..." width="...">`.
+Sau `FE-B2` còn lại 2. Gộp thành `<ShellSidebarLayout sidebar={...} title="..." width="...">`.
 
 ⚠️ Cả hai đều `force-dynamic` — giữ nguyên, vì cả hai đọc session từ cookie qua `apiRequest` (header `x-access-token` do `proxy.ts` tiêm, xem `http.client.ts:73-84`).
 
@@ -390,7 +408,7 @@ Sau `B2` còn lại 2. Gộp thành `<ShellSidebarLayout sidebar={...} title="..
 
 ## §10 — `/` và `/group` không có `groupId` phải redirect, không in text lỗi
 
-**`/`** (`(public)/page.tsx`): sau `B8` thành landing marketing không còn ý nghĩa. Theo Q11:
+**`/`** (`(public)/page.tsx`): sau `FE-B8` thành landing marketing không còn ý nghĩa. Theo Q11:
 
 ```
 0 group  → màn hình tạo group / lời mời
@@ -437,13 +455,15 @@ Cẩn thận: khác với `USER_ROLE`/`BLOG_MEDIA_TYPE` (xoá hẳn ở `01`), 3
 
 | Enum | Hiện tại | Sau | Ảnh hưởng FE |
 |---|---|---|---|
-| `ACTION_TYPE` | `{ UPDATE, DELETE, NEW }` | 11 giá trị chi tiết (backend `02` §6) | Màn hình lịch sử thay đổi (`03` §1) phải map **từng giá trị** sang nhãn tiếng Việt + icon |
+| `ACTION_TYPE` | `{ UPDATE, DELETE, NEW }` | **15** giá trị chi tiết — bảng chuẩn ở backend `03` §10 (đã chốt 2026-09-27) | Màn hình lịch sử thay đổi (`03` §1) phải map **từng giá trị** sang nhãn tiếng Việt + icon |
 | `TARGET_TYPE` | `{ ALBUM, FAMILY, EVENT_FAMILY, EVENT_SELF, USER }` | `{ FAMILY, MEMBER, RELATIONSHIP, ALBUM, PHOTO, EVENT, GROUP }` | Bộ lọc trong lịch sử thay đổi |
 | `NOTIFICATION_TYPE` | `{ NEW, UPDATE, DELETE, OTHER }` | **bỏ hẳn**, thay bằng cột `entityType` + `entityId` | Thông báo phải hiển thị *cái gì* thay đổi, không hiển thị "NEW" |
 
 ⚠️ `NOTIFICATION_TYPE` không có bản thay thế trực tiếp → phải sửa mọi chỗ đang hiển thị nó **cùng lúc** với việc đọc `entityType`/`entityId`, nếu không sẽ hiện `undefined`.
 
-⚠️ Nên để một bảng ánh xạ tập trung (`src/lib/family/labels.ts`) thay vì rải `switch` — 11 action type × 7 target type là 18 chỗ dễ quên, và người dùng sẽ thấy `MEMBER_CREATED_RAW`.
+⚠️ Nên để một bảng ánh xạ tập trung (`src/lib/family/labels.ts`) thay vì rải `switch` — **15 action type × 7 target type là 105 chỗ** dễ quên, và người dùng sẽ thấy `MEMBER_CREATED_RAW`.
+
+⚠️ Vì con số này **lớn hơn nhiều** so với ước lượng ban đầu, `labels.ts` nên sinh từ **2 mảng hằng** (`ACTION_TYPES`, `TARGET_TYPES`) chứ không viết tay 105 dòng — nếu không, chính bảng "tiện lợi" đó sẽ là nơi sai tiếp theo.
 
 ---
 
@@ -452,7 +472,7 @@ Cẩn thận: khác với `USER_ROLE`/`BLOG_MEDIA_TYPE` (xoá hẳn ở `01`), 3
 | Lỗi | Vị trí | Vì sao phải sửa trong đợt này |
 |---|---|---|
 | `useRouter()` gọi **bên trong `catch`** của hàm async không phải component | `panel-editor.tsx:74` | Vi phạm rules-of-hooks. Chỉ sống sót vì nhánh lỗi hiếm khi chạy. Khi `§3` làm lại luồng lỗi 409 thì nhánh này sẽ chạy thường xuyên → lộ ngay |
-| `/403` không có trang | `proxy.ts:136` | Sau `B2` không còn ai redirect tới, xoá luôn entry nếu có. Nhưng nếu giữ bất kỳ nhánh RBAC nào thì phải có trang thật |
+| `/403` không có trang | `proxy.ts:136` | Sau `FE-B2` không còn ai redirect tới, xoá luôn entry nếu có. Nhưng nếu giữ bất kỳ nhánh RBAC nào thì phải có trang thật |
 
 ---
 

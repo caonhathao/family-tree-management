@@ -65,10 +65,11 @@ Viết lại đường ghi. Đây là lúc duy nhất breaking change gần như
 |------|----------|-------|
 | 2.0 | Mô hình quan hệ — **đã chốt D9**: giữ bảng `Relationship`, server tự sinh chiều đối. Thêm `@@unique([fromMemberId, toMemberId, type])`; `SPOUSE` sort 2 id trước khi ghi (cặp không thứ tự); `wouldCreateCycle()` chặn chu trình | `02` §9 |
 | 2.1 | Thêm `Family.version Int @default(0)`; mọi mutation `version++` trong transaction | `02` §2 |
-| 2.2 | `FamilyMember` granular CRUD + `If-Match` version → 409 | `03` §1 |
-| 2.3 | `POST|PATCH|DELETE /family/:groupId/relationships` — mỗi lần ghi đều sinh chiều đối + `wouldCreateCycle` + `version++` | `03` §1, `02` §9 |
+| 2.2 | `FamilyMember` granular CRUD + `If-Match` version → 409. **Đây là API cấp thấp** — cho script/CLI và e2e test, không phải đường ghi frontend dùng (xem 2.2b) | `03` §1 |
+| 2.2b | **`POST /family/:groupId/changes` — ĐƯỜNG GHI CHÍNH.** `If-Match` + `{ baseVersion, operations[] }` với 8 op type (`MEMBER_CREATE`/`MEMBER_UPDATE`/`MEMBER_DELETE`/`RELATIONSHIP_CREATE`/`RELATIONSHIP_UPDATE`/`RELATIONSHIP_DELETE`/`FAMILY_UPDATE`/`LAYOUT_SAVE`); 1 `$transaction`, `version++` đúng 1 lần (I4), ghi hết log (I5); trả `idMap` để re-key; 409 kèm `currentVersion` + `conflicts[]` + `tree`. `LAYOUT_SAVE` nhận `positions[]`, **server tidy rồi ghi**, trả `tree` đã sắp | `06` R1 |
+| 2.3 | `POST|PATCH|DELETE /family/:groupId/relationships` — mỗi lần ghi đều sinh chiều đối + `wouldCreateCycle` + `version++` (**API cấp thấp**, xem 2.2b) | `03` §1, `02` §9 |
 | 2.4 | `generation` bỏ khỏi DTO; server BFS tính lại sau mỗi mutation có đổi quan hệ; client gửi giá trị lệch thì 409 | `02` §9 |
-| 2.5 | `POST /family/:groupId/import` — `dryRun` + `baseVersion` + `Idempotency-Key`; **không nhận primary key** | `03` §1 |
+| 2.5 | `POST /family/:groupId/import` — `If-Match` + `Idempotency-Key` + `baseVersion` + `dryRun` + **`mode: 'create' \| 'restore'`** (`restore` giữ nguyên id trong file backup; id trùng mà nội dung khác → 409 `conflicts`, không ghi đè) | `03` §5, `06` R2.5 |
 | 2.6 | Xoá `POST /family/sync-data/:groupId` | `03` §1 |
 | 2.7 | `FamilyMember.deletedAt` + `GET /trash` + restore + job 30 ngày | `03` §11 |
 | 2.8 | `ActivityLog`: `TARGET_TYPE`/`ACTION_TYPE` mới, `@@index([familyId, createdAt])`, ghi trong **cùng** `$transaction` với mọi mutation, `GET /family/:groupId/activity` (chỉ OWNER/EDITOR) | `03` §10 |
@@ -79,8 +80,8 @@ Viết lại đường ghi. Đây là lúc duy nhất breaking change gần như
 | 2.13 | `/api/v1` | `02` §8 |
 
 **Frontend phải sửa theo (chưa nằm trong phạm vi lần này, ghi ra để không quên):**
-- `src/lib/api/api-client.lib.ts` — bỏ `family.syncFamily`, thêm CRUD mới
-- `src/modules/family/family.actions.ts` — `SyncFamilyAction` viết lại thành bộ action lẻ
+- `src/lib/api/api-client.lib.ts` — bỏ `family.syncFamily`, thêm `family.changes` + CRUD mới
+- `src/modules/family/family.actions.ts` — `SyncFamilyAction` viết lại thành bộ action gọi `/changes`
 - `src/proxy.ts` — bỏ `x-user-role` sau khi `User.role` biến mất
 - Base path mọi request: `/api` → `/api/v1`
 - `src/app/group/_components/forms/relationship-form.tsx:228` — bỏ logic tự sinh quan hệ và tự tính `generation` (`:190-219`, đặc biệt `:199-212`); giờ server lo
@@ -120,7 +121,7 @@ Vòng kiểm thật sự: **export JSON → xoá group → import lại → cây
 | Bước | Nội dung | Nguồn |
 |------|----------|-------|
 | 4.1 | Share link read-only, có thu hồi, hết hạn, **guard riêng** (không dùng `AtGuard`) | `03` §6 |
-| 4.2 | Export ảnh cây PDF/PNG | `03` §5 |
+| 4.2 | Export ảnh cây PDF/PNG (**tách từ mục 5, hạ xuống P2**) | `03` §13 |
 | 4.3 | Email verification — **pending** (D11), chỉ làm nếu thấy cần. Bảng `Verification` đã bị xoá ở phase 0; nếu làm thì thêm cột `User.emailVerifiedAt DateTime?` mới, không dựng lại bảng | `01` B6, `03` §9 |
 | 4.4 | Xem lại `ActivityLog` sau khi đã chạy thật: log có ích không, có nên rút gọn bảng action không | `03` §10 |
 | 4.5 | Đồng bộ `postman.json`, `docs/`, `graphs/*.drawio` | `03` §12 |
@@ -131,14 +132,16 @@ Vòng kiểm thật sự: **export JSON → xoá group → import lại → cây
 
 ## Cổng release
 
+> ⚠️ **Trạng thái hiện tại: 0/7.** Bản cũ của file này tick đủ 7 mục, trong khi `README.md` ghi rõ đây là **đề xuất, chưa ai code** — và chính `04` cũng ghi ở phần CI rằng e2e **chưa** chạy trong CI. Tick `[x]` cho việc chưa làm là kiểu lỗi nguy hiểm nhất trong tài liệu: đọc lại 3 tháng sau sẽ tưởng đã xong.
+
 Không release cho người dùng thật trước khi có đủ:
 
-- [x] Phase 0 + Phase 1 xanh, e2e chạy **trong CI** chứ không phải chỉ local
-- [x] Test IDOR cross-tenant xanh
-- [x] **5 bất biến `05-pham-vi-tiem-do.md` tick đủ 5/5** và đã nhúng vào PR template
-- [x] Upload ảnh thành viên chạy được
-- [x] Export JSON + import round-trip xanh
-- [x] Không còn endpoint giả nào (audit lại `auth.controller.ts` toàn bộ)
-- [x] Clone repo mới → `cp .env.example .env` → boot được không cần sửa gì
+- [ ] Phase 0 + Phase 1 xanh, e2e chạy **trong CI** chứ không phải chỉ local
+- [ ] Test IDOR cross-tenant xanh
+- [ ] **5 bất biến `05-pham-vi-tiem-do.md` tick đủ 5/5** và đã nhúng vào PR template
+- [ ] Upload ảnh thành viên chạy được
+- [ ] Export JSON + import round-trip xanh (**cả `mode: 'restore'`** — export xong import lại phải ra cây y hệt kể cả id)
+- [ ] Không còn endpoint giả nào (audit lại `auth.controller.ts` toàn bộ)
+- [ ] Clone repo mới → `cp .env.example .env` → boot được không cần sửa gì
 
 Nếu thiếu mục nào trong 6 mục đầu thì vẫn dùng được với người thân, nhưng **không** để người lạ đăng ký.

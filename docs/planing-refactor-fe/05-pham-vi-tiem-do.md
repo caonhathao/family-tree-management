@@ -5,6 +5,8 @@
 > Đây là phát hiện quan trọng nhất của toàn bộ khảo sát frontend, và nó **lặp lại y hệt** phát hiện của khảo sát backend: hệ thống không hỏng vì thiếu tính năng, mà hỏng vì **không có bất biến nào được viết ra**. `familySlice` giữ `draft` + `origin` là một thói quen, không phải quy tắc — nên `family-member-form.tsx:136` mới mời sinh `v4()` làm `localId` mà không ai ngăn được.
 >
 > 5 bất biến backend (I1–I5) là phía server. 6 bất biến ở đây là phía client. **Hai bộ phải được kiểm tra cùng nhau** trong mọi PR đụng cả hai.
+>
+> ⚠️ **Ký hiệu `B` đã có tiền tố.** Cột "Sửa ở" ở bảng bên dưới dùng `FE-B*` cho mục của `planing-refactor-fe/01` và `BE-B*` cho mục của `planing-refactor-be/01` — **hai danh sách này không cùng nghĩa** và lệch nhau từ mục thứ 5 trở đi. Bảng ánh xạ 2 chiều ở [dòng 126](#) là nơi duy nhất trong file này dùng `BE-B*`, vì nó nói về việc *backend* xoá cột. Viết `B3` trần là không xác định.
 
 ---
 
@@ -68,7 +70,7 @@ Ví dụ hợp lệ về F1: nếu backend **thực sự** trả về `idMap` v�
 | F2 | `family-member-form.tsx:303-321` — **cho người dùng tự nhập số thế hệ** | `02` §4 |
 | F2 | `relationship-form.tsx:228` — gửi 1 chiều trong khi `:207,331` của `group-content.tsx` đọc 2 chiều ⇒ cặp cha–con chỉ vẽ đúng một phía | `02` §5 |
 | F3 | `api-client.lib.ts` — 60+ URL viết cứng `/api/...` | `02` §8 |
-| F3 | `proxy.ts:12-15` — 4 entry `/api/auth/*` trong `publicRoutes` không có route handler | `01` B10 |
+| F3 | `proxy.ts:12-15` — 4 entry `/api/auth/*` trong `publicRoutes` không có route handler | `01` `FE-B10` |
 | F4 | `familyThunk.ts:15-27` — không `version`, không `If-Match`; server `deleteMany` phần không trong payload | `02` §3 |
 | F4 | `http.client.ts` — không hỗ trợ `If-Match`; chỉ tự động gắn Bearer | `02` §3 |
 | F4 | Không có đường xử lý 409 ở bất kỳ đâu trong `src/` | `02` §3 + `03` §12 |
@@ -77,25 +79,25 @@ Ví dụ hợp lệ về F1: nếu backend **thực sự** trả về `idMap` v�
 | F5 | `family-info-drawer.tsx:189-203` — điều kiện `amILeader && !item.isLeader` cho nút *Xóa khỏi nhóm* | `02` §6 |
 | F5 | `family-info-drawer.tsx:212-224` — nút *Đổi vai trò* **không có `onClick`** (chức năng chết) | `02` §6 |
 | F5 | `family-setting-drawer.tsx:50` — `amILeader` | `02` §6 |
-| F5 | `group-family.dto.ts:30-31,50` — `isLeader`, `pinnedMemberId` trong response DTO | `01` B3, B4 |
-| F5 | `group-content.tsx:98,424-433,435-438,449,530` — `pinnedMemberId` từ server | `01` B4 |
-| F5 | `family-member-form.tsx:44,53,91,98,108,378-398` — `handlePin` + checkbox *Đây là tôi* | `01` B4 |
-| F5 | `proxy.ts:17-28,131-139,149` — `roleRights`, nhánh admin, `x-user-role` | `01` B2 |
-| F5 | `enums.ts:1-4` — `USER_ROLE { ADMIN, USER }` | `01` B2 |
-| F5 | `auth.lib.ts` — `getRoleFromToken` chỉ tồn tại cho RBAC admin | `01` B2 |
-| F6 | `sidebar-profile.tsx:46-51` — menu *Lời mời* → `/user/invite-list`, không có trang | `01` B9 |
-| F6 | `sidebar-profile.tsx:57-62` — menu *Kho lưu trữ* → `/user/storage`, không có trang | `01` B9 |
-| F6 | `sidebar-profile.tsx:71-76` — menu *Hỗ trợ* → `/user/support`, không có trang | `01` B9 |
-| F6 | `sidebar-profile.tsx:77-83` — menu *Phản hồi* → `/user/feadback` (typo), không có trang | `01` B9 |
+| F5 | `group-family.dto.ts:30-31,50` — `isLeader`, `pinnedMemberId` trong response DTO | `01` `FE-B3`, `FE-B4` |
+| F5 | `group-content.tsx:98,424-433,435-438,449,530` — `pinnedMemberId` từ server | `01` `FE-B4` |
+| F5 | `family-member-form.tsx:44,53,91,98,108,378-398` — `handlePin` + checkbox *Đây là tôi* | `01` `FE-B4` |
+| F5 | `proxy.ts:17-28,131-139,149` — `roleRights`, nhánh admin, `x-user-role` | `01` `FE-B2` |
+| F5 | `enums.ts:1-4` — `USER_ROLE { ADMIN, USER }` | `01` `FE-B2` |
+| F5 | `auth.lib.ts` — `getRoleFromToken` chỉ tồn tại cho RBAC admin | `01` `FE-B2` |
+| F6 | `sidebar-profile.tsx:46-51` — menu *Lời mời* → `/user/invite-list`, không có trang | `01` `FE-B9` |
+| F6 | `sidebar-profile.tsx:57-62` — menu *Kho lưu trữ* → `/user/storage`, không có trang | `01` `FE-B9` |
+| F6 | `sidebar-profile.tsx:71-76` — menu *Hỗ trợ* → `/user/support`, không có trang | `01` `FE-B9` |
+| F6 | `sidebar-profile.tsx:77-83` — menu *Phản hồi* → `/user/feadback` (typo), không có trang | `01` `FE-B9` |
 | F6 | `sidebar-profile.tsx:64-67` — menu *Thùng rác* → `/user/trash`, không có trang (**giữ mục, dựng trang**) | `03` §2 |
-| F6 | `sidebar-group-client.tsx` — dropdown *Hướng dẫn* → `/tutorials`, không có trang | `01` B8 |
-| F6 | `navigation-menu.tsx` — nav trỏ `/tutorials` và `/faq`, **cả hai không có trang**; dropdown mobile gộp 3 item về `/features` | `01` B8 |
-| F6 | `proxy.ts:8,10` — `publicRoutes` chứa `/tutorials` và `/faq` | `01` B10 |
-| F6 | `proxy.ts:136` — redirect `/403`, **không có trang `/403`** | `01` B2, `02` §14 |
-| F6 | `proxy.ts:30-33` — `isPublicRoute` dùng `includes()` **không so khớp tiền tố**; thêm route con phải liệt kê đầy đủ, quên là redirect `/auth` | `01` B10 |
+| F6 | `sidebar-group-client.tsx` — dropdown *Hướng dẫn* → `/tutorials`, không có trang | `01` `FE-B8` |
+| F6 | `navigation-menu.tsx` — nav trỏ `/tutorials` và `/faq`, **cả hai không có trang**; dropdown mobile gộp 3 item về `/features` | `01` `FE-B8` |
+| F6 | `proxy.ts:8,10` — `publicRoutes` chứa `/tutorials` và `/faq` | `01` `FE-B10` |
+| F6 | `proxy.ts:136` — redirect `/403`, **không có trang `/403`** | `01` `FE-B2`, `02` §14 |
+| F6 | `proxy.ts:30-33` — `isPublicRoute` dùng `includes()` **không so khớp tiền tố**; thêm route con phải liệt kê đầy đủ, quên là redirect `/auth` | `01` `FE-B10` |
 | F6 | `group-content-wrapper.tsx:48` — thiếu `groupId` thì in text lỗi inline thay vì redirect | `02` §10 |
-| F6 | `admin/page.tsx` — stub rỗng | `01` B2 |
-| F6 | `panel-editor.tsx` — mục *Chi tiết* không có handler | `01` B7, `02` §7 |
+| F6 | `admin/page.tsx` — stub rỗng | `01` `FE-B2` |
+| F6 | `panel-editor.tsx` — mục *Chi tiết* không có handler | `01` `FE-B7`, `02` §7 |
 
 ---
 
@@ -123,7 +125,7 @@ Mục tiêu của bảng này không phải "phát hiện đủ hết lần này
 | F2 (không giá trị dẫn xuất) | **D10** (`generation` server là nguồn sự thật) + **I4** | `version` **không** bắt được lỗi `generation` — vì client vẫn gửi `version` đúng. Đây là lý do F2 là bất biến riêng chứ không gộp vào F4 |
 | F3 (mọi URL từ `API_PREFIX`) | **2.13** (`/api` → `/api/v1`) | Cùng một lần đổi, hai bên phải deploy **cùng nhịp** |
 | F4 (mọi mutation mang `If-Match`) | **I4** (`version++` trong `$transaction`) + **R1** (batch endpoint) | F4 vô nghĩa nếu không có R1: N request lẻ thì lưu không nguyên tử |
-| F5 (không đọc field bị xoá) | **D2** (bỏ admin) · **B3** (bỏ `isLeader`) · **B5** (bỏ `pinnedMemberId`) | Mỗi lần backend xoá cột là một lần F5 có thêm vi phạm |
+| F5 (không đọc field bị xoá) | **D2** (bỏ admin) · **BE-B3** (bỏ `isLeader`) · **BE-B5** (bỏ `pinnedMemberId`) | Mỗi lần backend xoá cột là một lần F5 có thêm vi phạm |
 | F6 (route/menu có trang thật) | **D3** (bỏ blog) — `/features` mất nguồn nội dung | Không có bất biến backend nào; đây là thứ FE tự phát hiện |
 | — | **I5** (mọi mutation ghi `ActivityLog`) | FE dựa vào để hiển thị lịch sử thay đổi (`03` §1) và thông điệp 409 (`03` §12). Nếu I5 không giữ, 2 màn hình đó hỏng theo |
 
