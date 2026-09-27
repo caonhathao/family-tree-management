@@ -1,129 +1,192 @@
-/* Dữ liệu giả cho wireframe. Giữ trong file để mọi screen dùng chung. */
-(function (g) {
+/* ==========================================================================
+   wireframes/assets/mock-data.js
+   Dữ liệu giả cho wireframe. Chỉ giữ những gì thực sự hiện trên màn hình —
+   không có mảng dữ liệu "để dành". Ảnh không có file thật nên photoId chỉ là
+   con trỏ: node hiện chữ cái, thẻ album hiện ô trống.
+   Nguồn số liệu: docs/planing-refactor-fe/06-workflow-user.md
+   ========================================================================== */
+(function () {
   "use strict";
 
-  var me = { id: "u1", fullName: "Nguyễn Thanh Hà", role: "OWNER", email: "ha.nguyen@example.com" };
+  var me = { id: "u1", fullName: "Nguyễn Thanh Hà", email: "ha.nguyen@example.com" };
 
-  /* 14 thành viên, 4 đời. photoId = ảnh đã gắn vào node. pinned = ảnh profile chụp tại lúc ghim. */
+  var group = { id: "g1", name: "Nhà họ Nguyễn – Trần", version: 42, hasEventToday: true };
+
+  /* Cây 4 đời. generation = 0..3, khớp y = generation * RANK_SEP. */
   var members = [
-    { id: "m1", fullName: "Nguyễn Văn An", generation: 1, birthDate: "1942-03-02", deceased: true, deathDate: "2010-11-20", gender: "male", note: "" },
-    { id: "m2", fullName: "Trần Thị Bà", generation: 1, birthDate: "1946-07-15", deceased: true, deathDate: "2015-01-08", gender: "female", note: "" },
-    { id: "m3", fullName: "Nguyễn Văn Bình", generation: 2, parentId: "m1", spouseId: "m4", birthDate: "1968-05-21", deceased: false, gender: "male", note: "" },
-    { id: "m4", fullName: "Lê Thị Cúc", generation: 2, birthDate: "1970-09-30", deceased: false, gender: "female", note: "" },
-    { id: "m5", fullName: "Nguyễn Văn Cường", generation: 2, parentId: "m1", birthDate: "1971-01-11", deceased: false, gender: "male", note: "" },
-    { id: "m6", fullName: "Phạm Thị Dung", generation: 2, spouseId: "m5", birthDate: "1973-04-04", deceased: false, gender: "female", note: "" },
-    { id: "m7", fullName: "Nguyễn Thanh Hà", generation: 3, parentId: "m3", spouseId: "m8", birthDate: "1994-08-19", deceased: false, gender: "female", photoId: "ph1", pinnedMemberId: "u1", note: "Tự ghim ảnh hồ sơ của mình" },
-    { id: "m8", fullName: "Đỗ Quang Minh", generation: 3, birthDate: "1992-12-05", deceased: false, gender: "male", note: "" },
-    { id: "m9", fullName: "Nguyễn Thu Hà", generation: 3, parentId: "m3", birthDate: "1997-02-27", deceased: false, gender: "female", photoId: "ph2", note: "" },
-    { id: "m10", fullName: "Nguyễn Văn Cường (Trung)", generation: 3, parentId: "m5", birthDate: "1999-06-05", deceased: false, gender: "male", note: "Trùng tên với ông nội — ông nội đã mất" },
-    { id: "m11", fullName: "Trần Ngọc An", generation: 4, parentId: "m7", birthDate: "2021-05-14", deceased: false, gender: "female", birthday: true, photoId: "ph3", note: "" },
-    { id: "m12", fullName: "Trần Đức Kiên", generation: 4, parentId: "m7", birthDate: "2023-10-02", deceased: false, gender: "male", birthday: true, note: "" },
-    { id: "m13", fullName: "Phạm Gia Bảo", generation: 4, parentId: "m9", birthDate: "2019-03-22", deceased: false, gender: "male", note: "Cháu nội" },
-    { id: "m14", fullName: "Phạm Gia Linh", generation: 4, parentId: "m9", birthDate: "2024-11-08", deceased: false, gender: "female", birthday: true, note: "" }
+    { id: "m1", fullName: "Nguyễn Văn Minh",  gender: "MALE",   birthDate: "1925-03-02", generation: 0, isDeceased: true },
+    { id: "m2", fullName: "Trần Thị Hồng",   gender: "FEMALE", birthDate: "1930-07-19", generation: 0, isDeceased: true },
+    { id: "m3", fullName: "Nguyễn Văn Cường", gender: "MALE",   birthDate: "1948-11-05", generation: 1 },
+    { id: "m4", fullName: "Lê Thị Lan",       gender: "FEMALE", birthDate: "1952-01-30", generation: 1 },
+    { id: "m5", fullName: "Trần Thị Mai",     gender: "FEMALE", birthDate: "1955-09-12", generation: 1 },
+    { id: "m6", fullName: "Nguyễn Thanh Hà",  gender: "FEMALE", birthDate: "1975-06-21", generation: 2, photoId: "ph1", pinnedMemberId: "u1" },
+    { id: "m7", fullName: "Nguyễn Văn Tuấn",  gender: "MALE",   birthDate: "1972-02-14", generation: 2 },
+    { id: "m8", fullName: "Trần Quốc Bảo",    gender: "MALE",   birthDate: "1978-05-08", generation: 2 },
+    { id: "m9", fullName: "Nguyễn Minh Khôi",  gender: "MALE",   birthDate: "2005-04-02", generation: 3, photoId: "ph2" },
+    { id: "m10", fullName: "Nguyễn Bích Ngọc", gender: "FEMALE", birthDate: "2010-12-25", generation: 3 },
+    { id: "m11", fullName: "Trần Ngọc Mai",    gender: "FEMALE", birthDate: "2008-08-09", generation: 3, photoId: "ph3" },
+    { id: "m12", fullName: "Nguyễn Minh Anh",  gender: "MALE",   birthDate: "2013-03-18", generation: 3 }
+  ];
+
+  /* Gửi 1 chiều: luôn ghi PARENT (cha/mẹ -> con). Đọc thì server trả về cả 2 chiều. */
+  var relations = [
+    { id: "r1", type: "SPOUSE", fromMemberId: "m1", toMemberId: "m2" },
+    { id: "r2", type: "SPOUSE", fromMemberId: "m3", toMemberId: "m4" },
+    { id: "r3", type: "SPOUSE", fromMemberId: "m6", toMemberId: "m7" },
+    { id: "r4", type: "PARENT", fromMemberId: "m1", toMemberId: "m3" },
+    { id: "r5", type: "PARENT", fromMemberId: "m2", toMemberId: "m3" },
+    { id: "r6", type: "PARENT", fromMemberId: "m1", toMemberId: "m5" },
+    { id: "r7", type: "PARENT", fromMemberId: "m2", toMemberId: "m5" },
+    { id: "r8", type: "PARENT", fromMemberId: "m3", toMemberId: "m6" },
+    { id: "r9", type: "PARENT", fromMemberId: "m4", toMemberId: "m6" },
+    { id: "r10", type: "PARENT", fromMemberId: "m3", toMemberId: "m7" },
+    { id: "r11", type: "PARENT", fromMemberId: "m4", toMemberId: "m7" },
+    { id: "r12", type: "PARENT", fromMemberId: "m5", toMemberId: "m8" },
+    { id: "r13", type: "PARENT", fromMemberId: "m6", toMemberId: "m9" },
+    { id: "r14", type: "PARENT", fromMemberId: "m7", toMemberId: "m9" },
+    { id: "r15", type: "PARENT", fromMemberId: "m6", toMemberId: "m10" },
+    { id: "r16", type: "PARENT", fromMemberId: "m7", toMemberId: "m10" },
+    { id: "r17", type: "PARENT", fromMemberId: "m8", toMemberId: "m11" },
+    { id: "r18", type: "PARENT", fromMemberId: "m6", toMemberId: "m12" },
+    { id: "r19", type: "PARENT", fromMemberId: "m7", toMemberId: "m12" }
   ];
 
   var collaborators = [
-    { id: "u1", fullName: "Nguyễn Thanh Hà", email: "ha.nguyen@example.com", role: "OWNER" },
-    { id: "u2", fullName: "Nguyễn Văn Cường", email: "cuong.nguyen@example.com", role: "EDITOR" },
-    { id: "u3", fullName: "Phạm Gia Linh", email: "linh.pham@example.com", role: "EDITOR" },
-    { id: "u4", fullName: "Đỗ Quang Minh", email: "minh.do@example.com", role: "VIEWER" }
+    { id: "u1", fullName: "Nguyễn Thanh Hà",  email: "ha.nguyen@example.com",     role: "OWNER"  },
+    { id: "u2", fullName: "Trần Quốc Bảo",    email: "bao.tran@example.com",      role: "EDITOR" },
+    { id: "u3", fullName: "Lê Minh Linh",     email: "linh.le@example.com",       role: "EDITOR" },
+    { id: "u4", fullName: "Phạm Thu Hà",      email: "ha.pham@example.com",       role: "VIEWER" }
   ];
 
+  /* Media thuộc về người tải (createdById). Quyền sửa/xoá = người tải HOẶC chủ nhóm. */
   var albums = [
-    { id: "al1", name: "Họp mặt dòng họ 2024", createdById: "u1", createdAt: "2024-04-02", photos: 12, shared: true },
-    { id: "al2", name: "Cưới Hà – Minh", createdById: "u1", createdAt: "2023-12-20", photos: 48, shared: true },
-    { id: "al3", name: "Ảnh Bà ngoại", createdById: "u2", createdAt: "2025-02-14", photos: 7, shared: false },
-    { id: "al4", name: "Trẻ con", createdById: "u4", createdAt: "2025-08-30", photos: 23, shared: true }
+    { id: "al1", name: "Họp mặt dòng họ 2025", createdById: "u1", shared: true,  photoIds: ["ph1", "ph2", "ph3"] },
+    { id: "al2", name: "Ảnh gia đình",        createdById: "u2", shared: true,  photoIds: ["ph4", "ph5"] },
+    { id: "al3", name: "Kỷ niệm Hà Nội",      createdById: "u4", shared: true,  photoIds: ["ph6"] }
   ];
-
   var photos = [
-    { id: "ph1", albumId: "al2", name: "wedding-hava.jpg", byUserId: "u1", at: "2023-12-20", hiddenById: null, shared: true },
-    { id: "ph2", albumId: null, name: "thu-ha-2023.jpg", byUserId: "u1", at: "2023-07-01", hiddenById: null, shared: true },
-    { id: "ph3", albumId: "al4", name: "an-2025.jpg", byUserId: "u4", at: "2025-08-30", hiddenById: null, shared: true },
-    { id: "ph4", albumId: "al3", name: "ba-ngoai-01.jpg", byUserId: "u2", at: "2025-02-14", hiddenById: "u2", shared: false },
-    { id: "ph5", albumId: "al1", name: "hop-mat-114.jpg", byUserId: "u1", at: "2024-04-02", hiddenById: null, shared: true },
-    { id: "ph6", albumId: "al1", name: "hop-mat-115.jpg", byUserId: "u3", at: "2024-04-03", hiddenById: null, shared: true }
+    { id: "ph1", name: "ho-hop-mat-2025.jpg", albumId: "al1", createdById: "u1", shared: true,  hiddenById: null },
+    { id: "ph2", name: "khoai-1.jpg",         albumId: "al1", createdById: "u1", shared: true,  hiddenById: null },
+    { id: "ph3", name: "mai-1.jpg",           albumId: "al1", createdById: "u1", shared: true,  hiddenById: null },
+    { id: "ph4", name: "ba-ngoai-01.jpg",     albumId: "al2", createdById: "u2", shared: true,  hiddenById: "u2" },
+    { id: "ph5", name: "scan-trang-04.jpg",   albumId: "al2", createdById: "u2", shared: true,  hiddenById: null },
+    { id: "ph6", name: "hoa-sen-02.jpg",      albumId: "al3", createdById: "u4", shared: true,  hiddenById: null }
   ];
 
   var events = [
-    { id: "e1", title: "Giỗ ông Nguyễn Văn An", date: "2026-10-02", type: "DEATH_ANNIVERSARY", familyMemberId: "m1", createdById: "u1" },
-    { id: "e2", title: "Sinh nhật Trần Ngọc An", date: "2026-11-14", type: "BIRTHDAY", familyMemberId: "m11", createdById: "u1" },
-    { id: "e3", title: "Giỗ bà Trần Thị Bà", date: "2026-09-08", type: "DEATH_ANNIVERSARY", familyMemberId: "m2", createdById: "u2" },
-    { id: "e4", title: "Tết dính (không gắn với ai)", date: "2027-01-29", type: "FAMILY", familyMemberId: null, createdById: "u1" },
-    { id: "e5", title: "Trùng tháng bảo An", date: "2026-09-21", type: "BIRTHDAY", familyMemberId: "m11", createdById: "u2" }
+    { id: "e1", title: "Sinh nhật Minh Khôi",   date: "2005-04-02", familyMemberId: "m9",  createdById: "u1" },
+    { id: "e2", title: "Kỷ niệm cưới",          date: "1980-05-12", familyMemberId: "m5",  createdById: "u1" },
+    { id: "e3", title: "Giỗ cụ Nguyễn Văn Minh", date: "2026-10-15", familyMemberId: "m1", createdById: "u2" },
+    { id: "e4", title: "Tết Bính Ngọ",          date: "2026-02-17", familyMemberId: null, createdById: "u1" }
   ];
 
-  /* 7 TARGET_TYPE — nhãn sinh từ mảng hằng số, không viết tay từng dòng (fe/02 §13) */
-  var TARGET_TYPES = ["GROUP", "FAMILY", "MEMBER", "RELATIONSHIP", "ALBUM", "PHOTO", "EVENT"];
+  var TARGET_TYPES = ["FAMILY", "MEMBER", "RELATIONSHIP", "ALBUM", "PHOTO", "EVENT", "GROUP"];
+  var TARGET_LABEL = {
+    FAMILY: "Cây gia đình", MEMBER: "Thành viên", RELATIONSHIP: "Quan hệ",
+    ALBUM: "Album", PHOTO: "Ảnh", EVENT: "Sự kiện", GROUP: "Nhóm"
+  };
   var ACTIONS = [
-    "GROUP_RENAMED", "FAMILY_LAYOUT_CHANGED", "MEMBER_ADDED", "MEMBER_UPDATED", "MEMBER_DELETED",
-    "RELATION_ADDED", "RELATION_DELETED", "ALBUM_CREATED", "ALBUM_UPDATED", "ALBUM_DELETED",
-    "PHOTO_ADDED", "PHOTO_DELETED", "PHOTO_HIDDEN", "PHOTO_UNHIDDEN",
-    "NODE_PHOTO_ASSIGNED", "NODE_PHOTO_UNPINNED",
-    "EVENT_CREATED", "EVENT_UPDATED", "EVENT_DELETED"
+    "MEMBER_ADDED", "MEMBER_UPDATED", "MEMBER_DELETED", "MEMBER_PHOTO_SET",
+    "RELATION_ADDED", "RELATION_UPDATED", "RELATION_DELETED",
+    "FAMILY_RENAMED", "FAMILY_LAYOUT_CHANGED",
+    "ALBUM_CREATED", "PHOTO_ADDED", "PHOTO_DELETED", "PHOTO_HIDDEN", "PHOTO_UNHIDDEN",
+    "EVENT_CREATED", "EVENT_UPDATED", "EVENT_DELETED",
+    "MEMBER_ROLE_CHANGED", "OWNERSHIP_TRANSFERRED"
   ];
+  var ACTION_LABEL = {
+    MEMBER_ADDED: "Thêm thành viên", MEMBER_UPDATED: "Sửa thành viên", MEMBER_DELETED: "Xoá thành viên",
+    MEMBER_PHOTO_SET: "Gắn ảnh cho node", RELATION_ADDED: "Thêm quan hệ", RELATION_UPDATED: "Sửa quan hệ",
+    RELATION_DELETED: "Xoá quan hệ", FAMILY_RENAMED: "Đổi tên cây", FAMILY_LAYOUT_CHANGED: "Lưu bố cục",
+    ALBUM_CREATED: "Tạo album", PHOTO_ADDED: "Thêm ảnh", PHOTO_DELETED: "Xoá ảnh",
+    PHOTO_HIDDEN: "Ẩn ảnh", PHOTO_UNHIDDEN: "Bỏ ẩn ảnh",
+    EVENT_CREATED: "Tạo sự kiện", EVENT_UPDATED: "Sửa sự kiện", EVENT_DELETED: "Xoá sự kiện",
+    MEMBER_ROLE_CHANGED: "Đổi vai trò", OWNERSHIP_TRANSFERRED: "Chuyển quyền sở hữu"
+  };
+  /* VIEWER chỉ thấy ALBUM / PHOTO / EVENT trong lịch sử. */
+  var VIEWER_ACTIONS = ["ALBUM_CREATED", "PHOTO_ADDED", "PHOTO_DELETED", "PHOTO_HIDDEN", "PHOTO_UNHIDDEN",
+    "EVENT_CREATED", "EVENT_UPDATED", "EVENT_DELETED"];
 
+  /* 22 dòng. ac1 + ac2 là cặp bắt buộc: xoá 1 thành viên sinh 2 dòng log. */
   var activity = [
-    { id: "ac1", at: "2026-09-26T21:14:00Z", byUserId: "u2", action: "MEMBER_DELETED", targetType: "MEMBER", content: { snapshot: { fullName: "Phạm Thị Dung", birthDate: "1973-04-04", isDeceased: false } } },
-    { id: "ac2", at: "2026-09-26T21:14:02Z", byUserId: "u2", action: "RELATION_DELETED", targetType: "RELATIONSHIP", content: { cascade: true, snapshot: { fullName: "Nguyễn Văn Cường" } } },
-    { id: "ac3", at: "2026-09-25T09:02:00Z", byUserId: "u1", action: "FAMILY_LAYOUT_CHANGED", targetType: "FAMILY", content: { note: "Sắp xếp tự động + Lưu" } },
-    { id: "ac4", at: "2026-09-24T16:40:00Z", byUserId: "u1", action: "MEMBER_UPDATED", targetType: "MEMBER", content: { diff: { fullName: { from: "Nguyễn Thu Hà", to: "Nguyễn Thu Hà (Hà 2)" } } } },
-    { id: "ac5", at: "2026-09-24T16:41:00Z", byUserId: "u1", action: "NODE_PHOTO_ASSIGNED", targetType: "MEMBER", content: { photoId: "ph2", to: "Nguyễn Thu Hà" } },
-    { id: "ac6", at: "2026-09-20T11:05:00Z", byUserId: "u4", action: "PHOTO_ADDED", targetType: "PHOTO", content: { photoId: "ph3", albumId: "al4", count: 6 } },
-    { id: "ac7", at: "2026-09-20T11:06:00Z", byUserId: "u4", action: "ALBUM_CREATED", targetType: "ALBUM", content: { albumId: "al4", name: "Trẻ con" } },
-    { id: "ac8", at: "2026-09-18T08:30:00Z", byUserId: "u2", action: "PHOTO_HIDDEN", targetType: "PHOTO", content: { photoId: "ph4" } },
-    { id: "ac9", at: "2026-09-15T19:22:00Z", byUserId: "u1", action: "GROUP_RENAMED", targetType: "GROUP", content: { diff: { name: { from: "Nhà họ Nguyễn", to: "Nhà họ Nguyễn – Trần" } } } },
-    { id: "ac10", at: "2026-09-12T13:00:00Z", byUserId: "u3", action: "MEMBER_ADDED", targetType: "MEMBER", content: { fullName: "Phạm Gia Linh", generation: 4 } },
-    { id: "ac11", at: "2026-09-12T13:05:00Z", byUserId: "u3", action: "RELATION_ADDED", targetType: "RELATIONSHIP", content: { from: "Nguyễn Thu Hà", to: "Phạm Gia Linh", type: "PARENT" } },
-    { id: "ac12", at: "2026-09-08T07:45:00Z", byUserId: "u2", action: "EVENT_CREATED", targetType: "EVENT", content: { eventId: "e3", title: "Giỗ bà Trần Thị Bà" } },
-    { id: "ac13", at: "2026-09-05T15:12:00Z", byUserId: "u1", action: "ALBUM_DELETED", targetType: "ALBUM", content: { albumId: "al0", name: "Ảnh scan cũ", photosDeleted: 0 } },
-    { id: "ac14", at: "2026-09-02T10:00:00Z", byUserId: "u1", action: "NODE_PHOTO_UNPINNED", targetType: "MEMBER", content: { from: "Nguyễn Văn Cường (Trung)" } },
-    { id: "ac15", at: "2026-08-30T20:30:00Z", byUserId: "u4", action: "ALBUM_UPDATED", targetType: "ALBUM", content: { albumId: "al4", name: "Trẻ con 2025" } },
-    { id: "ac16", at: "2026-08-28T09:15:00Z", byUserId: "u2", action: "PHOTO_DELETED", targetType: "PHOTO", content: { photoId: "ph9", albumId: "al3" } },
-    { id: "ac17", at: "2026-08-22T14:05:00Z", byUserId: "u1", action: "PHOTO_UNHIDDEN", targetType: "PHOTO", content: { photoId: "ph8" } },
-    { id: "ac18", at: "2026-08-20T12:00:00Z", byUserId: "u3", action: "MEMBER_UPDATED", targetType: "MEMBER", content: { diff: { birthDate: { from: "2024-11-08", to: "2024-11-09" } } } },
-    { id: "ac19", at: "2026-08-18T17:40:00Z", byUserId: "u1", action: "EVENT_UPDATED", targetType: "EVENT", content: { eventId: "e4", diff: { date: { from: "2027-02-06", to: "2027-01-29" } } } },
-    { id: "ac20", at: "2026-08-15T08:00:00Z", byUserId: "u1", action: "FAMILY_LAYOUT_CHANGED", targetType: "FAMILY", content: { note: "Lưu thủ công" } },
-    { id: "ac21", at: "2026-08-11T16:00:00Z", byUserId: "u2", action: "MEMBER_ADDED", targetType: "MEMBER", content: { fullName: "Phạm Gia Bảo", generation: 4 } },
-    { id: "ac22", at: "2026-08-09T10:00:00Z", byUserId: "u1", action: "PHOTO_ADDED", targetType: "PHOTO", content: { photoId: "ph5", albumId: "al1", count: 3 } }
+    { id: "ac1",  at: "2026-09-26T20:11:00Z", byUserId: "u1", action: "MEMBER_DELETED",      targetType: "MEMBER", summary: "Phạm Thị Dung", snapshot: { fullName: "Phạm Thị Dung", birthDate: "1949-02-11", isDeceased: true } },
+    { id: "ac2",  at: "2026-09-26T20:11:00Z", byUserId: "u1", action: "RELATION_DELETED",    targetType: "RELATIONSHIP", summary: "Quan hệ kéo theo khi xoá Phạm Thị Dung", cascade: true },
+    { id: "ac3",  at: "2026-09-26T19:40:00Z", byUserId: "u2", action: "PHOTO_HIDDEN",        targetType: "PHOTO", summary: "ba-ngoai-01.jpg", photoId: "ph4" },
+    { id: "ac4",  at: "2026-09-26T18:02:00Z", byUserId: "u1", action: "FAMILY_LAYOUT_CHANGED", targetType: "FAMILY", summary: "Sắp xếp sơ đồ + lưu" },
+    { id: "ac5",  at: "2026-09-25T21:15:00Z", byUserId: "u1", action: "MEMBER_UPDATED",      targetType: "MEMBER", summary: "Nguyễn Thanh Hà", diff: { fullName: { from: "Nguyễn Thanh Hà", to: "Nguyễn Thanh Hà (Hà)" } } },
+    { id: "ac6",  at: "2026-09-25T20:48:00Z", byUserId: "u3", action: "MEMBER_ADDED",        targetType: "MEMBER", summary: "Lê Minh Khôi" },
+    { id: "ac7",  at: "2026-09-25T09:30:00Z", byUserId: "u2", action: "PHOTO_ADDED",         targetType: "PHOTO", summary: "scan-trang-04.jpg", photoId: "ph5" },
+    { id: "ac8",  at: "2026-09-24T16:20:00Z", byUserId: "u1", action: "EVENT_UPDATED",       targetType: "EVENT", summary: "Tết Bính Ngọ" },
+    { id: "ac9",  at: "2026-09-24T11:05:00Z", byUserId: "u1", action: "MEMBER_PHOTO_SET",    targetType: "MEMBER", summary: "Nguyễn Minh Khôi ← khoai-1.jpg", photoId: "ph2" },
+    { id: "ac10", at: "2026-09-23T22:14:00Z", byUserId: "u1", action: "ALBUM_CREATED",       targetType: "ALBUM", summary: "Họp mặt dòng họ 2025" },
+    { id: "ac11", at: "2026-09-23T14:52:00Z", byUserId: "u1", action: "RELATION_ADDED",      targetType: "RELATIONSHIP", summary: "Trần Quốc Bảo → Trần Ngọc Mai" },
+    { id: "ac12", at: "2026-09-22T19:00:00Z", byUserId: "u1", action: "FAMILY_RENAMED",      targetType: "FAMILY", summary: "Nhà họ Nguyễn", diff: { name: { from: "Nhà họ Nguyễn", to: "Nhà họ Nguyễn – Trần" } } },
+    { id: "ac13", at: "2026-09-22T10:33:00Z", byUserId: "u3", action: "EVENT_CREATED",       targetType: "EVENT", summary: "Giỗ cụ Nguyễn Văn Minh" },
+    { id: "ac14", at: "2026-09-21T21:44:00Z", byUserId: "u2", action: "MEMBER_UPDATED",      targetType: "MEMBER", summary: "Trần Quốc Bảo", diff: { fullName: { from: "Trần Quốc Báo", to: "Trần Quốc Bảo" } } },
+    { id: "ac15", at: "2026-09-20T08:12:00Z", byUserId: "u1", action: "PHOTO_UNHIDDEN",      targetType: "PHOTO", summary: "khoai-1.jpg", photoId: "ph2" },
+    { id: "ac16", at: "2026-09-19T17:26:00Z", byUserId: "u1", action: "MEMBER_ADDED",        targetType: "MEMBER", summary: "Nguyễn Minh Anh" },
+    { id: "ac17", at: "2026-09-18T12:41:00Z", byUserId: "u3", action: "RELATION_ADDED",      targetType: "RELATIONSHIP", summary: "Nguyễn Minh Khôi → Nguyễn Minh Anh" },
+    { id: "ac18", at: "2026-09-17T20:03:00Z", byUserId: "u1", action: "FAMILY_LAYOUT_CHANGED", targetType: "FAMILY", summary: "Kéo 3 node + lưu" },
+    { id: "ac19", at: "2026-09-16T09:55:00Z", byUserId: "u1", action: "MEMBER_ROLE_CHANGED", targetType: "GROUP", summary: "Phạm Thu Hà: VIEWER ← EDITOR" },
+    { id: "ac20", at: "2026-09-14T15:19:00Z", byUserId: "u1", action: "PHOTO_ADDED",         targetType: "PHOTO", summary: "mai-1.jpg", photoId: "ph3" },
+    { id: "ac21", at: "2026-09-12T11:30:00Z", byUserId: "u1", action: "OWNERSHIP_TRANSFERRED", targetType: "GROUP", summary: "Chủ nhóm: Nguyễn Văn Cường → Nguyễn Thanh Hà" },
+    { id: "ac22", at: "2026-09-10T07:48:00Z", byUserId: "u1", action: "MEMBER_ADDED",        targetType: "MEMBER", summary: "Nguyễn Thanh Hà" }
   ];
 
-  /* VIEWER chỉ thấy nhóm hành động này (fe/06 §7) */
-  var VIEWER_ACTIONS = ["ALBUM_CREATED", "ALBUM_UPDATED", "ALBUM_DELETED", "PHOTO_ADDED", "PHOTO_DELETED", "PHOTO_HIDDEN", "PHOTO_UNHIDDEN"];
-
+  /* Thùng rác: cây thì dùng chung, media thì mỗi người một thùng. */
   var trash = {
     tree: [
-      { id: "t1", kind: "MEMBER", name: "Phạm Thị Dung", birthDate: "1973-04-04", deletedById: "u2", deletedAt: "2026-09-26T21:14:00Z", withRelations: 1 },
-      { id: "t2", kind: "RELATIONSHIP", name: "Quan hệ: Nguyễn Văn Cường → Nguyễn Văn Bình", deletedById: "u1", deletedAt: "2026-08-19T10:00:00Z", withRelations: 0 }
+      { id: "t1", kind: "MEMBER", name: "Phạm Thị Dung", detail: "Sinh 11/02/1949", deletedById: "u1", deletedAt: "2026-09-26T20:11:00Z" },
+      { id: "t2", kind: "RELATIONSHIP", name: "Trần Quốc Bảo → Nguyễn Minh Khôi", detail: "Quan hệ cha – con", deletedById: "u1", deletedAt: "2026-09-25T10:04:00Z" }
     ],
     media: [
-      { id: "t3", kind: "PHOTO", name: "ba-ngoai-01.jpg", albumId: "al3", byUserId: "u2", deletedById: "u2", deletedAt: "2026-09-20T11:00:00Z" },
-      { id: "t4", kind: "PHOTO", name: "scan-trang-04.jpg", albumId: null, byUserId: "u4", deletedAt: "2026-09-12T09:00:00Z" }
+      { id: "t3", kind: "PHOTO", name: "ba-ngoai-01.jpg", detail: "Album Ảnh gia đình", tint: "#d8e4d0", deletedById: "u2", deletedAt: "2026-09-26T19:40:00Z" },
+      { id: "t4", kind: "PHOTO", name: "scan-trang-04.jpg", detail: "Album Ảnh gia đình", tint: "#e6ded2", deletedById: "u4", deletedAt: "2026-09-20T16:22:00Z" }
     ]
   };
 
   var shareLinks = [
-    { id: "s1", token: "8fTq2kZm", createdAt: "2026-09-20", expiresAt: "2026-09-27", opens: 41, revoked: false },
-    { id: "s2", token: "b1Xv7pRa", createdAt: "2026-08-15", expiresAt: "2026-08-22", opens: 12, revoked: false, expired: true },
-    { id: "s3", token: "Lp4wQ9dK", createdAt: "2026-07-01", expiresAt: "2026-07-08", opens: 5, revoked: true }
+    { id: "s1", token: "7f3a9c2b", expiresInDays: 30, opens: 12, revoked: false, createdAt: "2026-09-20T10:00:00Z" },
+    { id: "s2", token: "b81d4e07", expiresInDays: 7,  opens: 3,  revoked: false, createdAt: "2026-08-30T10:00:00Z" },
+    { id: "s3", token: "c05e7a19", expiresInDays: 90, opens: 41, revoked: true,  createdAt: "2026-06-02T10:00:00Z" }
   ];
 
-  var invite = { token: "8fTq2kZm", inviterName: "Nguyễn Thanh Hà", groupName: "Nhà họ Nguyễn – Trần", expiresAt: "2026-09-27", role: "VIEWER" };
-
-  g.MOCK = {
-    me: me, group: { id: "g1", name: "Nhà họ Nguyễn – Trần", version: 42 },
-    members: members, collaborators: collaborators,
-    albums: albums, photos: photos, events: events,
-    TARGET_TYPES: TARGET_TYPES, ACTIONS: ACTIONS, activity: activity, VIEWER_ACTIONS: VIEWER_ACTIONS,
-    trash: trash, shareLinks: shareLinks, invite: invite,
-    userById: function (id) {
-      var all = [me].concat(collaborators);
-      var f = all.filter(function (u) { return u.id === id; });
-      return f.length ? f[0].fullName : "Không rõ";
-    },
-    memberById: function (id) {
-      var f = members.filter(function (m) { return m.id === id; });
-      return f.length ? f[0] : null;
-    }
+  /* Link mời: dùng 1 lần, hết hạn 7 ngày. KHÔNG có màn quản lý link mời. */
+  var invite = {
+    token: "inv_9c41f2",
+    groupId: "g1",
+    groupName: "Nhà họ Nguyễn – Trần",
+    inviter: "Nguyễn Thanh Hà",
+    role: "VIEWER",
+    expiresAt: "2026-09-27T00:00:00Z"
   };
-})(window);
+
+  var userById = function (id) {
+    for (var i = 0; i < collaborators.length; i++) if (collaborators[i].id === id) return collaborators[i];
+    if (id === me.id) return { id: me.id, fullName: me.fullName, role: "OWNER" };
+    return { id: id, fullName: "Không rõ", role: "" };
+  };
+  var memberById = function (id) {
+    for (var i = 0; i < members.length; i++) if (members[i].id === id) return members[i];
+    return null;
+  };
+  var photoById = function (id) {
+    for (var i = 0; i < photos.length; i++) if (photos[i].id === id) return photos[i];
+    return null;
+  };
+  /* Còn N ngày nữa thì bị xoá vĩnh viễn (backend quét 30 ngày). */
+  var daysLeft = function (deletedAt) {
+    var due = new Date(deletedAt).getTime() + 30 * 86400000;
+    return Math.max(0, Math.ceil((due - Date.now()) / 86400000));
+  };
+
+  window.MOCK = {
+    me: me, group: group,
+    members: members, relations: relations,
+    collaborators: collaborators,
+    albums: albums, photos: photos, events: events,
+    TARGET_TYPES: TARGET_TYPES, TARGET_LABEL: TARGET_LABEL,
+    ACTIONS: ACTIONS, ACTION_LABEL: ACTION_LABEL, VIEWER_ACTIONS: VIEWER_ACTIONS,
+    activity: activity, trash: trash, shareLinks: shareLinks, invite: invite,
+    userById: userById, memberById: memberById, photoById: photoById, daysLeft: daysLeft
+  };
+})();

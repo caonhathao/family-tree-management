@@ -1,204 +1,317 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>08 · Lưu và xung đột 409</title>
-<link rel="stylesheet" href="assets/wireframe.css">
-<style>
-  #conflictBar { border-color:#f2d3a8; background:var(--warn-weak); }
-</style>
-</head>
-<body>
-<header class="wf-bar">
-  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
-  <span class="wf-bar-title">08 · Lưu và xung đột</span>
-  <span class="wf-bar-route">bấm Lưu ở /group</span>
-  <span class="wf-spacer"></span>
-  <span class="wf-role">Vai trò <span data-role-switch></span></span>
-</header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mâu thuẫn khi lưu — Quản lý gia phả</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <a class="sidebar-menu-button" data-size="lg" href="s06-tree-canvas.html">
+            <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </a>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Danh sách</div>
+            <a class="sidebar-menu-button" data-active="true" data-size="lg" href="s06-tree-canvas.html">
+              <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+              <span class="truncate hide-narrow">Nhà họ Nguyễn – Trần</span>
+            </a>
+          </div>
+        </div>
+      </aside>
 
-<main class="wf-main">
-  <div class="wf-head">
-    <h1>Một lần bấm Lưu, tất cả hoặc không gì cả</h1>
-    <p class="sub">Bản nháp của bạn và bản trên máy chủ đang ở hai phiên bản khác nhau.</p>
-  </div>
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Quản lý gia phả</h2>
+          <div class="ml-auto flex items-center gap-2">
+            <span class="badge" data-tone="muted" id="ver">bản 42</span>
+            <a class="btn" data-variant="outline" data-size="sm" href="index.html">Danh sách màn</a>
+          </div>
+        </header>
 
-  <div class="wf-grid c2">
-    <!-- trái: thay đổi của tôi -->
-    <div class="wf-card">
-      <h2>Thay đổi chưa lưu của bạn</h2>
-      <p style="color:var(--muted);font-size:13px">Máy chủ đang ở bản <b>42</b>. Bạn đang sửa từ bản <b>41</b>.</p>
-      <div id="myList" class="wf-stack"></div>
-      <div class="wf-btn-row wf-mt">
-        <button class="wf-btn primary" data-needs-perm="layout.save" onclick="attemptSave()">Lưu</button>
-        <button class="wf-btn ghost" onclick="addDirty()">Thêm một thay đổi nữa</button>
+        <main class="app-main">
+          <div class="page">
+            <div class="page-head">
+              <h1 class="page-title">Lưu thay đổi</h1>
+              <p class="page-desc">
+                Bấm “Mô phỏng có người khác vừa sửa” rồi bấm “Thử lưu” để xem hộp thoại xử lý mâu thuẫn.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <button class="btn" data-variant="outline" data-size="sm" id="simulate">Mô phỏng có người khác vừa sửa</button>
+              <button class="btn" data-variant="outline" data-size="sm" id="make-dirty">Tạo vài thay đổi trong bản nháp</button>
+              <button class="btn" data-size="sm" id="attempt" data-needs-perm="layout.save">Thử lưu</button>
+            </div>
+
+            <div class="banner hidden" data-tone="warn" id="conflict-bar">
+              <span class="ico">⚠</span>
+              <span id="conflict-text">
+                Có người đã lưu trước bạn: <strong>Trần Thị Mai</strong> đổi tên <strong>Trần Thị Mai</strong> →
+                <strong>Trần Thị Mai Bích</strong>, <strong>Lê Thị Lan</strong> thêm ngày mất.
+                Bạn còn <strong>3 thay đổi</strong> chưa lưu.
+              </span>
+              <button class="btn" data-variant="outline" data-size="sm" style="margin-left: auto" id="reopen">Xử lý</button>
+            </div>
+
+            <div class="two-col">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Thay đổi của bạn</h3>
+                  <p class="card-description">Chưa ghi lên máy chủ</p>
+                </div>
+                <div class="card-content flex flex-col gap-2" id="mine"></div>
+              </div>
+
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Thay đổi của người khác</h3>
+                  <p class="card-description">Đọc từ lịch sử thay đổi</p>
+                </div>
+                <div class="card-content flex flex-col gap-2" id="theirs"></div>
+              </div>
+            </div>
+
+            <details class="note">
+              <summary>Ghi chú thiết kế</summary>
+              <div class="note-body">
+                <ul>
+                  <li>Một tài khoản chỉ có một cây, nhưng nhiều người vẫn cùng sửa. Máy chủ trả <code>409</code> khi bản ghi đã bị ai đó ghi đè từ lúc bạn mở trang.</li>
+                  <li><strong>Không tự thử lại, không tự gộp.</strong> Cứ thử lại là mất thay đổi của người vừa sửa; tự gộp là sinh dữ liệu vừa thiếu vừa thừa.</li>
+                  <li>Hộp thoại không có nút nào được chọn sẵn. Người dùng phải tự quyết định.</li>
+                  <li>Đóng hộp thoại không được làm mất trạng thái mâu thuẫn — thanh cảnh báo vẫn còn, và các thay đổi chưa lưu vẫn còn nguyên.</li>
+                  <li>Nếu chưa làm xong hộp thoại này thì chưa được bật <code>If-Match</code> sớm, không thì người dùng sẽ gặp lỗi 409 mà không có đường thoát.</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </main>
       </div>
-      <div class="wf-note wf-mt wf-mb0">Bấm <b>Lưu</b> gửi tất cả thay đổi này trong <b>một</b> giao dịch, kèm số bản mong đợi
-      <span class="mono">41</span>. Máy chủ so với <span class="mono">42</span> và từ chối toàn bộ nếu lệch.</div>
     </div>
 
-    <!-- phải: trạng thái -->
-    <div class="wf-stack">
-      <div class="wf-card" id="conflictBar" hidden>
-        <h2 style="color:var(--warn)">Có người vừa lưu trước bạn</h2>
-        <p style="color:var(--ink-2)">Bản 42 đã có <b>Nguyễn Văn Cường</b> thay đổi lúc 21:14 hôm nay. Bạn đang sửa từ
-        bản 41, nên bấm Lưu sẽ không ghi đè lên thay đổi của họ.</p>
-        <div class="wf-note warn wf-mb0">Hộp thoại này có thể đóng lại và mở lại. <b>Đóng không có nghĩa là huỷ
-        thay đổi của bạn</b> — bản nháp vẫn còn nguyên.</div>
-        <div class="wf-btn-row wf-mt">
-          <button class="wf-btn" onclick="WF.openDialog('dlgConflict')">Mở lại hộp thoại</button>
+    <div class="overlay hidden" id="conflict-overlay">
+      <div class="dialog" data-wide>
+        <div class="dialog-header">
+          <h3 class="dialog-title">Có người đã lưu trước bạn</h3>
+          <p class="dialog-description">Máy chủ ở bản 43, bạn đang sửa từ bản 42.</p>
+        </div>
+        <div class="dialog-body flex flex-col gap-5">
+          <ol class="steps">
+            <li class="step">
+              <span class="step-num">1</span>
+              <div>
+                <div class="font-semibold">Xem họ đã đổi gì</div>
+                <div class="text-sm muted">2 thay đổi trong 4 phút trước, từ bảng lịch sử thay đổi.</div>
+              </div>
+            </li>
+            <li class="step">
+              <span class="step-num">2</span>
+              <div>
+                <div class="font-semibold">Còn 3 thay đổi của bạn chưa lưu</div>
+                <div class="text-sm muted">Thêm 1 thành viên, sửa 1 ngày sinh, kéo 1 node.</div>
+              </div>
+            </li>
+            <li class="step">
+              <span class="step-num">3</span>
+              <div>
+                <div class="font-semibold">Chọn cách xử lý</div>
+                <div class="text-sm muted">Không có lựa chọn nào được chọn sẵn.</div>
+              </div>
+            </li>
+          </ol>
+          <div class="banner" data-tone="warn">
+            <span class="ico">⚠</span>
+            <span>Ghi đè sẽ xoá 2 thay đổi của họ. Giữ của mình sẽ xoá 2 thay đổi của họ. Cách nào cũng có mất mát.</span>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="conflict">Huỷ</button>
+          <div class="flex flex-wrap gap-2" style="margin-left: auto">
+            <button class="btn" data-variant="outline" data-size="sm" id="diff">Xem khác biệt</button>
+            <button class="btn" data-variant="outline" data-size="sm" id="keep-mine">Giữ của mình</button>
+            <button class="btn" data-variant="destructive" data-size="sm" id="overwrite">Ghi đè</button>
+          </div>
         </div>
       </div>
-
-      <div class="wf-card">
-        <h3>Thử xung đột</h3>
-        <p style="color:var(--ink-2);margin:0">Bấm nút dưới để giả lập việc có người khác vừa lưu, rồi bấm
-        <b>Lưu</b> để xem hộp thoại 409.</p>
-        <button class="wf-btn wf-mt" onclick="simulate()">Giả lập: có người vừa lưu</button>
-        <button class="wf-btn wf-mt" data-needs-perm="layout.save" onclick="forceClear()">Dọn sạch thay đổi (không cần xung đột)</button>
-      </div>
-
-      <div class="wf-card flat">
-        <h3>Hai điều tuyệt đối không làm</h3>
-        <ul style="color:var(--ink-2);padding-left:18px;margin:0">
-          <li><b>Không tự thử lại.</b> Tự gửi lại là lặp lại việc ghi đè dữ liệu của người khác, chỉ chậm hơn.</li>
-          <li><b>Không tự gộp.</b> Gộp máy là phân đoán ngầm về ý định của hai con người. Không làm thay họ.</li>
-        </ul>
-      </div>
     </div>
-  </div>
 
-  <footer class="wf-foot">
-    <b>Nguồn.</b> Quy trình §6 (hai người cùng sửa, ba bước, không tự thử lại không tự gộp) · phạm vi thêm §12 (hộp thoại 409) · phạm vi sửa §1–§3 (ghi theo bản, <span class="mono">If-Match</span>).
-  </footer>
-</main>
-
-<!-- hộp thoại 409 -->
-<div class="wf-overlay" id="dlgConflict" hidden>
-  <div class="wf-dialog wide">
-    <header>
-      <h3>Bản của bạn cũ hơn bản trên máy chủ</h3>
-    </header>
-    <div class="content">
-      <div class="wf-steps">
-        <div class="wf-step"><span class="n">1</span><div>
-          <b>Họ đã đổi gì</b>
-          <div class="wf-diff wf-mt">
-            <div class="row"><span class="k">Nguyễn Thu Hà</span><span>Tên: <del>Nguyễn Thu Hà</del> <ins>Nguyễn Thu Hà (Hà 2)</ins></span></div>
-            <div class="row"><span class="k">Bố cục</span><span>Sắp xếp tự động + Lưu lúc 21:14</span></div>
-            <div class="row"><span class="k">Thành viên</span><span>Xoá Phạm Thị Dung — kéo theo 1 quan hệ</span></div>
+    <div class="overlay hidden" id="diff-overlay">
+      <div class="dialog" data-wide>
+        <div class="dialog-header">
+          <h3 class="dialog-title">Khác biệt từng dòng</h3>
+          <p class="dialog-description">Chọn phiên bản muốn giữ cho từng dòng</p>
+        </div>
+        <div class="dialog-body" style="padding: 0">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Đối tượng</th>
+                  <th>Máy chủ 43</th>
+                  <th>Máy bạn 42</th>
+                  <th>Giữ máy chủ</th>
+                  <th>Giữ máy bạn</th>
+                </tr>
+              </thead>
+              <tbody id="diff-rows"></tbody>
+            </table>
           </div>
-          <p style="margin:6px 0 0;font-size:12.5px;color:var(--muted)">Đọc từ lịch sử thay đổi (màn 09). Xem đầy đủ: <a href="s09-activity.html">mở lịch sử</a>.</p>
-        </div></div>
-        <div class="wf-step"><span class="n">2</span><div>
-          <b>Bạn đang muốn ghi gì</b>
-          <p style="margin:4px 0 0;color:var(--ink-2)"><b id="cCount">0</b> thay đổi chưa lưu trên máy bạn.</p>
-        </div></div>
-        <div class="wf-step"><span class="n muted">3</span><div>
-          <b>Chọn cách xử lý</b>
-          <p style="margin:4px 0 0;color:var(--muted);font-size:12.5px">Không có lựa chọn nào được chọn sẵn. Bạn phải bấm.</p>
-        </div></div>
+        </div>
+        <div class="dialog-footer">
+          <span class="text-sm muted">Dòng nào cũng phải chọn, không có lựa chọn mặc định.</span>
+          <div class="flex flex-wrap gap-2" style="margin-left: auto">
+            <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="diff">Quay lại</button>
+            <button class="btn" data-size="sm" id="apply-diff" disabled>Áp dụng lựa chọn</button>
+          </div>
+        </div>
       </div>
     </div>
-    <footer style="flex-wrap:wrap;justify-content:space-between">
-      <button class="wf-btn ghost" onclick="closeKeep()">Huỷ, giữ nguyên bản nháp</button>
-      <div class="wf-btn-row">
-        <button class="wf-btn" onclick="viewDiff()">Xem khác biệt đầy đủ</button>
-        <button class="wf-btn" onclick="keepMine()">Giữ của mình</button>
-        <button class="wf-btn danger" onclick="WF.openDialog('dlgOverwrite')">Ghi đè</button>
+
+    <div class="overlay hidden" id="overwrite-overlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3 class="dialog-title">Ghi đè thay đổi của họ?</h3>
+          <p class="dialog-description">Thao tác này không hoàn tác được.</p>
+        </div>
+        <div class="dialog-body flex flex-col gap-3">
+          <div class="banner" data-tone="danger">
+            <span class="ico">⊘</span>
+            <span>Bạn sẽ mất đúng 3 thứ:</span>
+          </div>
+          <ul class="flex flex-col gap-2" style="padding-left: 1.25rem">
+            <li>Đổi tên <strong>Trần Thị Mai → Trần Thị Mai Bích</strong> của Trần Thị Mai</li>
+            <li>Ngày mất mới của <strong>Lê Thị Lan</strong></li>
+            <li>Ảnh mới gắn cho <strong>Nguyễn Minh Khôi</strong></li>
+          </ul>
+          <label class="check-row">
+            <span class="checkbox" data-checked="false" id="ack-over"></span>
+            <span class="text-sm">Tôi hiểu 3 thay đổi trên sẽ biến mất</span>
+          </label>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="overwrite">Quay lại</button>
+          <button class="btn" data-variant="destructive" data-size="sm" id="do-overwrite" disabled>Ghi đè</button>
+        </div>
       </div>
-    </footer>
-  </div>
-</div>
-
-<!-- cảnh báo ghi đè -->
-<div class="wf-overlay" id="dlgOverwrite" hidden style="z-index:120">
-  <div class="wf-dialog">
-    <header><h3 style="color:var(--danger)">Ghi đè thay đổi của người khác</h3></header>
-    <div class="content">
-      <p style="color:var(--ink-2)">Toàn bộ bản 42 trên máy chủ sẽ bị thay bằng bản của bạn. Cụ thể là:</p>
-      <ul style="color:var(--danger);padding-left:18px">
-        <li>Tên "Nguyễn Thu Hà" đổi thành "Nguyễn Thu Hà (Hà 2)" sẽ <b>bị mất</b> — quay về "Nguyễn Thu Hà".</li>
-        <li>Bố cục do họ sắp xếp lúc 21:14 sẽ <b>bị thay</b>.</li>
-        <li>Phạm Thị Dung bị họ xoá sẽ <b>hiện lại</b> trong cây của bạn.</li>
-      </ul>
-      <div class="wf-note danger wf-mb0">Thay đổi của họ vẫn còn trong lịch sử, nhưng dữ liệu cây thì không. Chỉ bấm khi thực sự muốn.</div>
     </div>
-    <footer>
-      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgOverwrite')">Quay lại</button>
-      <button class="wf-btn danger" onclick="overwrite()">Tôi hiểu, ghi đè</button>
-    </footer>
-  </div>
-</div>
 
-<!-- xem khác biệt -->
-<div class="wf-overlay" id="dlgDiff" hidden style="z-index:120">
-  <div class="wf-dialog wide">
-    <header><h3>Khác biệt giữa bản 42 và bản của bạn</h3></header>
-    <div class="content wf-scroll">
-      <table class="wf-table">
-        <thead><tr><th>Đối tượng</th><th>Máy chủ (bản 42)</th><th>Máy bạn</th><th>Giữ máy chủ</th><th>Giữ máy bạn</th></tr></thead>
-        <tbody id="diffBody"></tbody>
-      </table>
-      <div class="wf-note wf-mt wf-mb0">Chọn từng dòng để giữ lại một bên. Không chọn dòng nào nghĩa là giữ bản máy chủ.</div>
-    </div>
-    <footer>
-      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgDiff')">Đóng</button>
-      <button class="wf-btn primary" onclick="applyDiff()">Áp dụng lựa chọn</button>
-    </footer>
-  </div>
-</div>
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
 
-<script src="assets/mock-data.js"></script>
-<script src="assets/wireframe.js"></script>
-<script>
-  var dirty = [
-    { t: "Thành viên mới", d: "Thêm Phạm Gia Bảo (đời 4, cha/mẹ: Nguyễn Thu Hà)" },
-    { t: "Thành viên", d: "Nguyễn Văn Bình — đổi ngày sinh 1968-05-20 → 1968-05-21" },
-    { t: "Quan hệ", d: "Gỡ quan hệ vợ chồng Nguyễn Văn Cường ↔ Phạm Thị Dung" },
-    { t: "Ảnh node", d: "Gắn ph2 vào node Nguyễn Thu Hà" },
-    { t: "Bố cục", d: "Kéo 3 node, sắp xếp tự động" }
-  ];
-  var conflicted = false;
+        var MINE = [
+          { what: "Thêm thành viên", detail: "Nguyễn Minh Châu · đời 4" },
+          { what: "Sửa ngày sinh", detail: "Nguyễn Minh Anh · 12/04/1971 → 12/04/1972" },
+          { what: "Kéo node", detail: "Trần Ngọc Mai · chỉ trên máy này" }
+        ];
+        var THEIRS = [
+          { who: "Trần Thị Mai", what: "Đổi tên", detail: "Trần Thị Mai → Trần Thị Mai Bích" },
+          { who: "Lê Thị Lan", what: "Thêm ngày mất", detail: "ngày mất 08/03/2026" },
+          { who: "Nguyễn Minh Khôi", what: "Gắn ảnh", detail: "ph2 → ph5" }
+        ];
+        var DIFF = [
+          { obj: "Trần Thị Mai", mine: "Trần Thị Mai", theirs: "Trần Thị Mai Bích" },
+          { obj: "Lê Thị Lan · ngày mất", mine: "(trống)", theirs: "08/03/2026" },
+          { obj: "Nguyễn Minh Khôi · ảnh", mine: "ph2", theirs: "ph5" },
+          { obj: "Nguyễn Minh Châu", mine: "thêm mới", theirs: "(không có)" },
+          { obj: "Nguyễn Minh Anh · ngày sinh", mine: "12/04/1972", theirs: "12/04/1971" }
+        ];
 
-  function renderMine() {
-    WF.qs("#myList").innerHTML = dirty.map(function (d, i) {
-      return '<div class="wf-note" style="margin:0"><b>' + WF.esc(d.t) + "</b><br>" + WF.esc(d.d) + "</div>";
-    }).join("") || '<div class="wf-empty" style="padding:18px">Không có thay đổi nào.</div>';
-    WF.qs("#cCount").textContent = dirty.length;
-  }
-  function addDirty() {
-    dirty.push({ t: "Thành viên", d: "Nguyễn Thu Hà (Hà 2) — thêm ghi chú" });
-    renderMine(); WF.toast("Đã thêm vào bản nháp.");
-  }
-  function simulate() { conflicted = true; WF.qs("#conflictBar").hidden = false; WF.toast("Bản 42 đã đổi. Bấm Lưu để xem 409.", "err"); }
-  function attemptSave() {
-    if (!dirty.length) { WF.toast("Không có gì để lưu."); return; }
-    if (conflicted) { WF.openDialog("dlgConflict"); return; }
-    forceClear();
-  }
-  function forceClear() { dirty = []; renderMine(); conflicted = false; WF.qs("#conflictBar").hidden = true; WF.toast("Đã lưu. Bản 43.", "ok"); }
+        function rows(el, list, withWho) {
+          qs(el).innerHTML = list.map(function (r) {
+            return '<div class="mini-row"><span class="flex-1"><span class="font-semibold">' +
+              (withWho ? esc(r.who) + " · " : "") + esc(r.what) + '</span>' +
+              '<div class="text-xs muted">' + esc(r.detail) + "</div></span></div>";
+          }).join("");
+        }
+        rows("#mine", MINE, false);
+        rows("#theirs", THEIRS, true);
 
-  function closeKeep() { WF.closeDialog("dlgConflict"); WF.toast("Bản nháp vẫn còn. Bấm Lưu lúc nào cũng được."); }
-  function keepMine() { WF.closeDialog("dlgConflict"); dirty = []; renderMine(); WF.toast("Đã ghi bản của bạn lên bản 43. Thay đổi của họ vẫn nằm trong lịch sử.", "ok"); }
-  function overwrite() { WF.closeDialog("dlgOverwrite"); WF.closeDialog("dlgConflict"); forceClear(); WF.toast("Đã ghi đè. Bản 43 là của bạn.", "ok"); }
+        function simulate() {
+          qs("#conflict-bar").classList.remove("hidden");
+          qs("#ver").textContent = "bản 43";
+          WF.toast("Trần Thị Mai vừa lưu", "Máy chủ chuyển từ bản 42 sang bản 43.", "destructive");
+        }
+        qs("#simulate").addEventListener("click", simulate);
+        qs("#make-dirty").addEventListener("click", function () {
+          WF.toast("Bản nháp có thay đổi", "3 mục đang chờ lưu.", "default");
+        });
+        qs("#attempt").addEventListener("click", function () {
+          if (qs("#conflict-bar").classList.contains("hidden")) {
+            WF.toast("Lưu thành công", "Bản 42 → 43. Mọi thay đổi đã ghi trong một lần.", "success");
+            return;
+          }
+          WF.openDialog("conflict");
+        });
+        qs("#reopen").addEventListener("click", function () { WF.openDialog("conflict"); });
+        qs("#keep-mine").addEventListener("click", function () {
+          WF.closeDialog("conflict");
+          WF.toast("Đang ghi đè 3 thay đổi của họ", "Bạn sẽ thấy xác nhận lần nữa.", "default");
+          WF.openDialog("overwrite");
+        });
+        qs("#overwrite").addEventListener("click", function () {
+          WF.closeDialog("conflict");
+          WF.openDialog("overwrite");
+        });
+        qs("#ack-over").addEventListener("click", function () {
+          var c = qs("#ack-over");
+          c.setAttribute("data-checked", c.getAttribute("data-checked") === "true" ? "false" : "true");
+          qs("#do-overwrite").disabled = c.getAttribute("data-checked") !== "true";
+        });
+        qs("#do-overwrite").addEventListener("click", function () {
+          WF.closeDialog("overwrite");
+          qs("#conflict-bar").classList.add("hidden");
+          qs("#ver").textContent = "bản 44";
+          WF.toast("Đã ghi đè", "3 thay đổi của Trần Thị Mai đã mất.", "destructive");
+        });
 
-  function viewDiff() {
-    WF.qs("#diffBody").innerHTML = [
-      ["Tên Nguyễn Thu Hà", "Nguyễn Thu Hà (Hà 2)", "Nguyễn Thu Hà"],
-      ["Ngày sinh Nguyễn Văn Bình", "1968-05-21", "1968-05-21"],
-      ["Phạm Thị Dung", "đã xoá", "đang có"],
-      ["Bố cục", "xếp tự động 21:14", "xếp theo tôi"]
-    ].map(function (r, i) {
-      return "<tr><td>" + r[0] + "</td><td>" + r[1] + '</td><td><input type="radio" name="d' + i + '" value="server"></td>' +
-        '<td><input type="radio" name="d' + i + '" value="mine" checked></td></tr>';
-    }).join("").replace(/<\/tr><tr>/g, "</tr><tr>");
-    WF.qs("#dlgDiff").hidden = false;
-  }
-  function applyDiff() { WF.closeDialog("dlgDiff"); forceClear(); WF.toast("Đã áp dụng lựa chọn. Bản 43.", "ok"); }
+        qs("#diff").addEventListener("click", function () {
+          WF.closeDialog("conflict");
+          qs("#diff-rows").innerHTML = DIFF.map(function (d, i) {
+            return "<tr>" +
+              '<td class="font-semibold">' + esc(d.obj) + "</td>" +
+              '<td><span class="diff-old">' + esc(d.theirs) + "</span></td>" +
+              '<td><span class="diff-new">' + esc(d.mine) + "</span></td>" +
+              '<td><span class="radio" data-checked="false" data-pick="' + i + '" data-side="theirs"></span></td>' +
+              '<td><span class="radio" data-checked="false" data-pick="' + i + '" data-side="mine"></span></td>' +
+              "</tr>";
+          }).join("");
+          WF.openDialog("diff");
+        });
 
-  renderMine();
-</script>
-</body>
+        Array.prototype.forEach.call(document.querySelectorAll("#diff-rows .radio"), function (r) {
+          r.addEventListener("click", function () {
+            var i = r.getAttribute("data-pick");
+            Array.prototype.forEach.call(document.querySelectorAll('#diff-rows .radio[data-pick="' + i + '"]'), function (o) {
+              o.setAttribute("data-checked", "false");
+            });
+            r.setAttribute("data-checked", "true");
+            var any = !!qs('#diff-rows .radio[data-checked="true"]');
+            qs("#apply-diff").disabled = !any;
+          });
+        });
+
+        qs("#apply-diff").addEventListener("click", function () {
+          WF.closeDialog("diff");
+          WF.toast("Đã áp dụng lựa chọn từng dòng", "Còn 1 dòng chưa chọn nên chưa ghi.", "default");
+        });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+        window.demoConflict = function () { simulate(); WF.openDialog("conflict"); };
+      })();
+    </script>
+  </body>
 </html>

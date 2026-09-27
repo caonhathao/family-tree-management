@@ -1,224 +1,343 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>16 · Khu tài khoản — /user/*</title>
-<link rel="stylesheet" href="assets/wireframe.css">
-</head>
-<body>
-<header class="wf-bar">
-  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
-  <span class="wf-bar-title">16 · Khu tài khoản</span>
-  <span class="wf-bar-route">/user/profile · /user/secure · /user/trash</span>
-  <span class="wf-spacer"></span>
-  <span class="wf-badge" data-role-label>—</span>
-  <span class="wf-role">Vai trò <span data-role-switch></span></span>
-</header>
-
-<main class="wf-main">
-  <div class="wf-split nav">
-    <!-- thanh bên -->
-    <div class="wf-card" style="padding:12px">
-      <div class="wf-row" style="gap:10px;padding:6px 8px 12px;border-bottom:1px solid var(--line);margin-bottom:10px">
-        <div class="ph" style="width:40px;height:40px;border-radius:999px;background:var(--accent-weak);display:flex;align-items:center;justify-content:center;color:#1b4bbd;font-weight:700">H</div>
-        <div>
-          <div style="font-weight:600">Nguyễn Thanh Hà</div>
-          <div style="font-size:12px;color:var(--muted)" data-role-label>—</div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thông tin cá nhân — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <button class="sidebar-menu-button" data-size="lg" id="hello">
+            <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </button>
         </div>
-      </div>
-      <div class="wf-menu">
-        <a href="#"><span class="ico">▣</span>Về cây của tôi</a>
-        <a class="on" href="#"><span class="ico">☺</span>Thông tin cá nhân</a>
-        <a href="#"><span class="ico">⚿</span>Bảo mật</a>
-        <a href="s10-trash.html"><span class="ico">🗑</span>Thùng rác</a>
-        <a href="s04-forgot-reset.html"><span class="ico">↺</span>Đổi mật khẩu</a>
-      </div>
-
-      <div class="wf-note wf-mt" style="font-size:12px">
-        <b>Không còn 4 mục này:</b> Danh sách nhóm, Lời mời, Kho lưu trữ, Hỗ trợ, Phản hồi. Trước đây bấm vào ra
-        trang trắng vì không có màn nào ở đó.
-      </div>
-    </div>
-
-    <!-- nội dung -->
-    <div class="wf-stack">
-      <div class="wf-card">
-        <h2>Thông tin cá nhân</h2>
-        <div class="wf-grid c2">
-          <div class="wf-field"><label>Họ và tên</label><input class="wf-input" value="Nguyễn Thanh Hà"></div>
-          <div class="wf-field"><label>Email</label><input class="wf-input" value="ha.nguyen@example.com"></div>
-        </div>
-        <div class="wf-field">
-          <label>Ảnh hồ sơ</label>
-          <div class="wf-row">
-            <div class="ph" style="width:56px;height:56px;border-radius:999px;background:var(--accent-weak);display:flex;align-items:center;justify-content:center;color:#1b4bbd;font-weight:700">H</div>
-            <button class="wf-btn" onclick="WF.toast('Đổi ảnh hồ sơ không ảnh hưởng node nào đã ghim ảnh cũ','ok')">Đổi ảnh</button>
-            <span style="color:var(--muted);font-size:12.5px">Các node đã ghim ảnh hồ sơ vẫn giữ bản chụp cũ.</span>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Chung</div>
+            <a class="sidebar-menu-button" data-active="true" href="s16-profile-hub.html"><span class="ico">◉</span><span class="hide-narrow">Thông tin cá nhân</span></a>
+            <a class="sidebar-menu-button" href="s04-forgot-reset.html"><span class="ico">⚿</span><span class="hide-narrow">Bảo mật</span></a>
+          </div>
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Cây</div>
+            <a class="sidebar-menu-button" href="s06-tree-canvas.html"><span class="ico">⌥</span><span class="hide-narrow">Về cây</span></a>
+            <a class="sidebar-menu-button" href="s09-activity.html"><span class="ico">≡</span><span class="hide-narrow">Lịch sử thay đổi</span></a>
+            <a class="sidebar-menu-button" href="s15-events.html"><span class="ico">◷</span><span class="hide-narrow">Sự kiện</span></a>
+          </div>
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Lưu trữ</div>
+            <a class="sidebar-menu-button" href="s10-trash.html"><span class="ico">⊘</span><span class="hide-narrow">Thùng rác</span></a>
           </div>
         </div>
-        <div class="wf-btn-row"><button class="wf-btn primary" onclick="WF.toast('Đã lưu.','ok')">Lưu</button></div>
-      </div>
-
-      <div class="wf-card">
-        <h2>Người trong nhóm</h2>
-        <p style="color:var(--muted);font-size:13px">Một tài khoản chỉ có một cây. Danh sách dưới đây là những người
-        dùng chung cây đó — không phải danh sách các nhóm.</p>
-        <div class="wf-table-wrap">
-          <table class="wf-table">
-            <thead><tr><th>Người</th><th>Quyền</th><th>Thao tác</th></tr></thead>
-            <tbody id="people"></tbody>
-          </table>
+        <div class="sidebar-footer">
+          <div class="text-xs muted" style="padding: 0 0.5rem">
+            Bỏ 5 mục chết: Danh sách nhóm, Lời mời, Kho lưu trữ, Hỗ trợ, Phản hồi.
+          </div>
         </div>
-        <div class="wf-note rule wf-mt">
-          <b>Đổi vai trò chỉ chuyển giữa SỬA và XEM.</b> Không có đường nâng lên CHỦ NHÓM. Muốn đổi CHỦ NHÓM thì
-          phải <b>chuyển quyền sở hữu</b> — một việc riêng, khác hẳn.
+      </aside>
+
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Thông tin cá nhân</h2>
+        </header>
+
+        <main class="app-main">
+          <div class="page">
+            <div class="two-col" style="align-items: start">
+              <div class="flex flex-col gap-4">
+                <div class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">Tài khoản</h3>
+                    <p class="card-description">Thông tin đăng nhập</p>
+                  </div>
+                  <div class="card-content flex flex-col gap-4">
+                    <div class="flex flex-wrap items-center gap-3">
+                      <span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span>
+                      <div class="flex-1">
+                        <div class="font-semibold">Nguyễn Thanh Hà</div>
+                        <div class="text-sm muted">ha.nguyen@example.com</div>
+                      </div>
+                      <button class="btn" data-variant="outline" data-size="sm">Đổi ảnh</button>
+                    </div>
+                    <div class="banner">
+                      <span class="ico">◈</span>
+                      <span>Đổi ảnh hồ sơ <strong>không</strong> làm đổi ảnh đã ghim trên cây. Ảnh trên node là bản chụp tại lúc ghim.</span>
+                    </div>
+                    <div class="field-group">
+                      <label class="field-label" for="dn">Tên hiển thị</label>
+                      <input class="input" id="dn" value="Nguyễn Thanh Hà" />
+                    </div>
+                    <div class="field-group">
+                      <label class="field-label" for="dp">Mật khẩu</label>
+                      <div class="pass-row">
+                        <input class="input" id="dp" type="password" value="matkhau123" />
+                        <a class="btn" data-variant="outline" data-size="sm" href="s04-forgot-reset.html">Đổi mật khẩu</a>
+                      </div>
+                    </div>
+                    <button class="btn" id="save-me">Lưu thông tin</button>
+                  </div>
+                </div>
+
+                <div class="card" data-needs-perm="role.transfer">
+                  <div class="card-header">
+                    <h3 class="card-title">Nhóm của tôi</h3>
+                    <p class="card-description">Một tài khoản chỉ có một cây, không có màn danh sách nhóm</p>
+                  </div>
+                  <div class="card-content flex flex-col gap-3">
+                    <div class="mini-list">
+                      <div class="mini-row"><span class="muted">Cây</span><span class="font-semibold">Nhà họ Nguyễn – Trần</span></div>
+                      <div class="mini-row"><span class="muted">Vai trò của bạn</span><span><span class="badge" data-tone="primary" id="my-role">Chủ nhóm</span></span></div>
+                      <div class="mini-row"><span class="muted">Bản hiện tại</span><span class="muted">43</span></div>
+                    </div>
+                    <div class="banner" data-tone="warn">
+                      <span class="ico">⚠</span>
+                      <span>Không có nút “rời nhóm”. Muốn bỏ thì xoá tài khoản, và toàn bộ ảnh của bạn chuyển sang Chủ nhóm.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card" style="border-color: var(--destructive)">
+                  <div class="card-header">
+                    <h3 class="card-title">Xoá tài khoản</h3>
+                    <p class="card-description">Không hoàn tác được</p>
+                  </div>
+                  <div class="card-content flex flex-col gap-3">
+                    <div class="mini-list">
+                      <div class="mini-row"><span class="muted">Cây gia phả</span><span>bị xoá cùng tài khoản</span></div>
+                      <div class="mini-row"><span class="muted">Ảnh bạn tải lên</span><span>chuyển sang Chủ nhóm</span></div>
+                      <div class="mini-row"><span class="muted">Ảnh ở thùng rác</span><span>bị xoá luôn, không ai khôi phục được</span></div>
+                    </div>
+                    <div class="field-group">
+                      <label class="field-label" for="confirm">Gõ <strong>XOACUATKHOAN</strong> để xác nhận</label>
+                      <input class="input" id="confirm" placeholder="XOACUATKHOAN" />
+                    </div>
+                    <button class="btn" data-variant="destructive" id="del-me" disabled>Xoá tài khoản của tôi</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-4">
+                <div class="card" data-needs-perm="invite.create">
+                  <div class="card-header">
+                    <h3 class="card-title">Mời người mới</h3>
+                    <p class="card-description">Link dùng một lần, hạn 7 ngày</p>
+                  </div>
+                  <div class="card-content flex flex-col gap-3">
+                    <div class="codebox">/invite/inv_9c41f2</div>
+                    <div class="flex gap-2">
+                      <button class="btn" data-variant="outline" data-size="sm" id="copy-inv">Sao chép</button>
+                      <a class="btn" data-variant="outline" data-size="sm" href="s02-register-invite-fork.html?token=inv_9c41f2">Mở thử</a>
+                    </div>
+                    <p class="field-desc">Người vào từ link này là Người xem. Không có màn quản lý lời mời.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mt-6" data-needs-perm="role.change">
+              <div class="card-header">
+                <h3 class="card-title">Người cùng nhóm</h3>
+                <p class="card-description">Chủ nhóm đổi được vai trò và chuyển quyền sở hữu</p>
+              </div>
+              <div class="card-content" style="padding: 0">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Người</th>
+                        <th style="width: 10rem">Vai trò</th>
+                        <th style="width: 16rem"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="people"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <details class="note">
+              <summary>Ghi chú thiết kế</summary>
+              <div class="note-body">
+                <ul>
+                  <li>Thanh bên chỉ còn 5 mục thật. 5 mục còn lại trỏ tới trang không tồn tại và phải xoá khỏi dữ liệu điều hướng, không chỉ ẩn.</li>
+                  <li>Đổi vai trò chỉ xoay vòng giữa <strong>Biên tập viên</strong> và <strong>Người xem</strong> — không có đường nâng lên Chủ nhóm.</li>
+                  <li>Nút “Đổi vai trò” trên bản hiện tại không gắn sự kiện gì cả, bấm không ra gì.</li>
+                  <li>Chuyển quyền sở hữu: người nhận thành Chủ nhóm, <strong>bạn vẫn ở trong nhóm</strong> với vai trò Biên tập viên, không bị đuổi ra. Nếu nhóm chưa có Biên tập viên nào thì người nhận bắt đầu bằng Biên tập viên.</li>
+                  <li>Không có “rời nhóm”. Cách duy nhất thoát ra là xoá tài khoản.</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="role-overlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3 class="dialog-title" id="role-title">Đổi vai trò</h3>
+          <p class="dialog-description" id="role-who"></p>
+        </div>
+        <div class="dialog-body flex flex-col gap-3">
+          <div class="field-group">
+            <span class="field-label">Vai trò mới</span>
+            <div class="flex flex-col gap-2">
+              <label class="check-row"><span class="radio" data-checked="false" data-newrole="editor"></span><span class="text-sm">Biên tập viên — sửa được toàn bộ cây</span></label>
+              <label class="check-row"><span class="radio" data-checked="false" data-newrole="viewer"></span><span class="text-sm">Người xem — chỉ xem, kéo và phóng cây</span></label>
+            </div>
+            <p class="field-desc">Không có lựa chọn Chủ nhóm ở đây. Chỉ chuyển quyền sở hữu mới đổi được chủ nhóm.</p>
+          </div>
+          <div class="banner" data-tone="warn">
+            <span class="ico">⚠</span>
+            <span id="role-warn"></span>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="role">Huỷ</button>
+          <button class="btn" data-size="sm" id="do-role" disabled>Đổi vai trò</button>
         </div>
       </div>
+    </div>
 
-      <div class="wf-card">
-        <h2>Bỏ nhóm</h2>
-        <p style="color:var(--ink-2)">Không có nút "Rời nhóm". Một tài khoản chỉ có một cây, nên rời nhóm đồng nghĩa
-        mất cây đó. Muốn bỏ hẳn thì xoá tài khoản.</p>
-        <div class="wf-note warn">
-          <b>Xoá tài khoản: ảnh của bạn chuyển sang CHỦ NHÓM của nhóm.</b> Không mất ảnh. Còn cây thì xoá theo
-          tài khoản.
+    <div class="overlay hidden" id="transfer-overlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3 class="dialog-title">Chuyển quyền sở hữu</h3>
+          <p class="dialog-description" id="transfer-who"></p>
         </div>
-        <button class="wf-btn danger" data-needs-perm="role.change" onclick="WF.openDialog('dlgDelAcc')">Xoá tài khoản của tôi</button>
+        <div class="dialog-body flex flex-col gap-3">
+          <div class="banner" data-tone="warn">
+            <span class="ico">⚠</span>
+            <span>Đây là thay đổi không hoàn tác được trên giao diện. Không phải hộp thoại “OK” mặc định.</span>
+          </div>
+          <ul class="flex flex-col gap-2" style="padding-left: 1.25rem">
+            <li>Người nhận trở thành <strong>Chủ nhóm</strong>.</li>
+            <li><strong>Bạn vẫn ở trong nhóm</strong>, chuyển sang Biên tập viên. Bạn không bị đuổi ra.</li>
+            <li>Bạn mất quyền đổi vai trò người khác và quyền tạo link chia sẻ.</li>
+            <li>Nếu nhóm đang chưa có Biên tập viên nào, người nhận bắt đầu bằng Biên tập viên.</li>
+          </ul>
+          <label class="check-row">
+            <span class="checkbox" data-checked="false" id="ack-transfer"></span>
+            <span class="text-sm">Tôi hiểu mình sẽ mất quyền chủ nhóm</span>
+          </label>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="transfer">Huỷ</button>
+          <button class="btn" data-variant="destructive" data-size="sm" id="do-transfer" disabled>Chuyển quyền sở hữu</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <footer class="wf-foot">
-    <b>Nguồn.</b> Quy trình §5 (tạo link mời, đổi vai trò, chuyển quyền sở hữu, không có rời nhóm) · phạm vi sửa §6 (hai nút bấm chết trước đây phải nối vào, hộp thoại cảnh báo thật) · phạm vi xoá B9 (xoá 4 mục chết), B11 (xoá danh sách nhóm và rời nhóm) · quyết định Q16, Q17.
-  </footer>
-</main>
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
+        var picked = null;
 
-<!-- đổi vai trò -->
-<div class="wf-overlay" id="dlgRole" hidden>
-  <div class="wf-dialog">
-    <header><h3>Đổi vai trò của <span id="rName"></span></h3></header>
-    <div class="content">
-      <p style="color:var(--ink-2)">Quyền hiện tại: <b id="rOld"></b></p>
-      <div class="wf-radio" id="rChoices"></div>
-      <div class="wf-note warn wf-mb0" id="rWarn"></div>
-    </div>
-    <footer>
-      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgRole')">Huỷ</button>
-      <button class="wf-btn primary" onclick="applyRoleChange()">Xác nhận</button>
-    </footer>
-  </div>
-</div>
+        function renderPeople() {
+          qs("#people").innerHTML = MOCK.collaborators.map(function (c) {
+            var me = WF.myId();
+            var act = c.id === me;
+            return "<tr>" +
+              '<td><span class="font-semibold">' + esc(c.fullName) + "</span>" +
+              (act ? ' <span class="badge" data-tone="muted">bạn</span>' : "") +
+              '<div class="text-xs muted">' + esc(c.email) + "</div></td>" +
+              "<td>" + (c.role === "owner"
+                ? '<span class="badge" data-tone="primary">Chủ nhóm</span>'
+                : c.role === "editor"
+                  ? '<span class="badge" data-tone="primary">Biên tập viên</span>'
+                  : '<span class="badge" data-tone="muted">Người xem</span>') + "</td>" +
+              '<td class="text-right">' + (act
+                ? '<span class="text-xs muted">—</span>'
+                : '<div class="flex gap-2" style="justify-content:flex-end">' +
+                  '<button class="btn" data-variant="outline" data-size="sm" data-role="' + c.id + '">Đổi vai trò</button>' +
+                  (c.role === "owner" ? "" : '<button class="btn" data-variant="ghost" data-size="sm" data-transfer="' + c.id + '">Chuyển quyền</button>') +
+                  "</div>") +
+              "</td></tr>";
+          }).join("");
 
-<!-- chuyển quyền sở hữu -->
-<div class="wf-overlay" id="dlgTransfer" hidden style="z-index:120">
-  <div class="wf-dialog">
-    <header><h3 style="color:var(--warn)">Chuyển quyền sở hữu cho <span id="tName"></span>?</h3></header>
-    <div class="content">
-      <p style="color:var(--ink-2)">Sau khi chuyển:</p>
-      <ul style="color:var(--ink-2);padding-left:18px">
-        <li><span id="tName2"></span> trở thành <b>CHỦ NHÓM</b>.</li>
-        <li>Bạn trở thành <b>BIÊN TẬP VIÊN</b> — <b>bạn vẫn ở trong nhóm</b>, không bị đá ra.</li>
-        <li>Bạn mất quyền đổi vai trò người khác và quyền tạo link chia sẻ.</li>
-        <li>Có thể chuyển lại, nhưng phải nhờ CHỦ NHÓM mới bấm được.</li>
-      </ul>
-      <div class="wf-note danger" id="tExtra"></div>
-      <label class="wf-row" style="font-size:13px;gap:7px">
-        <input type="checkbox" id="tAck"> Tôi hiểu và muốn chuyển quyền sở hữu
-      </label>
-    </div>
-    <footer>
-      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgTransfer')">Huỷ</button>
-      <button class="wf-btn danger" id="tGo" disabled onclick="doTransfer()">Chuyển quyền sở hữu</button>
-    </footer>
-  </div>
-</div>
+          Array.prototype.forEach.call(document.querySelectorAll("[data-role]"), function (b) {
+            b.addEventListener("click", function () { openRole(b.getAttribute("data-role")); });
+          });
+        }
 
-<!-- xoá tài khoản -->
-<div class="wf-overlay" id="dlgDelAcc" hidden>
-  <div class="wf-dialog">
-    <header><h3 style="color:var(--danger)">Xoá tài khoản?</h3></header>
-    <div class="content">
-      <p style="color:var(--ink-2)">Tài khoản của bạn bị xoá. Bạn sẽ không đăng nhập lại được.</p>
-      <ul style="color:var(--ink-2);padding-left:18px">
-        <li>Ảnh bạn tải (<b>4 ảnh</b>) chuyển sang CHỦ NHÓM. Không mất.</li>
-        <li>Cây của nhóm bị xoá vào thùng rác, khôi phục trong 30 ngày.</li>
-        <li>Nếu bạn là CHỦ NHÓM thì phải <b>chuyển quyền sở hữu</b> trước, không xoá được trực tiếp.</li>
-      </ul>
-      <label class="wf-field"><label>Nhập <b class="mono">XOA TAI KHOAN</b> để xác nhận</label><input class="wf-input" placeholder="XOA TAI KHOAN"></label>
-    </div>
-    <footer>
-      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgDelAcc')">Huỷ</button>
-      <button class="wf-btn danger" onclick="WF.toast('Cần gõ đúng câu xác nhận','err')">Xoá tài khoản</button>
-    </footer>
-  </div>
-</div>
+        function openRole(id) {
+          picked = id;
+          var c = MOCK.collaborators.filter(function (x) { return x.id === id; })[0];
+          qs("#role-who").textContent = c.fullName + " · " + c.email;
+          qs("#role-warn").textContent = c.role === "owner"
+            ? "Đây là Chủ nhóm. Không thể đổi vai trò của chủ nhóm bằng hộp thoại này — phải chuyển quyền sở hữu trước."
+            : "Sau khi đổi, người này " + (c.role === "editor" ? "chỉ còn xem và kéo cây" : "sửa được toàn bộ cây") + " ngay lập tức.";
+          qs("#do-role").disabled = c.role === "owner";
+          Array.prototype.forEach.call(document.querySelectorAll("[data-newrole]"), function (r) {
+            r.setAttribute("data-checked", r.getAttribute("data-newrole") === (c.role === "editor" ? "viewer" : "editor") ? "true" : "false");
+          });
+          WF.openDialog("role");
+        }
 
-<script src="assets/mock-data.js"></script>
-<script src="assets/wireframe.js"></script>
-<script>
-  function gate() {
-    var isOwner = WF.getRole() === "owner";
-    WF.qsa("[data-needs-perm='role.change']").forEach(function (b) { b.disabled = !isOwner; });
-    renderPeople();
-  }
-  function renderPeople() {
-    var isOwner = WF.getRole() === "owner";
-    WF.qs("#people").innerHTML = MOCK.collaborators.map(function (u) {
-      var canEdit = isOwner && u.id !== MOCK.me.id;
-      return "<tr><td><b>" + WF.esc(u.fullName) + "</b><br><span style='color:var(--muted);font-size:12px'>" + u.email + "</span></td>" +
-        '<td><span class="wf-badge' + (u.role === "OWNER" ? " accent" : "") + '">' + u.role + "</span></td>" +
-        '<td class="actions">' +
-        (canEdit && u.role !== "OWNER" ? '<button class="wf-btn sm" onclick="askRole(\'' + u.id + '\')">Đổi vai trò</button> ' +
-          '<button class="wf-btn sm" onclick="askTransfer(\'' + u.id + '\')">Chuyển quyền sở hữu</button>'
-          : u.role === "OWNER" ? '<span class="wf-badge">bạn là chủ nhóm</span>'
-          : '<span class="wf-badge">chỉ CHỦ NHÓM thao tác được</span>') +
-        "</td></tr>";
-    }).join("");
-  }
-  function askRole(id) {
-    var u = MOCK.collaborators.filter(function (x) { return x.id === id; })[0];
-    WF.qs("#rName").textContent = u.fullName;
-    WF.qs("#rOld").textContent = u.role;
-    WF.qs("#rChoices").innerHTML = ["EDITOR", "VIEWER"].map(function (r) {
-      return '<label><input type="radio" name="nr" value="' + r + '"' + (r === u.role ? " checked" : "") + "> " +
-        (r === "EDITOR" ? "BIÊN TẬP VIÊN — thêm, sửa, xoá thành viên và quan hệ, gắn ảnh node, nhập xuất" : "CHỈ XEM — xem cây, xem ảnh và album được chia sẻ, xem lịch sử ảnh") +
-        "</label>";
-    }).join("");
-    WF.qs("#rWarn").innerHTML = u.role === "EDITOR"
-      ? "Hạ quyền xuống CHỈ XEM: họ vẫn thấy cây, nhưng không thêm sửa được gì nữa, và lịch sử chỉ còn phần ảnh và album."
-      : "Nâng lên BIÊN TẬP VIÊN: họ sửa được toàn bộ cây, nhưng <b>vẫn không sửa được ảnh của người khác</b> — đó là chuyện bình thường, đừng sửa.";
-    WF.qs("#rChoices").dataset.uid = id;
-    WF.openDialog("dlgRole");
-  }
-  function applyRoleChange() {
-    var id = WF.qs("#rChoices").dataset.uid;
-    var nr = (WF.qs('input[name="nr"]:checked') || {}).value;
-    var u = MOCK.collaborators.filter(function (x) { return x.id === id; })[0];
-    u.role = nr; WF.closeDialog("dlgRole"); renderPeople();
-    WF.toast(u.fullName + " giờ là " + nr + ".", "ok");
-  }
-  function askTransfer(id) {
-    var u = MOCK.collaborators.filter(function (x) { return x.id === id; })[0];
-    WF.qs("#tName").textContent = u.fullName;
-    WF.qs("#tName2").textContent = u.fullName;
-    var hasEditor = MOCK.collaborators.filter(function (x) { return x.role === "EDITOR"; }).length > 0;
-    WF.qs("#tExtra").innerHTML = hasEditor
-      ? "Nhóm đang có ít nhất một BIÊN TẬP VIÊN, nên sau khi bạn hạ quyền thì nhóm vẫn còn người sửa được cây."
-      : "<b>Nhóm hiện chưa có ai là BIÊN TẬP VIÊN.</b> Nếu bạn hạ xuống, sẽ không còn ai sửa được cây ngoài người mới. Vì vậy <b>người nhận sẽ bắt đầu với quyền BIÊN TẬP VIÊN</b>, rồi bạn mới hạ xuống.";
-    WF.qs("#tAck").checked = false;
-    WF.qs("#tGo").disabled = true;
-    WF.qs("#tAck").onchange = function () { WF.qs("#tGo").disabled = !this.checked; };
-    WF.openDialog("dlgTransfer");
-  }
-  function doTransfer() {
-    WF.closeDialog("dlgTransfer");
-    var u = MOCK.collaborators.filter(function (x) { return x.role !== "OWNER"; })[0];
-    if (u) { u.role = "OWNER"; WF.toast("Đã chuyển. Bạn còn trong nhóm, với quyền BIÊN TẬP VIÊN.", "ok"); renderPeople(); }
-  }
+        Array.prototype.forEach.call(document.querySelectorAll("[data-newrole]"), function (r) {
+          r.addEventListener("click", function () {
+            Array.prototype.forEach.call(document.querySelectorAll("[data-newrole]"), function (o) {
+              o.setAttribute("data-checked", "false");
+            });
+            r.setAttribute("data-checked", "true");
+          });
+        });
+        qs("#do-role").addEventListener("click", function () {
+          var sel = document.querySelector('[data-newrole][data-checked="true"]');
+          var c = MOCK.collaborators.filter(function (x) { return x.id === picked; })[0];
+          c.role = sel.getAttribute("data-newrole");
+          WF.closeDialog("role");
+          renderPeople();
+          WF.toast("Đã đổi vai trò", c.fullName + " giờ là " + WF.roleLabel(c.role) + ".", "success");
+        });
 
-  gate();
-  window.wfOnRole = function () { gate(); WF.applyRole(); };
-</script>
-</body>
+        Array.prototype.forEach.call(document.querySelectorAll("[data-transfer]"), function (b) {
+          b.addEventListener("click", function () {
+            var c = MOCK.collaborators.filter(function (x) { return x.id === b.getAttribute("data-transfer"); })[0];
+            qs("#transfer-who").textContent = "Chuyển cho " + c.fullName;
+            WF.openDialog("transfer");
+          });
+        });
+        qs("#ack-transfer").addEventListener("click", function () {
+          var c = qs("#ack-transfer");
+          c.setAttribute("data-checked", c.getAttribute("data-checked") === "true" ? "false" : "true");
+          qs("#do-transfer").disabled = c.getAttribute("data-checked") !== "true";
+        });
+        qs("#do-transfer").addEventListener("click", function () {
+          WF.closeDialog("transfer");
+          WF.toast("Đã chuyển quyền sở hữu", "Bạn vẫn ở trong nhóm với vai trò Biên tập viên.", "success");
+          qs("#my-role").textContent = "Biên tập viên";
+        });
+
+        qs("#confirm").addEventListener("input", function () {
+          qs("#del-me").disabled = qs("#confirm").value !== "XOACUATKHOAN";
+        });
+        qs("#del-me").addEventListener("click", function () {
+          WF.toast("Đã xoá tài khoản", "Ảnh của bạn đã chuyển sang Chủ nhóm.", "destructive");
+        });
+        qs("#save-me").addEventListener("click", function () {
+          WF.toast("Đã lưu", "Ảnh hồ sơ đổi không ảnh trên cây.", "success");
+        });
+        qs("#copy-inv").addEventListener("click", function () {
+          WF.toast("Đã sao chép", "/invite/inv_9c41f2", "success");
+        });
+        qs("#hello").addEventListener("click", function () { location.href = "index.html"; });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+
+        window.wfOnRole = renderPeople;
+        renderPeople();
+      })();
+    </script>
+  </body>
 </html>

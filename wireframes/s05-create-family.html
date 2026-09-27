@@ -1,76 +1,137 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>05 · Tạo nhóm và cây mới — /invite</title>
-<link rel="stylesheet" href="assets/wireframe.css">
-</head>
-<body>
-<header class="wf-bar">
-  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
-  <span class="wf-bar-title">05 · Tạo nhóm và cây mới</span>
-  <span class="wf-bar-route">/invite (không có token)</span>
-  <span class="wf-spacer"></span>
-  <span class="wf-role">Vai trò <span data-role-switch></span></span>
-</header>
-
-<main class="wf-main">
-  <div class="wf-narrow">
-    <div class="wf-head" style="text-align:center">
-      <h1>Tạo cây gia đình của bạn</h1>
-      <p class="sub">Chỉ cần tên. Bạn có thể đổi sau.</p>
-    </div>
-
-    <div class="wf-card" style="padding:24px">
-      <div class="wf-field">
-        <label>Tên nhóm</label>
-        <input class="wf-input" id="gname" value="Nhà họ Nguyễn – Trần" oninput="preview()">
-        <span class="hint">Tên này hiện trên link mời và trên màn hình cây. Có thể đổi về sau nếu bạn có quyền SỬA.</span>
-      </div>
-      <div class="wf-field">
-        <label>Tên cây</label>
-        <input class="wf-input" id="tname" value="Gia đình họ Nguyễn" oninput="preview()">
-        <span class="hint">Để trống thì dùng luôn tên nhóm.</span>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tạo cây gia phả</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <a class="btn" data-variant="outline" href="index.html">‹ Quay lại</a>
+        <button class="btn" data-variant="outline" data-size="icon" id="info" aria-label="Thông tin">i</button>
       </div>
 
-      <div class="wf-note">
-        <b>Bạn sẽ là CHỦ NHÓM</b> của cây vừa tạo. Tài khoản này có thể thêm, sửa, xoá thành viên và quan hệ;
-        đổi vai trò người khác; chuyển quyền sở hữu; tạo link chia sẻ.
+      <div class="auth-center">
+        <div class="auth-card" data-mode="signup" style="max-width: 34rem">
+          <div class="auth-panes" data-mode="signup">
+            <div class="auth-pane-form">
+              <div class="card" data-variant="flat">
+                <div class="card-header">
+                  <h3 class="card-title">Tạo cây gia phả của bạn</h3>
+                  <p class="card-description">Bạn sẽ là chủ nhóm và có quyền sửa mọi thứ trong cây</p>
+                </div>
+                <div class="card-content flex flex-col gap-6">
+                  <div class="banner">
+                    <span class="ico">◉</span>
+                    <span>Bạn vào thẳng màn <strong>Quản lý gia phả</strong>. Thành viên khác chỉ vào được sau khi bạn gửi link mời.</span>
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-label" for="gname">Tên nhóm</label>
+                    <input class="input" id="gname" value="Nhà họ Nguyễn – Trần" />
+                    <p class="field-desc">Tên này hiện ở đầu thanh bên và trên cây của mọi người.</p>
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-label" for="tname">Tên cây</label>
+                    <input class="input" id="tname" value="Cây gia phả nhà họ Nguyễn – Trần" />
+                    <p class="field-desc">Sau này chủ nhóm vẫn đổi được trong Tuỳ chọn gia đình.</p>
+                  </div>
+
+                  <div class="field-group">
+                    <span class="field-label">Link mời sẽ trỏ tới</span>
+                    <div class="codebox">
+                      <div id="preview" class="font-semibold">/invite/inv_9c41f2</div>
+                      <div class="text-xs muted mt-1">
+                        Người nhận mở link này sẽ đăng ký vào <strong>nhóm của bạn</strong> với quyền Người xem, không tự tạo cây riêng.
+                      </div>
+                    </div>
+                    <div class="flex gap-2 mt-2">
+                      <label class="check-row">
+                        <span class="checkbox" data-checked="true" id="exp"></span>
+                        <span class="text-sm">Cho hạn 7 ngày</span>
+                      </label>
+                    </div>
+                    <p class="field-desc" id="exp-note">Sau 7 ngày link hết hiệu lực và không dùng lại được. Muốn mời thêm thì tạo link mới.</p>
+                  </div>
+
+                  <button class="btn w-full" id="create">Tạo nhóm và vào cây</button>
+                  <a class="btn" data-variant="link" data-size="sm" href="s06-tree-canvas.html" id="skip">Bỏ qua, vào cây trống</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <div id="pv" class="wf-note rule wf-mb0" style="margin-bottom:14px"></div>
-
-      <button class="wf-btn primary" style="width:100%" onclick="create()">Tạo cây</button>
-      <p style="text-align:center;margin:12px 0 0;font-size:13px">Có link mời của người khác? <a href="s02-register-invite-fork.html">Vào bằng link mời</a></p>
     </div>
 
-    <div class="wf-note warn wf-mt">
-      <b>Một tài khoản chỉ có một cây.</b> Nếu tài khoản đã có cây rồi mà gọi tạo mới, phía máy chủ trả về lỗi
-      <span class="mono">409</span> và cây cũ giữ nguyên. Màn hình này không cần xử lý trường hợp đó bằng cách
-      cho xoá cây — muốn bỏ thì xoá tài khoản (xem màn 16), ảnh sẽ chuyển sang CHỦ NHÓM của nhóm.
+    <div class="overlay hidden" id="conflict-overlay">
+      <div class="dialog" id="conflict" data-wide>
+        <div class="dialog-header">
+          <h3 class="dialog-title">Bạn đã có một cây rồi</h3>
+          <p class="dialog-description">Một tài khoản chỉ quản lý được một cây gia phả.</p>
+        </div>
+        <div class="dialog-body flex flex-col gap-4">
+          <div class="banner" data-tone="warn">
+            <span class="ico">⚠</span>
+            <span>Tài khoản <strong>ha.nguyen@example.com</strong> đang có cây “Nhà họ Nguyễn – Trần”. Muốn tạo cây mới thì phải xoá cây cũ trước.</span>
+          </div>
+          <div class="flex flex-col gap-2">
+            <button class="btn" data-variant="outline" data-close-dialog="conflict" class="text-left">Vào cây hiện có của tôi</button>
+            <a class="btn" data-variant="link" data-size="sm" href="s16-profile-hub.html">Xoá cây cũ rồi tạo cây mới</a>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="conflict">Đóng</button>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <footer class="wf-foot wf-narrow" style="padding-left:0;padding-right:0">
-    <b>Nguồn.</b> Quy trình §2 (nhánh tạo cây riêng, trở thành CHỦ NHÓM) · quyết định Q16 (một tài khoản một cây, bỏ danh sách nhóm và rời nhóm) · phạm vi sửa §6 (đổi vai trò theo <span class="mono">MEMBER_ROLE.OWNER</span>).
-  </footer>
-</main>
+    <details class="note">
+      <summary>Ghi chú thiết kế</summary>
+      <div class="note-body">
+        <ul>
+          <li>Đây là nhánh “không có token” của cùng một đường dẫn <code>/invite</code> với nhánh mời — xem <a href="s02-register-invite-fork.html">màn đăng ký</a>.</li>
+          <li>Không có nút “xoá cây hiện tại” ở đây. Xoá là việc của màn tài khoản, và nó kéo theo chuyển ảnh sang chủ nhóm — xem <a href="s16-profile-hub.html">màn hồ sơ</a>.</li>
+          <li>Link mời chỉ dùng một lần, hạn 7 ngày. Không có màn “quản lý lời mời” và không có API xem danh sách lời mời.</li>
+          <li>Gửi link ở đâu cũng được — copy rồi dán vào Zalo, Messenger, tin nhắn. Không cần gửi qua hệ thống.</li>
+        </ul>
+      </div>
+    </details>
 
-<script src="assets/mock-data.js"></script>
-<script src="assets/wireframe.js"></script>
-<script>
-  function preview() {
-    var g = WF.qs("#gname").value.trim() || "(chưa đặt tên nhóm)";
-    var t = WF.qs("#tname").value.trim() || g;
-    WF.qs("#pv").innerHTML = "Link mời sẽ trỏ tới cây <b>" + WF.esc(t) + "</b> trong nhóm <b>" + WF.esc(g) + "</b>. Người nhận vào với quyền Xem và hạn 7 ngày.";
-  }
-  function create() {
-    preview();
-    WF.toast("Đã tạo — bạn là CHỦ NHÓM. Đi tới màn hình cây.", "ok");
-    setTimeout(function () { location.href = "s06-tree-canvas.html"; }, 900);
-  }
-  preview();
-</script>
-</body>
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs;
+        function preview() {
+          var g = qs("#gname").value.trim() || "Nhóm mới";
+          var t = qs("#tname").value.trim() || g;
+          qs("#preview").textContent = "/invite/inv_9c41f2 → " + g + " · " + t;
+        }
+        qs("#gname").addEventListener("input", preview);
+        qs("#tname").addEventListener("input", preview);
+        preview();
+
+        qs("#exp").addEventListener("click", function () {
+          var c = qs("#exp");
+          var on = c.getAttribute("data-checked") === "true";
+          c.setAttribute("data-checked", on ? "false" : "true");
+          qs("#exp-note").textContent = on
+            ? "Link không hết hạn. Ai có link cũng vào được nhóm cho tới khi bạn đổi link."
+            : "Sau 7 ngày link hết hiệu lực và không dùng lại được. Muốn mời thêm thì tạo link mới.";
+        });
+
+        qs("#create").addEventListener("click", function () {
+          WF.toast("Đã tạo nhóm", "Bạn là chủ nhóm. Mời người khác từ màn cây.", "success");
+        });
+        qs("#info").addEventListener("click", function () {
+          WF.toast("Một tài khoản = một cây", "Bấm nút tạo khi đã có cây để xem thông báo 409.", "default");
+        });
+        window.demoConflict = function () { WF.openDialog("conflict"); };
+      })();
+    </script>
+  </body>
 </html>

@@ -1,110 +1,98 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>13 · Xem cây qua link — /share/[token]</title>
-<link rel="stylesheet" href="assets/wireframe.css">
-<style>
-  #tree { height: 460px; }
-  .ro-bar { background: var(--surface); border:1px solid var(--line); border-radius:8px; padding:10px 14px; display:flex; gap:10px; align-items:center; margin-bottom:14px; }
-</style>
-</head>
-<body>
-<header class="wf-bar">
-  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
-  <span class="wf-bar-title">13 · Xem cây qua link</span>
-  <span class="wf-bar-route">/share/8fTq2kZm</span>
-  <span class="wf-spacer"></span>
-  <span class="wf-badge warn">bạn đang xem với tư cách khách</span>
-  <span class="wf-role">Đổi vai trò <span data-role-switch></span></span>
-</header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Xem cây — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <span class="text-sm font-semibold sm:text-base lg:text-lg">Nhà họ Nguyễn – Trần</span>
+        <div class="ml-auto flex items-center gap-2">
+          <span class="badge" data-tone="amber">xem chỉ đọc</span>
+          <a class="btn" data-variant="outline" data-size="sm" href="s01-landing-redirect.html">Đăng nhập</a>
+        </div>
+      </div>
 
-<main class="wf-main">
-  <div class="wf-head">
-    <h1>Nhà họ Nguyễn – Trần</h1>
-    <p class="sub">Chia sẻ bởi Nguyễn Thanh Hà · hết hạn 27/09/2026</p>
-  </div>
+      <div class="banner" style="margin: 0 1rem">
+        <span class="ico">◑</span>
+        <span>
+          Bạn đang xem bản chia sẻ, không phải cây của bạn. Ở đây <strong>không có</strong> nút thêm, sửa, xoá,
+          lưu hay kéo thả — không phải vì ẩn đi, mà vì nhánh mã này không sinh ra chúng.
+        </span>
+      </div>
 
-  <div class="wf-note warn">
-    <b>Đây không phải màn hình cây của bạn.</b> Trang này dựng lại từ đầu chỉ với phần đọc. Ở trạng thái khách
-    mọi nút ghi đều <b>không tồn tại</b> — không phải bị ẩn bằng CSS cho vừa mắt. Chuyển công tắc vai trò sang
-    <b>OWNER</b> để thấy bản đầy đủ có đủ nút, rồi đổi lại <b>Khách</b> để thấy bản này trống các nút đó.
-  </div>
+      <div class="auth-center" style="padding: 1rem">
+        <div class="card" style="padding: 0; gap: 0; overflow: hidden">
+          <div class="flow-wrap" id="stage" style="height: 60vh; border: 0; border-radius: 0">
+            <div class="flow-dots"></div>
+            <div class="flow-viewport" data-zoom="1">
+              <div class="flow-canvas" id="canvas"></div>
+              <div class="flow-svg" id="svg"></div>
+            </div>
+            <div class="flow-controls">
+              <button class="btn" data-variant="outline" data-size="icon-sm" data-zoom-step="-1" aria-label="Thu nhỏ">−</button>
+              <button class="btn" data-variant="outline" data-size="icon-sm" data-zoom-step="1" aria-label="Phóng to">+</button>
+              <button class="btn" data-variant="outline" data-size="icon-sm" data-fit aria-label="Vừa khung">⛶</button>
+            </div>
+          </div>
+        </div>
 
-  <div class="ro-bar">
-    <span class="wf-badge">Chỉ xem</span>
-    <span style="color:var(--ink-2);flex:1">Bạn đang xem thông qua một link chia sẻ, không cần đăng nhập.</span>
-    <a class="wf-btn" href="s03-login.html">Đăng nhập để sửa</a>
-  </div>
-
-  <div style="position:relative">
-    <div class="wf-stage" id="tree"><div class="wf-stage-inner"></div></div>
-    <div class="wf-stage-toolbar" style="left:12px;bottom:12px">
-      <button class="wf-btn sm" onclick="z(-1)">−</button>
-      <span class="wf-zoom" id="zl">100%</span>
-      <button class="wf-btn sm" onclick="z(1)">+</button>
-      <span style="color:var(--muted);font-size:12px;padding:0 6px">kéo qua kéo lại và phóng to đều được</span>
+        <div class="two-col" style="margin-top: 1rem; align-items: start">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Ảnh được chia sẻ</h3>
+              <p class="card-description">Ảnh công khai trong album</p>
+            </div>
+            <div class="card-content"><div class="media-grid" id="photos"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Sự kiện</h3>
+              <p class="card-description">Chỉ xem, không đăng ký dự</p>
+            </div>
+            <div class="card-content flex flex-col gap-2" id="events"></div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="wf-grid c2 wf-mt">
-    <div class="wf-card">
-      <h2>Ảnh và album được chia sẻ</h2>
-      <div class="wf-media-grid" id="photos"></div>
+    <div class="bottom-nav">
+      <a class="bottom-nav-item" data-active="true" href="s13-share-readonly.html">Cây</a>
+      <a class="bottom-nav-item" href="s11-albums.html">Ảnh</a>
+      <a class="bottom-nav-item" href="s15-events.html">Sự kiện</a>
     </div>
-    <div class="wf-card">
-      <h2>Sự kiện sắp tới</h2>
-      <div id="events" class="wf-stack"></div>
-    </div>
-  </div>
 
-  <div class="wf-grid c2 wf-mt">
-    <div class="wf-note rule">
-      <b>Không có ở đây:</b> lịch sử thay đổi · thùng rác · ảnh đã bị ẩn · ảnh riêng tư · bảng điều khiển
-      bố cục · nút thêm thành viên · nút lưu · nút sắp xếp · nút gắn ảnh cho node.
-    </div>
-    <div class="wf-note">
-      <b>Vì sao phải tách thành hai phần.</b> Ẩn nút bằng CSS là ẩn <b>con trỏ</b>, không phải chặn
-      <b>hành động</b>. Trang đọc và trang sửa phải là hai thành phần khác nhau, và phía máy chủ phải từ chối
-      mọi lệnh ghi với người mở link. Nếu không, chỉ cần mở cửa sổ giao diện là ghi được vào cây.
-    </div>
-  </div>
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
 
-  <footer class="wf-foot">
-    <b>Nguồn.</b> Quy trình §9 (chia sẻ không cần tài khoản: thấy cây, ảnh và album chia sẻ, sự kiện; không có lịch sử, không thùng rác, không ghi) · phạm vi thêm §6 (trang chỉ đọc, phải tách thành phần chứ không chỉ ẩn nút).
-  </footer>
-</main>
+        WF.renderTree("#stage", { draggable: false, showHandles: false });
 
-<script src="assets/mock-data.js"></script>
-<script src="assets/wireframe.js"></script>
-<script>
-  var zoom = 1;
-  function draw() {
-    var list = MOCK.members.map(function (m) { return Object.assign({}, m); });
-    WF.renderTree("#tree", list, { draggable: false });
-    WF.qs(".wf-stage-inner").style.transform = "scale(" + zoom + ")";
-    WF.qs(".wf-stage-inner").style.transformOrigin = "0 0";
-    WF.qs("#zl").textContent = Math.round(zoom * 100) + "%";
-  }
-  function z(d) { zoom = Math.min(1.6, Math.max(0.6, +(zoom + d * 0.2).toFixed(2))); draw(); }
+        var photos = MOCK.photos.filter(function (p) { return p.shared && !p.hiddenById; });
+        qs("#photos").innerHTML = photos.map(function (p) {
+          return '<div class="media" style="cursor:default"><span class="thumb" style="background:' + p.tint + '"></span>' +
+            '<div class="media-info"><div class="text-xs font-semibold truncate">' + esc(p.fileName) + "</div></div></div>";
+        }).join("");
 
-  function renderSide() {
-    var r = WF.getRole();
-    var shared = r === "guest" || r === "anon";
-    WF.qs("#photos").innerHTML = MOCK.photos.filter(function (p) { return shared ? (p.shared && !p.hiddenById) : true; })
-      .map(function (p) {
-        return '<div class="wf-media"><div class="ph">' + WF.esc(p.name) + "</div><div class='cap'>" + WF.esc(p.name) + "</div>" +
-          (p.hiddenById ? '<div class="hidden-tag"><span class="wf-badge warn">Đã ẩn</span></div>' : "") + "</div>";
-      }).join("") || '<div class="wf-empty" style="grid-column:1/-1"><div class="big">Không có ảnh nào được chia sẻ</div></div>';
-    WF.qs("#events").innerHTML = MOCK.events.map(function (e) {
-      return '<div class="wf-note" style="margin:0"><b>' + e.date + "</b> · " + WF.esc(e.title) +
-        (e.familyMemberId ? ' <span class="wf-badge">gắn với ' + WF.esc(MOCK.memberById(e.familyMemberId).fullName) + "</span>" : "") + "</div>";
-    }).join("");
-  }
+        qs("#events").innerHTML = MOCK.events.map(function (e) {
+          var m = e.familyMemberId ? MOCK.memberById(e.familyMemberId) : null;
+          return '<div class="mini-row"><span class="flex-1"><span class="font-semibold">' + esc(e.title) + "</span>" +
+            '<div class="text-xs muted">' + WF.formatDate(e.date) + (m ? " · " + esc(m.fullName) : " · sự kiện chung") + "</div></span></div>";
+        }).join("");
 
-  draw(); renderSide();
-  window.wfOnRole = function () { draw(); renderSide(); WF.applyRole(); };
-</script>
-</body>
+        Array.prototype.forEach.call(document.querySelectorAll("[data-zoom-step]"), function (b) {
+          b.addEventListener("click", function () {
+            WF.zoomBy("#stage", Number(b.getAttribute("data-zoom-step")) * 0.2);
+          });
+        });
+        qs("[data-fit]").addEventListener("click", function () { WF.fitView("#stage"); });
+        WF.setRole("guest");
+      })();
+    </script>
+  </body>
 </html>

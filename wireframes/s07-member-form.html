@@ -1,162 +1,255 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>07 · Thêm / sửa thành viên</title>
-<link rel="stylesheet" href="assets/wireframe.css">
-</head>
-<body>
-<header class="wf-bar">
-  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
-  <span class="wf-bar-title">07 · Thêm / sửa thành viên</span>
-  <span class="wf-bar-route">hộp thoại trong /group</span>
-  <span class="wf-spacer"></span>
-  <span class="wf-role">Vai trò <span data-role-switch></span></span>
-</header>
-
-<main class="wf-main">
-  <div class="wf-head">
-    <h1>Thành viên</h1>
-    <p class="sub">Cùng một hộp thoại cho thêm mới và sửa. Chỉ chủ nhóm và biên tập viên mở được; xem thì chỉ đọc.</p>
-  </div>
-
-  <div class="wf-tabs" role="tablist">
-    <button role="tab" aria-selected="true" data-tab="add">Thêm mới</button>
-    <button role="tab" aria-selected="false" data-tab="edit">Sửa thành viên có sẵn</button>
-  </div>
-
-  <!-- THÊM MỚI -->
-  <div class="wf-tabpanel" data-panel="add">
-    <div class="wf-split">
-      <div class="wf-card">
-        <h2>Thêm thành viên</h2>
-        <div class="wf-field">
-          <label>Họ và tên <span style="color:var(--danger)">*</span></label>
-          <input class="wf-input" id="nm" value="" placeholder="Ví dụ: Nguyễn Văn An">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thành viên — Quản lý gia phả</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <a class="sidebar-menu-button" data-size="lg" href="s06-tree-canvas.html">
+            <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </a>
         </div>
-        <div class="wf-grid c2" style="gap:0 12px">
-          <div class="wf-field">
-            <label>Giới tính</label>
-            <select class="wf-select"><option>Nam</option><option>Nữ</option><option>Khác</option><option>Không muốn nói</option></select>
-          </div>
-          <div class="wf-field">
-            <label>Đời thứ mấy</label>
-            <select class="wf-select" id="gen">
-              <option value="1">1 — Ông bà tôi</option>
-              <option value="2" selected>2 — Bố mẹ tôi</option>
-              <option value="3">3 — Tôi</option>
-              <option value="4">4 — Con tôi</option>
-            </select>
-            <span class="hint">Đổi đời sẽ kéo theo các quan hệ bên dưới.</span>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Danh sách</div>
+            <a class="sidebar-menu-button" data-active="true" data-size="lg" href="s06-tree-canvas.html">
+              <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+              <span class="truncate hide-narrow">Nhà họ Nguyễn – Trần</span>
+            </a>
           </div>
         </div>
-        <div class="wf-grid c2" style="gap:0 12px">
-          <div class="wf-field">
-            <label>Ngày sinh</label>
-            <input class="wf-input" type="date">
-          </div>
-          <div class="wf-field">
-            <label>Ngày mất</label>
-            <input class="wf-input" type="date" id="death">
-          </div>
-        </div>
-        <div class="wf-field">
-          <label>Cha / Mẹ</label>
-          <select class="wf-select" id="par">
-            <option value="">— Chưa biết —</option>
-            <option>Nguyễn Văn An · Đời 1</option>
-            <option>Trần Thị Bà · Đời 1</option>
-            <option>Nguyễn Văn Bình · Đời 2</option>
-            <option>Nguyễn Văn Cường · Đời 2</option>
-          </select>
-          <span class="hint">Quan hệ cha/mẹ hiển thị <b>một chiều</b> khi bạn chọn; người kia <b>tự thấy</b> quan hệ trong lịch sử khi mở từ phía họ. Bạn không cần chọn hai lần.</span>
-        </div>
-        <div class="wf-field">
-          <label>Ghi chú</label>
-          <textarea class="wf-textarea" placeholder="Nghề nghiệp, quê quán, chuyện vui…"></textarea>
-        </div>
+      </aside>
 
-        <div class="wf-note rule">
-          <b>Ghim ảnh của tôi vào node này.</b>
-          <div class="wf-row" style="margin-top:8px">
-            <button class="wf-btn" id="pinBtn" onclick="pin()">🖼 Gắn ảnh của tôi vào node này</button>
-            <span class="wf-badge" id="pinState">chưa ghim</span>
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Quản lý gia phả</h2>
+          <div class="ml-auto"><span class="badge" data-tone="muted">bản 42</span></div>
+        </header>
+        <main class="app-main" data-bleed>
+          <div class="flow-wrap" style="position: absolute; inset: 0">
+            <div class="flow-dots"></div>
           </div>
-          <p style="margin:8px 0 0;font-size:12.5px">Lấy <b>ảnh hồ sơ của bạn</b> tại đúng thời điểm bạn bấm, rồi lưu một bản chụp vào node. Sau này bạn đổi ảnh hồ sơ thì node này <b>không</b> đổi theo. Bạn có thể ghim cho chính mình ở bất kỳ node nào, không cần quyền riêng.</p>
-        </div>
-
-        <div class="wf-btn-row">
-          <button class="wf-btn primary" onclick="add()">Thêm vào bản nháp</button>
-          <button class="wf-btn ghost" onclick="location.href='s06-tree-canvas.html'">Huỷ</button>
-        </div>
-        <p class="wf-mb0" style="color:var(--muted);font-size:12.5px;margin:10px 0 0">Thêm xong <b>chưa</b> có gì được ghi. Phải bấm <b>Lưu</b> ở màn hình cây thì mới thành.</p>
+        </main>
       </div>
+    </div>
 
-      <div class="wf-stack">
-        <div class="wf-card flat">
-          <h3>Vì sao không lưu ngay ở đây?</h3>
-          <p style="color:var(--ink-2);margin:0">Người dùng thường thêm một lô người rồi mới sửa. Lưu từng người
-          sẽ tạo nhiều phiên bản và nhiều dòng lịch sử rác. Một lần bấm <b>Lưu</b> ở màn hình cây gom tất cả
-          lại thành một thay đổi duy nhất, thành công thì tất cả, thất bại thì không có gì cả.</p>
+    <div class="overlay" id="member-overlay" data-static>
+      <div class="dialog" data-wide>
+        <div class="dialog-header">
+          <h3 class="dialog-title" id="title">Thêm thành viên</h3>
+          <p class="dialog-description">Chưa lưu gì cho tới khi bấm Lưu trên cây</p>
         </div>
-        <div class="wf-card flat">
-          <h3>Kiểm tra trùng tên</h3>
-          <p style="color:var(--ink-2);margin:0 0 8px">Trong cây này đã có <b>Nguyễn Văn Cường</b> (đời 2) và
-          <b>Nguyễn Văn Cường</b> (đời 3). Trùng tên là chuyện bình thường trong gia đình, nên <b>không</b> chặn —
-          chỉ nhắc.</p>
-          <div class="wf-note warn wf-mb0">Cả hai đều được giữ. Không có bước "gộp trùng".</div>
+        <div class="dialog-body flex flex-col gap-5">
+          <div class="tabs-list" data-tabs="m" role="tablist">
+            <button class="tabs-trigger" data-key="new" data-state="active" role="tab">Thêm mới</button>
+            <button class="tabs-trigger" data-key="edit" data-state="inactive" role="tab">Đang sửa</button>
+          </div>
+
+          <div class="tabs-panel flex flex-col gap-5" data-tabs="m" data-key="new" data-state="active" role="tabpanel">
+            <div class="two-even">
+              <div class="field-group">
+                <label class="field-label" for="fname">Họ và tên</label>
+                <input class="input" id="fname" value="Nguyễn Minh Châu" />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="fgender">Giới tính</label>
+                <select class="select" id="fgender">
+                  <option>Nam</option>
+                  <option selected>Nữ</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="two-even">
+              <div class="field-group">
+                <label class="field-label" for="fbirth">Ngày sinh</label>
+                <input class="input" id="fbirth" type="date" value="1998-04-12" />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="fdeath">Ngày mất</label>
+                <input class="input" id="fdeath" type="date" />
+                <p class="field-desc">Để trống nếu người này còn sống.</p>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="fparent">Cha / Mẹ</label>
+              <select class="select" id="fparent">
+                <option value="">— Chọn người —</option>
+              </select>
+              <p class="field-desc">Chọn một người. Quan hệ được gửi một chiều nhưng đọc ra hai chiều, nên con hiển thị dưới cả cha lẫn mẹ.</p>
+            </div>
+
+            <div class="field-group">
+              <span class="field-label">Ảnh trên node</span>
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-3">
+                  <span class="thumb" id="node-photo" data-empty="true" aria-hidden="true"></span>
+                  <div class="flex-1">
+                    <div class="text-sm" id="photo-state">Chưa có ảnh</div>
+                    <div class="text-xs muted" id="photo-id">—</div>
+                  </div>
+                  <button class="btn" data-variant="outline" data-size="sm" id="pick">Gắn ảnh có sẵn</button>
+                </div>
+                <button class="btn" id="pin" data-needs-perm="nodePhoto.pinSelf">
+                  <span class="ico">◉</span>
+                  <span id="pin-label">Gắn ảnh của tôi vào node này</span>
+                </button>
+                <p class="field-desc" id="pin-desc">
+                  Lấy đúng ảnh hồ sơ của bạn tại thời điểm này và chụp lại. Sau này bạn đổi ảnh hồ sơ thì ảnh trên node này không đổi theo.
+                </p>
+              </div>
+            </div>
+
+            <div class="banner" data-tone="warn">
+              <span class="ico">⚠</span>
+              <span>Trong cây đang có hai người tên <strong>Nguyễn Văn Cường</strong>. Có thể trùng tên, hệ thống không tự gộp và cũng không cảnh báo.</span>
+            </div>
+          </div>
+
+          <div class="tabs-panel hidden flex flex-col gap-5" data-tabs="m" data-key="edit" data-state="inactive" role="tabpanel">
+            <div class="flex items-center gap-3">
+              <span class="thumb" style="background: #dfe6dd"></span>
+              <div>
+                <div class="font-semibold" id="ed-name">Nguyễn Thanh Hà</div>
+                <div class="text-sm muted" id="ed-sub">Nữ · sinh 12/04/1975</div>
+              </div>
+              <span class="badge" data-tone="primary" style="margin-left: auto">ảnh đã ghim</span>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="ed-note">Ghi chú</label>
+              <textarea class="textarea" id="ed-note" rows="3">Kỹ sư cầu đường, từng làm ở Hà Nội.</textarea>
+              <p class="field-desc">Ghi chú riêng tư. Không ghi danh sách khách mời hay thông tin của người khác vào đây.</p>
+            </div>
+            <div class="banner" data-tone="danger">
+              <span class="ico">⊘</span>
+              <span>Xoá thành viên là xoá mềm — vào thùng rác và có thể khôi phục trong 30 ngày.</span>
+            </div>
+            <button class="btn" data-variant="destructive" data-needs-perm="member.delete" id="del">Xoá thành viên này</button>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <span class="text-sm muted" id="dirty-hint">Chưa có thay đổi nào được ghi</span>
+          <div class="flex gap-2" style="margin-left: auto">
+            <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="member">Huỷ</button>
+            <button class="btn" data-size="sm" data-needs-perm="tree.edit" id="apply">Thêm vào bản nháp</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- SỬA -->
-  <div class="wf-tabpanel" data-panel="edit" hidden>
-    <div class="wf-card wf-narrow" style="margin:0 auto">
-      <h2>Sửa Nguyễn Thu Hà</h2>
-      <div class="wf-field"><label>Họ và tên</label><input class="wf-input" value="Nguyễn Thu Hà"></div>
-      <div class="wf-field"><label>Ngày sinh</label><input class="wf-input" type="date" value="1997-02-27"></div>
-      <div class="wf-field"><label>Cha / Mẹ</label><select class="wf-select"><option>Nguyễn Văn Bình (đời 2)</option><option>Trần Thị Cúc (đời 2)</option></select></div>
-      <div class="wf-field"><label>Ghi chú</label><textarea class="wf-textarea">Kế toán, hiện làm ở Hà Nội.</textarea></div>
-      <div class="wf-note danger">
-        <b>Xoá thành viên là xoá mềm, không xoá hẳn.</b> Người đó và các quan hệ của họ rơi vào thùng rác cây và
-        khôi phục được trong 30 ngày — kèm cả quan hệ bị kéo theo. Xem màn 10.
-      </div>
-      <div class="wf-btn-row">
-        <button class="wf-btn primary" onclick="location.href='s06-tree-canvas.html'">Lưu vào bản nháp</button>
-        <button class="wf-btn danger" onclick="location.href='s10-trash.html'">Xoá thành viên</button>
-        <button class="wf-btn ghost" onclick="location.href='s06-tree-canvas.html'">Huỷ</button>
+    <div class="overlay hidden" id="pick-overlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3 class="dialog-title">Gắn ảnh có sẵn</h3>
+          <p class="dialog-description">Chọn một ảnh trong nhóm</p>
+        </div>
+        <div class="dialog-body">
+          <div class="media-grid" id="picker"></div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="pick">Huỷ</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <footer class="wf-foot">
-    <b>Nguồn.</b> Quy trình §3 (thêm thành viên, thêm quan hệ) · phạm vi thêm §4 (ghim ảnh hồ sơ, nhãn nút đổi từ "đánh dấu tôi" sang "gắn ảnh của tôi vào node này") · phạm vi sửa §5 (quan hệ gửi một chiều, đọc hai chiều).
-  </footer>
-</main>
+    <details class="note">
+      <summary>Ghi chú thiết kế</summary>
+      <div class="note-body">
+        <ul>
+          <li>Trong ứng dụng thật đây là hộp thoại mở ra từ nút “Thêm thành viên” của PanelEditor, không phải một trang riêng.</li>
+          <li>Quan hệ gửi <strong>một chiều</strong> (chọn cha/mẹ), đọc ra <strong>hai chiều</strong> (con nằm dưới cả cha và mẹ).</li>
+          <li>Hai đường gắn ảnh khác quyền nhau: nút “Gắn ảnh của tôi” thì ai cũng tự ghim cho mình, còn gắn ảnh của người khác thì cần quyền sửa cây.</li>
+          <li>Ảnh ghim là <strong>bản chụp</strong> tại thời điểm ghim, không phải liên kết tới ảnh hồ sơ. Đổi ảnh hồ sơ sau này không làm node đổi ảnh.</li>
+          <li>Trùng tên là chuyện bình thường, không có bước gộp hay cảnh báo trùng.</li>
+        </ul>
+      </div>
+    </details>
 
-<script src="assets/mock-data.js"></script>
-<script src="assets/wireframe.js"></script>
-<script>
-  WF.wireTabs(".wf-tabs");
-  function pin() {
-    var b = WF.qs("#pinBtn"), s = WF.qs("#pinState");
-    if (b.dataset.on) {
-      b.dataset.on = ""; b.classList.remove("primary");
-      s.className = "wf-badge"; s.textContent = "chưa ghim";
-      WF.toast("Đã bỏ ghim ảnh khỏi node này.");
-    } else {
-      b.dataset.on = "1"; b.classList.add("primary");
-      s.className = "wf-badge ok"; s.textContent = "đã chụp ảnh hồ sơ · photoId ph1";
-      WF.toast("Đã chụp ảnh hồ sơ của bạn (photoId ph1). Đổi ảnh hồ sơ sau này không ảnh hưởng node này.", "ok");
-    }
-  }
-  function add() {
-    var n = WF.qs("#nm").value.trim();
-    if (!n) { WF.toast("Chưa nhập họ tên.", "err"); return; }
-    WF.toast("Đã thêm \"" + n + "\" vào bản nháp. Bấm Lưu ở màn hình cây.", "ok");
-  }
-</script>
-</body>
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
+        var photo = null;
+
+        WF.wireTabs("[data-tabs=m]", function (key) {
+          qs("#title").textContent = key === "new" ? "Thêm thành viên" : "Sửa thành viên";
+          qs("#apply").textContent = key === "new" ? "Thêm vào bản nháp" : "Cập nhật bản nháp";
+        });
+
+        var sel = qs("#fparent");
+        MOCK.members.filter(function (m) { return m.id !== "m6"; }).forEach(function (m) {
+          var o = document.createElement("option");
+          o.value = m.id;
+          o.textContent = m.fullName + " · đời " + (m.generation + 1);
+          sel.appendChild(o);
+        });
+        sel.value = "m3";
+
+        qs("#picker").innerHTML = MOCK.photos.map(function (p) {
+          return '<button class="thumb" data-ph="' + p.id + '" style="background:' + p.tint + '" title="' + esc(p.fileName) + '"></button>';
+        }).join("");
+
+        qsa_click("#picker .thumb", function (b) {
+          photo = MOCK.photoById(b.getAttribute("data-ph"));
+          setPhoto(photo.id, "chọn từ thư viện nhóm");
+        });
+
+        function setPhoto(id, how) {
+          photo = MOCK.photoById(id);
+          qs("#node-photo").setAttribute("data-empty", "false");
+          qs("#node-photo").style.background = photo.tint;
+          qs("#photo-state").textContent = photo.fileName;
+          qs("#photo-id").textContent = photo.id + " · " + how;
+          if (how.indexOf("hồ sơ") !== -1) qs("#pin").setAttribute("data-checked", "true");
+          WF.closeDialog("pick");
+        }
+
+        qs("#pin").addEventListener("click", function () {
+          var on = qs("#pin").getAttribute("data-checked") === "true";
+          if (on) {
+            qs("#pin").setAttribute("data-checked", "false");
+            qs("#node-photo").setAttribute("data-empty", "true");
+            qs("#node-photo").style.background = "";
+            qs("#photo-state").textContent = "Chưa có ảnh";
+            qs("#photo-id").textContent = "—";
+            qs("#pin-label").textContent = "Gắn ảnh của tôi vào node này";
+            return;
+          }
+          qs("#pin").setAttribute("data-checked", "true");
+          qs("#pin-label").textContent = "Đã ghim · bỏ ghim";
+          setPhoto("ph1", "chụp ảnh hồ sơ lúc ghim");
+        });
+
+        qs("#pick").addEventListener("click", function () { WF.openDialog("pick"); });
+        qs("#apply").addEventListener("click", function () {
+          qs("#dirty-hint").textContent = "Đã thêm vào bản nháp — bấm Lưu trên cây mới ghi";
+          WF.toast("Đã thêm vào bản nháp", "Chưa ghi gì lên máy chủ.", "success");
+        });
+        qs("#del").addEventListener("click", function () {
+          WF.toast("Vào thùng rác", "Khôi phục được trong 30 ngày.", "destructive");
+        });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+
+        function qsa_click(sel, fn) {
+          Array.prototype.forEach.call(document.querySelectorAll(sel), function (el) {
+            el.addEventListener("click", function () { fn(el); });
+          });
+        }
+      })();
+    </script>
+  </body>
 </html>

@@ -1,141 +1,183 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Wireframe — Kế hoạch refactor</title>
-<link rel="stylesheet" href="assets/wireframe.css">
-<style>
-  .hub-s { margin-top: 26px; }
-  .hub-s > h2 { display: flex; align-items: baseline; gap: 8px; }
-  .hub-s > h2 .n { color: var(--line-strong); font-size: 13px; font-weight: 600; }
-  .hub-s > .src { color: var(--muted); font-size: 12.5px; margin: -4px 0 10px; }
-</style>
-</head>
-<body>
-<header class="wf-bar">
-  <span class="wf-bar-title">Wireframe — bộ màn hình sau refactor</span>
-  <span class="wf-bar-route">wireframes/</span>
-  <span class="wf-spacer"></span>
-  <span class="wf-role">Đang xem với vai trò <span data-role-switch></span></span>
-</header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wireframe — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <span class="text-sm font-semibold sm:text-base lg:text-lg">Danh sách màn hình</span>
+        <div class="ml-auto flex items-center gap-2">
+          <a class="btn" data-variant="outline" data-size="sm" href="s06-tree-canvas.html">Mở màn cây</a>
+        </div>
+      </div>
 
-<main class="wf-main">
-  <div class="wf-head">
-    <h1>Kế hoạch refactor → wireframe màn hình</h1>
-    <p class="sub">Bám theo <span class="mono">docs/planing-refactor-fe/06-workflow-user.md</span> (12 mục nghiệp vụ người dùng) và thứ tự triển khai ở <span class="mono">04-thu-tu-thuc-hien.md</span>.</p>
-  </div>
+      <div class="auth-center" style="padding: 1.5rem 1rem">
+        <div class="page">
+          <div class="page-head">
+            <h1 class="page-title">Wireframe các màn hình sau khi sửa lại</h1>
+            <p class="page-desc">
+              Bám theo hệ màu và cấu trúc hiện có của ứng dụng, không phải bản dựng từ đầu.
+              Mỗi màn chạy được bằng cách bấm nút, đổi vai trò ở góc dưới phải để xem ai bị ẩn nút, ai thấy màn 403.
+            </p>
+          </div>
 
-  <div class="wf-note rule">
-    <b>Cách đọc bộ wireframe này.</b> Mỗi màn hình đều có công tắc <b>vai trò</b> ở góc trên. Đổi giữa
-    <span class="wf-badge accent">OWNER</span> <span class="wf-badge">EDITOR</span> <span class="wf-badge">VIEWER</span>
-    <span class="wf-badge warn">Khách</span> <span class="wf-badge">Chưa đăng nhập</span> để xem nút nào biến mất theo đúng
-    bảng quyền ở mục §1. Quyền được chia làm <b>hai trục</b>: quyền trên cây (theo vai trò) và quyền trên ảnh (theo người tải).
-  </div>
+          <div class="two-even" style="align-items: start">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Vào nhóm</h3>
+                <p class="card-description">Có tài khoản, có link mời, chưa có cây</p>
+              </div>
+              <div class="card-content flex flex-col gap-2" id="g1"></div>
+            </div>
 
-  <div class="wf-grid c2">
-    <div class="wf-card">
-      <h3>Đã cố ý không vẽ</h3>
-      <p class="wf-mb0" style="color:var(--ink-2)">Những mục đã bị cắt khỏi phạm vi (mục §12 của tài liệu quy trình): danh sách nhóm, rời nhóm, trang quản lý lời mời, bố cục cá nhân, thanh cuộn bố cục, cho VIEWER tự sắp xếp, xác minh email, trang quản trị, blog, kho lưu trữ, hỗ trợ, phản hồi, danh sách khách mời sự kiện, loại trùng khi nhập.</p>
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Cây gia phả</h3>
+                <p class="card-description">Màn chính, dùng hằng ngày</p>
+              </div>
+              <div class="card-content flex flex-col gap-2" id="g2"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Ảnh, sự kiện, chia sẻ</h3>
+                <p class="card-description">Dữ liệu phụ theo cây</p>
+              </div>
+              <div class="card-content flex flex-col gap-2" id="g3"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Tài khoản và dữ liệu</h3>
+                <p class="card-description">Thùng rác, nhập xuất, hồ sơ</p>
+              </div>
+              <div class="card-content flex flex-col gap-2" id="g4"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Quyền — hai trục độc lập</h3>
+              <p class="card-description">Đổi vai trò ở góc dưới phải để thấy bảng này bớt hay thêm dòng</p>
+            </div>
+            <div class="card-content" style="padding: 0">
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Việc</th>
+                      <th style="width: 8rem">Chủ nhóm</th>
+                      <th style="width: 8rem">Biên tập viên</th>
+                      <th style="width: 8rem">Người xem</th>
+                      <th style="width: 8rem">Khách</th>
+                    </tr>
+                  </thead>
+                  <tbody id="perm"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <details class="note">
+            <summary>Ghi chú thiết kế</summary>
+            <div class="note-body">
+              <ul>
+                <li>Hai trục: việc trong <strong>cây</strong> tính theo vai trò nhóm, việc với <strong>ảnh</strong> tính theo người đã tải lên. Sửa được cây không có nghĩa xoá được ảnh của người khác.</li>
+                <li>Ẩn ảnh là “người khác không thấy”, không phải “xoá”. Người ẩn và Chủ nhóm vẫn thấy kèm nút Hiện lại.</li>
+                <li>Thùng rác cũng chia hai: thùng rác cây theo vai trò, thùng rác ảnh theo người đã xoá.</li>
+                <li>Mỗi tài khoản chỉ có một cây, nên không có màn danh sách nhóm và không có nút rời nhóm.</li>
+                <li>Ảnh thẻ của thành viên nằm ở cây, không nằm trong album. Gắn ảnh vào node chỉ giữ một mã ảnh, không tạo bản sao.</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </div>
     </div>
-    <div class="wf-card">
-      <h3>Không có mã build</h3>
-      <p class="wf-mb0" style="color:var(--ink-2)">Mở trực tiếp bằng trình duyệt, không cài gì. Ba tệp dùng chung nằm ở <span class="mono">assets/</span>: <span class="mono">wireframe.css</span>, <span class="mono">wireframe.js</span> (đổi vai trò, hộp thoại, tab, vẽ cây), <span class="mono">mock-data.js</span> (một cây 14 người, 4 album, 5 sự kiện, 22 dòng lịch sử).</p>
-    </div>
-  </div>
 
-  <section class="hub-s">
-    <h2><span class="n">Giai đoạn 1–3</span> Vào hệ thống và dựng cây</h2>
-    <p class="src">Nguồn: quy trình §2, §3, §4, §5 · phạm vi thêm §7 (quên mật khẩu) · phạm vi sửa §7 (bố cục), §10 (chuyển hướng)</p>
-    <div class="wf-grid c2">
-      <a class="wf-card" href="s01-landing-redirect.html" style="text-decoration:none;color:inherit">
-        <h3>01 · Màn chuyển hướng <span class="wf-badge">/</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Hai nhánh: đã đăng nhập thì vào cây, chưa thì vào trang đăng nhập. Không in dòng lỗi tại chỗ.</p>
-      </a>
-      <a class="wf-card" href="s02-register-invite-fork.html" style="text-decoration:none;color:inherit">
-        <h3>02 · Đăng ký có / không có link mời <span class="wf-badge">/invite?token=</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Có token thì vào cây của người mời với quyền Xem. Link hết hạn hoặc đã dùng thì dừng lại và báo rõ, tuyệt đối không tạo cây riêng.</p>
-      </a>
-      <a class="wf-card" href="s03-login.html" style="text-decoration:none;color:inherit">
-        <h3>03 · Đăng nhập <span class="wf-badge">/auth</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Có đường dẫn "Quên mật khẩu?". Không có đăng ký bằng mật khẩu tự đặt ở bước này.</p>
-      </a>
-      <a class="wf-card" href="s04-forgot-reset.html" style="text-decoration:none;color:inherit">
-        <h3>04 · Quên mật khẩu và đặt lại <span class="wf-badge">/auth/forgot-password</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Thông báo trung tính giống hệt nhau dù email có hay không. Cảnh báo đổi mật khẩu sẽ đăng xuất mọi thiết bị.</p>
-      </a>
-      <a class="wf-card" href="s05-create-family.html" style="text-decoration:none;color:inherit">
-        <h3>05 · Tạo nhóm và cây mới <span class="wf-badge">/invite</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Không có link mời. Một tài khoản chỉ có một cây, nên tạo xong là thành CHỦ NHÓM.</p>
-      </a>
-      <a class="wf-card" href="s06-tree-canvas.html" style="text-decoration:none;color:inherit">
-        <h3>06 · Màn hình cây <span class="wf-badge">/group?groupId=</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Màn chính: vẽ cây kéo được, bảng điều khiển 4 nhóm, tìm người, gắn ảnh node, lưu một lần. Thử đổi vai trò để xem quyền.</p>
-      </a>
-      <a class="wf-card" href="s07-member-form.html" style="text-decoration:none;color:inherit">
-        <h3>07 · Thêm / sửa thành viên <span class="wf-badge">hộp thoại trong /group</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Kèm nút "Gắn ảnh của tôi vào node này" — chụp lại ảnh hồ sơ tại đúng thời điểm ghim.</p>
-      </a>
-      <a class="wf-card" href="s08-save-conflict.html" style="text-decoration:none;color:inherit">
-        <h3>08 · Lưu và xung đột <span class="wf-badge">sau khi bấm Lưu</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Danh sách thay đổi chưa lưu, rồi hộp thoại 409 ba bước. Không tự thử lại, không tự gộp.</p>
-      </a>
-      <a class="wf-card" href="s16-profile-hub.html" style="text-decoration:none;color:inherit">
-        <h3>16 · Khu tài khoản <span class="wf-badge">/user/*</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Thanh bên rút gọn còn mục thật, đổi vai trò, chuyển quyền sở hữu, tạo link mời.</p>
-      </a>
-    </div>
-  </section>
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
 
-  <section class="hub-s">
-    <h2><span class="n">Giai đoạn 4</span> Màn hình mới</h2>
-    <p class="src">Nguồn: phạm vi thêm §1 lịch sử, §2 thùng rác, §3 tìm người (nhúng trong 06), §4 gắn ảnh node (nhúng trong 06), §5 nhập xuất, §9 sự kiện gắn người, §12 hộp thoại 409</p>
-    <div class="wf-grid c2">
-      <a class="wf-card" href="s09-activity.html" style="text-decoration:none;color:inherit">
-        <h3>09 · Lịch sử thay đổi <span class="wf-badge">/group/activity</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Lọc theo hành động / loại đối tượng / khoảng ngày, tải thêm theo con trỏ. Xoá một người sinh ra hai dòng.</p>
-      </a>
-      <a class="wf-card" href="s10-trash.html" style="text-decoration:none;color:inherit">
-        <h3>10 · Thùng rác <span class="wf-badge">/user/trash</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Hai tab: thùng rác cây và thùng rác ảnh. Mỗi người một thùng, không ai khôi phục giúp bạn được.</p>
-      </a>
-      <a class="wf-card" href="s14-import-export.html" style="text-decoration:none;color:inherit">
-        <h3>14 · Nhập / xuất dữ liệu <span class="wf-badge">trong /group</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Bốn tab: xuất JSON, khôi phục từ JSON, nhập GEDCOM, xuất ảnh cây PDF/PNG. Có bản xem trước trước khi ghi.</p>
-      </a>
-      <a class="wf-card" href="s15-events.html" style="text-decoration:none;color:inherit">
-        <h3>15 · Sự kiện <span class="wf-badge">/group/events</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Gắn sự kiện với một thành viên trong cây, hoặc để trống cho sự kiện chung.</p>
-      </a>
-    </div>
-  </section>
+        var GROUPS = {
+          g1: [
+            ["s01-landing-redirect.html", "Trang chủ", "Chỉ chuyển hướng, không in lỗi ra giữa trang"],
+            ["s02-register-invite-fork.html", "Đăng ký từ link mời", "Bốn nhánh: còn hạn, hết hạn, đã dùng, không có token"],
+            ["s03-login.html", "Đăng nhập", "Giữ nguyên token mời xuyên suốt"],
+            ["s04-forgot-reset.html", "Quên / đặt lại mật khẩu", "Thông báo trung tính, cảnh báo mất phiên đăng nhập"],
+            ["s05-create-family.html", "Tạo cây mới", "Nhánh không có token của cùng đường dẫn /invite"]
+          ],
+          g2: [
+            ["s06-tree-canvas.html", "Cây gia phả", "Màn chính: tìm, thêm, kéo thả, gắn ảnh, một nút Lưu"],
+            ["s07-member-form.html", "Thêm / sửa thành viên", "Ghim ảnh hồ sơ của mình vào node"],
+            ["s08-save-conflict.html", "Mâu thuẫn khi lưu", "Xem khác biệt, giữ của mình, hoặc ghi đè có xác nhận"]
+          ],
+          g3: [
+            ["s09-activity.html", "Lịch sử thay đổi", "Lọc theo hành động, đối tượng, khoảng ngày"],
+            ["s11-albums.html", "Ảnh", "Quyền theo người tạo album, ảnh ẩn vẫn hiện nhãn"],
+            ["s15-events.html", "Sự kiện", "Gắn với một thành viên, hoặc để là sự kiện chung"],
+            ["s12-share-manage.html", "Tạo link chia sẻ", "Chỉ Chủ nhóm, hạn 7 / 30 / 90 ngày, thu hồi được"],
+            ["s13-share-readonly.html", "Xem cây qua link", "Không có một nút ghi nào"]
+          ],
+          g4: [
+            ["s10-trash.html", "Thùng rác", "Tách thùng rác cây và thùng rác ảnh"],
+            ["s14-import-export.html", "Nhập / Xuất", "Xem trước trước khi ghi, bốn kiểu tệp"],
+            ["s16-profile-hub.html", "Thông tin cá nhân", "Đổi vai trò, chuyển quyền sở hữu, xoá tài khoản"]
+          ]
+        };
 
-  <section class="hub-s">
-    <h2><span class="n">Giai đoạn 5</span> Album và chia sẻ</h2>
-    <p class="src">Nguồn: phạm vi thêm §6 chia sẻ chỉ đọc, §8 album</p>
-    <div class="wf-grid c2">
-      <a class="wf-card" href="s11-albums.html" style="text-decoration:none;color:inherit">
-        <h3>11 · Album <span class="wf-badge">/group/albums</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Chủ album là người tạo; CHỦ NHÓM sửa được của ai. Ẩn ảnh phải hiện nhãn kèm nút hiện lại.</p>
-      </a>
-      <a class="wf-card" href="s12-share-manage.html" style="text-decoration:none;color:inherit">
-        <h3>12 · Tạo link chia sẻ <span class="wf-badge">/group/share</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Chỉ CHỦ NHÓM tạo được. Hạn 7/30/90 ngày, xem số lần mở, thu hồi được. Không có trang quản lý lời mời.</p>
-      </a>
-      <a class="wf-card" href="s13-share-readonly.html" style="text-decoration:none;color:inherit">
-        <h3>13 · Xem cây qua link <span class="wf-badge">/share/[token]</span></h3>
-        <p class="wf-mb0" style="color:var(--ink-2);font-size:13px">Không cần tài khoản. Không có bất kỳ nút ghi nào — không phải chỉ ẩn đi là xong.</p>
-      </a>
-    </div>
-  </section>
+        Object.keys(GROUPS).forEach(function (g) {
+          qs("#" + g).innerHTML = GROUPS[g].map(function (r) {
+            return '<a class="mini-row" href="' + r[0] + '"><span class="flex-1">' +
+              '<span class="font-semibold">' + esc(r[1]) + "</span>" +
+              '<div class="text-xs muted">' + esc(r[2]) + "</div></span>" +
+              '<span class="ico muted">›</span></a>';
+          }).join("");
+        });
 
-  <footer class="wf-foot">
-    <b>Nguồn.</b> 01, 02, 03, 04, 05, 06 trong <span class="mono">docs/planing-refactor-fe/</span>.
-    Bảng quyền hai trục và luồng người dùng lấy từ mục §1 và §1–§11 của tài liệu quy trình.
-  </footer>
-</main>
+        var ROWS = [
+          ["tree.view", "Xem cây"],
+          ["tree.edit", "Sửa cây, thành viên, quan hệ"],
+          ["tree.rename", "Đổi tên nhóm"],
+          ["tree.delete", "Xoá toàn bộ cây"],
+          ["layout.drag", "Kéo thả node trên màn hình"],
+          ["layout.auto", "Sắp xếp sơ đồ"],
+          ["layout.save", "Lưu cho cả nhóm"],
+          ["nodePhoto.pinSelf", "Ghim ảnh hồ sơ của chính mình"],
+          ["nodePhoto.assign", "Gắn ảnh bất kỳ cho người khác"],
+          ["history.viewAll", "Xem toàn bộ lịch sử thay đổi"],
+          ["history.viewMedia", "Xem lịch sử album, ảnh, sự kiện"],
+          ["media.upload", "Tải ảnh lên"],
+          ["media.editOwn", "Sửa / xoá ảnh của mình"],
+          ["trash.tree", "Khôi phục thành viên, quan hệ"],
+          ["trash.media", "Khôi phục ảnh của mình"],
+          ["album.editOwn", "Sửa album của mình"],
+          ["role.change", "Đổi vai trò người khác"],
+          ["role.transfer", "Chuyển quyền sở hữu"],
+          ["invite.create", "Tạo link mời"],
+          ["share.manage", "Tạo / thu hồi link chia sẻ"],
+          ["import.export", "Nhập và xuất cây"]
+        ];
 
-<script src="assets/mock-data.js"></script>
-<script src="assets/wireframe.js"></script>
-</body>
+        function cell(key) {
+          if (WF.can(key)) return '<td style="text-align:center">✓</td>';
+          return '<td style="text-align:center" class="muted">—</td>';
+        }
+
+        function renderPerm() {
+          qs("#perm").innerHTML = ROWS.map(function (r) {
+            return '<tr><td class="font-semibold">' + esc(r[1]) + "</td>" +
+              cell(r[0]) + cell(r[0]) + cell(r[0]) + cell(r[0]) + "</tr>";
+          }).join("");
+        }
+        window.wfOnRole = renderPerm;
+        renderPerm();
+      })();
+    </script>
+  </body>
 </html>

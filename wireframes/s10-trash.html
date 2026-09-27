@@ -1,201 +1,263 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>10 · Thùng rác — /user/trash</title>
-<link rel="stylesheet" href="assets/wireframe.css">
-</head>
-<body>
-<header class="wf-bar">
-  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
-  <span class="wf-bar-title">10 · Thùng rác</span>
-  <span class="wf-bar-route">/user/trash</span>
-  <span class="wf-spacer"></span>
-  <span class="wf-role">Vai trò <span data-role-switch></span></span>
-</header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thùng rác — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <a class="sidebar-menu-button" data-size="lg" href="s16-profile-hub.html">
+            <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </a>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Chung</div>
+            <a class="sidebar-menu-button" href="s16-profile-hub.html"><span class="ico">◉</span><span class="hide-narrow">Thông tin cá nhân</span></a>
+            <a class="sidebar-menu-button" href="s16-profile-hub.html#secure"><span class="ico">⚿</span><span class="hide-narrow">Bảo mật</span></a>
+          </div>
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Cây</div>
+            <a class="sidebar-menu-button" href="s06-tree-canvas.html"><span class="ico">⌥</span><span class="hide-narrow">Về cây</span></a>
+            <a class="sidebar-menu-button" href="s09-activity.html"><span class="ico">≡</span><span class="hide-narrow">Lịch sử thay đổi</span></a>
+          </div>
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Lưu trữ</div>
+            <a class="sidebar-menu-button" data-active="true" href="s10-trash.html"><span class="ico">⊘</span><span class="hide-narrow">Thùng rác</span></a>
+          </div>
+        </div>
+      </aside>
 
-<main class="wf-main">
-  <div class="wf-head">
-    <h1>Thùng rác</h1>
-    <p class="sub">Xoá không mất vĩnh viễn. Sau 30 ngày mới thật sự mất.</p>
-  </div>
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Thùng rác</h2>
+        </header>
 
-  <div class="wf-tabs" role="tablist">
-    <button role="tab" aria-selected="true" data-tab="tree">Thùng rác cây</button>
-    <button role="tab" aria-selected="false" data-tab="media">Thùng rác ảnh</button>
-  </div>
+        <main class="app-main">
+          <div class="page">
+            <div class="page-head">
+              <h1 class="page-title">Thùng rác</h1>
+              <p class="page-desc">Mọi thứ bị xoá đều vào đây và tự biến mất sau 30 ngày.</p>
+            </div>
 
-  <!-- TAB 1: cây -->
-  <div class="wf-tabpanel" data-panel="tree">
-    <div class="wf-note warn" id="treeDeny" hidden>
-      Bạn đang xem với quyền <b>XEM</b>: không xoá được thành viên hay quan hệ, nên thùng rác cây không có gì của bạn.
-    </div>
-    <div id="treeBody">
-      <div class="wf-note rule">
-        <b>Thùng rác này dùng chung cho cả nhóm</b> — ai có quyền SỬA cây cũng thấy và cùng khôi phục được.
-        (Khác với thùng rác ảnh bên dưới, mỗi người một thùng.)
+            <div class="tabs-list" data-tabs="trash" role="tablist">
+              <button class="tabs-trigger" data-key="tree" data-state="active" role="tab">Thùng rác cây</button>
+              <button class="tabs-trigger" data-key="media" data-state="inactive" role="tab">Thùng rác ảnh</button>
+            </div>
+
+            <div class="tabs-panel flex flex-col gap-4" data-tabs="trash" data-key="tree" data-state="active" role="tabpanel">
+              <div class="banner hidden" data-tone="danger" id="tree-gate">
+                <span class="ico">⊘</span>
+                <span>Bạn đang là <span data-role-label></span> nên không khôi phục được thành viên hay quan hệ. Chỉ Chủ nhóm và Biên tập viên mới làm được.</span>
+              </div>
+
+              <div class="card" id="tree-card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Đã xoá</th>
+                        <th>Chi tiết</th>
+                        <th style="width: 12rem">Ai xoá, lúc nào</th>
+                        <th style="width: 8rem">Còn</th>
+                        <th style="width: 15rem"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="tree-rows"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="tabs-panel flex flex-col gap-4 hidden" data-tabs="trash" data-key="media" data-state="inactive" role="tabpanel">
+              <div class="banner">
+                <span class="ico">◑</span>
+                <span id="who-ami">Thùng rác ảnh là của riêng bạn.</span>
+              </div>
+              <div class="banner" data-tone="warn">
+                <span class="ico">⚠</span>
+                <span>Chủ nhóm nhìn thấy thùng rác của bạn, nhưng không khôi phục thay bạn được. Người khác hoàn toàn không thấy.</span>
+              </div>
+              <div class="card" id="media-card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Ảnh</th>
+                        <th>Thuộc</th>
+                        <th style="width: 12rem">Ai xoá, lúc nào</th>
+                        <th style="width: 8rem">Còn</th>
+                        <th style="width: 15rem"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="media-rows"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <details class="note">
+              <summary>Ghi chú thiết kế</summary>
+              <div class="note-body">
+                <ul>
+                  <li>Thùng rác <strong>tách làm hai</strong>, vì luật khác nhau: cây thì tính theo quyền vai trò, ảnh thì tính theo người đã xoá.</li>
+                  <li>Khôi phục thành viên sẽ kéo theo khôi phục cả các quan hệ đã xoá cùng lúc đó. Việc này làm ở máy chủ, giao diện không tự dựng lại.</li>
+                  <li>Đổi vai trò xuống Người xem thì tab “Thùng rác cây” không còn nút khôi phục nào — không phải chỉ ẩn nút.</li>
+                  <li>“Xoá vĩnh viễn” không thể hoàn tác, kể cả bằng Chủ nhóm. Hộp thoại phải nói rõ điều đó.</li>
+                  <li>Đổi tên mục trong thanh bên và bỏ 4 mục chết: Danh sách nhóm, Lời mời, Kho lưu trữ, Hỗ trợ, Phản hồi.</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </main>
       </div>
-      <div class="wf-table-wrap">
-        <table class="wf-table">
-          <thead><tr><th>Đã xoá</th><th>Ngày sinh</th><th>Ai xoá</th><th>Lúc nào</th><th>Còn</th><th></th></tr></thead>
-          <tbody id="treeRows"></tbody>
-        </table>
+    </div>
+
+    <div class="overlay hidden" id="restore-overlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3 class="dialog-title">Khôi phục mục này?</h3>
+          <p class="dialog-description" id="restore-what"></p>
+        </div>
+        <div class="dialog-body flex flex-col gap-3">
+          <div class="banner">
+            <span class="ico">↺</span>
+            <span id="restore-note">Các quan hệ đã xoá cùng lúc cũng được khôi phục.</span>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="restore">Huỷ</button>
+          <button class="btn" data-size="sm" id="do-restore">Khôi phục</button>
+        </div>
       </div>
-      <div class="wf-note danger wf-mt">
-        <b>Đã quá 30 ngày</b> thì không khôi phục được nữa, kể cả CHỦ NHÓM. Màn này chỉ hiện những thứ còn trong hạn;
-        phần đã hết hạn bị dọn ở phía máy chủ.
+    </div>
+
+    <div class="overlay hidden" id="forever-overlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3 class="dialog-title">Xoá vĩnh viễn?</h3>
+          <p class="dialog-description">Không còn khôi phục được nữa.</p>
+        </div>
+        <div class="dialog-body flex flex-col gap-3">
+          <div class="banner" data-tone="danger">
+            <span class="ico">⊘</span>
+            <span>Xoá vĩnh viễn thì kể cả Chủ nhóm cũng không khôi phục lại được.</span>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="forever">Huỷ</button>
+          <button class="btn" data-variant="destructive" data-size="sm" id="do-forever">Xoá vĩnh viễn</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- TAB 2: ảnh -->
-  <div class="wf-tabpanel" data-panel="media" hidden>
-    <div class="wf-note rule">
-      <b>Mỗi người một thùng rác ảnh riêng.</b> Bạn chỉ khôi phục được ảnh <b>mình</b> tải lên. Người khác — kể cả
-      CHỦ NHÓM — không thay bạn khôi phục, và bạn cũng không khôi phục giúp họ. Đổi lại, mỗi người tự dọn
-      thùng của mình.
-    </div>
-    <div class="wf-note wf-mb0" id="whoAmI"></div>
-    <div class="wf-table-wrap">
-      <table class="wf-table">
-        <thead><tr><th>Ảnh</th><th>Thuộc album</th><th>Người tải</th><th>Ai xoá</th><th>Lúc nào</th><th></th></tr></thead>
-        <tbody id="mediaRows"></tbody>
-      </table>
-    </div>
-    <div class="wf-note warn wf-mt">
-      <b>Xoá một ảnh không mất bản ở album khác.</b> Nếu ảnh còn nằm trong album nào đó thì bản media vẫn được
-      giữ; chỉ khi không còn album nào chứa nó thì ảnh mới thật sự bị xoá khỏi bộ nhớ đám mây.
-    </div>
-  </div>
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
+        var pending = null;
 
-  <footer class="wf-foot">
-    <b>Nguồn.</b> Quy trình §8 (thùng rác tách theo người, hai tab) · phạm vi thêm §2 (xoá mềm, khôi phục, dọn sau 30 ngày) · quyết định Q17 (quyền ảnh theo người tải) · phạm vi xoá B9 (giữ lại đường dẫn thùng rác, xoá 4 mục chết).
-  </footer>
-</main>
+        WF.wireTabs("[data-tabs=trash]");
 
-<!-- xoá vĩnh viễn -->
-<div class="wf-overlay" id="dlgForever" hidden>
-  <div class="wf-dialog">
-    <header><h3 style="color:var(--danger)">Xoá vĩnh viễn?</h3></header>
-    <div class="content">
-      <p style="color:var(--ink-2)">Sắp xoá vĩnh viễn <b id="ffName"></b>.</p>
-      <div class="wf-note danger wf-mb0">Sau khi bấm, không còn khôi phục được, kể cả bằng CHỦ NHÓM. Hành động này không
-      đưa vào thùng rác nữa.</div>
-    </div>
-    <footer>
-      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgForever')">Giữ lại trong thùng rác</button>
-      <button class="wf-btn danger" onclick="forever()">Xoá vĩnh viễn</button>
-    </footer>
-  </div>
-</div>
+        function left30(row) {
+          var d = MOCK.daysLeft(row.deletedAt);
+          return d <= 0 ? "hết hạn" : "còn " + d + " ngày";
+        }
 
-<!-- khôi phục -->
-<div class="wf-overlay" id="dlgRestore" hidden>
-  <div class="wf-dialog">
-    <header><h3>Khôi phục?</h3></header>
-    <div class="content" id="rsBody"></div>
-    <footer>
-      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgRestore')">Huỷ</button>
-      <button class="wf-btn primary" onclick="doRestore()">Khôi phục</button>
-    </footer>
-  </div>
-</div>
+        function renderTree() {
+          var allowed = WF.can("trash.tree");
+          qs("#tree-gate").classList.toggle("hidden", allowed);
+          qs("#tree-card").classList.toggle("hidden", !allowed);
+          if (!allowed) return;
+          qs("#tree-rows").innerHTML = MOCK.trash.tree.map(function (t) {
+            var u = MOCK.userById(t.deletedById);
+            var kind = t.kind === "MEMBER" ? "Thành viên" : "Quan hệ";
+            return "<tr>" +
+              '<td><span class="badge" data-tone="muted">' + kind + "</span>" +
+              '<div class="font-semibold mt-1">' + esc(t.name) + "</div></td>" +
+              '<td class="muted">' + esc(t.detail) + "</td>" +
+              '<td class="muted">' + esc(u.fullName) + '<div class="text-xs">' + WF.formatDate(t.deletedAt) + "</div></td>" +
+              '<td class="muted">' + left30(t) + "</td>" +
+              '<td class="flex gap-2" style="justify-content:flex-end">' +
+              '<button class="btn" data-variant="outline" data-size="sm" data-restore="' + t.id + '" data-kind="tree">Khôi phục</button>' +
+              '<button class="btn" data-variant="ghost" data-size="sm" data-forever="' + t.id + '" data-kind="tree">Xoá vĩnh viễn</button>' +
+              "</td></tr>";
+          }).join("");
+        }
 
-<script src="assets/mock-data.js"></script>
-<script src="assets/wireframe.js"></script>
-<script>
-  var target = null, targetTab = null;
-  /* bấm chuyển vai trò = giả lập "bạn là người khác", nên thùng rác phải đổi theo */
-  var WHO = { owner: "u1", editor: "u2", viewer: "u4" };
-  function myId() { return WHO[WF.getRole()] || null; }
+        function renderMedia() {
+          var me = WF.myId();
+          var rows = MOCK.trash.media.filter(function (m) { return !!me && m.deletedById === me; });
+          var q = qs("#who-ami");
+          var who = me ? MOCK.userById(me).fullName : null;
+          q.textContent = me
+            ? "Bạn đang xem thùng rác của riêng mình (" + who + "). Không ai xoá được thay bạn."
+            : "Bạn không có tài khoản nên không có thùng rác ảnh riêng.";
 
-  function left30(iso) {
-    var d = new Date(iso); d.setDate(d.getDate() + 30);
-    return Math.max(0, Math.ceil((d - new Date()) / 86400000));
-  }
-  function fmt(iso) { return new Date(iso).toLocaleDateString("vi-VN"); }
+          if (!rows.length) {
+            qs("#media-rows").innerHTML = '<tr><td colspan="5"><div class="empty">Thùng rác ảnh của bạn đang trống</div></td></tr>';
+            return;
+          }
+          qs("#media-rows").innerHTML = rows.map(function (m) {
+            var u = MOCK.userById(m.deletedById);
+            return "<tr>" +
+              '<td><div class="flex items-center gap-2"><span class="thumb" style="background:' + m.tint + '"></span>' +
+              '<span class="font-semibold">' + esc(m.name) + "</span></div></td>" +
+              '<td class="muted">' + esc(m.detail) + "</td>" +
+              '<td class="muted">' + esc(u.fullName) + '<div class="text-xs">' + WF.formatDate(m.deletedAt) + "</div></td>" +
+              '<td class="muted">' + left30(m) + "</td>" +
+              '<td class="flex gap-2" style="justify-content:flex-end">' +
+              '<button class="btn" data-variant="outline" data-size="sm" data-restore="' + m.id + '" data-kind="media">Khôi phục</button>' +
+              '<button class="btn" data-variant="ghost" data-size="sm" data-forever="' + m.id + '" data-kind="media">Xoá vĩnh viễn</button>' +
+              "</td></tr>";
+          }).join("");
+        }
 
-  function renderTree() {
-    var ok = WF.can("trash.tree");
-    WF.qs("#treeDeny").hidden = ok;
-    WF.qs("#treeBody").hidden = !ok;
-    if (!ok) return;
-    WF.qs("#treeRows").innerHTML = MOCK.trash.tree.map(function (t) {
-      return '<tr><td><b>' + WF.esc(t.name) + '</b><br><span class="wf-badge">' + (t.kind === "MEMBER" ? "thành viên" : "quan hệ") + "</span></td>" +
-        "<td>" + (t.birthDate || "—") + "</td><td>" + MOCK.userById(t.deletedById) + "</td>" +
-        "<td>" + fmt(t.deletedAt) + "</td><td><span class='wf-badge warn'>còn " + left30(t.deletedAt) + " ngày</span></td>" +
-        '<td class="actions"><button class="wf-btn sm" onclick="askRestore(\'' + t.id + '\')">Khôi phục</button> ' +
-        '<button class="wf-btn sm danger" onclick="askForever(\'' + t.id + '\')">Xoá vĩnh viễn</button></td></tr>';
-    }).join("") || '<tr><td colspan="6"><div class="wf-empty"><div class="big">Thùng rác cây trống</div>Chưa có thành viên hay quan hệ nào bị xoá.</div></td></tr>';
-  }
+        function wire() {
+          Array.prototype.forEach.call(document.querySelectorAll("[data-restore]"), function (b) {
+            b.addEventListener("click", function () {
+              pending = b.getAttribute("data-restore");
+              var kind = b.getAttribute("data-kind");
+              var src = kind === "tree" ? MOCK.trash.tree : MOCK.trash.media;
+              var row = src.filter(function (r) { return r.id === pending; })[0];
+              qs("#restore-what").textContent = row.name;
+              qs("#restore-note").textContent = kind === "tree"
+                ? "Các quan hệ đã xoá cùng lúc cũng được khôi phục."
+                : "Ảnh trở lại album và hiện với mọi người như cũ.";
+              WF.openDialog("restore");
+            });
+          });
+          Array.prototype.forEach.call(document.querySelectorAll("[data-forever]"), function (b) {
+            b.addEventListener("click", function () { WF.openDialog("forever"); });
+          });
+        }
 
-  function mediaMine() {
-    var r = WF.getRole();
-    if (r === "owner") return MOCK.trash.media;                 /* CHỦ NHÓM dọn được của cả nhóm */
-    if (r === "editor" || r === "viewer") {                    /* ai đó chỉ dọn được của chính mình */
-      var id = myId();
-      return MOCK.trash.media.filter(function (m) { return m.byUserId === id; });
-    }
-    return [];
-  }
+        qs("#do-restore").addEventListener("click", function () {
+          WF.closeDialog("restore");
+          WF.toast("Đã khôi phục", "Các quan hệ liên quan cũng đã trở lại.", "success");
+          renderTree(); renderMedia(); wire();
+        });
+        qs("#do-forever").addEventListener("click", function () {
+          WF.closeDialog("forever");
+          WF.toast("Đã xoá vĩnh viễn", "Không khôi phục lại được nữa.", "destructive");
+        });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
 
-  function renderMedia() {
-    var list = mediaMine();
-    var id = myId();
-    WF.qs("#whoAmI").innerHTML = id
-      ? "Bấm chuyển vai trò ở thanh trên để xem thùng của người khác. Lúc này bạn là <b>" +
-        WF.esc(MOCK.userById(id)) + "</b> — thùng dưới đây là của riêng người đó."
-      : "Bạn không có tài khoản trong nhóm nên không có thùng rác ảnh riêng.";
-    WF.qs("#mediaRows").innerHTML = list.map(function (m) {
-      return '<tr><td><b>' + WF.esc(m.name) + "</b></td><td>" + (m.albumId ? "album " + m.albumId : "không thuộc album") + "</td>" +
-        "<td>" + MOCK.userById(m.byUserId) + "</td><td>" + (m.deletedById ? MOCK.userById(m.deletedById) : "—") + "</td>" +
-        "<td>" + fmt(m.deletedAt) + '</td><td class="actions"><button class="wf-btn sm" onclick="askRestore(\'' + m.id + '\')">Khôi phục</button> ' +
-        '<button class="wf-btn sm danger" onclick="askForever(\'' + m.id + '\')">Xoá vĩnh viễn</button></td></tr>';
-    }).join("") || '<tr><td colspan="6"><div class="wf-empty"><div class="big">Thùng rác ảnh trống</div>Bạn không có ảnh nào bị xoá.</div></td></tr>';
-  }
-
-  function find(id) {
-    var a = MOCK.trash.tree.concat(MOCK.trash.media).filter(function (x) { return x.id === id; })[0];
-    return a || null;
-  }
-
-  function askRestore(id) {
-    target = id; targetTab = "tree";
-    var t = find(id);
-    if (t.kind === "MEMBER") {
-      WF.qs("#rsBody").innerHTML = "Khôi phục <b>" + WF.esc(t.name) + "</b> vào cây. Quan hệ bị gỡ kèm lúc xoá cũng được khôi phục lại theo — bạn không cần làm gì thêm.";
-    } else if (t.kind === "RELATIONSHIP") {
-      WF.qs("#rsBody").innerHTML = "Khôi phục quan hệ <b>" + WF.esc(t.name) + "</b>.";
-    } else {
-      targetTab = "media";
-      WF.qs("#rsBody").innerHTML = "Khôi phục ảnh <b>" + WF.esc(t.name) + "</b> vào kho của bạn. Nếu ảnh vẫn thuộc album nào đó thì album đó không bị đụng tới.";
-    }
-    WF.openDialog("dlgRestore");
-  }
-  function doRestore() {
-    WF.closeDialog("dlgRestore");
-    WF.toast("Đã khôi phục " + target + " (kèm quan hệ bị gỡ theo, nếu có).", "ok");
-  }
-
-  function askForever(id) {
-    target = id; targetTab = "tree";
-    WF.qs("#ffName").textContent = find(id).name;
-    WF.openDialog("dlgForever");
-  }
-  function forever() {
-    WF.closeDialog("dlgForever");
-    var pool = targetTab === "tree" ? MOCK.trash.tree : MOCK.trash.media;
-    var i = pool.map(function (x) { return x.id; }).indexOf(target);
-    if (i >= 0) pool.splice(i, 1);
-    renderAll();
-    WF.toast("Đã xoá vĩnh viễn.");
-  }
-
-  function renderAll() { renderTree(); renderMedia(); }
-  renderAll();
-  window.wfOnRole = renderAll;
-  WF.wireTabs(".wf-tabs", function (id) { targetTab = id; renderAll(); });
-</script>
-</body>
+        window.wfOnRole = function () { renderTree(); renderMedia(); wire(); };
+        renderTree(); renderMedia(); wire();
+      })();
+    </script>
+  </body>
 </html>

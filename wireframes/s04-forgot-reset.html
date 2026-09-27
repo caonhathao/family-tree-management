@@ -1,103 +1,149 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>04 · Quên mật khẩu và đặt lại</title>
-<link rel="stylesheet" href="assets/wireframe.css">
-</head>
-<body>
-<header class="wf-bar">
-  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
-  <span class="wf-bar-title">04 · Quên mật khẩu và đặt lại</span>
-  <span class="wf-bar-route">/auth/forgot-password · /auth/reset-password?token=</span>
-  <span class="wf-spacer"></span>
-  <span class="wf-role">Vai trò <span data-role-switch></span></span>
-</header>
-
-<main class="wf-main">
-  <div class="wf-note danger">
-    <b>Hai trang này phải nằm trong danh sách truy cập công khai.</b> Trong danh sách đó hiện có năm đường dẫn
-    không tồn tại, nếu quên luôn hai trang này thì người dùng sẽ bị đá về trang đăng nhập, rồi lại bị đá tiếp —
-    một vòng lặp chuyển hướng vô tận, không có lỗi nào hiện ra.
-  </div>
-
-  <div class="wf-tabs" role="tablist">
-    <button role="tab" aria-selected="true" data-tab="forgot">Bước 1 · Quên mật khẩu</button>
-    <button role="tab" aria-selected="false" data-tab="sent">Sau khi gửi</button>
-    <button role="tab" aria-selected="false" data-tab="reset">Bước 2 · Đặt mật khẩu mới</button>
-  </div>
-
-  <div class="wf-tabpanel" data-panel="forgot">
-    <div class="wf-card wf-narrow" style="margin:0 auto">
-      <h1>Quên mật khẩu</h1>
-      <p style="color:var(--ink-2)">Nhập email đã đăng ký. Ta sẽ gửi một đường dẫn đặt lại mật khẩu.</p>
-      <div class="wf-field">
-        <label>Email</label>
-        <input class="wf-input" id="fmail" value="ha.nguyen@example.com">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quên mật khẩu</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <a class="btn" data-variant="outline" href="s03-login.html">‹ Quay lại</a>
+        <button class="btn" data-variant="outline" data-size="icon" id="info" aria-label="Thông tin">i</button>
       </div>
-      <div class="wf-btn-row">
-        <button class="wf-btn primary" onclick="send()">Gửi đường dẫn</button>
-        <a class="wf-btn ghost" href="s03-login.html">Về đăng nhập</a>
+
+      <div class="auth-center">
+        <div class="auth-card" data-mode="signup">
+          <div class="auth-panes" data-mode="signup">
+            <div class="auth-pane-form">
+              <div class="card" data-variant="flat">
+                <div class="card-header">
+                  <h3 class="card-title" id="t-forgot">Quên mật khẩu</h3>
+                  <p class="card-description" id="d-forgot">Nhập email, ta sẽ gửi link đặt lại mật khẩu</p>
+                  <h3 class="card-title hidden" id="t-sent">Đã gửi link</h3>
+                  <p class="card-description hidden" id="d-sent">Kiểm tra hộp thư của bạn</p>
+                  <h3 class="card-title hidden" id="t-reset">Đặt mật khẩu mới</h3>
+                  <p class="card-description hidden" id="d-reset">Chọn mật khẩu mới cho tài khoản</p>
+                </div>
+                <div class="card-content flex flex-col gap-6">
+                  <div class="tabs-list" data-tabs="pw" role="tablist">
+                    <button class="tabs-trigger" data-key="forgot" data-state="active" role="tab">Gửi link</button>
+                    <button class="tabs-trigger" data-key="sent" data-state="inactive" role="tab">Đã gửi</button>
+                    <button class="tabs-trigger" data-key="reset" data-state="inactive" role="tab">Đặt mật khẩu</button>
+                  </div>
+
+                  <div class="tabs-panel flex flex-col gap-6" data-tabs="pw" data-key="forgot" data-state="active" role="tabpanel">
+                    <div class="field-group">
+                      <label class="field-label" for="email">Email</label>
+                      <input class="input" id="email" placeholder="Email của bạn" value="ha.nguyen@example.com" />
+                      <p class="field-desc">Không nhớ email? Liên hệ chủ nhóm nhóm để được giúp.</p>
+                    </div>
+                    <button class="btn w-full" id="send">Gửi link đặt lại mật khẩu</button>
+                  </div>
+
+                  <div class="tabs-panel flex flex-col gap-4 hidden" data-tabs="pw" data-key="sent" data-state="inactive" role="tabpanel">
+                    <div class="banner">
+                      <span class="ico">✉</span>
+                      <span>Nếu email này đã đăng ký, bạn sẽ nhận được link đặt lại mật khẩu trong vài phút. Câu trả lời này giống nhau dù email có tồn tại hay không.</span>
+                    </div>
+                    <div class="codebox">
+                      <div class="muted text-xs">Email vừa dùng</div>
+                      <div class="font-semibold" id="sent-to">ha.nguyen@example.com</div>
+                    </div>
+                    <div class="flex gap-2">
+                      <button class="btn" data-variant="outline" data-size="sm" data-goto="forgot">Gửi lại</button>
+                      <a class="btn" data-variant="link" data-size="sm" href="s03-login.html">Về đăng nhập</a>
+                    </div>
+                  </div>
+
+                  <div class="tabs-panel flex flex-col gap-6 hidden" data-tabs="pw" data-key="reset" data-state="inactive" role="tabpanel">
+                    <div class="banner" data-tone="warn">
+                      <span class="ico">⚠</span>
+                      <span>Đổi mật khẩu sẽ khiến bạn bị đăng xuất khỏi <strong>mọi thiết bị</strong>, kể cả những thiết bị đang dùng cây này.</span>
+                    </div>
+                    <div class="field-group">
+                      <label class="field-label" for="p1">Mật khẩu mới</label>
+                      <input class="input" id="p1" type="password" value="matkhau123" />
+                    </div>
+                    <div class="field-group">
+                      <label class="field-label" for="p2">Nhập lại mật khẩu mới</label>
+                      <input class="input" id="p2" type="password" value="matkhau123" />
+                    </div>
+                    <label class="check-row">
+                      <span class="checkbox" data-checked="true" id="ack"></span>
+                      <span class="text-sm">Tôi hiểu mình sẽ phải đăng nhập lại ở mọi thiết bị</span>
+                    </label>
+                    <button class="btn w-full" id="do-reset" disabled>Đặt mật khẩu mới</button>
+                    <a class="btn" data-variant="link" data-size="sm" href="s03-login.html" id="after-reset" style="display: none">Đăng nhập với mật khẩu mới</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="auth-pane-greet" data-mode="signup">
+              <h2>Chào bạn!</h2>
+              <p class="text-center mt-2">Lấy lại quyền truy cập cây của bạn</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="wf-tabpanel" data-panel="sent" hidden>
-    <div class="wf-card wf-narrow" style="margin:0 auto">
-      <div class="wf-gate">
-        <div class="code">✉</div>
-        <h2>Đã gửi yêu cầu</h2>
-        <p style="color:var(--ink-2)">Nếu email này có tài khoản, ta đã gửi một đường dẫn đặt lại mật khẩu tới đó.</p>
-        <p style="color:var(--muted);font-size:13px">Kiểm tra cả thư mục thư rác.</p>
-        <a class="wf-btn" href="index.html" style="margin-top:12px">Về trang chủ</a>
+    <details class="note">
+      <summary>Ghi chú thiết kế</summary>
+      <div class="note-body">
+        <ul>
+          <li>Hai đường dẫn này phải nằm trong <code>publicRoutes</code>. Nếu quên, người dùng bị vòng lặp chuyển hướng về <code>/auth</code> vô hạn và không bao giờ tới được trang đặt mật khẩu.</li>
+          <li>Thông báo phải <strong>giống hệt nhau</strong> khi email có tồn tại và khi không có — không nói “không tìm thấy email”.</li>
+          <li>Link đặt lại mật khẩu hạn dùng một lần và tự huỷ sau vài phút.</li>
+          <li>Đổi mật khẩu làm mất toàn bộ phiên đăng nhập, nên phải nói rõ trước khi bấm, không phải sau.</li>
+          <li>Đổi mật khẩu không đụng tới cây gia phả và không tạo dòng lịch sử nào.</li>
+        </ul>
       </div>
-    </div>
-    <div class="wf-note rule wf-narrow" style="margin:14px auto 0">
-      <b>Thông báo phải giống hệt nhau.</b> Bấm lại với một email không tồn tại thì câu chữ, thứ tự hiển thị và
-      thời gian phản hồi phải y hệt. Nếu lộ ra "email không tồn tại" thì kẻ xấu dò được email nào đã đăng ký.
-    </div>
-  </div>
+    </details>
 
-  <div class="wf-tabpanel" data-panel="reset" hidden>
-    <div class="wf-card wf-narrow" style="margin:0 auto">
-      <h1>Đặt mật khẩu mới</h1>
-      <div class="wf-field">
-        <label>Mật khẩu mới</label>
-        <input class="wf-input" type="password" value="••••••••••">
-        <span class="hint">Tối thiểu 8 ký tự, có chữ và số.</span>
-      </div>
-      <div class="wf-field">
-        <label>Xác nhận mật khẩu mới</label>
-        <input class="wf-input" type="password" value="••••••••••">
-      </div>
-      <div class="wf-note warn">
-        <b>Đổi mật khẩu sẽ đăng xuất bạn khỏi mọi thiết bị.</b>
-        Mọi phiên đang mở — kể cả trên điện thoại — sẽ mất hiệu lực ngay. Bạn sẽ phải đăng nhập lại từ đầu.
-      </div>
-      <label class="wf-row" style="font-size:13px;gap:7px;margin-bottom:12px">
-        <input type="checkbox" checked> Tôi hiểu và muốn đăng xuất khỏi mọi thiết bị
-      </label>
-      <div class="wf-btn-row">
-        <button class="wf-btn primary" onclick="WF.toast('Đổi mật khẩu xong — mọi phiên cũ đã mất hiệu lực. Đăng nhập lại.','ok');setTimeout(function(){location.href='s03-login.html'},1200)">Đổi mật khẩu</button>
-        <a class="wf-btn ghost" href="s03-login.html">Huỷ</a>
-      </div>
-    </div>
-  </div>
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs;
+        WF.wireTabs("[data-tabs=pw]", function (key) {
+          qs("#t-forgot").classList.toggle("hidden", key !== "forgot");
+          qs("#d-forgot").classList.toggle("hidden", key !== "forgot");
+          qs("#t-sent").classList.toggle("hidden", key !== "sent");
+          qs("#d-sent").classList.toggle("hidden", key !== "sent");
+          qs("#t-reset").classList.toggle("hidden", key !== "reset");
+          qs("#d-reset").classList.toggle("hidden", key !== "reset");
+        });
 
-  <footer class="wf-foot">
-    <b>Nguồn.</b> Phạm vi thêm §7 (quên mật khẩu, đặt lại mật khẩu, thông báo trung tính, cảnh báo đăng xuất mọi thiết bị, bắt buộc nằm trong truy cập công khai).
-  </footer>
-</main>
-
-<script src="assets/mock-data.js"></script>
-<script src="assets/wireframe.js"></script>
-<script>
-  WF.wireTabs(".wf-tabs");
-  function send() {
-    var tab = WF.qsa('[role="tab"]').filter(function (b) { return b.textContent.indexOf("Sau khi gửi") >= 0; })[0];
-    tab.click();
-  }
-</script>
-</body>
+        qs("#send").addEventListener("click", function () {
+          var v = qs("#email").value.trim();
+          qs("#sent-to").textContent = v || "ha.nguyen@example.com";
+          WF.tabs("pw", "sent");
+          WF.toast("Đã gửi link", "Câu trả lời giống nhau dù email có tồn tại hay không.", "success");
+        });
+        qs("#ack").addEventListener("click", function () {
+          var c = qs("#ack");
+          c.setAttribute("data-checked", c.getAttribute("data-checked") === "true" ? "false" : "true");
+          qs("#do-reset").disabled = c.getAttribute("data-checked") !== "true";
+        });
+        qs("#do-reset").addEventListener("click", function () {
+          qs("#do-reset").disabled = true;
+          qs("#do-reset").textContent = "Đang đặt…";
+          WF.toast("Đã đổi mật khẩu", "Bạn đã bị đăng xuất khỏi mọi thiết bị.", "success");
+          qs("#after-reset").style.display = "";
+        });
+        qs("#info").addEventListener("click", function () {
+          WF.toast("Mật khẩu", "Tối thiểu 8 ký tự, có cả chữ và số.", "default");
+        });
+        qsa_dots();
+        function qsa_dots() {
+          Array.prototype.forEach.call(document.querySelectorAll("[data-goto]"), function (b) {
+            b.addEventListener("click", function () { WF.tabs("pw", b.getAttribute("data-goto")); });
+          });
+        }
+      })();
+    </script>
+  </body>
 </html>

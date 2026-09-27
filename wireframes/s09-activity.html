@@ -1,207 +1,228 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>09 · Lịch sử thay đổi — /group/activity</title>
-<link rel="stylesheet" href="assets/wireframe.css">
-<style>
-  .ac { display: grid; grid-template-columns: 132px 1fr; gap: 12px; padding: 11px 14px; border-bottom: 1px solid var(--line); }
-  .ac:last-child { border-bottom: 0; }
-  .ac .when { font-size: 12px; color: var(--muted); }
-  .ac .who { font-weight: 600; font-size: 13px; }
-  .ac .what { color: var(--ink-2); font-size: 13px; }
-  .ac.cascade { background: var(--surface-2); }
-  .ac.cascade .what::before { content: "↳ kéo theo: "; color: var(--muted); }
-  .ac-row-acts { margin-top: 5px; }
-</style>
-</head>
-<body>
-<header class="wf-bar">
-  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
-  <span class="wf-bar-title">09 · Lịch sử thay đổi</span>
-  <span class="wf-bar-route">/group/activity?groupId=g1</span>
-  <span class="wf-spacer"></span>
-  <span class="wf-role">Vai trò <span data-role-switch></span></span>
-</header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lịch sử thay đổi — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <button class="sidebar-menu-button" data-size="lg" id="hello">
+            <span class="sidebar-avatar-wrap">
+              <span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span>
+            </span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </button>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Danh sách</div>
+            <button class="sidebar-menu-button" data-size="lg">
+              <span class="sidebar-avatar-wrap">
+                <span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span>
+              </span>
+              <span class="truncate hide-narrow">Nhà họ Nguyễn – Trần</span>
+            </button>
+          </div>
+        </div>
+      </aside>
 
-<main class="wf-main">
-  <!-- chặn: chưa đăng nhập, và khách xem qua link -->
-  <div class="wf-card wf-narrow" id="gate" hidden style="margin:0 auto">
-    <div class="wf-gate">
-      <div class="code">403</div>
-      <h2>Không xem được lịch sử</h2>
-      <p style="color:var(--ink-2)" id="gateWhy"></p>
-      <a class="wf-btn wf-mt" href="index.html">Về trang chủ wireframe</a>
-    </div>
-  </div>
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Lịch sử thay đổi</h2>
+          <div class="ml-auto flex items-center gap-2">
+            <a class="btn" data-variant="outline" data-size="sm" href="s06-tree-canvas.html">← Về cây</a>
+          </div>
+        </header>
 
-  <div id="body">
-    <div class="wf-head">
-      <h1>Lịch sử thay đổi</h1>
-      <p class="sub" id="scopeNote"></p>
-    </div>
+        <main class="app-main">
+          <!-- 403: chỉ người có tài khoản mới vào được màn này -->
+          <div class="gate hidden" id="gate">
+            <div class="gate-icon">⊘</div>
+            <div>
+              <div class="font-semibold">Bạn không có quyền xem lịch sử</div>
+              <div class="muted text-sm">Lịch sử thay đổi chỉ dành cho thành viên của nhóm.</div>
+            </div>
+            <a class="btn" data-variant="outline" data-size="sm" href="index.html">Về trang chủ</a>
+          </div>
 
-    <div class="wf-card" style="margin-bottom:16px">
-      <div class="wf-grid c4" style="gap:0 12px">
-        <div class="wf-field"><label>Hành động</label><select class="wf-select" id="fAction" onchange="render()"><option value="">Tất cả</option></select></div>
-        <div class="wf-field"><label>Loại đối tượng</label><select class="wf-select" id="fTarget" onchange="render()"><option value="">Tất cả</option></select></div>
-        <div class="wf-field"><label>Từ ngày</label><input class="wf-input" type="date" id="fFrom" onchange="render()"></div>
-        <div class="wf-field"><label>Đến ngày</label><input class="wf-input" type="date" id="fTo" onchange="render()"></div>
+          <div id="real">
+            <div class="page">
+              <div class="page-head">
+                <h1 class="page-title">Lịch sử thay đổi</h1>
+                <p class="page-desc">Nhà họ Nguyễn – Trần · 22 thay đổi gần nhất</p>
+              </div>
+
+              <div class="card" style="gap: 12px">
+                <div class="flex flex-col gap-3">
+                  <div class="field">
+                    <label class="field-label" for="f-action">Hành động</label>
+                    <select class="select" id="f-action"><option value="">Tất cả</option></select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="f-target">Đối tượng</label>
+                    <select class="select" id="f-target"><option value="">Tất cả</option></select>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <div class="field flex-1">
+                      <label class="field-label" for="f-from">Từ ngày</label>
+                      <input class="input" type="date" id="f-from" value="2026-09-01" />
+                    </div>
+                    <div class="field flex-1">
+                      <label class="field-label" for="f-to">Đến ngày</label>
+                      <input class="input" type="date" id="f-to" value="2026-09-27" />
+                    </div>
+                  </div>
+                  <div class="flex gap-2">
+                    <button class="btn" data-variant="default" data-size="sm" id="apply">Lọc</button>
+                    <button class="btn" data-variant="ghost" data-size="sm" id="reset">Xoá lọc</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="scope-note" class="banner hidden">
+                <span class="ico">◑</span>
+                <span>Bạn đang xem với tư cách <span data-role-label></span> nên chỉ thấy thay đổi về album, ảnh và sự kiện.</span>
+              </div>
+
+              <div class="card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th style="width: 9.5rem">Thời điểm</th>
+                        <th>Người thực hiện</th>
+                        <th>Việc</th>
+                        <th style="width: 9rem">Đối tượng</th>
+                      </tr>
+                    </thead>
+                    <tbody id="rows"></tbody>
+                  </table>
+                </div>
+                <div class="flex items-center justify-between" style="padding: 12px">
+                  <span class="text-sm muted" id="count"></span>
+                  <button class="btn" data-variant="outline" data-size="sm" id="more">Xem thêm</button>
+                </div>
+              </div>
+
+              <details class="note">
+                <summary>Ghi chú thiết kế</summary>
+                <div class="note-body">
+                  <ul>
+                    <li>Đây là màn hình thật, không phải chú giải: nó nằm trong menu Hành động của PanelEditor, không nằm ở sidebar (<code>03-pham-vi-them.md §1</code>).</li>
+                    <li>Phân trang theo con trỏ (cursor), không theo offset — offset làm rơi và lặp dòng khi có người chèn thêm giữa hai lần tải.</li>
+                    <li>Bộ lọc và nhãn đều lấy từ 2 mảng hằng <code>ACTIONS</code> / <code>TARGET_TYPES</code> trong <code>src/lib/family/labels.ts</code>, không viết tay 105 dòng.</li>
+                    <li>Đổi tên hiện dạng <code>Tên: "A" → "B"</code>. Xoá thành viên hiện dạng ảnh chụp dữ liệu tại lúc xoá.</li>
+                    <li>Xoá một thành viên sinh <strong>hai</strong> dòng: một dòng xoá, một dòng quan hệ bị kéo theo (dòng có mũi tên <code>↳</code>).</li>
+                    <li>VIEWER bị lọc còn album / ảnh / sự kiện. Khách và chưa đăng nhập thấy màn 403 và gọi thẳng URL cũng vậy.</li>
+                    <li>Nội dung này chính là nguồn để dựng hộp thoại 409 ở <a href="s08-save-conflict.html">màn Lưu</a>.</li>
+                  </ul>
+                </div>
+              </details>
+            </div>
+          </div>
+        </main>
       </div>
-      <div class="wf-row">
-        <button class="wf-btn sm" onclick="clearFilters()">Xoá lọc</button>
-        <span class="wf-badge" id="countBadge"></span>
-      </div>
     </div>
 
-    <div class="wf-card" style="padding:0;overflow:hidden">
-      <div id="rows"></div>
-      <div style="padding:12px 14px;border-top:1px solid var(--line);text-align:center">
-        <button class="wf-btn" id="moreBtn" onclick="more()">Tải thêm 10 dòng</button>
-      </div>
-    </div>
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, qsa = WF.qsa, esc = WF.esc;
+        var shown = 10;
+        var current = MOCK.activity.slice();
 
-    <div class="wf-note rule wf-mt">
-      <b>Vì sao có 2 dòng khi xoá một người.</b> Xoá Phạm Thị Dung làm 2 việc: xoá người, và kéo theo quan hệ
-      vợ chồng của họ. Hai việc đó lưu thành 2 dòng riêng, dòng sau có chữ <span class="mono">↳ kéo theo</span>.
-      Gộp làm một dòng thì người đọc không biết mất bao nhiêu thứ.
-    </div>
+        WF.qs("#f-action").innerHTML = '<option value="">Tất cả</option>' +
+          MOCK.ACTIONS.map(function (a) { return '<option value="' + a + '">' + esc(MOCK.ACTION_LABEL[a]) + "</option>"; }).join("");
+        WF.qs("#f-target").innerHTML = '<option value="">Tất cả</option>' +
+          MOCK.TARGET_TYPES.map(function (t) { return '<option value="' + t + '">' + esc(MOCK.TARGET_LABEL[t]) + "</option>"; }).join("");
 
-    <div class="wf-grid c2 wf-mt">
-      <div class="wf-note warn">
-        <b>Phân trang bằng con trỏ, không phải số thứ tự.</b> Danh sách luôn có thêm dòng mới trong lúc bạn đang
-        đọc. Nếu phân trang theo vị trí, các dòng mới sẽ chen vào và bạn đọc trùng hoặc bỏ sót.
-        Nút "Tạo sơ đồ" và nút "Xoá toàn bộ" ở bảng điều khiển cũng dùng chung màn này để tra lại.
-      </div>
-      <div class="wf-note">
-        <b>Nhãn sinh từ hai mảng hằng số.</b> Có 7 loại đối tượng và 19 hành động. Danh sách bên trái lấy thẳng từ
-        <span class="mono">TARGET_TYPES</span> và <span class="mono">ACTIONS</span>; khi phía máy chủ thêm một
-        hành động mới thì chỉ cần thêm một dòng vào mảng, không sửa tay chỗ này.
-      </div>
-    </div>
-  </div>
+        function visible() {
+          var role = WF.getRole();
+          var base = MOCK.activity;
+          if (role === "viewer") {
+            base = base.filter(function (a) { return MOCK.VIEWER_ACTIONS.indexOf(a.action) !== -1; });
+          }
+          var fa = qs("#f-action").value, ft = qs("#f-target").value;
+          var from = qs("#f-from").value, to = qs("#f-to").value;
+          return base.filter(function (a) {
+            var d = a.at.slice(0, 10);
+            if (fa && a.action !== fa) return false;
+            if (ft && a.targetType !== ft) return false;
+            if (from && d < from) return false;
+            if (to && d > to) return false;
+            return true;
+          });
+        }
 
-  <footer class="wf-foot">
-    <b>Nguồn.</b> Quy trình §7 (lịch sử thay đổi, lọc theo vai trò) · phạm vi thêm §1 (màn lịch sử, lọc, phân trang con trỏ, nhãn tập trung, xoá một người sinh hai dòng) · phạm vi sửa §13 (nhãn sinh từ mảng hằng số) và §15 (lọc phải nằm ở tầng dịch vụ, không chỉ ở giao diện).
-  </footer>
-</main>
+        function describe(a) {
+          var parts = [esc(MOCK.ACTION_LABEL[a.action])];
+          if (a.diff) {
+            Object.keys(a.diff).forEach(function (k) {
+              parts.push(esc(k) + ': <span class="diff-old">' + esc(a.diff[k].from) + '</span> <span class="diff-new">' + esc(a.diff[k].to) + "</span>");
+            });
+          } else if (a.cascade) {
+            parts.push('<span class="muted">' + esc(a.summary) + "</span>");
+          } else if (a.snapshot) {
+            parts.push(esc(a.snapshot.fullName) + ' <span class="badge" data-tone="muted">ảnh chụp dữ liệu tại lúc xoá</span>');
+          } else {
+            parts.push(esc(a.summary));
+          }
+          if (a.photoId) parts.push('<span class="badge" data-tone="muted">' + esc(a.photoId) + "</span>");
+          return parts.join(" ");
+        }
 
-<script src="assets/mock-data.js"></script>
-<script src="assets/wireframe.js"></script>
-<script>
-  var PAGE = 10, shown = PAGE;
+        function render() {
+          var role = WF.getRole();
+          qs("#real").classList.toggle("hidden", role === "guest" || role === "anon");
+          qs("#gate").classList.toggle("hidden", !(role === "guest" || role === "anon"));
+          if (qs("#real").classList.contains("hidden")) return;
 
-  var TARGET_LABEL = {
-    GROUP: "Nhóm", FAMILY: "Cây gia đình", MEMBER: "Thành viên", RELATIONSHIP: "Quan hệ",
-    ALBUM: "Album", PHOTO: "Ảnh", EVENT: "Sự kiện"
-  };
-  var ACTION_LABEL = {
-    GROUP_RENAMED: "Đổi tên nhóm", FAMILY_LAYOUT_CHANGED: "Đổi bố cục cây",
-    MEMBER_ADDED: "Thêm thành viên", MEMBER_UPDATED: "Sửa thành viên", MEMBER_DELETED: "Xoá thành viên",
-    RELATION_ADDED: "Thêm quan hệ", RELATION_DELETED: "Xoá quan hệ",
-    ALBUM_CREATED: "Tạo album", ALBUM_UPDATED: "Sửa album", ALBUM_DELETED: "Xoá album",
-    PHOTO_ADDED: "Thêm ảnh", PHOTO_DELETED: "Xoá ảnh", PHOTO_HIDDEN: "Ẩn ảnh", PHOTO_UNHIDDEN: "Hiện lại ảnh",
-    NODE_PHOTO_ASSIGNED: "Gắn ảnh vào node", NODE_PHOTO_UNPINNED: "Bỏ ghim ảnh ở node",
-    EVENT_CREATED: "Tạo sự kiện", EVENT_UPDATED: "Sửa sự kiện", EVENT_DELETED: "Xoá sự kiện"
-  };
-  var VIEWER_OK = ["ALBUM", "PHOTO", "EVENT"];
+          qs("#scope-note").classList.toggle("hidden", role !== "viewer");
+          current = visible();
+          var slice = current.slice(0, shown);
+          if (!slice.length) {
+            qs("#rows").innerHTML = '<tr><td colspan="4"><div class="empty">Không có thay đổi nào khớp bộ lọc</div></td></tr>';
+          } else {
+            qs("#rows").innerHTML = slice.map(function (a) {
+              var u = MOCK.userById(a.byUserId);
+              var t = new Date(a.at);
+              return "<tr" + (a.cascade ? ' data-cascade="true"' : "") + ">" +
+                "<td class=\"muted whitespace-nowrap\">" + t.getDate().toString().padStart(2, "0") + "/" +
+                (t.getMonth() + 1) + "/" + t.getFullYear() + " " + t.getHours().toString().padStart(2, "0") + ":" +
+                t.getMinutes().toString().padStart(2, "0") + "</td>" +
+                "<td class=\"whitespace-nowrap\">" + esc(u.fullName) + "</td>" +
+                "<td>" + (a.cascade ? "↳ " : "") + describe(a) + "</td>" +
+                "<td><span class=\"badge\" data-tone=\"primary\">" + esc(MOCK.TARGET_LABEL[a.targetType]) + "</span></td></tr>";
+            }).join("");
+          }
+          qs("#count").textContent = "Hiện " + slice.length + " / " + current.length + " thay đổi";
+          qs("#more").classList.toggle("hidden", slice.length >= current.length);
+        }
 
-  function fmtAt(iso) {
-    var d = new Date(iso);
-    return d.toLocaleDateString("vi-VN") + " " + d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-  }
-
-  function fillSelects() {
-    MOCK.ACTIONS.forEach(function (a) {
-      WF.qs("#fAction").insertAdjacentHTML("beforeend", '<option value="' + a + '">' + ACTION_LABEL[a] + "</option>");
-    });
-    MOCK.TARGET_TYPES.forEach(function (t) {
-      WF.qs("#fTarget").insertAdjacentHTML("beforeend", '<option value="' + t + '">' + TARGET_LABEL[t] + "</option>");
-    });
-  }
-
-  function visible() {
-    var r = WF.getRole();
-    if (r === "viewer") return MOCK.activity.filter(function (a) { return VIEWER_OK.indexOf(a.targetType) >= 0; });
-    return MOCK.activity;
-  }
-
-  function filtered() {
-    var a = WF.qs("#fAction").value, t = WF.qs("#fTarget").value;
-    var f = WF.qs("#fFrom").value, to = WF.qs("#fTo").value;
-    return visible().filter(function (x) {
-      if (a && x.action !== a) return false;
-      if (t && x.targetType !== t) return false;
-      if (f && x.at < f) return false;
-      if (to && x.at > to + "T23:59:59Z") return false;
-      return true;
-    });
-  }
-
-  function describe(x) {
-    var c = x.content || {};
-    if (c.diff) {
-      return Object.keys(c.diff).map(function (k) {
-        var d = c.diff[k];
-        return WF.esc(k) + ': <del>' + WF.esc(d.from) + "</del> <ins>" + WF.esc(d.to) + "</ins>";
-      }).join(" · ");
-    }
-    if (c.snapshot) return "<b>" + WF.esc(c.snapshot.fullName) + "</b>" + (c.snapshot.birthDate ? " · sinh " + c.snapshot.birthDate : "") + (c.snapshot.isDeceased ? " · đã mất" : "") + " <span class='wf-badge'>ảnh chụp dữ liệu tại lúc xoá</span>";
-    if (c.cascade) return "Quan hệ của <b>" + WF.esc(c.snapshot.fullName) + "</b> bị gỡ kèm";
-    if (c.name) return WF.esc(c.name) + (c.photos ? " · " + c.photos + " ảnh" : "");
-    if (c.count != null) return c.count + " ảnh" + (c.albumId ? " · vào album " + c.albumId : "");
-    if (c.photoId) return "photoId <span class='mono'>" + c.photoId + "</span>" + (c.to ? " · gắn cho " + WF.esc(c.to) : "");
-    if (c.fullName) return WF.esc(c.fullName) + (c.generation ? " · đời " + c.generation : "");
-    if (c.from) return WF.esc(c.from) + " → " + WF.esc(c.to) + " · " + c.type;
-    if (c.eventId) return WF.esc(c.title || c.eventId);
-    if (c.note) return WF.esc(c.note);
-    if (c.albumId) return "albumId <span class='mono'>" + c.albumId + "</span>" + (c.photosDeleted === 0 ? " · ảnh vẫn còn nguyên ở album khác" : "");
-    return "";
-  }
-
-  function render() {
-    var list = filtered();
-    var page = list.slice(0, shown);
-    WF.qs("#countBadge").textContent = "Còn " + list.length + " dòng (đang hiện " + page.length + ")";
-    WF.qs("#moreBtn").hidden = page.length >= list.length;
-    WF.qs("#rows").innerHTML = page.map(function (x) {
-      return '<div class="ac' + (x.content && x.content.cascade ? " cascade" : "") + '">' +
-        '<div class="when">' + fmtAt(x.at) + "</div>" +
-        '<div><span class="who">' + MOCK.userById(x.byUserId) + "</span> " +
-        '<span class="wf-badge">' + (TARGET_LABEL[x.targetType] || x.targetType) + "</span> " +
-        '<span class="what"><b>' + (ACTION_LABEL[x.action] || x.action) + "</b> — " + describe(x) + "</span></div></div>";
-    }).join("") || '<div class="wf-empty"><div class="big">Không có dòng nào khớp bộ lọc</div>Thử bỏ bớt điều kiện lọc, hoặc nới ngày.</div>';
-  }
-
-  function more() { shown += PAGE; render(); WF.toast("Đã tải thêm " + PAGE + " dòng."); }
-  function clearFilters() {
-    WF.qs("#fAction").value = ""; WF.qs("#fTarget").value = "";
-    WF.qs("#fFrom").value = ""; WF.qs("#fTo").value = "";
-    shown = PAGE; render();
-  }
-
-  function syncGate() {
-    var r = WF.getRole();
-    var blocked = r === "anon" || r === "guest";
-    WF.qs("#gate").hidden = !blocked;
-    WF.qs("#body").hidden = blocked;
-    if (blocked) {
-      WF.qs("#gateWhy").innerHTML = r === "anon"
-        ? "Lịch sử thay đổi nằm trong nhóm, nên cần đăng nhập mới xem được."
-        : "Người mở link chia sẻ không có tài khoản. Trang xem qua link <b>không có</b> lịch sử thay đổi — kể cả lịch sử ảnh. Xem <a href=\"s13-share-readonly.html\">màn 13</a>.";
-    } else {
-      WF.qs("#scopeNote").innerHTML = r === "viewer"
-        ? 'Bạn xem với quyền <b>XEM</b>: chỉ thấy thay đổi về <b>ảnh, album và sự kiện</b>. Không thấy thay đổi về thành viên, quan hệ, bố cục hay tên nhóm.'
-        : "Bạn thấy toàn bộ thay đổi của nhóm, gồm cả thay đổi của mọi người khác trong nhóm.";
-    }
-    shown = PAGE;
-    render();
-  }
-
-  fillSelects();
-  syncGate();
-  window.wfOnRole = syncGate;
-</script>
-</body>
+        function apply() { shown = 10; render(); }
+        qs("#apply").addEventListener("click", apply);
+        qs("#reset").addEventListener("click", function () {
+          qs("#f-action").value = ""; qs("#f-target").value = "";
+          qs("#f-from").value = "2026-09-01"; qs("#f-to").value = "2026-09-27";
+          apply();
+        });
+        qs("#more").addEventListener("click", function () { shown += 10; render(); });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+        qs("#hello").addEventListener("click", function () { location.href = "index.html"; });
+        window.wfOnRole = render;
+        render();
+      })();
+    </script>
+  </body>
 </html>

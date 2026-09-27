@@ -1,284 +1,427 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>14 · Nhập / xuất dữ liệu</title>
-<link rel="stylesheet" href="assets/wireframe.css">
-</head>
-<body>
-<header class="wf-bar">
-  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
-  <span class="wf-bar-title">14 · Nhập / xuất dữ liệu</span>
-  <span class="wf-bar-route">trong /group</span>
-  <span class="wf-spacer"></span>
-  <span class="wf-role">Vai trò <span data-role-switch></span></span>
-</header>
-
-<main class="wf-main">
-  <div class="wf-head">
-    <h1>Nhập và xuất</h1>
-    <p class="sub">Bốn việc khác nhau, xếp cạnh nhau cho tiện.</p>
-  </div>
-
-  <div class="wf-card wf-narrow" id="gate" hidden style="margin:0 auto">
-    <div class="wf-gate">
-      <div class="code">403</div>
-      <h2>Không nhập / xuất được</h2>
-      <p style="color:var(--ink-2)">Nhập và xuất là thao tác trên cả cây, nên cần quyền SỬA cây. Người chỉ xem không
-      làm được.</p>
-      <a class="wf-btn wf-mt" href="s06-tree-canvas.html">Về màn hình cây</a>
-    </div>
-  </div>
-
-  <div id="body">
-    <div class="wf-tabs" role="tablist">
-      <button role="tab" aria-selected="true" data-tab="ex">Xuất JSON</button>
-      <button role="tab" aria-selected="false" data-tab="rs">Khôi phục từ JSON</button>
-      <button role="tab" aria-selected="false" data-tab="gd">Nhập GEDCOM</button>
-      <button role="tab" aria-selected="false" data-tab="img">Xuất ảnh cây</button>
-    </div>
-
-    <!-- 1. xuất JSON -->
-    <div class="wf-tabpanel" data-panel="ex">
-      <div class="wf-split">
-        <div class="wf-card">
-          <h2>Xuất toàn bộ cây ra một tệp</h2>
-          <p style="color:var(--ink-2)">Tệp JSON chứa thành viên, quan hệ, album, ảnh, sự kiện, bố cục và lịch sử
-          thay đổi — kèm <b>định danh gốc</b> của từng thứ.</p>
-          <div class="wf-field">
-            <label>Khoảng thời gian lịch sử</label>
-            <select class="wf-select"><option>Tất cả</option><option>1 năm gần nhất</option><option>90 ngày gần nhất</option></select>
-            <span class="hint">Bỏ bớt thì tệp nhỏ hơn, nhưng mất lịch sử cũ.</span>
-          </div>
-          <div class="wf-field">
-            <label>Kèm cả tệp ảnh</label>
-            <select class="wf-select"><option>Có — tệp lớn hơn nhiều</option><option>Không — chỉ danh sách đường dẫn ảnh</option></select>
-          </div>
-          <div class="wf-note wf-mb0">Bản 42 · 14 thành viên · 16 quan hệ · 4 album · 6 ảnh · 5 sự kiện · 22 dòng lịch sử
-          → ước <b>184 KB</b> (không kèm ảnh).</div>
-          <div class="wf-btn-row wf-mt">
-            <button class="wf-btn primary" onclick="WF.toast('Đang tải nha-cua-ho-2026-09-27.json…','ok')">Tải tệp JSON</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nhập / Xuất — Quản lý gia phả</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <a class="sidebar-menu-button" data-size="lg" href="s16-profile-hub.html">
+            <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </a>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Danh sách</div>
+            <a class="sidebar-menu-button" data-active="true" data-size="lg" href="s06-tree-canvas.html">
+              <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+              <span class="truncate hide-narrow">Nhà họ Nguyễn – Trần</span>
+            </a>
           </div>
         </div>
-        <div class="wf-card flat">
-          <h3>Xuất xong rồi thì sao?</h3>
-          <p style="color:var(--ink-2);margin:0">Có hai đường dùng tệp này: khôi phục lại đúng như cũ (tab 2), hoặc
-          lấy một phần để dựng cây mới (tab 3).</p>
-        </div>
-      </div>
-    </div>
+      </aside>
 
-    <!-- 2. khôi phục -->
-    <div class="wf-tabpanel" data-panel="rs" hidden>
-      <div class="wf-note rule">
-        <b>Khôi phục giữ nguyên mọi định danh gốc.</b> Thành viên, quan hệ, album, ảnh, sự kiện, bố cục và
-        lịch sử đều trở lại <b>đúng id cũ</b>, nên mọi tham chiếu giữa chúng vẫn đúng. Đây là đường an toàn bắt
-        buộc khi dữ liệu hỏng.
-      </div>
-      <div class="wf-card">
-        <div class="wf-field">
-          <label>Chọn tệp JSON đã xuất</label>
-          <input class="wf-input" type="file" id="fRs" onchange="pickRs(this.value)">
-          <span class="hint" id="hRs">Chưa chọn tệp. Dùng nút bên dưới để dùng tệp mẫu.</span>
-        </div>
-        <div class="wf-btn-row">
-          <button class="wf-btn" onclick="pickRs('nha-cua-ho-2026-08-01.json')">Dùng tệp mẫu (bản 38)</button>
-          <button class="wf-btn primary" id="btnPreviewRs" disabled onclick="previewRs()">Xem trước</button>
-        </div>
-      </div>
-      <div id="pvRs" class="wf-mt"></div>
-    </div>
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Nhập / Xuất</h2>
+          <div class="ml-auto"><span class="badge" data-tone="muted">bản 43</span></div>
+        </header>
 
-    <!-- 3. GEDCOM -->
-    <div class="wf-tabpanel" data-panel="gd" hidden>
-      <div class="wf-grid c2">
-        <div class="wf-card">
-          <h2>Nhập từ tệp GEDCOM</h2>
-          <p style="color:var(--ink-2)">Phần mềm gia đình khác xuất ra tệp <span class="mono">.ged</span>. Ta đọc
-          người, vợ chồng, cha mẹ và con cái. Ngày sinh, ngày mất và nơi chôn ổn.</p>
-          <div class="wf-field">
-            <label>Chọn tệp</label>
-            <input class="wf-input" type="file" onchange="pickGd(this.value)">
-            <span class="hint" id="hGd">Chưa chọn tệp.</span>
-          </div>
-          <div class="wf-note warn">
-            <b>Ta không tự loại trùng.</b> Nếu tệp có người tên giống người đã có trong cây, cả hai đều được giữ.
-            Hãy tự kiểm tra và xoá thủ công phần thừa.
-          </div>
-          <div class="wf-btn-row">
-            <button class="wf-btn primary" id="btnPreviewGd" disabled onclick="previewGd()">Xem trước</button>
-          </div>
-        </div>
-        <div class="wf-card flat">
-          <h3>Khác gì so với khôi phục?</h3>
-          <p style="color:var(--ink-2);margin:0 0 8px">Nhập GEDCOM tạo ra thành viên với <b>định danh mới</b> và
-          chỉ giữ lại phần cây. Không có album, không có ảnh, không có lịch sử, bố cục phải xếp lại.</p>
-          <p class="wf-mb0" style="color:var(--ink-2)">Muốn giữ <b>tất cả</b> như cũ thì dùng tab 2.</p>
-        </div>
-      </div>
-      <div id="pvGd" class="wf-mt"></div>
-    </div>
-
-    <!-- 4. xuất ảnh cây -->
-    <div class="wf-tabpanel" data-panel="img" hidden>
-      <div class="wf-split">
-        <div class="wf-card">
-          <h2>Xuất sơ đồ ra PDF hoặc PNG</h2>
-          <p style="color:var(--ink-2)">Để in treo tường, hoặc gửi cho người ngoài. Không giống xuất JSON: không
-          có định danh, không phục hồi được — chỉ để đọc.</p>
-          <div class="wf-grid c2" style="gap:0 12px">
-            <div class="wf-field">
-              <label>Định dạng</label>
-              <select class="wf-select" id="fmt"><option value="pdf">PDF — nhiều trang</option><option value="png">PNG — một ảnh dài</option></select>
+        <main class="app-main">
+          <div class="gate hidden" id="gate">
+            <div class="gate-icon">⊘</div>
+            <div>
+              <div class="font-semibold">Bạn không có quyền nhập hoặc xuất</div>
+              <div class="muted text-sm">Nhập và xuất dành cho Chủ nhóm và Biên tập viên. Bạn đang là <span data-role-label></span>.</div>
             </div>
-            <div class="wf-field">
-              <label>Khoảng đời</label>
-              <select class="wf-select" id="gen"><option>3 đời gần nhất (mặc định)</option><option>Toàn bộ</option><option>4 đời gần nhất</option></select>
+            <a class="btn" data-variant="outline" data-size="sm" href="s06-tree-canvas.html">Về cây</a>
+          </div>
+
+          <div id="real" class="page">
+            <div class="page-head">
+              <h1 class="page-title">Nhập / Xuất</h1>
+              <p class="page-desc">Bản sao lưu để khôi phục khi cần. Nhập là đường ghi dữ liệu hàng loạt, không thay thế nút Lưu.</p>
             </div>
+
+            <div class="tabs-list" data-tabs="ie" role="tablist">
+              <button class="tabs-trigger" data-key="export-json" data-state="active" role="tab">Xuất JSON</button>
+              <button class="tabs-trigger" data-key="restore" data-state="inactive" role="tab">Khôi phục</button>
+              <button class="tabs-trigger" data-key="gedcom" data-state="inactive" role="tab">Nhập GEDCOM</button>
+              <button class="tabs-trigger" data-key="image" data-state="inactive" role="tab">Xuất ảnh</button>
+            </div>
+
+            <!-- Xuất JSON -->
+            <div class="tabs-panel flex flex-col gap-4" data-tabs="ie" data-key="export-json" data-state="active" role="tabpanel">
+              <div class="card" style="max-width: 44rem">
+                <div class="card-header">
+                  <h3 class="card-title">Xuất cây ra tệp</h3>
+                  <p class="card-description">Tệp JSON, mở lại được để khôi phục nguyên trạng</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="field-group">
+                    <span class="field-label">Phạm vi</span>
+                    <div class="flex flex-col gap-2">
+                      <label class="check-row"><span class="checkbox" data-checked="true" id="all"></span><span class="text-sm">Toàn bộ cây — 12 thành viên, 19 quan hệ</span></label>
+                      <label class="check-row"><span class="checkbox" data-checked="true" id="logs"></span><span class="text-sm">Kèm lịch sử thay đổi — 22 dòng</span></label>
+                      <label class="check-row"><span class="checkbox" data-checked="false" id="layout"></span><span class="text-sm">Kèm bố cục cây</span></label>
+                      <label class="check-row"><span class="checkbox" data-checked="false" id="img"></span><span class="text-sm">Kèm tệp ảnh — khoảng 24 MB</span></label>
+                    </div>
+                  </div>
+                  <div class="mini-list">
+                    <div class="mini-row"><span class="muted">Ước tính</span><span class="font-semibold" id="size">184 KB</span></div>
+                    <div class="mini-row"><span class="muted">Định dạng</span><span>.json · 1 bản ghi mỗi thành viên và quan hệ</span></div>
+                  </div>
+                  <button class="btn" id="do-export">Tải tệp xuống</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Khôi phục -->
+            <div class="tabs-panel hidden flex flex-col gap-4" data-tabs="ie" data-key="restore" data-state="inactive" role="tabpanel">
+              <div class="banner">
+                <span class="ico">◈</span>
+                <span>Khôi phục giữ nguyên mã cũ, nên ảnh, quan hệ, lịch sử và bố cục đều trở lại đúng chỗ. Đây là vòng an toàn dữ liệu bắt buộc.</span>
+              </div>
+
+              <div class="card" style="max-width: 44rem">
+                <div class="card-header">
+                  <h3 class="card-title">Khôi phục từ tệp JSON</h3>
+                  <p class="card-description">Xem trước trước khi ghi bất cứ thứ gì</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="field-group">
+                    <label class="field-label" for="file">Tệp JSON</label>
+                    <input class="input" type="file" id="file" />
+                    <button class="btn" data-variant="outline" data-size="sm" id="demo-file" style="margin-top: 0.5rem">Dùng tệp mẫu (bản 38)</button>
+                  </div>
+                  <div class="banner" data-tone="danger hidden" id="rs-conflict">
+                    <span class="ico">⚠</span>
+                    <span>1 mã bị trùng: <strong>m6</strong> đã tồn tại nhưng nội dung khác. Hệ thống <strong>không ghi đè</strong> và cũng không tự gộp.</span>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="rs-mode">Cách xử lý mã trùng</label>
+                    <select class="select" id="rs-mode">
+                      <option selected>Dừng lại và báo tôi</option>
+                      <option>Giữ bản đang có, bỏ bản trong tệp</option>
+                      <option>Giữ bản trong tệp, ghi đè bản đang có</option>
+                    </select>
+                    <p class="field-desc">Không có lựa chọn nào được chọn trước sẵn cả.</p>
+                  </div>
+                  <button class="btn" data-variant="outline" id="preview-rs" disabled>Xem trước</button>
+                </div>
+              </div>
+
+              <div class="card hidden" id="rs-diff-card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead>
+                      <tr><th>Loại</th><th>Thêm</th><th>Sửa</th><th>Bỏ qua</th></tr>
+                    </thead>
+                    <tbody id="rs-rows"></tbody>
+                  </table>
+                </div>
+                <div class="flex items-center justify-between" style="padding: 12px">
+                  <span class="text-sm muted">Xem trước chưa ghi gì lên máy chủ.</span>
+                  <button class="btn" id="commit-rs" disabled>Ghi vào cây</button>
+                </div>
+              </div>
+
+              <div class="card hidden" id="rs-prog-card">
+                <div class="card-header"><h3 class="card-title">Đang ghi</h3></div>
+                <div class="card-content flex flex-col gap-3">
+                  <div class="progress"><div data-bar style="width: 0%"></div></div>
+                  <div class="flex flex-col gap-1" id="rs-steps"></div>
+                </div>
+              </div>
+
+              <div class="card hidden" id="rs-map-card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="card-header" style="padding: 1rem 1rem 0.5rem">
+                  <h3 class="card-title">Bản đồ mã sau khi ghi</h3>
+                  <p class="card-description">Khôi phục giữ nguyên mã cũ nên cột “Mã mới” trùng cột “Mã cũ”</p>
+                </div>
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead><tr><th>Loại</th><th>Mã cũ</th><th>Mã mới</th></tr></thead>
+                    <tbody id="rs-map"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- GEDCOM -->
+            <div class="tabs-panel hidden flex flex-col gap-4" data-tabs="ie" data-key="gedcom" data-state="inactive" role="tabpanel">
+              <div class="banner" data-tone="warn">
+                <span class="ico">⚠</span>
+                <span>Không có bước loại trùng. Người tên giống nhau sẽ thành hai người riêng, và mọi tham chiếu cũ đều đứt.</span>
+              </div>
+              <div class="card" style="max-width: 44rem">
+                <div class="card-header">
+                  <h3 class="card-title">Nhập từ tệp GEDCOM</h3>
+                  <p class="card-description">.ged hoặc .gedcom · chỉ nhập được cây, không nhập được ảnh và sự kiện</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="field-group">
+                    <label class="field-label" for="gfile">Tệp GEDCOM</label>
+                    <input class="input" type="file" id="gfile" />
+                    <button class="btn" data-variant="outline" data-size="sm" id="demo-gfile" style="margin-top: 0.5rem">Dùng tệp mẫu</button>
+                  </div>
+                  <button class="btn" data-variant="outline" id="preview-gd" disabled>Xem trước</button>
+                </div>
+              </div>
+
+              <div class="card hidden" id="gd-diff-card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead><tr><th>Loại</th><th>Thêm</th><th>Sửa</th><th>Bỏ qua</th></tr></thead>
+                    <tbody id="gd-rows"></tbody>
+                  </table>
+                </div>
+                <div class="flex items-center justify-between" style="padding: 12px">
+                  <span class="text-sm muted">Tệp có 3 người cùng tên Nguyễn Văn Cường — cả 3 đều được giữ.</span>
+                  <button class="btn" id="commit-gd" disabled>Nhập vào cây</button>
+                </div>
+              </div>
+
+              <div class="card hidden" id="gd-prog-card">
+                <div class="card-header"><h3 class="card-title">Đang nhập</h3></div>
+                <div class="card-content flex flex-col gap-3">
+                  <div class="progress"><div data-bar style="width: 0%"></div></div>
+                  <div class="flex flex-col gap-1" id="gd-steps"></div>
+                </div>
+              </div>
+
+              <div class="card hidden" id="gd-map-card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="card-header" style="padding: 1rem 1rem 0.5rem">
+                  <h3 class="card-title">Bản đồ mã sau khi nhập</h3>
+                  <p class="card-description">Mã mới sinh ra, mọi tham chiếu cũ không dùng lại được</p>
+                </div>
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead><tr><th>Loại</th><th>Mã cũ</th><th>Mã mới</th></tr></thead>
+                    <tbody id="gd-map"></tbody>
+                  </table>
+                </div>
+                <div style="padding: 12px" class="text-sm muted">
+                  Sau khi nhập GEDCOM, cây sẽ <strong>không có</strong> ảnh, album, sự kiện, lịch sử thay đổi và bố cục cũ.
+                </div>
+              </div>
+            </div>
+
+            <!-- Xuất ảnh -->
+            <div class="tabs-panel hidden flex flex-col gap-4" data-tabs="ie" data-key="image" data-state="inactive" role="tabpanel">
+              <div class="card" style="max-width: 44rem">
+                <div class="card-header">
+                  <h3 class="card-title">Xuất cây thành ảnh để in</h3>
+                  <p class="card-description">PDF hoặc PNG</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="field-group">
+                    <span class="field-label">Định dạng</span>
+                    <div class="flex gap-4">
+                      <label class="check-row"><span class="radio" data-checked="true" data-fmt="pdf"></span><span class="text-sm">PDF</span></label>
+                      <label class="check-row"><span class="radio" data-checked="false" data-fmt="png"></span><span class="text-sm">PNG</span></label>
+                    </div>
+                  </div>
+                  <div class="two-even">
+                    <div class="field-group">
+                      <label class="field-label" for="gen">Số đời</label>
+                      <select class="select" id="gen">
+                        <option>3 đời gần nhất</option>
+                        <option>Toàn bộ cây</option>
+                        <option>2 đời gần nhất</option>
+                      </select>
+                    </div>
+                    <div class="field-group">
+                      <label class="field-label" for="paper">Khổ giấy</label>
+                      <select class="select" id="paper">
+                        <option>A4 ngang</option>
+                        <option>A3 ngang</option>
+                        <option>A4 dọc</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="banner">
+                    <span class="ico">◉</span>
+                    <span>Không có tên người tải ảnh lên trên bản in. Bản in dành cho dán lên tường, không phải bản kiểm kê.</span>
+                  </div>
+                  <div class="banner" data-tone="warn">
+                    <span class="ico">⚠</span>
+                    <span>Chữ tiếng Việt trong PDF phía máy chủ hay bị thay bằng ô vuông mà không báo lỗi. Nên dựng hình ở trình duyệt rồi xuất PNG.</span>
+                  </div>
+                  <div class="flex gap-2">
+                    <button class="btn" id="do-image">Tải ảnh cây</button>
+                    <button class="btn" data-variant="outline" id="preview-image" data-needs-perm="tree.view">Xem thử</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <details class="note">
+              <summary>Ghi chú thiết kế</summary>
+              <div class="note-body">
+                <ul>
+                  <li>Khôi phục và nhập đều có bước <strong>chạy thử trước</strong> rồi mới ghi, và phải ghi trong một lần.</li>
+                  <li>Khôi phục giữ mã cũ. Nhập tạo mã mới và làm đứt mọi tham chiếu cũ — đó là lý do không có chế độ gộp thông minh.</li>
+                  <li>Mã trùng thì dừng lại, không bao giờ tự ghi đè và không bao giờ nói “đã khôi phục một phần”.</li>
+                  <li>Thanh tiến trình phải là tiến trình thật, không phải vòng quay quay vô tận.</li>
+                  <li>Xuất ảnh là thao tác chỉ đọc: không tăng bản, không ghi lịch sử, không cần <code>If-Match</code>.</li>
+                </ul>
+              </div>
+            </details>
           </div>
-          <div class="wf-field">
-            <label>Cỡ giấy</label>
-            <select class="wf-select"><option>A3 ngang</option><option>A4 ngang</option><option>A2 ngang</option></select>
-          </div>
-          <div class="wf-btn-row">
-            <button class="wf-btn" onclick="WF.toast('Chỉ xem thôi — chỉ cần quyền xem, ai cũng xem được bản xem trước')">Xem trước</button>
-            <button class="wf-btn primary" onclick="WF.toast('Đang dựng PDF…','ok')">Tải PDF</button>
-          </div>
-        </div>
-        <div class="wf-card flat">
-          <h3>Trên giấy không có tên người tải</h3>
-          <p style="color:var(--ink-2);margin:0 0 8px">Sơ đồ in ra chỉ có tên, ngày sinh, ngày mất. Không có
-          "tải bởi", không có tên tài khoản, không có mã thành viên.</p>
-          <div class="wf-note warn wf-mb0">Chữ tiếng Việt phải hiện đủ dấu. Nếu chuyển chữ trên máy chủ thì dấu có
-          thể mất mà không báo lỗi — bản in ra sẽ có ô vuông. Vì vậy nên dựng hình ở trình duyệt rồi xuất, thay
-          vì dựng PDF ngay trên máy chủ.</div>
-        </div>
+        </main>
       </div>
     </div>
-  </div>
 
-  <footer class="wf-foot">
-    <b>Nguồn.</b> Quy trình §10 (xuất để in, không in tên người tải; nhập có xem trước, chỉ CHỦ NHÓM và biên tập viên) · phạm vi thêm §5 (xuất JSON, khôi phục, nhập GEDCOM, <span class="mono">dryRun</span>, <span class="mono">idMap</span>, xung đột không ghi đè, không loại trùng) và §13 (xuất ảnh cây, thao tác chỉ đọc).
-  </footer>
-</main>
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
 
-<div class="wf-overlay" id="dlgBusy" hidden style="z-index:140">
-  <div class="wf-dialog">
-    <header><h3 id="busyTitle"></h3></header>
-    <div class="content">
-      <div class="wf-prog" id="busyProg"><i></i></div>
-      <p style="margin:8px 0 0;font-size:12.5px;color:var(--muted)" data-prog-step>Đang chuẩn bị…</p>
-    </div>
-  </div>
-</div>
+        WF.wireTabs("[data-tabs=ie]");
 
-<script src="assets/mock-data.js"></script>
-<script src="assets/wireframe.js"></script>
-<script>
-  function gate() {
-    var ok = WF.can("import.export");
-    WF.qs("#gate").hidden = ok;
-    WF.qs("#body").hidden = !ok;
-  }
+        function wireChecks(ids, cb) {
+          ids.forEach(function (id) {
+            qs("#" + id).addEventListener("click", function () {
+              var c = qs("#" + id);
+              c.setAttribute("data-checked", c.getAttribute("data-checked") === "true" ? "false" : "true");
+              if (cb) cb();
+            });
+          });
+        }
+        function size() {
+          var s = 148;
+          if (qs("#logs").getAttribute("data-checked") === "true") s += 36;
+          if (qs("#layout").getAttribute("data-checked") === "true") s += 12;
+          if (qs("#img").getAttribute("data-checked") === "true") s = 24576;
+          qs("#size").textContent = s > 1024 ? (s / 1024).toFixed(0) + " MB" : s + " KB";
+        }
+        wireChecks(["all", "logs", "layout", "img"], size);
+        size();
 
-  function pickRs(v) {
-    WF.qs("#hRs").textContent = "Đã chọn: " + v;
-    WF.qs("#btnPreviewRs").disabled = false;
-  }
-  function pickGd(v) {
-    WF.qs("#hGd").textContent = "Đã chọn: " + v;
-    WF.qs("#btnPreviewGd").disabled = false;
-  }
+        qs("#do-export").addEventListener("click", function () {
+          WF.toast("Đang dựng tệp", "Tệp JSON tải xuống ngay sau khi dựng xong.", "default");
+        });
 
-  function diffTable(rows) {
-    return '<div class="wf-table-wrap"><table class="wf-table"><thead><tr><th>Loại</th><th>Thêm</th><th>Sửa</th><th>Bỏ qua</th></tr></thead><tbody>' +
-      rows.map(function (r) {
-        return "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td><td>" + r[3] + "</td></tr>";
-      }).join("") + "</tbody></table></div>";
-  }
+        qs("#demo-file").addEventListener("click", function () {
+          qs("#rs-conflict").classList.remove("hidden");
+          qs("#preview-rs").disabled = false;
+          WF.toast("Đã nạp tệp mẫu", "Bản 38 · 1 mã trùng", "default");
+        });
+        qs("#file").addEventListener("change", function () {
+          qs("#rs-conflict").classList.add("hidden");
+          qs("#preview-rs").disabled = false;
+        });
+        qs("#rs-mode").addEventListener("change", function () {
+          qs("#commit-rs").disabled = qs("#rs-mode").selectedIndex === 0;
+        });
 
-  function previewRs() {
-    WF.qs("#pvRs").innerHTML =
-      '<div class="wf-card"><h2>Xem trước — chưa ghi gì cả</h2>' +
-      '<p style="color:var(--ink-2)">Tệp này là bản <b>38</b>, còn cây hiện tại là bản <b>42</b>. Khôi phục sẽ thay toàn bộ cây bằng nội dung bản 38.</p>' +
-      diffTable([
-        ["Thành viên", "0", "2 (tên và ngày sinh đổi)", "0"],
-        ["Quan hệ", "0", "1", "0"],
-        ["Ảnh", "6 (kèm tệp)", "0", "0"],
-        ["Album", "0", "1", "0"],
-        ["Sự kiện", "0", "2", "0"],
-        ["Bố cục", "1 (về bản 38)", "—", "—"],
-        ["Lịch sử", "14 dòng của bản 38", "—", "8 dòng của bản 39–42"]
-      ]) +
-      '<div class="wf-note danger wf-mt">Có <b>1 xung đột định danh</b>: ảnh <span class="mono">ph1</span> trong tệp đã tồn tại ở cây hiện tại nhưng là tệp khác. Ta <b>không ghi đè</b> và cũng không tự gộp — bạn phải chọn.</div>' +
-      '<div class="wf-field"><label>Cách xử lý xung đột</label><select class="wf-select"><option>Dừng lại, không ghi gì cả (mặc định)</option><option>Bỏ qua ảnh bị trùng, ghi phần còn lại</option></select></div>' +
-      '<div class="wf-btn-row"><button class="wf-btn primary" onclick="commitRs()">Ghi vào cây</button>' +
-      '<button class="wf-btn ghost" onclick="WF.qs(\'#pvRs\').innerHTML=\'\';WF.toast(\'Đã bỏ bản xem trước\')">Bỏ qua</button></div></div>';
-    WF.toast("Xem trước xong — chưa ghi gì. Bấm Ghi vào cây mới thật sự ghi.");
-  }
+        qs("#preview-rs").addEventListener("click", function () {
+          qs("#rs-diff-card").classList.remove("hidden");
+          qs("#rs-rows").innerHTML = [
+            ["Thành viên", 1, 1, 0],
+            ["Quan hệ", 3, 0, 0],
+            ["Ảnh", 6, 0, 0],
+            ["Album", 2, 0, 0],
+            ["Sự kiện", 3, 0, 0],
+            ["Lịch sử", 22, 0, 0]
+          ].map(function (r) {
+            return "<tr><td class=\"font-semibold\">" + r[0] + "</td><td>" + r[1] +
+              "</td><td>" + r[2] + '</td><td class="diff-old">' + r[3] + "</td></tr>";
+          }).join("");
+        });
 
-  function commitRs() {
-    WF.qs("#busyTitle").textContent = "Đang khôi phục";
-    WF.qs("#busyProg").querySelector("i").style.width = "0%";
-    WF.qs("#dlgBusy").hidden = false;
-    WF.runProgress(WF.qs("#busyProg"), {
-      steps: ["Đọc tệp", "Kiểm tra xung đột", "Ghi thành viên và quan hệ", "Ghi ảnh", "Ghi bố cục", "Ghi lịch sử"],
-      onDone: function () {
-        WF.qs("#dlgBusy").hidden = true;
-        WF.qs("#pvRs").innerHTML =
-          '<div class="wf-card"><div class="wf-note ok"><b>Xong. Bản 43.</b></div>' +
-          "<p style='color:var(--ink-2)'>Mọi thứ trở lại đúng định danh cũ:</p>" +
-          '<div class="wf-table-wrap"><table class="wf-table"><tbody>' +
-          "<tr><td>m7 Nguyễn Thanh Hà</td><td>m7</td></tr>" +
-          "<tr><td>m11 Trần Ngọc An</td><td>m11</td></tr>" +
-          "<tr><td>ph1 wedding-hava.jpg</td><td>ph1</td></tr>" +
-          "<tr><td>al2 Cưới Hà – Minh</td><td>al2</td></tr>" +
-          "<tr><td>quan hệ m7 ↔ m8</td><td>r7-r8 (giữ nguyên)</td></tr>" +
-          "</tbody></table></div>" +
-          '<p class="wf-mb0" style="color:var(--muted);font-size:12.5px">Bảng này là <span class="mono">idMap</span>: cho bạn biết món đồ cũ nằm ở món mới nào. Với khôi phục thì hai bên giống nhau.</p></div>';
-        WF.toast("Đã khôi phục xong. Bản 43.", "ok");
-      }
-    });
-  }
+        qs("#commit-rs").addEventListener("click", function () {
+          qs("#rs-prog-card").classList.remove("hidden");
+          WF.runProgress("#rs-prog-card", {
+            steps: ["Kiểm tra bản hiện tại", "Chạy thử không ghi", "Ghi thành viên", "Ghi quan hệ", "Ghi ảnh và album", "Ghi sự kiện và lịch sử"],
+            onDone: function () {
+              qs("#rs-map-card").classList.remove("hidden");
+              qs("#rs-map").innerHTML = [
+                ["Thành viên", "m6", "m6"],
+                ["Thành viên", "m13", "m13"],
+                ["Quan hệ", "r20", "r20"],
+                ["Ảnh", "ph7", "ph7"]
+              ].map(function (r) {
+                return '<tr><td class="font-semibold">' + r[0] + "</td><td>" + r[1] +
+                  '</td><td><span class="badge" data-tone="ok">' + r[2] + " (giữ nguyên)</span></td></tr>";
+              }).join("");
+              WF.toast("Đã khôi phục", "Bản 43 → 44. Tất cả mã giữ nguyên.", "success");
+            }
+          });
+        });
 
-  function previewGd() {
-    WF.qs("#pvGd").innerHTML =
-      '<div class="wf-card"><h2>Xem trước — chưa ghi gì cả</h2>' +
-      '<p style="color:var(--ink-2)">Tệp <span class="mono">ho-le.ged</span> có 9 người, 11 quan hệ. Đọc được 8 người, 10 quan hệ; 1 dòng hỏng nên bỏ qua.</p>' +
-      diffTable([
-        ["Thành viên", "8", "0", "0"],
-        ["Quan hệ", "10", "0", "1 (dòng hỏng)"],
-        ["Ảnh / album / sự kiện", "0", "0", "— (GEDCOM không có)"],
-        ["Bố cục", "0", "0", "phải xếp lại bằng Sắp xếp sơ đồ"]
-      ]) +
-      '<div class="wf-note warn wf-mt">Trùng tên <b>Nguyễn Văn Cường</b> xuất hiện 2 lần trong tệp và 1 lần đã có trong cây. Ta giữ cả 3. Không có bước tự nhận diện trùng.</div>' +
-      '<div class="wf-btn-row"><button class="wf-btn primary" onclick="commitGd()">Ghi vào cây</button>' +
-      "<button class='wf-btn ghost' onclick=\"WF.qs('#pvGd').innerHTML=''\">Bỏ qua</button></div></div>";
-  }
-  function commitGd() {
-    WF.qs("#busyTitle").textContent = "Đang nhập GEDCOM";
-    WF.qs("#busyProg").querySelector("i").style.width = "0%";
-    WF.qs("#dlgBusy").hidden = false;
-    WF.runProgress(WF.qs("#busyProg"), {
-      steps: ["Đọc tệp", "Đối chiếu phiên bản", "Tạo thành viên mới", "Tạo quan hệ", "Ghi báo cáo"],
-      onDone: function () {
-        WF.qs("#dlgBusy").hidden = true;
-        WF.qs("#pvGd").innerHTML =
-          '<div class="wf-card"><div class="wf-note ok"><b>Xong. Bản 43.</b> Đã tạo 8 thành viên và 10 quan hệ với định danh mới.</div>' +
-          '<div class="wf-table-wrap"><table class="wf-table"><thead><tr><th>Trong tệp</th><th>Trong cây</th></tr></thead><tbody>' +
-          [["@I1 Lê Gia Tân", "m15"], ["@I2 Trần Thị Hương", "m16"], ["@I5 Hoàng Văn Thành", "m19"]]
-            .map(function (r) { return "<tr><td>" + r[0] + "</td><td><span class='mono'>" + r[1] + "</span></td></tr>"; }).join("") +
-          "</tbody></table></div>" +
-          '<div class="wf-note warn wf-mt">Chưa có ảnh, album, sự kiện, lịch sử và bố cục. Bấm <b>Sắp xếp sơ đồ</b> rồi <b>Lưu</b> để xếp bố cục. Định danh cũ trong tệp <b>không</b> được giữ.</div></div>';
-        WF.toast("Đã nhập. Bản 43.", "ok");
-      }
-    });
-  }
+        qs("#demo-gfile").addEventListener("click", function () {
+          qs("#preview-gd").disabled = false;
+          WF.toast("Đã nạp tệp GEDCOM", "31 dòng dữ liệu, 3 người trùng tên", "default");
+        });
+        qs("#gfile").addEventListener("change", function () { qs("#preview-gd").disabled = false; });
+        qs("#preview-gd").addEventListener("click", function () {
+          qs("#gd-diff-card").classList.remove("hidden");
+          qs("#gd-rows").innerHTML = [
+            ["Thành viên", 11, 0, 0],
+            ["Quan hệ", 0, 0, 18],
+            ["Sự kiện", 0, 0, 4]
+          ].map(function (r) {
+            return '<tr><td class="font-semibold">' + r[0] + "</td><td>" + r[1] +
+              "</td><td>" + r[2] + '</td><td class="diff-old">' + r[3] + "</td></tr>";
+          }).join("");
+        });
+        qs("#commit-gd").addEventListener("click", function () {
+          qs("#gd-prog-card").classList.remove("hidden");
+          WF.runProgress("#gd-prog-card", {
+            steps: ["Đọc tệp", "Kiểm tra bản hiện tại", "Ghi thành viên", "Ghi quan hệ"],
+            onDone: function () {
+              qs("#gd-map-card").classList.remove("hidden");
+              qs("#gd-map").innerHTML = [
+                ["Thành viên", "I1", "n1"],
+                ["Thành viên", "I2", "n2"],
+                ["Thành viên", "I3", "n3"]
+              ].map(function (r) {
+                return '<tr><td class="font-semibold">' + r[0] + "</td><td>" + r[1] +
+                  '</td><td><span class="badge" data-tone="amber">' + r[2] + " (mới)</span></td></tr>";
+              }).join("");
+              WF.toast("Đã nhập", "Bản 43 → 44. Ảnh, album, sự kiện, lịch sử không có trong GEDCOM.", "default");
+            }
+          });
+        });
 
-  gate();
-  window.wfOnRole = gate;
-  WF.wireTabs(".wf-tabs");
-</script>
-</body>
+        Array.prototype.forEach.call(document.querySelectorAll("[data-fmt]"), function (r) {
+          r.addEventListener("click", function () {
+            Array.prototype.forEach.call(document.querySelectorAll("[data-fmt]"), function (o) {
+              o.setAttribute("data-checked", "false");
+            });
+            r.setAttribute("data-checked", "true");
+          });
+        });
+        qs("#do-image").addEventListener("click", function () {
+          WF.toast("Đang dựng ảnh", "PDF chữ tiếng Việt có thể lỗi — nên dùng PNG.", "default");
+        });
+        qs("#preview-image").addEventListener("click", function () {
+          WF.toast("Xem thử", "Không tăng bản, không ghi lịch sử.", "default");
+        });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+        window.wfOnRole = function () {
+          var allowed = WF.can("import.export");
+          qs("#real").classList.toggle("hidden", !allowed);
+          qs("#gate").classList.toggle("hidden", allowed);
+        };
+        var ok = WF.can("import.export");
+        qs("#real").classList.toggle("hidden", !ok);
+        qs("#gate").classList.toggle("hidden", ok);
+      })();
+    </script>
+  </body>
 </html>
