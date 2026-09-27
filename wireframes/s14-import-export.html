@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>14 · Nhập / xuất dữ liệu</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">14 · Nhập / xuất dữ liệu</span>
+  <span class="wf-bar-route">trong /group</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-role">Vai trò <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main">
+  <div class="wf-head">
+    <h1>Nhập và xuất</h1>
+    <p class="sub">Bốn việc khác nhau, xếp cạnh nhau cho tiện.</p>
+  </div>
+
+  <div class="wf-card wf-narrow" id="gate" hidden style="margin:0 auto">
+    <div class="wf-gate">
+      <div class="code">403</div>
+      <h2>Không nhập / xuất được</h2>
+      <p style="color:var(--ink-2)">Nhập và xuất là thao tác trên cả cây, nên cần quyền SỬA cây. Người chỉ xem không
+      làm được.</p>
+      <a class="wf-btn wf-mt" href="s06-tree-canvas.html">Về màn hình cây</a>
+    </div>
+  </div>
+
+  <div id="body">
+    <div class="wf-tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="ex">Xuất JSON</button>
+      <button role="tab" aria-selected="false" data-tab="rs">Khôi phục từ JSON</button>
+      <button role="tab" aria-selected="false" data-tab="gd">Nhập GEDCOM</button>
+      <button role="tab" aria-selected="false" data-tab="img">Xuất ảnh cây</button>
+    </div>
+
+    <!-- 1. xuất JSON -->
+    <div class="wf-tabpanel" data-panel="ex">
+      <div class="wf-split">
+        <div class="wf-card">
+          <h2>Xuất toàn bộ cây ra một tệp</h2>
+          <p style="color:var(--ink-2)">Tệp JSON chứa thành viên, quan hệ, album, ảnh, sự kiện, bố cục và lịch sử
+          thay đổi — kèm <b>định danh gốc</b> của từng thứ.</p>
+          <div class="wf-field">
+            <label>Khoảng thời gian lịch sử</label>
+            <select class="wf-select"><option>Tất cả</option><option>1 năm gần nhất</option><option>90 ngày gần nhất</option></select>
+            <span class="hint">Bỏ bớt thì tệp nhỏ hơn, nhưng mất lịch sử cũ.</span>
+          </div>
+          <div class="wf-field">
+            <label>Kèm cả tệp ảnh</label>
+            <select class="wf-select"><option>Có — tệp lớn hơn nhiều</option><option>Không — chỉ danh sách đường dẫn ảnh</option></select>
+          </div>
+          <div class="wf-note wf-mb0">Bản 42 · 14 thành viên · 16 quan hệ · 4 album · 6 ảnh · 5 sự kiện · 22 dòng lịch sử
+          → ước <b>184 KB</b> (không kèm ảnh).</div>
+          <div class="wf-btn-row wf-mt">
+            <button class="wf-btn primary" onclick="WF.toast('Đang tải nha-cua-ho-2026-09-27.json…','ok')">Tải tệp JSON</button>
+          </div>
+        </div>
+        <div class="wf-card flat">
+          <h3>Xuất xong rồi thì sao?</h3>
+          <p style="color:var(--ink-2);margin:0">Có hai đường dùng tệp này: khôi phục lại đúng như cũ (tab 2), hoặc
+          lấy một phần để dựng cây mới (tab 3).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. khôi phục -->
+    <div class="wf-tabpanel" data-panel="rs" hidden>
+      <div class="wf-note rule">
+        <b>Khôi phục giữ nguyên mọi định danh gốc.</b> Thành viên, quan hệ, album, ảnh, sự kiện, bố cục và
+        lịch sử đều trở lại <b>đúng id cũ</b>, nên mọi tham chiếu giữa chúng vẫn đúng. Đây là đường an toàn bắt
+        buộc khi dữ liệu hỏng.
+      </div>
+      <div class="wf-card">
+        <div class="wf-field">
+          <label>Chọn tệp JSON đã xuất</label>
+          <input class="wf-input" type="file" id="fRs" onchange="pickRs(this.value)">
+          <span class="hint" id="hRs">Chưa chọn tệp. Dùng nút bên dưới để dùng tệp mẫu.</span>
+        </div>
+        <div class="wf-btn-row">
+          <button class="wf-btn" onclick="pickRs('nha-cua-ho-2026-08-01.json')">Dùng tệp mẫu (bản 38)</button>
+          <button class="wf-btn primary" id="btnPreviewRs" disabled onclick="previewRs()">Xem trước</button>
+        </div>
+      </div>
+      <div id="pvRs" class="wf-mt"></div>
+    </div>
+
+    <!-- 3. GEDCOM -->
+    <div class="wf-tabpanel" data-panel="gd" hidden>
+      <div class="wf-grid c2">
+        <div class="wf-card">
+          <h2>Nhập từ tệp GEDCOM</h2>
+          <p style="color:var(--ink-2)">Phần mềm gia đình khác xuất ra tệp <span class="mono">.ged</span>. Ta đọc
+          người, vợ chồng, cha mẹ và con cái. Ngày sinh, ngày mất và nơi chôn ổn.</p>
+          <div class="wf-field">
+            <label>Chọn tệp</label>
+            <input class="wf-input" type="file" onchange="pickGd(this.value)">
+            <span class="hint" id="hGd">Chưa chọn tệp.</span>
+          </div>
+          <div class="wf-note warn">
+            <b>Ta không tự loại trùng.</b> Nếu tệp có người tên giống người đã có trong cây, cả hai đều được giữ.
+            Hãy tự kiểm tra và xoá thủ công phần thừa.
+          </div>
+          <div class="wf-btn-row">
+            <button class="wf-btn primary" id="btnPreviewGd" disabled onclick="previewGd()">Xem trước</button>
+          </div>
+        </div>
+        <div class="wf-card flat">
+          <h3>Khác gì so với khôi phục?</h3>
+          <p style="color:var(--ink-2);margin:0 0 8px">Nhập GEDCOM tạo ra thành viên với <b>định danh mới</b> và
+          chỉ giữ lại phần cây. Không có album, không có ảnh, không có lịch sử, bố cục phải xếp lại.</p>
+          <p class="wf-mb0" style="color:var(--ink-2)">Muốn giữ <b>tất cả</b> như cũ thì dùng tab 2.</p>
+        </div>
+      </div>
+      <div id="pvGd" class="wf-mt"></div>
+    </div>
+
+    <!-- 4. xuất ảnh cây -->
+    <div class="wf-tabpanel" data-panel="img" hidden>
+      <div class="wf-split">
+        <div class="wf-card">
+          <h2>Xuất sơ đồ ra PDF hoặc PNG</h2>
+          <p style="color:var(--ink-2)">Để in treo tường, hoặc gửi cho người ngoài. Không giống xuất JSON: không
+          có định danh, không phục hồi được — chỉ để đọc.</p>
+          <div class="wf-grid c2" style="gap:0 12px">
+            <div class="wf-field">
+              <label>Định dạng</label>
+              <select class="wf-select" id="fmt"><option value="pdf">PDF — nhiều trang</option><option value="png">PNG — một ảnh dài</option></select>
+            </div>
+            <div class="wf-field">
+              <label>Khoảng đời</label>
+              <select class="wf-select" id="gen"><option>3 đời gần nhất (mặc định)</option><option>Toàn bộ</option><option>4 đời gần nhất</option></select>
+            </div>
+          </div>
+          <div class="wf-field">
+            <label>Cỡ giấy</label>
+            <select class="wf-select"><option>A3 ngang</option><option>A4 ngang</option><option>A2 ngang</option></select>
+          </div>
+          <div class="wf-btn-row">
+            <button class="wf-btn" onclick="WF.toast('Chỉ xem thôi — chỉ cần quyền xem, ai cũng xem được bản xem trước')">Xem trước</button>
+            <button class="wf-btn primary" onclick="WF.toast('Đang dựng PDF…','ok')">Tải PDF</button>
+          </div>
+        </div>
+        <div class="wf-card flat">
+          <h3>Trên giấy không có tên người tải</h3>
+          <p style="color:var(--ink-2);margin:0 0 8px">Sơ đồ in ra chỉ có tên, ngày sinh, ngày mất. Không có
+          "tải bởi", không có tên tài khoản, không có mã thành viên.</p>
+          <div class="wf-note warn wf-mb0">Chữ tiếng Việt phải hiện đủ dấu. Nếu chuyển chữ trên máy chủ thì dấu có
+          thể mất mà không báo lỗi — bản in ra sẽ có ô vuông. Vì vậy nên dựng hình ở trình duyệt rồi xuất, thay
+          vì dựng PDF ngay trên máy chủ.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="wf-foot">
+    <b>Nguồn.</b> Quy trình §10 (xuất để in, không in tên người tải; nhập có xem trước, chỉ CHỦ NHÓM và biên tập viên) · phạm vi thêm §5 (xuất JSON, khôi phục, nhập GEDCOM, <span class="mono">dryRun</span>, <span class="mono">idMap</span>, xung đột không ghi đè, không loại trùng) và §13 (xuất ảnh cây, thao tác chỉ đọc).
+  </footer>
+</main>
+
+<div class="wf-overlay" id="dlgBusy" hidden style="z-index:140">
+  <div class="wf-dialog">
+    <header><h3 id="busyTitle"></h3></header>
+    <div class="content">
+      <div class="wf-prog" id="busyProg"><i></i></div>
+      <p style="margin:8px 0 0;font-size:12.5px;color:var(--muted)" data-prog-step>Đang chuẩn bị…</p>
+    </div>
+  </div>
+</div>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>
+  function gate() {
+    var ok = WF.can("import.export");
+    WF.qs("#gate").hidden = ok;
+    WF.qs("#body").hidden = !ok;
+  }
+
+  function pickRs(v) {
+    WF.qs("#hRs").textContent = "Đã chọn: " + v;
+    WF.qs("#btnPreviewRs").disabled = false;
+  }
+  function pickGd(v) {
+    WF.qs("#hGd").textContent = "Đã chọn: " + v;
+    WF.qs("#btnPreviewGd").disabled = false;
+  }
+
+  function diffTable(rows) {
+    return '<div class="wf-table-wrap"><table class="wf-table"><thead><tr><th>Loại</th><th>Thêm</th><th>Sửa</th><th>Bỏ qua</th></tr></thead><tbody>' +
+      rows.map(function (r) {
+        return "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td><td>" + r[3] + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+  }
+
+  function previewRs() {
+    WF.qs("#pvRs").innerHTML =
+      '<div class="wf-card"><h2>Xem trước — chưa ghi gì cả</h2>' +
+      '<p style="color:var(--ink-2)">Tệp này là bản <b>38</b>, còn cây hiện tại là bản <b>42</b>. Khôi phục sẽ thay toàn bộ cây bằng nội dung bản 38.</p>' +
+      diffTable([
+        ["Thành viên", "0", "2 (tên và ngày sinh đổi)", "0"],
+        ["Quan hệ", "0", "1", "0"],
+        ["Ảnh", "6 (kèm tệp)", "0", "0"],
+        ["Album", "0", "1", "0"],
+        ["Sự kiện", "0", "2", "0"],
+        ["Bố cục", "1 (về bản 38)", "—", "—"],
+        ["Lịch sử", "14 dòng của bản 38", "—", "8 dòng của bản 39–42"]
+      ]) +
+      '<div class="wf-note danger wf-mt">Có <b>1 xung đột định danh</b>: ảnh <span class="mono">ph1</span> trong tệp đã tồn tại ở cây hiện tại nhưng là tệp khác. Ta <b>không ghi đè</b> và cũng không tự gộp — bạn phải chọn.</div>' +
+      '<div class="wf-field"><label>Cách xử lý xung đột</label><select class="wf-select"><option>Dừng lại, không ghi gì cả (mặc định)</option><option>Bỏ qua ảnh bị trùng, ghi phần còn lại</option></select></div>' +
+      '<div class="wf-btn-row"><button class="wf-btn primary" onclick="commitRs()">Ghi vào cây</button>' +
+      '<button class="wf-btn ghost" onclick="WF.qs(\'#pvRs\').innerHTML=\'\';WF.toast(\'Đã bỏ bản xem trước\')">Bỏ qua</button></div></div>';
+    WF.toast("Xem trước xong — chưa ghi gì. Bấm Ghi vào cây mới thật sự ghi.");
+  }
+
+  function commitRs() {
+    WF.qs("#busyTitle").textContent = "Đang khôi phục";
+    WF.qs("#busyProg").querySelector("i").style.width = "0%";
+    WF.qs("#dlgBusy").hidden = false;
+    WF.runProgress(WF.qs("#busyProg"), {
+      steps: ["Đọc tệp", "Kiểm tra xung đột", "Ghi thành viên và quan hệ", "Ghi ảnh", "Ghi bố cục", "Ghi lịch sử"],
+      onDone: function () {
+        WF.qs("#dlgBusy").hidden = true;
+        WF.qs("#pvRs").innerHTML =
+          '<div class="wf-card"><div class="wf-note ok"><b>Xong. Bản 43.</b></div>' +
+          "<p style='color:var(--ink-2)'>Mọi thứ trở lại đúng định danh cũ:</p>" +
+          '<div class="wf-table-wrap"><table class="wf-table"><tbody>' +
+          "<tr><td>m7 Nguyễn Thanh Hà</td><td>m7</td></tr>" +
+          "<tr><td>m11 Trần Ngọc An</td><td>m11</td></tr>" +
+          "<tr><td>ph1 wedding-hava.jpg</td><td>ph1</td></tr>" +
+          "<tr><td>al2 Cưới Hà – Minh</td><td>al2</td></tr>" +
+          "<tr><td>quan hệ m7 ↔ m8</td><td>r7-r8 (giữ nguyên)</td></tr>" +
+          "</tbody></table></div>" +
+          '<p class="wf-mb0" style="color:var(--muted);font-size:12.5px">Bảng này là <span class="mono">idMap</span>: cho bạn biết món đồ cũ nằm ở món mới nào. Với khôi phục thì hai bên giống nhau.</p></div>';
+        WF.toast("Đã khôi phục xong. Bản 43.", "ok");
+      }
+    });
+  }
+
+  function previewGd() {
+    WF.qs("#pvGd").innerHTML =
+      '<div class="wf-card"><h2>Xem trước — chưa ghi gì cả</h2>' +
+      '<p style="color:var(--ink-2)">Tệp <span class="mono">ho-le.ged</span> có 9 người, 11 quan hệ. Đọc được 8 người, 10 quan hệ; 1 dòng hỏng nên bỏ qua.</p>' +
+      diffTable([
+        ["Thành viên", "8", "0", "0"],
+        ["Quan hệ", "10", "0", "1 (dòng hỏng)"],
+        ["Ảnh / album / sự kiện", "0", "0", "— (GEDCOM không có)"],
+        ["Bố cục", "0", "0", "phải xếp lại bằng Sắp xếp sơ đồ"]
+      ]) +
+      '<div class="wf-note warn wf-mt">Trùng tên <b>Nguyễn Văn Cường</b> xuất hiện 2 lần trong tệp và 1 lần đã có trong cây. Ta giữ cả 3. Không có bước tự nhận diện trùng.</div>' +
+      '<div class="wf-btn-row"><button class="wf-btn primary" onclick="commitGd()">Ghi vào cây</button>' +
+      "<button class='wf-btn ghost' onclick=\"WF.qs('#pvGd').innerHTML=''\">Bỏ qua</button></div></div>";
+  }
+  function commitGd() {
+    WF.qs("#busyTitle").textContent = "Đang nhập GEDCOM";
+    WF.qs("#busyProg").querySelector("i").style.width = "0%";
+    WF.qs("#dlgBusy").hidden = false;
+    WF.runProgress(WF.qs("#busyProg"), {
+      steps: ["Đọc tệp", "Đối chiếu phiên bản", "Tạo thành viên mới", "Tạo quan hệ", "Ghi báo cáo"],
+      onDone: function () {
+        WF.qs("#dlgBusy").hidden = true;
+        WF.qs("#pvGd").innerHTML =
+          '<div class="wf-card"><div class="wf-note ok"><b>Xong. Bản 43.</b> Đã tạo 8 thành viên và 10 quan hệ với định danh mới.</div>' +
+          '<div class="wf-table-wrap"><table class="wf-table"><thead><tr><th>Trong tệp</th><th>Trong cây</th></tr></thead><tbody>' +
+          [["@I1 Lê Gia Tân", "m15"], ["@I2 Trần Thị Hương", "m16"], ["@I5 Hoàng Văn Thành", "m19"]]
+            .map(function (r) { return "<tr><td>" + r[0] + "</td><td><span class='mono'>" + r[1] + "</span></td></tr>"; }).join("") +
+          "</tbody></table></div>" +
+          '<div class="wf-note warn wf-mt">Chưa có ảnh, album, sự kiện, lịch sử và bố cục. Bấm <b>Sắp xếp sơ đồ</b> rồi <b>Lưu</b> để xếp bố cục. Định danh cũ trong tệp <b>không</b> được giữ.</div></div>';
+        WF.toast("Đã nhập. Bản 43.", "ok");
+      }
+    });
+  }
+
+  gate();
+  window.wfOnRole = gate;
+  WF.wireTabs(".wf-tabs");
+</script>
+</body>
+</html>

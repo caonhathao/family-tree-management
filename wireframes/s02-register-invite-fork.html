@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>02 · Đăng ký có / không link mời — /invite?token=</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">02 · Đăng ký theo nhánh</span>
+  <span class="wf-bar-route">/invite?token=8fTq2kZm</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-role">Vai trò <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main">
+  <div class="wf-head">
+    <h1>Có link mời thì vào cây của người mời</h1>
+    <p class="sub">Hai nhánh tách bạch từ đầu, không phải chờ tới lúc ghi mới biết.</p>
+  </div>
+
+  <div class="wf-note rule">
+    <b>Quy tắc quan trọng nhất.</b> Link mời <b>không bao giờ</b> tạo ra một cây riêng cho người lạ. Nếu link hết hạn
+    hoặc đã dùng thì dừng lại và báo rõ; tuyệt đối không lặng lẽ rơi xuống nhánh tạo cây mới — đó là cách
+    dễ nhất để người lạ tạo rác. Link hết hạn sau <b>7 ngày</b>, dùng một lần là hết.
+  </div>
+
+  <div class="wf-tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="ok">Token còn hạn</button>
+    <button role="tab" aria-selected="false" data-tab="expired">Token hết hạn</button>
+    <button role="tab" aria-selected="false" data-tab="used">Token đã dùng</button>
+    <button role="tab" aria-selected="false" data-tab="none">Không có token</button>
+  </div>
+
+  <!-- 1. token còn hạn -->
+  <div class="wf-tabpanel" data-panel="ok">
+    <div class="wf-split">
+      <div class="wf-card flat">
+        <h3>Thông tin lời mời</h3>
+        <table class="wf-table">
+          <tbody>
+            <tr><td>Người mời</td><td><b>Nguyễn Thanh Hà</b></td></tr>
+            <tr><td>Nhóm</td><td>Nhà họ Nguyễn – Trần</td></tr>
+            <tr><td>Quyền khi vào</td><td><span class="wf-badge">XEM</span> không sửa được</td></tr>
+            <tr><td>Hết hạn</td><td><span class="mono">2026-09-27</span> (7 ngày)</td></tr>
+          </tbody>
+        </table>
+        <div class="wf-note ok wf-mt wf-mb0">Sau khi đăng ký xong, tài khoản này có <b>không</b> cây riêng. Nó thuộc cây của
+        nhóm trên, với quyền Xem. Người dùng không được nâng quyền lên SỬA.</div>
+      </div>
+      <div class="wf-card">
+        <h2>Đặt tài khoản để vào cây</h2>
+        <div class="wf-field">
+          <label>Họ và tên</label>
+          <input class="wf-input" value="Lê Thị Hồng Vân">
+        </div>
+        <div class="wf-field">
+          <label>Email</label>
+          <input class="wf-input" value="van.le@example.com">
+        </div>
+        <div class="wf-field">
+          <label>Mật khẩu</label>
+          <input class="wf-input" type="password" value="••••••••">
+          <span class="hint">Tối thiểu 8 ký tự.</span>
+        </div>
+        <div class="wf-field">
+          <label>Xác nhận mật khẩu</label>
+          <input class="wf-input" type="password" value="••••••••">
+        </div>
+        <label class="wf-row" style="font-size:13px;gap:7px;margin-bottom:12px">
+          <input type="checkbox" checked> Cho tôi xem ảnh và album mà nhóm chia sẻ công khai
+        </label>
+        <div class="wf-btn-row">
+          <button class="wf-btn primary" onclick="WF.toast('Đăng ký xong — vào cây Nhà họ Nguyễn – Trần với quyền Xem','ok');location.href='s13-share-readonly.html'">Vào cây với quyền Xem</button>
+          <button class="wf-btn ghost" onclick="WF.toast('Hủy — quay lại trang đăng nhập')">Hủy</button>
+        </div>
+        <p class="wf-mt wf-mb0" style="color:var(--muted);font-size:12.5px">Nút "Tạo cây của riêng tôi" <b>không</b> xuất hiện ở màn này.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. hết hạn -->
+  <div class="wf-tabpanel" data-panel="expired" hidden>
+    <div class="wf-card wf-narrow" style="margin:0 auto">
+      <div class="wf-gate">
+        <div class="code">⏱</div>
+        <h2>Link mời đã hết hạn</h2>
+        <p style="color:var(--ink-2)">Link này hết hạn từ <span class="mono">2026-08-22</span>. Bạn cần nhờ
+        <b>Nguyễn Thanh Hà</b> tạo link mới và gửi lại.</p>
+        <div class="wf-btn-row" style="justify-content:center;margin-top:14px">
+          <a class="wf-btn" href="s03-login.html">Về trang đăng nhập</a>
+          <button class="wf-btn ghost" onclick="WF.toast('Không có hành động nào khác — link hết hạn thì phải xin link mới')">Không có cách nào khác</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. đã dùng -->
+  <div class="wf-tabpanel" data-panel="used" hidden>
+    <div class="wf-card wf-narrow" style="margin:0 auto">
+      <div class="wf-gate">
+        <div class="code">✖</div>
+        <h2>Link mời đã được dùng</h2>
+        <p style="color:var(--ink-2)">Mỗi link chỉ dùng được một lần. Nếu bạn đã có tài khoản, hãy đăng nhập bình thường.</p>
+        <div class="wf-btn-row" style="justify-content:center;margin-top:14px">
+          <a class="wf-btn primary" href="s03-login.html">Đăng nhập</a>
+          <button class="wf-btn ghost" onclick="WF.toast('Không tạo cây riêng từ link đã dùng')">Tạo cây riêng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. không có token -->
+  <div class="wf-tabpanel" data-panel="none" hidden>
+    <div class="wf-gate">
+      <h2>Đây là nhánh "không có link mời"</h2>
+      <p style="color:var(--max-width:520px);margin:0 auto 14px;color:var(--ink-2)">Không có token thì người dùng
+      đi tới nhánh tạo nhóm và cây riêng. Tài khoản đó trở thành CHỦ NHÓM.</p>
+      <a class="wf-btn primary" href="s05-create-family.html">Mở màn 05 · Tạo nhóm và cây mới →</a>
+    </div>
+  </div>
+
+  <footer class="wf-foot">
+    <b>Nguồn.</b> Quy trình §2 (cây quyết định hai nhánh) · quyết định Q15 (link mời không tạo cây riêng, hạn 7 ngày, dùng một lần).
+  </footer>
+</main>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>WF.wireTabs(".wf-tabs");</script>
+</body>
+</html>

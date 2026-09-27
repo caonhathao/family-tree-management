@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>15 · Sự kiện — /group/events</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">15 · Sự kiện</span>
+  <span class="wf-bar-route">/group/events?groupId=g1</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-role">Vai trò <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main">
+  <div class="wf-head">
+    <h1>Sự kiện</h1>
+    <p class="sub">Sinh nhật, giỗ, cưới, tết. Gắn với người trong cây thì sự kiện hiện luôn ở node của họ.</p>
+  </div>
+
+  <div class="wf-tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="up">Sắp tới</button>
+    <button role="tab" aria-selected="false" data-tab="all">Tất cả</button>
+    <button role="tab" aria-selected="false" data-tab="new">Thêm sự kiện</button>
+  </div>
+
+  <div class="wf-tabpanel" data-panel="up">
+    <div class="wf-table-wrap">
+      <table class="wf-table">
+        <thead><tr><th>Ngày</th><th>Sự kiện</th><th>Gắn với</th><th>Người tạo</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="wf-note rule wf-mt">
+      <b>Sự kiện nào gắn với người đã mất thì hiện ở node của người đó</b> — dưới tên node có biểu tượng tháng
+      nhắc việc. Người chỉ xem thấy sự kiện nhưng không thêm được.
+    </div>
+  </div>
+
+  <div class="wf-tabpanel" data-panel="all" hidden>
+    <div class="wf-table-wrap">
+      <table class="wf-table">
+        <thead><tr><th>Ngày</th><th>Sự kiện</th><th>Gắn với</th><th>Người tạo</th><th></th></tr></thead>
+        <tbody id="rows2"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="wf-tabpanel" data-panel="new" hidden>
+    <div class="wf-split">
+      <div class="wf-card">
+        <h2>Thêm sự kiện</h2>
+        <div class="wf-field">
+          <label>Tên sự kiện <span style="color:var(--danger)">*</span></label>
+          <input class="wf-input" id="eTitle" value="Giỗ ông Nguyễn Văn Cường">
+        </div>
+        <div class="wf-grid c2" style="gap:0 12px">
+          <div class="wf-field">
+            <label>Ngày</label>
+            <input class="wf-input" type="date" value="2026-10-18">
+          </div>
+          <div class="wf-field">
+            <label>Loại</label>
+            <select class="wf-select"><option>Giỗ / kỷ niệm</option><option>Sinh nhật</option><option>Cưới</option><option>Tết / lễ tết</option><option>Khác</option></select>
+          </div>
+        </div>
+        <div class="wf-field">
+          <label>Gắn với thành viên</label>
+          <select class="wf-select" id="eMember" onchange="hint()">
+            <option value="">— Sự kiện chung, không gắn ai —</option>
+          </select>
+          <span class="hint" id="eHint"></span>
+        </div>
+        <div class="wf-field">
+          <label>Nhắc trước</label>
+          <select class="wf-select"><option>1 ngày</option><option>3 ngày</option><option>1 tuần</option></select>
+        </div>
+        <div class="wf-note warn">
+          <b>Không có danh sách khách mời.</b> Đừng ghi tên người tới dự vào ô ghi chú — dữ liệu đó không thuộc
+          sự kiện, và sẽ mất khi người ấy rời nhóm. Muốn ghi thì đưa họ vào cây trước, rồi gắn sự kiện.
+        </div>
+        <div class="wf-btn-row">
+          <button class="wf-btn primary" data-needs-perm="event.edit" onclick="add()">Thêm vào bản nháp</button>
+          <button class="wf-btn ghost" onclick="WF.toast('Huỷ — chưa ghi gì')">Huỷ</button>
+        </div>
+      </div>
+      <div class="wf-card flat">
+        <h3>Sự kiện thuộc về ai?</h3>
+        <p style="color:var(--ink-2);margin:0 0 8px">Sự kiện <b>thuộc về người tạo</b>, không thuộc về thành viên
+        được gắn. Xoá sự kiện thì chỉ người tạo hoặc CHỦ NHÓM xoá được; các sự kiện của người khác thì sửa thì ai
+        cũng sửa được — nhưng xoá thì không.</p>
+        <p class="wf-mb0" style="color:var(--ink-2)">Biểu tượng ở node chỉ là lối vào nhanh. Không gắn thì sự kiện
+        vẫn tồn tại, chỉ không hiện trên cây.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="wf-foot">
+    <b>Nguồn.</b> Quy trình §11 (sự kiện gắn với thành viên, thuộc về người tạo, danh sách sắp tới) · phạm vi thêm §9 (bộ chọn thành viên trong biểu mẫu, biểu tượng ở node) · phạm vi thêm §10 <b>đã cắt khỏi phạm vi</b> (danh sách khách mời sự kiện).
+  </footer>
+</main>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>
+  function row(e, editable) {
+    var m = e.familyMemberId ? MOCK.memberById(e.familyMemberId) : null;
+    return '<tr><td><b>' + e.date + "</b></td><td>" + WF.esc(e.title) + "</td>" +
+      "<td>" + (m ? WF.esc(m.fullName) + ' <span class="wf-badge">đời ' + m.generation + "</span>" : '<span style="color:var(--muted)">chung</span>') + "</td>" +
+      "<td>" + MOCK.userById(e.createdById) + "</td>" +
+      '<td class="actions">' +
+      '<button class="wf-btn sm" onclick="WF.toast(\'Chi tiết sự kiện\')">Xem</button> ' +
+      (editable ? '<button class="wf-btn sm" onclick="WF.toast(\'Sửa — sẽ ghi vào bản nháp\')">Sửa</button> <button class="wf-btn sm danger" onclick="WF.toast(\'Chỉ người tạo hoặc CHỦ NHÓM mới xoá được\',\'err\')">Xoá</button>' : "") +
+      "</td></tr>";
+  }
+  function render() {
+    var canEdit = WF.can("event.edit");
+    var all = MOCK.events.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    var today = "2026-09-27";
+    var up = all.filter(function (e) { return e.date >= today; });
+    WF.qs("#rows").innerHTML = (up.length ? up : all).map(function (e) { return row(e, canEdit); }).join("");
+    WF.qs("#rows2").innerHTML = all.map(function (e) { return row(e, canEdit); }).join("");
+    if (!WF.qs("#eMember").dataset.filled) {
+      WF.qs("#eMember").insertAdjacentHTML("beforeend", MOCK.members.map(function (m) {
+        return '<option value="' + m.id + '">' + WF.esc(m.fullName) + " · đời " + m.generation + (m.deceased ? " (đã mất)" : "") + "</option>";
+      }).join(""));
+      WF.qs("#eMember").dataset.filled = "1";
+    }
+  }
+  function hint() {
+    var v = WF.qs("#eMember").value;
+    WF.qs("#eHint").textContent = v
+      ? "Sự kiện sẽ hiện ở node " + MOCK.memberById(v).fullName + " trên sơ đồ, kèm biểu tượng nhắc."
+      : "Sự kiện chung của cả nhóm — không hiện trên node nào, vẫn có trong danh sách sắp tới.";
+  }
+  function add() {
+    var t = WF.qs("#eTitle").value.trim();
+    if (!t) { WF.toast("Chưa nhập tên sự kiện.", "err"); return; }
+    var v = WF.qs("#eMember").value;
+    MOCK.events.push({ id: "eMoi", title: t, date: "2026-10-18", type: "OTHER", familyMemberId: v || null, createdById: MOCK.me.id });
+    render(); hint();
+    WF.toast("Đã thêm vào bản nháp. Bấm Lưu ở màn hình cây.", "ok");
+  }
+
+  render(); hint();
+  window.wfOnRole = function () { render(); hint(); };
+  WF.wireTabs(".wf-tabs");
+</script>
+</body>
+</html>

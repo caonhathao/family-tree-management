@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>07 · Thêm / sửa thành viên</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">07 · Thêm / sửa thành viên</span>
+  <span class="wf-bar-route">hộp thoại trong /group</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-role">Vai trò <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main">
+  <div class="wf-head">
+    <h1>Thành viên</h1>
+    <p class="sub">Cùng một hộp thoại cho thêm mới và sửa. Chỉ chủ nhóm và biên tập viên mở được; xem thì chỉ đọc.</p>
+  </div>
+
+  <div class="wf-tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="add">Thêm mới</button>
+    <button role="tab" aria-selected="false" data-tab="edit">Sửa thành viên có sẵn</button>
+  </div>
+
+  <!-- THÊM MỚI -->
+  <div class="wf-tabpanel" data-panel="add">
+    <div class="wf-split">
+      <div class="wf-card">
+        <h2>Thêm thành viên</h2>
+        <div class="wf-field">
+          <label>Họ và tên <span style="color:var(--danger)">*</span></label>
+          <input class="wf-input" id="nm" value="" placeholder="Ví dụ: Nguyễn Văn An">
+        </div>
+        <div class="wf-grid c2" style="gap:0 12px">
+          <div class="wf-field">
+            <label>Giới tính</label>
+            <select class="wf-select"><option>Nam</option><option>Nữ</option><option>Khác</option><option>Không muốn nói</option></select>
+          </div>
+          <div class="wf-field">
+            <label>Đời thứ mấy</label>
+            <select class="wf-select" id="gen">
+              <option value="1">1 — Ông bà tôi</option>
+              <option value="2" selected>2 — Bố mẹ tôi</option>
+              <option value="3">3 — Tôi</option>
+              <option value="4">4 — Con tôi</option>
+            </select>
+            <span class="hint">Đổi đời sẽ kéo theo các quan hệ bên dưới.</span>
+          </div>
+        </div>
+        <div class="wf-grid c2" style="gap:0 12px">
+          <div class="wf-field">
+            <label>Ngày sinh</label>
+            <input class="wf-input" type="date">
+          </div>
+          <div class="wf-field">
+            <label>Ngày mất</label>
+            <input class="wf-input" type="date" id="death">
+          </div>
+        </div>
+        <div class="wf-field">
+          <label>Cha / Mẹ</label>
+          <select class="wf-select" id="par">
+            <option value="">— Chưa biết —</option>
+            <option>Nguyễn Văn An · Đời 1</option>
+            <option>Trần Thị Bà · Đời 1</option>
+            <option>Nguyễn Văn Bình · Đời 2</option>
+            <option>Nguyễn Văn Cường · Đời 2</option>
+          </select>
+          <span class="hint">Quan hệ cha/mẹ hiển thị <b>một chiều</b> khi bạn chọn; người kia <b>tự thấy</b> quan hệ trong lịch sử khi mở từ phía họ. Bạn không cần chọn hai lần.</span>
+        </div>
+        <div class="wf-field">
+          <label>Ghi chú</label>
+          <textarea class="wf-textarea" placeholder="Nghề nghiệp, quê quán, chuyện vui…"></textarea>
+        </div>
+
+        <div class="wf-note rule">
+          <b>Ghim ảnh của tôi vào node này.</b>
+          <div class="wf-row" style="margin-top:8px">
+            <button class="wf-btn" id="pinBtn" onclick="pin()">🖼 Gắn ảnh của tôi vào node này</button>
+            <span class="wf-badge" id="pinState">chưa ghim</span>
+          </div>
+          <p style="margin:8px 0 0;font-size:12.5px">Lấy <b>ảnh hồ sơ của bạn</b> tại đúng thời điểm bạn bấm, rồi lưu một bản chụp vào node. Sau này bạn đổi ảnh hồ sơ thì node này <b>không</b> đổi theo. Bạn có thể ghim cho chính mình ở bất kỳ node nào, không cần quyền riêng.</p>
+        </div>
+
+        <div class="wf-btn-row">
+          <button class="wf-btn primary" onclick="add()">Thêm vào bản nháp</button>
+          <button class="wf-btn ghost" onclick="location.href='s06-tree-canvas.html'">Huỷ</button>
+        </div>
+        <p class="wf-mb0" style="color:var(--muted);font-size:12.5px;margin:10px 0 0">Thêm xong <b>chưa</b> có gì được ghi. Phải bấm <b>Lưu</b> ở màn hình cây thì mới thành.</p>
+      </div>
+
+      <div class="wf-stack">
+        <div class="wf-card flat">
+          <h3>Vì sao không lưu ngay ở đây?</h3>
+          <p style="color:var(--ink-2);margin:0">Người dùng thường thêm một lô người rồi mới sửa. Lưu từng người
+          sẽ tạo nhiều phiên bản và nhiều dòng lịch sử rác. Một lần bấm <b>Lưu</b> ở màn hình cây gom tất cả
+          lại thành một thay đổi duy nhất, thành công thì tất cả, thất bại thì không có gì cả.</p>
+        </div>
+        <div class="wf-card flat">
+          <h3>Kiểm tra trùng tên</h3>
+          <p style="color:var(--ink-2);margin:0 0 8px">Trong cây này đã có <b>Nguyễn Văn Cường</b> (đời 2) và
+          <b>Nguyễn Văn Cường</b> (đời 3). Trùng tên là chuyện bình thường trong gia đình, nên <b>không</b> chặn —
+          chỉ nhắc.</p>
+          <div class="wf-note warn wf-mb0">Cả hai đều được giữ. Không có bước "gộp trùng".</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SỬA -->
+  <div class="wf-tabpanel" data-panel="edit" hidden>
+    <div class="wf-card wf-narrow" style="margin:0 auto">
+      <h2>Sửa Nguyễn Thu Hà</h2>
+      <div class="wf-field"><label>Họ và tên</label><input class="wf-input" value="Nguyễn Thu Hà"></div>
+      <div class="wf-field"><label>Ngày sinh</label><input class="wf-input" type="date" value="1997-02-27"></div>
+      <div class="wf-field"><label>Cha / Mẹ</label><select class="wf-select"><option>Nguyễn Văn Bình (đời 2)</option><option>Trần Thị Cúc (đời 2)</option></select></div>
+      <div class="wf-field"><label>Ghi chú</label><textarea class="wf-textarea">Kế toán, hiện làm ở Hà Nội.</textarea></div>
+      <div class="wf-note danger">
+        <b>Xoá thành viên là xoá mềm, không xoá hẳn.</b> Người đó và các quan hệ của họ rơi vào thùng rác cây và
+        khôi phục được trong 30 ngày — kèm cả quan hệ bị kéo theo. Xem màn 10.
+      </div>
+      <div class="wf-btn-row">
+        <button class="wf-btn primary" onclick="location.href='s06-tree-canvas.html'">Lưu vào bản nháp</button>
+        <button class="wf-btn danger" onclick="location.href='s10-trash.html'">Xoá thành viên</button>
+        <button class="wf-btn ghost" onclick="location.href='s06-tree-canvas.html'">Huỷ</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="wf-foot">
+    <b>Nguồn.</b> Quy trình §3 (thêm thành viên, thêm quan hệ) · phạm vi thêm §4 (ghim ảnh hồ sơ, nhãn nút đổi từ "đánh dấu tôi" sang "gắn ảnh của tôi vào node này") · phạm vi sửa §5 (quan hệ gửi một chiều, đọc hai chiều).
+  </footer>
+</main>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>
+  WF.wireTabs(".wf-tabs");
+  function pin() {
+    var b = WF.qs("#pinBtn"), s = WF.qs("#pinState");
+    if (b.dataset.on) {
+      b.dataset.on = ""; b.classList.remove("primary");
+      s.className = "wf-badge"; s.textContent = "chưa ghim";
+      WF.toast("Đã bỏ ghim ảnh khỏi node này.");
+    } else {
+      b.dataset.on = "1"; b.classList.add("primary");
+      s.className = "wf-badge ok"; s.textContent = "đã chụp ảnh hồ sơ · photoId ph1";
+      WF.toast("Đã chụp ảnh hồ sơ của bạn (photoId ph1). Đổi ảnh hồ sơ sau này không ảnh hưởng node này.", "ok");
+    }
+  }
+  function add() {
+    var n = WF.qs("#nm").value.trim();
+    if (!n) { WF.toast("Chưa nhập họ tên.", "err"); return; }
+    WF.toast("Đã thêm \"" + n + "\" vào bản nháp. Bấm Lưu ở màn hình cây.", "ok");
+  }
+</script>
+</body>
+</html>

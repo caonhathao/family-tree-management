@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>05 · Tạo nhóm và cây mới — /invite</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">05 · Tạo nhóm và cây mới</span>
+  <span class="wf-bar-route">/invite (không có token)</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-role">Vai trò <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main">
+  <div class="wf-narrow">
+    <div class="wf-head" style="text-align:center">
+      <h1>Tạo cây gia đình của bạn</h1>
+      <p class="sub">Chỉ cần tên. Bạn có thể đổi sau.</p>
+    </div>
+
+    <div class="wf-card" style="padding:24px">
+      <div class="wf-field">
+        <label>Tên nhóm</label>
+        <input class="wf-input" id="gname" value="Nhà họ Nguyễn – Trần" oninput="preview()">
+        <span class="hint">Tên này hiện trên link mời và trên màn hình cây. Có thể đổi về sau nếu bạn có quyền SỬA.</span>
+      </div>
+      <div class="wf-field">
+        <label>Tên cây</label>
+        <input class="wf-input" id="tname" value="Gia đình họ Nguyễn" oninput="preview()">
+        <span class="hint">Để trống thì dùng luôn tên nhóm.</span>
+      </div>
+
+      <div class="wf-note">
+        <b>Bạn sẽ là CHỦ NHÓM</b> của cây vừa tạo. Tài khoản này có thể thêm, sửa, xoá thành viên và quan hệ;
+        đổi vai trò người khác; chuyển quyền sở hữu; tạo link chia sẻ.
+      </div>
+
+      <div id="pv" class="wf-note rule wf-mb0" style="margin-bottom:14px"></div>
+
+      <button class="wf-btn primary" style="width:100%" onclick="create()">Tạo cây</button>
+      <p style="text-align:center;margin:12px 0 0;font-size:13px">Có link mời của người khác? <a href="s02-register-invite-fork.html">Vào bằng link mời</a></p>
+    </div>
+
+    <div class="wf-note warn wf-mt">
+      <b>Một tài khoản chỉ có một cây.</b> Nếu tài khoản đã có cây rồi mà gọi tạo mới, phía máy chủ trả về lỗi
+      <span class="mono">409</span> và cây cũ giữ nguyên. Màn hình này không cần xử lý trường hợp đó bằng cách
+      cho xoá cây — muốn bỏ thì xoá tài khoản (xem màn 16), ảnh sẽ chuyển sang CHỦ NHÓM của nhóm.
+    </div>
+  </div>
+
+  <footer class="wf-foot wf-narrow" style="padding-left:0;padding-right:0">
+    <b>Nguồn.</b> Quy trình §2 (nhánh tạo cây riêng, trở thành CHỦ NHÓM) · quyết định Q16 (một tài khoản một cây, bỏ danh sách nhóm và rời nhóm) · phạm vi sửa §6 (đổi vai trò theo <span class="mono">MEMBER_ROLE.OWNER</span>).
+  </footer>
+</main>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>
+  function preview() {
+    var g = WF.qs("#gname").value.trim() || "(chưa đặt tên nhóm)";
+    var t = WF.qs("#tname").value.trim() || g;
+    WF.qs("#pv").innerHTML = "Link mời sẽ trỏ tới cây <b>" + WF.esc(t) + "</b> trong nhóm <b>" + WF.esc(g) + "</b>. Người nhận vào với quyền Xem và hạn 7 ngày.";
+  }
+  function create() {
+    preview();
+    WF.toast("Đã tạo — bạn là CHỦ NHÓM. Đi tới màn hình cây.", "ok");
+    setTimeout(function () { location.href = "s06-tree-canvas.html"; }, 900);
+  }
+  preview();
+</script>
+</body>
+</html>

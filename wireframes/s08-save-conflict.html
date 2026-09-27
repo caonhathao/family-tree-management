@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>08 · Lưu và xung đột 409</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+<style>
+  #conflictBar { border-color:#f2d3a8; background:var(--warn-weak); }
+</style>
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">08 · Lưu và xung đột</span>
+  <span class="wf-bar-route">bấm Lưu ở /group</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-role">Vai trò <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main">
+  <div class="wf-head">
+    <h1>Một lần bấm Lưu, tất cả hoặc không gì cả</h1>
+    <p class="sub">Bản nháp của bạn và bản trên máy chủ đang ở hai phiên bản khác nhau.</p>
+  </div>
+
+  <div class="wf-grid c2">
+    <!-- trái: thay đổi của tôi -->
+    <div class="wf-card">
+      <h2>Thay đổi chưa lưu của bạn</h2>
+      <p style="color:var(--muted);font-size:13px">Máy chủ đang ở bản <b>42</b>. Bạn đang sửa từ bản <b>41</b>.</p>
+      <div id="myList" class="wf-stack"></div>
+      <div class="wf-btn-row wf-mt">
+        <button class="wf-btn primary" data-needs-perm="layout.save" onclick="attemptSave()">Lưu</button>
+        <button class="wf-btn ghost" onclick="addDirty()">Thêm một thay đổi nữa</button>
+      </div>
+      <div class="wf-note wf-mt wf-mb0">Bấm <b>Lưu</b> gửi tất cả thay đổi này trong <b>một</b> giao dịch, kèm số bản mong đợi
+      <span class="mono">41</span>. Máy chủ so với <span class="mono">42</span> và từ chối toàn bộ nếu lệch.</div>
+    </div>
+
+    <!-- phải: trạng thái -->
+    <div class="wf-stack">
+      <div class="wf-card" id="conflictBar" hidden>
+        <h2 style="color:var(--warn)">Có người vừa lưu trước bạn</h2>
+        <p style="color:var(--ink-2)">Bản 42 đã có <b>Nguyễn Văn Cường</b> thay đổi lúc 21:14 hôm nay. Bạn đang sửa từ
+        bản 41, nên bấm Lưu sẽ không ghi đè lên thay đổi của họ.</p>
+        <div class="wf-note warn wf-mb0">Hộp thoại này có thể đóng lại và mở lại. <b>Đóng không có nghĩa là huỷ
+        thay đổi của bạn</b> — bản nháp vẫn còn nguyên.</div>
+        <div class="wf-btn-row wf-mt">
+          <button class="wf-btn" onclick="WF.openDialog('dlgConflict')">Mở lại hộp thoại</button>
+        </div>
+      </div>
+
+      <div class="wf-card">
+        <h3>Thử xung đột</h3>
+        <p style="color:var(--ink-2);margin:0">Bấm nút dưới để giả lập việc có người khác vừa lưu, rồi bấm
+        <b>Lưu</b> để xem hộp thoại 409.</p>
+        <button class="wf-btn wf-mt" onclick="simulate()">Giả lập: có người vừa lưu</button>
+        <button class="wf-btn wf-mt" data-needs-perm="layout.save" onclick="forceClear()">Dọn sạch thay đổi (không cần xung đột)</button>
+      </div>
+
+      <div class="wf-card flat">
+        <h3>Hai điều tuyệt đối không làm</h3>
+        <ul style="color:var(--ink-2);padding-left:18px;margin:0">
+          <li><b>Không tự thử lại.</b> Tự gửi lại là lặp lại việc ghi đè dữ liệu của người khác, chỉ chậm hơn.</li>
+          <li><b>Không tự gộp.</b> Gộp máy là phân đoán ngầm về ý định của hai con người. Không làm thay họ.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <footer class="wf-foot">
+    <b>Nguồn.</b> Quy trình §6 (hai người cùng sửa, ba bước, không tự thử lại không tự gộp) · phạm vi thêm §12 (hộp thoại 409) · phạm vi sửa §1–§3 (ghi theo bản, <span class="mono">If-Match</span>).
+  </footer>
+</main>
+
+<!-- hộp thoại 409 -->
+<div class="wf-overlay" id="dlgConflict" hidden>
+  <div class="wf-dialog wide">
+    <header>
+      <h3>Bản của bạn cũ hơn bản trên máy chủ</h3>
+    </header>
+    <div class="content">
+      <div class="wf-steps">
+        <div class="wf-step"><span class="n">1</span><div>
+          <b>Họ đã đổi gì</b>
+          <div class="wf-diff wf-mt">
+            <div class="row"><span class="k">Nguyễn Thu Hà</span><span>Tên: <del>Nguyễn Thu Hà</del> <ins>Nguyễn Thu Hà (Hà 2)</ins></span></div>
+            <div class="row"><span class="k">Bố cục</span><span>Sắp xếp tự động + Lưu lúc 21:14</span></div>
+            <div class="row"><span class="k">Thành viên</span><span>Xoá Phạm Thị Dung — kéo theo 1 quan hệ</span></div>
+          </div>
+          <p style="margin:6px 0 0;font-size:12.5px;color:var(--muted)">Đọc từ lịch sử thay đổi (màn 09). Xem đầy đủ: <a href="s09-activity.html">mở lịch sử</a>.</p>
+        </div></div>
+        <div class="wf-step"><span class="n">2</span><div>
+          <b>Bạn đang muốn ghi gì</b>
+          <p style="margin:4px 0 0;color:var(--ink-2)"><b id="cCount">0</b> thay đổi chưa lưu trên máy bạn.</p>
+        </div></div>
+        <div class="wf-step"><span class="n muted">3</span><div>
+          <b>Chọn cách xử lý</b>
+          <p style="margin:4px 0 0;color:var(--muted);font-size:12.5px">Không có lựa chọn nào được chọn sẵn. Bạn phải bấm.</p>
+        </div></div>
+      </div>
+    </div>
+    <footer style="flex-wrap:wrap;justify-content:space-between">
+      <button class="wf-btn ghost" onclick="closeKeep()">Huỷ, giữ nguyên bản nháp</button>
+      <div class="wf-btn-row">
+        <button class="wf-btn" onclick="viewDiff()">Xem khác biệt đầy đủ</button>
+        <button class="wf-btn" onclick="keepMine()">Giữ của mình</button>
+        <button class="wf-btn danger" onclick="WF.openDialog('dlgOverwrite')">Ghi đè</button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- cảnh báo ghi đè -->
+<div class="wf-overlay" id="dlgOverwrite" hidden style="z-index:120">
+  <div class="wf-dialog">
+    <header><h3 style="color:var(--danger)">Ghi đè thay đổi của người khác</h3></header>
+    <div class="content">
+      <p style="color:var(--ink-2)">Toàn bộ bản 42 trên máy chủ sẽ bị thay bằng bản của bạn. Cụ thể là:</p>
+      <ul style="color:var(--danger);padding-left:18px">
+        <li>Tên "Nguyễn Thu Hà" đổi thành "Nguyễn Thu Hà (Hà 2)" sẽ <b>bị mất</b> — quay về "Nguyễn Thu Hà".</li>
+        <li>Bố cục do họ sắp xếp lúc 21:14 sẽ <b>bị thay</b>.</li>
+        <li>Phạm Thị Dung bị họ xoá sẽ <b>hiện lại</b> trong cây của bạn.</li>
+      </ul>
+      <div class="wf-note danger wf-mb0">Thay đổi của họ vẫn còn trong lịch sử, nhưng dữ liệu cây thì không. Chỉ bấm khi thực sự muốn.</div>
+    </div>
+    <footer>
+      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgOverwrite')">Quay lại</button>
+      <button class="wf-btn danger" onclick="overwrite()">Tôi hiểu, ghi đè</button>
+    </footer>
+  </div>
+</div>
+
+<!-- xem khác biệt -->
+<div class="wf-overlay" id="dlgDiff" hidden style="z-index:120">
+  <div class="wf-dialog wide">
+    <header><h3>Khác biệt giữa bản 42 và bản của bạn</h3></header>
+    <div class="content wf-scroll">
+      <table class="wf-table">
+        <thead><tr><th>Đối tượng</th><th>Máy chủ (bản 42)</th><th>Máy bạn</th><th>Giữ máy chủ</th><th>Giữ máy bạn</th></tr></thead>
+        <tbody id="diffBody"></tbody>
+      </table>
+      <div class="wf-note wf-mt wf-mb0">Chọn từng dòng để giữ lại một bên. Không chọn dòng nào nghĩa là giữ bản máy chủ.</div>
+    </div>
+    <footer>
+      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgDiff')">Đóng</button>
+      <button class="wf-btn primary" onclick="applyDiff()">Áp dụng lựa chọn</button>
+    </footer>
+  </div>
+</div>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>
+  var dirty = [
+    { t: "Thành viên mới", d: "Thêm Phạm Gia Bảo (đời 4, cha/mẹ: Nguyễn Thu Hà)" },
+    { t: "Thành viên", d: "Nguyễn Văn Bình — đổi ngày sinh 1968-05-20 → 1968-05-21" },
+    { t: "Quan hệ", d: "Gỡ quan hệ vợ chồng Nguyễn Văn Cường ↔ Phạm Thị Dung" },
+    { t: "Ảnh node", d: "Gắn ph2 vào node Nguyễn Thu Hà" },
+    { t: "Bố cục", d: "Kéo 3 node, sắp xếp tự động" }
+  ];
+  var conflicted = false;
+
+  function renderMine() {
+    WF.qs("#myList").innerHTML = dirty.map(function (d, i) {
+      return '<div class="wf-note" style="margin:0"><b>' + WF.esc(d.t) + "</b><br>" + WF.esc(d.d) + "</div>";
+    }).join("") || '<div class="wf-empty" style="padding:18px">Không có thay đổi nào.</div>';
+    WF.qs("#cCount").textContent = dirty.length;
+  }
+  function addDirty() {
+    dirty.push({ t: "Thành viên", d: "Nguyễn Thu Hà (Hà 2) — thêm ghi chú" });
+    renderMine(); WF.toast("Đã thêm vào bản nháp.");
+  }
+  function simulate() { conflicted = true; WF.qs("#conflictBar").hidden = false; WF.toast("Bản 42 đã đổi. Bấm Lưu để xem 409.", "err"); }
+  function attemptSave() {
+    if (!dirty.length) { WF.toast("Không có gì để lưu."); return; }
+    if (conflicted) { WF.openDialog("dlgConflict"); return; }
+    forceClear();
+  }
+  function forceClear() { dirty = []; renderMine(); conflicted = false; WF.qs("#conflictBar").hidden = true; WF.toast("Đã lưu. Bản 43.", "ok"); }
+
+  function closeKeep() { WF.closeDialog("dlgConflict"); WF.toast("Bản nháp vẫn còn. Bấm Lưu lúc nào cũng được."); }
+  function keepMine() { WF.closeDialog("dlgConflict"); dirty = []; renderMine(); WF.toast("Đã ghi bản của bạn lên bản 43. Thay đổi của họ vẫn nằm trong lịch sử.", "ok"); }
+  function overwrite() { WF.closeDialog("dlgOverwrite"); WF.closeDialog("dlgConflict"); forceClear(); WF.toast("Đã ghi đè. Bản 43 là của bạn.", "ok"); }
+
+  function viewDiff() {
+    WF.qs("#diffBody").innerHTML = [
+      ["Tên Nguyễn Thu Hà", "Nguyễn Thu Hà (Hà 2)", "Nguyễn Thu Hà"],
+      ["Ngày sinh Nguyễn Văn Bình", "1968-05-21", "1968-05-21"],
+      ["Phạm Thị Dung", "đã xoá", "đang có"],
+      ["Bố cục", "xếp tự động 21:14", "xếp theo tôi"]
+    ].map(function (r, i) {
+      return "<tr><td>" + r[0] + "</td><td>" + r[1] + '</td><td><input type="radio" name="d' + i + '" value="server"></td>' +
+        '<td><input type="radio" name="d' + i + '" value="mine" checked></td></tr>';
+    }).join("").replace(/<\/tr><tr>/g, "</tr><tr>");
+    WF.qs("#dlgDiff").hidden = false;
+  }
+  function applyDiff() { WF.closeDialog("dlgDiff"); forceClear(); WF.toast("Đã áp dụng lựa chọn. Bản 43.", "ok"); }
+
+  renderMine();
+</script>
+</body>
+</html>

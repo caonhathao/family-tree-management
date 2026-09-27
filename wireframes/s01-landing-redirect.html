@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>01 · Màn chuyển hướng — /</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">01 · Màn chuyển hướng</span>
+  <span class="wf-bar-route">/</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-role">Vai trò <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main">
+  <div class="wf-head">
+    <h1>Mở trang chủ <span class="mono" style="color:var(--muted)">/</span></h1>
+    <p class="sub">Trang này không vẽ gì cả. Nó chỉ quyết định đưa người dùng đi đâu.</p>
+  </div>
+
+  <div class="wf-note rule">
+    <b>Quy tắc.</b> Trang chủ phải <b>chuyển hướng</b>, không được in dòng lỗi tại chỗ. Trước đây khi vào
+    <span class="mono">/group</span> mà thiếu <span class="mono">groupId</span>, trang hiện thông báo lỗi
+    ngay giữa màn hình và người dùng không biết phải làm gì tiếp. Sau khi sửa, cả <span class="mono">/</span>
+    và <span class="mono">/group</span> đều chuyển hướng.
+  </div>
+
+  <div class="wf-card">
+    <h2>Chọn trạng thái để xem nó chuyển đi đâu</h2>
+    <p style="color:var(--ink-2)">Dữ liệu giả: công tắc vai trò ở góc trên chưa quyết định việc này — trang chủ
+    chỉ quan tâm bạn <b>đã đăng nhập</b> hay <b>chưa</b>.</p>
+    <div class="wf-row" style="margin-top:12px">
+      <button class="wf-btn primary" onclick="go('yes')">Đã đăng nhập → có phiên cookie</button>
+      <button class="wf-btn" onclick="go('no')">Chưa đăng nhập</button>
+      <button class="wf-btn" onclick="go('pending')">Đã có token nhưng token hết hạn</button>
+    </div>
+    <div id="out" class="wf-stack wf-mt"></div>
+  </div>
+
+  <div class="wf-grid c2 wf-mt">
+    <div class="wf-card flat">
+      <h3>Nhánh 1 — đã đăng nhập</h3>
+      <p style="color:var(--ink-2)">Đi thẳng tới cây của tài khoản. Một tài khoản chỉ có một cây nên không có bước
+      "chọn nhóm".</p>
+      <p class="wf-mb0"><a href="s06-tree-canvas.html">Mở màn 06 · Màn hình cây →</a></p>
+    </div>
+    <div class="wf-card flat">
+      <h3>Nhánh 2 — chưa đăng nhập</h3>
+      <p style="color:var(--ink-2)">Tới trang đăng nhập. Nếu vào bằng link mời thì trang đăng nhập phải giữ lại
+      <span class="mono">?token=</span> để chuyển tiếp sang nhánh mời.</p>
+      <p class="wf-mb0"><a href="s03-login.html">Mở màn 03 · Đăng nhập →</a></p>
+    </div>
+  </div>
+
+  <footer class="wf-foot">
+    <b>Nguồn.</b> Quy trình §2 (đăng ký hai nhánh) · phạm vi sửa §10 (chuyển hướng thay cho dòng lỗi tại chỗ).
+  </footer>
+</main>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>
+  function card(title, badge, body, link, linkText) {
+    return '<div class="wf-note ' + badge.cls + '"><b>' + title + '</b> ' + badge.txt +
+      '<br>' + body + (link ? '<br><a href="' + link + '">' + linkText + '</a>' : '') + '</div>';
+  }
+  function go(k) {
+    var out = WF.qs("#out");
+    if (k === "yes") {
+      out.innerHTML = card("Chuyển tới", { cls: "ok", txt: "200" },
+        "<span class='mono'>/group?groupId=g1</span> — dùng phiên cookie <span class='mono'>access_token</span> để xác thực ở proxy.",
+        "s06-tree-canvas.html", "Mở màn 06 · Màn hình cây →");
+    } else if (k === "no") {
+      out.innerHTML = card("Chuyển tới", { cls: "ok", txt: "307" },
+        "<span class='mono'>/auth</span> — không có <span class='mono'>?token=</span> nên không ghép vào nhánh mời nào.",
+        "s03-login.html", "Mở màn 03 · Đăng nhập →");
+    } else {
+      out.innerHTML = card("Chuyển tới", { cls: "danger", txt: "dừng lại" },
+        "Không chuyển tới đâu cả. Link mời hết hạn thì phải dừng và báo rõ — tuyệt đối không lặng lẽ tạo một cây riêng cho người lạ.",
+        "s02-register-invite-fork.html", "Xem màn 02 · Nhánh đăng ký theo link mời →");
+    }
+  }
+  go("yes");
+</script>
+</body>
+</html>

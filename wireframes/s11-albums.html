@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>11 · Album — /group/albums</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+<style>
+  .al-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap: 12px; }
+  .al { border: 1px solid var(--line); border-radius: 8px; background:#fff; padding: 10px; }
+  .al .cover { height: 84px; border-radius: 6px; background: linear-gradient(135deg,#eef0f4,#e2e6ec); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:11.5px; border:1px dashed var(--line-strong); }
+  .al h4 { margin: 8px 0 2px; text-transform: none; font-size: 13.5px; letter-spacing: 0; color: var(--ink); }
+  .al .sub { font-size: 11.5px; color: var(--muted); }
+  .al .acts { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">11 · Album</span>
+  <span class="wf-bar-route">/group/albums?groupId=g1</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-badge" data-role-label>—</span>
+  <span class="wf-role">Đang xem <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main">
+  <div class="wf-head">
+    <h1>Album</h1>
+    <p class="sub" id="sub"></p>
+  </div>
+
+  <div class="wf-note rule">
+    <b>Chủ album là người tạo ra nó.</b> Người tạo và CHỦ NHÓM được sửa, đổi tên, xoá. Biên tập viên và
+    người chỉ xem thì không — kể cả khi album nằm trong nhóm mà họ có quyền sửa cây. Sửa cây và sửa ảnh là hai
+    quyền khác nhau.
+  </div>
+
+  <div class="al-grid" id="albums"></div>
+
+  <div class="wf-btn-row wf-mt">
+    <button class="wf-btn primary" data-needs-perm="album.editOwn" onclick="newAlbum()">＋ Tạo album</button>
+    <button class="wf-btn" data-needs-perm="media.upload" onclick="WF.toast('Chọn nhiều ảnh cùng lúc — thanh tiến trình theo từng tệp','ok')">＋ Tải nhiều ảnh lên</button>
+    <span style="color:var(--muted);font-size:12.5px">Tệp tải lên lưu vào thư mục của nhóm; xoá tệp khỏi album cũng xoá tệp khỏi bộ nhớ đám mây.</span>
+  </div>
+
+  <div class="wf-card" style="margin-top:24px" id="photoCard">
+    <h2>Ảnh trong album</h2>
+    <div class="wf-media-grid" id="photos"></div>
+  </div>
+
+  <div class="wf-grid c2 wf-mt">
+    <div class="wf-note warn">
+      <b>Xoá album không phải xoá ảnh.</b> Chỉ những ảnh không còn nằm trong album nào khác mới bị xoá thật.
+      Ảnh nằm ở nhiều album vẫn còn nguyên ở album còn lại.
+    </div>
+    <div class="wf-note">
+      <b>Ẩn ảnh thì phải thấy dấu hiệu.</b> Ảnh bạn ẩn không biến mất khỏi album của bạn — nó ghi
+      <b>"Bạn đã ẩn ảnh này"</b> kèm nút <b>Hiện lại</b>. Người khác không thấy ảnh đó; CHỦ NHÓM vẫn thấy và hiện
+      lại được. Ẩn xong phải có một dòng trong lịch sử thay đổi.
+    </div>
+  </div>
+
+  <footer class="wf-foot">
+    <b>Nguồn.</b> Quy trình §8 (album, chủ album là người tạo, ẩn ảnh, xoá album không mất ảnh) · phạm vi thêm §8 (danh sách album, tải nhiều ảnh, gắn ảnh vào thành viên) · quyết định Q17 (quyền ảnh theo người tải) · phạm vi sửa §15 (<span class="mono">hiddenById</span> là một id duy nhất, không phải danh sách).
+  </footer>
+</main>
+
+<!-- gán ảnh cho thành viên -->
+<div class="wf-overlay" id="dlgAssign" hidden>
+  <div class="wf-dialog wide">
+    <header><h3>Gắn ảnh vào node</h3></header>
+    <div class="content">
+      <p style="color:var(--ink-2)">Chọn thành viên sẽ hiện ảnh này ở node của họ. Dùng lại đúng tệp ảnh đó — không
+      tạo bản sao — nên xoá album sau vẫn không mất ảnh ở node.</p>
+      <div class="wf-field"><label>Thành viên</label><select class="wf-select" id="asMember"></select></div>
+      <div class="wf-note rule wf-mb0">Đây là thao tác trên <b>cây</b>, nên cần quyền SỬA cây. Việc xoá ảnh thì theo
+      luật của ảnh, không theo luật của cây.</div>
+    </div>
+    <footer>
+      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgAssign')">Huỷ</button>
+      <button class="wf-btn primary" data-needs-perm="nodePhoto.assign" onclick="doAssign()">Gắn vào node</button>
+    </footer>
+  </div>
+</div>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>
+  /* Vai trò toàn cục ánh xạ sang tài khoản thật trong nhóm, để luật sở hữu hiện ra đúng. */
+  var WHO = { owner: "u1", editor: "u2", viewer: "u4", guest: null, anon: null };
+  function whoAm() { return WHO[WF.getRole()]; }
+  function isGroupOwner() { return WF.getRole() === "owner"; }
+  function canEditAlbum(a) {
+    var w = whoAm();
+    if (!w) return false;
+    return a.createdById === w || isGroupOwner();
+  }
+
+  function renderAlbums() {
+    var r = WF.getRole();
+    WF.qs("#sub").innerHTML = r === "guest"
+      ? "Bạn đang xem qua link chia sẻ: chỉ thấy album nào nhóm cho chia sẻ, và không sửa được gì."
+      : "Quyền sửa album: người tạo và CHỦ NHÓM. Album không có chủ thì không tồn tại.";
+    var list = MOCK.albums.filter(function (a) { return r !== "guest" || a.shared; });
+    WF.qs("#albums").innerHTML = list.map(function (a) {
+      var mine = canEditAlbum(a);
+      return '<div class="al"><div class="cover">bìa album</div><h4>' + WF.esc(a.name) + "</h4>" +
+        '<div class="sub">' + a.photos + " ảnh · tạo bởi " + MOCK.userById(a.createdById) + "</div>" +
+        (a.shared ? '<div class="sub"><span class="wf-badge ok">chia sẻ công khai</span></div>' : '<div class="sub"><span class="wf-badge">riêng tư</span></div>') +
+        '<div class="acts">' +
+        '<button class="wf-btn sm" onclick="openAlbum(\'' + a.id + '\')">Xem ảnh</button>' +
+        (mine ? '<button class="wf-btn sm" onclick="rename(\'' + a.id + '\')">Đổi tên</button>' +
+          '<button class="wf-btn sm" onclick="toggleShare(\'' + a.id + '\')">' + (a.shared ? "Tắt chia sẻ" : "Cho chia sẻ") + "</button>" +
+          '<button class="wf-btn sm danger" onclick="del(\'' + a.id + '\')">Xoá</button>'
+          : '<span class="wf-badge" title="Bạn không phải người tạo và không phải CHỦ NHÓM">chỉ xem</span>') +
+        "</div></div>";
+    }).join("");
+  }
+
+  function visiblePhotos(albumId) {
+    var w = whoAm();
+    return MOCK.photos.filter(function (p) {
+      if (p.albumId !== albumId) return false;
+      if (p.hiddenById && p.hiddenById !== w && !isGroupOwner()) return false;   /* ẩn = người khác không thấy */
+      if (WF.getRole() === "guest" && !p.shared) return false;
+      return true;
+    });
+  }
+
+  function renderPhotos(albumId) {
+    var list = visiblePhotos(albumId);
+    WF.qs("#photoCard").hidden = !albumId;
+    if (!albumId) return;
+    WF.qs("#photos").innerHTML = list.map(function (p) {
+      var w = whoAm();
+      var mineHidden = p.hiddenById && p.hiddenById === w;
+      var canUnhide = p.hiddenById && (p.hiddenById === w || isGroupOwner());
+      return '<div class="wf-media"><div class="ph">' + WF.esc(p.name) + "</div>" +
+        '<div class="cap">' + WF.esc(p.name) + "</div>" +
+        '<div class="by">' + MOCK.userById(p.byUserId) + "</div>" +
+        (p.hiddenById ? '<div class="hidden-tag"><span class="wf-badge warn">' +
+          (mineHidden ? "Bạn đã ẩn ảnh này" : "Đã ẩn bởi " + MOCK.userById(p.hiddenById)) +
+          "</span></div>" : "") +
+        '<div class="acts" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">' +
+        (canUnhide ? '<button class="wf-btn sm" onclick="unhide(\'' + p.id + '\')">Hiện lại</button>' : "") +
+        '<button class="wf-btn sm" data-needs-perm="nodePhoto.assign" onclick="assign(\'' + p.id + '\')">Gắn vào node</button>' +
+        '<button class="wf-btn sm" onclick="hide(\'' + p.id + '\')">' + (p.hiddenById ? "Ẩn tiếp" : "Ẩn") + "</button>" +
+        '<button class="wf-btn sm danger" onclick="delPhoto(\'' + p.id + '\')">Xoá</button>' +
+        "</div></div>";
+    }).join("") || '<div class="wf-empty" style="grid-column:1/-1"><div class="big">Album trống</div>Chưa có ảnh nào, hoặc mọi ảnh đều đang bị ẩn với bạn.</div>';
+    WF.applyRole();
+  }
+
+  var cur = "al1";
+  function openAlbum(id) { cur = id; renderPhotos(id); WF.qs("#photoCard").scrollIntoView({ block: "nearest" }); }
+  function rename(id) { var a = MOCK.albums.filter(function (x) { return x.id === id; })[0]; a.name = a.name + " (đã sửa)"; renderAlbums(); WF.toast("Đã đổi tên album.", "ok"); }
+  function toggleShare(id) {
+    var a = MOCK.albums.filter(function (x) { return x.id === id; })[0];
+    a.shared = !a.shared; renderAlbums();
+    WF.toast(a.shared ? "Album đã hiện trong link chia sẻ." : "Album đã ẩn khỏi link chia sẻ.");
+  }
+  function del(id) {
+    var a = MOCK.albums.filter(function (x) { return x.id === id; })[0];
+    var n = MOCK.photos.filter(function (p) { return p.albumId === id; }).length;
+    var keep = n > 0 ? " Giữ nguyên " + n + " tệp ảnh vì chúng vẫn nằm ở album khác? Không — chỉ ảnh nào không còn album nào chứa mới bị xoá thật." : "";
+    if (confirm("Xoá album \"" + a.name + "\"?" + keep + "\n\nCó thể khôi phục trong 30 ngày.")) {
+      MOCK.albums = MOCK.albums.filter(function (x) { return x.id !== id; });
+      renderAlbums(); renderPhotos(cur); WF.toast("Album đã vào thùng rác ảnh của " + MOCK.userById(a.createdById) + ".");
+    }
+  }
+  function hide(pid) {
+    var p = MOCK.photos.filter(function (x) { return x.id === pid; })[0];
+    p.hiddenById = p.hiddenById ? null : whoAm();
+    renderPhotos(cur);
+    WF.toast(p.hiddenById ? "Đã ẩn — người khác không thấy ảnh này nữa." : "Đã hiện lại ảnh.", p.hiddenById ? "" : "ok");
+  }
+  function unhide(pid) { var p = MOCK.photos.filter(function (x) { return x.id === pid; })[0]; p.hiddenById = null; renderPhotos(cur); WF.toast("Đã hiện lại ảnh.", "ok"); }
+  function delPhoto(pid) {
+    var p = MOCK.photos.filter(function (x) { return x.id === pid; })[0];
+    MOCK.photos = MOCK.photos.filter(function (x) { return x.id !== pid; });
+    renderPhotos(cur); WF.toast("Ảnh đã vào thùng rác ảnh của bạn.");
+  }
+  function assign(pid) {
+    WF.qs("#asMember").innerHTML = MOCK.members.map(function (m) {
+      return '<option value="' + m.id + '"' + (m.photoId === pid ? " selected" : "") + ">" + WF.esc(m.fullName) + " · đời " + m.generation + "</option>";
+    }).join("");
+    WF.qs("#asMember").dataset.pid = pid;
+    WF.openDialog("dlgAssign");
+  }
+  function doAssign() {
+    var pid = WF.qs("#asMember").dataset.pid, mid = WF.qs("#asMember").value;
+    var m = MOCK.members.filter(function (x) { return x.id === mid; })[0];
+    m.photoId = pid; m.pinnedMemberId = null;
+    WF.closeDialog("dlgAssign"); renderPhotos(cur);
+    WF.toast("Ảnh đã hiện ở node " + m.fullName + " (dùng lại tệp, không tạo bản sao).", "ok");
+  }
+  function newAlbum() {
+    MOCK.albums.push({ id: "alMoi", name: "Album mới", createdById: whoAm(), createdAt: "2026-09-27", photos: 0, shared: false });
+    renderAlbums(); WF.toast("Album mới đã tạo. Bạn là chủ album.", "ok");
+  }
+
+  renderAlbums(); renderPhotos(cur);
+  window.wfOnRole = function () { renderAlbums(); renderPhotos(cur); WF.applyRole(); };
+</script>
+</body>
+</html>

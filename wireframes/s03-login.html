@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>03 · Đăng nhập — /auth</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">03 · Đăng nhập</span>
+  <span class="wf-bar-route">/auth</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-role">Vai trò <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main">
+  <div class="wf-narrow">
+    <div class="wf-card" style="padding:26px">
+      <h1 style="text-align:center">Đăng nhập</h1>
+      <p style="text-align:center;color:var(--muted);margin-bottom:20px">Nhà họ Nguyễn – Trần</p>
+
+      <div class="wf-field">
+        <label>Email</label>
+        <input class="wf-input" id="em" value="ha.nguyen@example.com">
+      </div>
+      <div class="wf-field">
+        <label>Mật khẩu</label>
+        <input class="wf-input" type="password" value="••••••••">
+      </div>
+
+      <div class="wf-row" style="justify-content:space-between;margin:2px 0 16px">
+        <label style="font-size:13px;gap:7px" class="wf-row"><input type="checkbox"> Ghi nhớ đăng nhập</label>
+        <a href="s04-forgot-reset.html" style="font-size:13px">Quên mật khẩu?</a>
+      </div>
+
+      <button class="wf-btn primary" style="width:100%" onclick="WF.toast('Đăng nhập thành công → /group?groupId=g1','ok')">Đăng nhập</button>
+
+      <div id="alt" class="wf-stack wf-mt"></div>
+    </div>
+
+    <div class="wf-note rule wf-mt">
+      <b>Giữ lại token mời.</b> Khi vào <span class="mono">/invite?token=…</span> mà chưa đăng nhập, hệ thống
+      chuyển tới đây và phải <b>giữ nguyên</b> <span class="mono">?token=</span> trên URL. Đăng nhập xong phải quay
+      lại đúng nhánh mời, không phải vào thẳng cây của tài khoản.
+    </div>
+  </div>
+
+  <footer class="wf-foot wf-narrow" style="padding-left:0;padding-right:0">
+    <b>Nguồn.</b> Quy trình §2 (đăng ký hai nhánh) · phạm vi thêm §7 (đường dẫn quên mật khẩu trong màn đăng nhập).
+  </footer>
+</main>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>
+  /* Nếu URL có ?token= thì hiện nhánh giữ token — bằng chứng phải giữ nguyên token qua màn đăng nhập */
+  var hasToken = /token=/.test(location.search);
+  WF.qs("#alt").innerHTML = hasToken
+    ? '<div class="wf-note ok wf-mb0">Đang giữ <span class="mono">?token=8fTq2kZm</span> từ link mời. Đăng nhập xong sẽ vào cây của Nguyễn Thanh Hà với quyền Xem — <b>không</b> vào cây của tài khoản này.</div>'
+    : '<p style="text-align:center;margin:0;font-size:13px">Chưa có cây nào? <a href="s05-create-family.html">Tạo nhóm và cây mới</a></p>';
+</script>
+</body>
+</html>

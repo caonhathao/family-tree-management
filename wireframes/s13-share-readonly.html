@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>13 · Xem cây qua link — /share/[token]</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+<style>
+  #tree { height: 460px; }
+  .ro-bar { background: var(--surface); border:1px solid var(--line); border-radius:8px; padding:10px 14px; display:flex; gap:10px; align-items:center; margin-bottom:14px; }
+</style>
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">13 · Xem cây qua link</span>
+  <span class="wf-bar-route">/share/8fTq2kZm</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-badge warn">bạn đang xem với tư cách khách</span>
+  <span class="wf-role">Đổi vai trò <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main">
+  <div class="wf-head">
+    <h1>Nhà họ Nguyễn – Trần</h1>
+    <p class="sub">Chia sẻ bởi Nguyễn Thanh Hà · hết hạn 27/09/2026</p>
+  </div>
+
+  <div class="wf-note warn">
+    <b>Đây không phải màn hình cây của bạn.</b> Trang này dựng lại từ đầu chỉ với phần đọc. Ở trạng thái khách
+    mọi nút ghi đều <b>không tồn tại</b> — không phải bị ẩn bằng CSS cho vừa mắt. Chuyển công tắc vai trò sang
+    <b>OWNER</b> để thấy bản đầy đủ có đủ nút, rồi đổi lại <b>Khách</b> để thấy bản này trống các nút đó.
+  </div>
+
+  <div class="ro-bar">
+    <span class="wf-badge">Chỉ xem</span>
+    <span style="color:var(--ink-2);flex:1">Bạn đang xem thông qua một link chia sẻ, không cần đăng nhập.</span>
+    <a class="wf-btn" href="s03-login.html">Đăng nhập để sửa</a>
+  </div>
+
+  <div style="position:relative">
+    <div class="wf-stage" id="tree"><div class="wf-stage-inner"></div></div>
+    <div class="wf-stage-toolbar" style="left:12px;bottom:12px">
+      <button class="wf-btn sm" onclick="z(-1)">−</button>
+      <span class="wf-zoom" id="zl">100%</span>
+      <button class="wf-btn sm" onclick="z(1)">+</button>
+      <span style="color:var(--muted);font-size:12px;padding:0 6px">kéo qua kéo lại và phóng to đều được</span>
+    </div>
+  </div>
+
+  <div class="wf-grid c2 wf-mt">
+    <div class="wf-card">
+      <h2>Ảnh và album được chia sẻ</h2>
+      <div class="wf-media-grid" id="photos"></div>
+    </div>
+    <div class="wf-card">
+      <h2>Sự kiện sắp tới</h2>
+      <div id="events" class="wf-stack"></div>
+    </div>
+  </div>
+
+  <div class="wf-grid c2 wf-mt">
+    <div class="wf-note rule">
+      <b>Không có ở đây:</b> lịch sử thay đổi · thùng rác · ảnh đã bị ẩn · ảnh riêng tư · bảng điều khiển
+      bố cục · nút thêm thành viên · nút lưu · nút sắp xếp · nút gắn ảnh cho node.
+    </div>
+    <div class="wf-note">
+      <b>Vì sao phải tách thành hai phần.</b> Ẩn nút bằng CSS là ẩn <b>con trỏ</b>, không phải chặn
+      <b>hành động</b>. Trang đọc và trang sửa phải là hai thành phần khác nhau, và phía máy chủ phải từ chối
+      mọi lệnh ghi với người mở link. Nếu không, chỉ cần mở cửa sổ giao diện là ghi được vào cây.
+    </div>
+  </div>
+
+  <footer class="wf-foot">
+    <b>Nguồn.</b> Quy trình §9 (chia sẻ không cần tài khoản: thấy cây, ảnh và album chia sẻ, sự kiện; không có lịch sử, không thùng rác, không ghi) · phạm vi thêm §6 (trang chỉ đọc, phải tách thành phần chứ không chỉ ẩn nút).
+  </footer>
+</main>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>
+  var zoom = 1;
+  function draw() {
+    var list = MOCK.members.map(function (m) { return Object.assign({}, m); });
+    WF.renderTree("#tree", list, { draggable: false });
+    WF.qs(".wf-stage-inner").style.transform = "scale(" + zoom + ")";
+    WF.qs(".wf-stage-inner").style.transformOrigin = "0 0";
+    WF.qs("#zl").textContent = Math.round(zoom * 100) + "%";
+  }
+  function z(d) { zoom = Math.min(1.6, Math.max(0.6, +(zoom + d * 0.2).toFixed(2))); draw(); }
+
+  function renderSide() {
+    var r = WF.getRole();
+    var shared = r === "guest" || r === "anon";
+    WF.qs("#photos").innerHTML = MOCK.photos.filter(function (p) { return shared ? (p.shared && !p.hiddenById) : true; })
+      .map(function (p) {
+        return '<div class="wf-media"><div class="ph">' + WF.esc(p.name) + "</div><div class='cap'>" + WF.esc(p.name) + "</div>" +
+          (p.hiddenById ? '<div class="hidden-tag"><span class="wf-badge warn">Đã ẩn</span></div>' : "") + "</div>";
+      }).join("") || '<div class="wf-empty" style="grid-column:1/-1"><div class="big">Không có ảnh nào được chia sẻ</div></div>';
+    WF.qs("#events").innerHTML = MOCK.events.map(function (e) {
+      return '<div class="wf-note" style="margin:0"><b>' + e.date + "</b> · " + WF.esc(e.title) +
+        (e.familyMemberId ? ' <span class="wf-badge">gắn với ' + WF.esc(MOCK.memberById(e.familyMemberId).fullName) + "</span>" : "") + "</div>";
+    }).join("");
+  }
+
+  draw(); renderSide();
+  window.wfOnRole = function () { draw(); renderSide(); WF.applyRole(); };
+</script>
+</body>
+</html>

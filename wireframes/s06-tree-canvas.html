@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>06 · Màn hình cây — /group?groupId=</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+<style>
+  .wf-wrap { position: relative; }
+  #tree { height: 620px; }
+  .panel-search input { width: 100%; }
+  #zoomLabel { min-width: 46px; }
+</style>
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">06 · Màn hình cây</span>
+  <span class="wf-bar-route">/group?groupId=g1</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-badge accent" data-needs-perm="tree.edit">quyền sửa cây</span>
+  <span class="wf-badge" data-needs-perm="tree.view" hidden>quyền chỉ xem</span>
+  <span class="wf-role">Vai trò <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main wide">
+  <div class="wf-head">
+    <h1 id="gTitle">Nhà họ Nguyễn – Trần</h1>
+    <p class="sub">Bản <span class="mono">42</span> · 14 thành viên · 4 đời · cập nhật 26/09/2026 21:14</p>
+  </div>
+
+  <div class="wf-wrap">
+    <div class="wf-stage" id="tree"><div class="wf-stage-inner"></div></div>
+
+    <!-- thanh công cụ: thu phóng + lưới + chi tiết -->
+    <div class="wf-stage-toolbar" style="left:12px;bottom:12px">
+      <button class="wf-btn sm" onclick="zoom(-1)">−</button>
+      <span class="wf-zoom" id="zoomLabel">100%</span>
+      <button class="wf-btn sm" onclick="zoom(1)">+</button>
+      <span style="width:1px;height:18px;background:var(--line)"></span>
+      <button class="wf-btn sm" id="gridBtn" onclick="toggleGrid()">Lưới: bật</button>
+      <button class="wf-btn sm" id="detailBtn" onclick="toggleDetail()">Chi tiết: tắt</button>
+    </div>
+
+    <!-- thanh thay đổi chưa lưu -->
+    <div class="wf-dirty" id="dirtyBar" style="left:12px;top:12px" hidden>
+      <span><b id="dirtyCount">0</b> thay đổi chưa lưu</span>
+      <span class="wf-badge warn">chỉ có trên máy bạn</span>
+      <button class="wf-btn sm" onclick="location.href='s08-save-conflict.html'">Xem rồi Lưu</button>
+    </div>
+
+    <!-- bảng điều khiển -->
+    <div class="wf-float" id="panel" style="right:12px;top:12px;width:250px">
+      <header>
+        <b>Điều khiển</b>
+        <span class="wf-spacer"></span>
+        <span class="wf-badge" data-role-label>—</span>
+      </header>
+      <div class="body wf-float-body-scroll">
+
+        <div class="wf-field panel-search" style="margin-bottom:10px">
+          <label>Tìm thành viên</label>
+          <input class="wf-input" id="q" placeholder="Gõ tên hoặc năm sinh…" oninput="search(this.value)">
+          <div id="res"></div>
+        </div>
+
+        <h4>Chung</h4>
+        <div class="wf-menu" style="margin-bottom:12px">
+          <button data-needs-perm="member.add" onclick="location.href='s07-member-form.html'"><span class="ico">＋</span>Thêm thành viên</button>
+          <button data-needs-perm="relation.add" onclick="WF.toast('Hộp thoại thêm quan hệ — gửi 1 chiều, hiển thị 2 chiều')"><span class="ico">⇄</span>Thêm quan hệ</button>
+        </div>
+
+        <h4>Hiển thị</h4>
+        <div class="wf-menu" style="margin-bottom:12px">
+          <button data-needs-perm="layout.auto" onclick="arrange()"><span class="ico">▦</span>Sắp xếp sơ đồ</button>
+          <button data-needs-perm="media.upload" onclick="WF.toast('Chọn ảnh để tải lên')"><span class="ico">＋</span>Thêm ảnh vào nhóm</button>
+          <button onclick="location.href='s11-albums.html'"><span class="ico">▣</span>Album</button>
+          <button onclick="location.href='s15-events.html'"><span class="ico">◷</span>Sự kiện</button>
+        </div>
+
+        <h4>Hành động</h4>
+        <div class="wf-menu" style="margin-bottom:12px">
+          <button data-needs-perm="tree.edit" onclick="assignPhoto()"><span class="ico">🖼</span>Gắn ảnh cho node đã chọn</button>
+          <button data-needs-perm="history.viewAll" onclick="location.href='s09-activity.html'"><span class="ico">≡</span>Lịch sử thay đổi</button>
+          <button data-needs-perm="import.export" onclick="location.href='s14-import-export.html'"><span class="ico">⇅</span>Nhập / Xuất</button>
+          <button data-needs-perm="share.manage" onclick="location.href='s12-share-manage.html'"><span class="ico">🔗</span>Chia sẻ</button>
+          <button data-needs-perm="tree.edit" class="danger-link" onclick="openDialog('dlgDelTree')"><span class="ico">🗑</span>Xoá toàn bộ cây</button>
+        </div>
+
+        <div class="wf-btn-row">
+          <button class="wf-btn primary" data-needs-perm="layout.save" style="flex:1" onclick="save()">Lưu</button>
+          <button class="wf-btn" onclick="location.href='index.html'">Thoát</button>
+        </div>
+
+        <div id="noSave" class="wf-note wf-mt wf-mb0" hidden>
+          Bạn đang xem với quyền <b>XEM</b>: xem cây, kéo qua kéo lại, phóng to thu nhỏ. Không kéo thả được vị trí
+          node, không sắp xếp, không lưu.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- thẻ thông tin node -->
+  <div class="wf-card flat wf-mt" id="info" hidden></div>
+
+  <div class="wf-grid c2 wf-mt">
+    <div class="wf-note rule">
+      <b>Bố cục: một tầng, lưu theo nhóm.</b> Kéo node chỉ thay đổi trên máy bạn và <b>mất trắng khi tải lại
+      trang</b> — không có cảnh báo nào cả, đúng như thiết kế. Muốn cả nhóm thấy thì bấm
+      <b>Sắp xếp sơ đồ</b> rồi <b>Lưu</b>, hoặc bấm thẳng <b>Lưu</b> (gộp luôn sắp xếp tự động).
+      Một lần bấm Lưu chỉ tăng phiên bản <b>một lần</b>.
+    </div>
+    <div class="wf-note warn">
+      <b>Đổi vai trò thì màn này đổi theo.</b> Công tắc vai trò ở góc trên sẽ làm các nút biến mất ngay:
+      đổi sang XEM là mất <b>Lưu</b>, mất <b>Sắp xếp</b>, mất <b>kéo thả</b>, mất <b>Thêm thành viên</b>;
+      mất luôn <b>Lịch sử thay đổi</b> (XEM chỉ xem lịch sử ảnh và album, xem màn 09).
+    </div>
+  </div>
+
+  <footer class="wf-foot">
+    <b>Nguồn.</b> Quy trình §3 (dựng cây, lưu một lần) và §4 (bảng bố cục) · phạm vi sửa §7 (bố cục một tầng, quyền theo vai trò) · phạm vi thêm §1 (lịch sử nằm trong bảng điều khiển), §3 (tìm người), §4 (gắn ảnh node).
+  </footer>
+</main>
+
+<!-- chọn ảnh để gắn vào node -->
+<div class="wf-overlay" id="dlgPhoto" hidden>
+  <div class="wf-dialog wide">
+    <header><h3>Gắn ảnh cho node đã chọn</h3></header>
+    <div class="content">
+      <div class="wf-note rule wf-mb0" id="photoWho"></div>
+      <div class="wf-row" style="margin:12px 0">
+        <button class="wf-btn" onclick="uploadNew()">＋ Tải ảnh mới lên</button>
+        <span class="wf-badge">quyền SỬA cây</span>
+        <span style="color:var(--muted);font-size:12.5px">Thay ảnh thì ảnh cũ bị xoá khỏi bộ nhớ đám mây.</span>
+      </div>
+      <h4>Hoặc chọn ảnh đã có trong nhóm</h4>
+      <div class="wf-media-grid" id="photoGrid"></div>
+    </div>
+    <footer>
+      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgPhoto')">Huỷ</button>
+    </footer>
+  </div>
+</div>
+
+<!-- xoá toàn bộ cây -->
+<div class="wf-overlay" id="dlgDelTree" hidden>
+  <div class="wf-dialog">
+    <header><h3>Xoá toàn bộ cây?</h3></header>
+    <div class="content">
+      <p style="color:var(--ink-2)">Toàn bộ thành viên, quan hệ, album, ảnh và lịch sử của nhóm
+      <b>Nhà họ Nguyễn – Trần</b> sẽ vào thùng rác.</p>
+      <div class="wf-note warn wf-mb0">Có thể khôi phục trong 30 ngày. Tài khoản của bạn vẫn giữ lại.</div>
+    </div>
+    <footer>
+      <button class="wf-btn ghost" onclick="WF.closeDialog('dlgDelTree')">Huỷ</button>
+      <button class="wf-btn danger" onclick="location.href='s10-trash.html'">Xoá vào thùng rác</button>
+    </footer>
+  </div>
+</div>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>
+  var members = MOCK.members.map(function (m) { return Object.assign({}, m); });
+  var sel = "m7", zoomLevel = 1, dirty = 0, grid = true, detail = false;
+
+  function draw() {
+    var list = members.map(function (m) { m.selected = m.id === sel; return m; });
+    WF.renderTree("#tree", list, {
+      draggable: WF.can("layout.drag"),
+      onMove: function () { markDirty("Bạn đã kéo 1 node"); }
+    });
+    if (!grid) WF.qs("#tree").style.backgroundImage = "none";
+    WF.qs(".wf-stage-inner").style.transform = "scale(" + zoomLevel + ")";
+    WF.qs(".wf-stage-inner").style.transformOrigin = "0 0";
+    WF.qs("#zoomLabel").textContent = Math.round(zoomLevel * 100) + "%";
+    showInfo();
+  }
+
+  function showInfo() {
+    var m = members.filter(function (x) { return x.id === sel; })[0];
+    var box = WF.qs("#info");
+    if (!m) { box.hidden = true; return; }
+    var rel = members.filter(function (x) { return x.parentId === m.id; }).map(function (x) { return x.fullName; });
+    box.hidden = false;
+    box.innerHTML =
+      '<div class="wf-row" style="align-items:flex-start"><div style="flex:1">' +
+      '<h3 style="margin-bottom:2px">' + WF.esc(m.fullName) + ' <span class="wf-badge">Đời ' + m.generation + "</span> " +
+      (m.deceased ? '<span class="wf-badge danger">Đã mất ' + (m.deathDate || "") + "</span>" : "") + "</h3>" +
+      '<p style="color:var(--ink-2);margin:0;font-size:13px">Sinh ' + (m.birthDate || "—") +
+      (rel.length ? " · Con: " + WF.esc(rel.join(", ")) : "") +
+      (m.photoId ? " · <b>Đã gắn ảnh</b> (photoId " + m.photoId + ")" + (m.pinnedMemberId ? " — ảnh chụp từ hồ sơ của bạn" : " — ảnh gán tay") : " · Chưa gắn ảnh") +
+      "</p></div>" +
+      '<div class="wf-btn-row">' +
+      '<button class="wf-btn sm" data-needs-perm="member.add" onclick="location.href=\'s07-member-form.html\'">Sửa thông tin</button>' +
+      '<button class="wf-btn sm" data-needs-perm="nodePhoto.assign" onclick="assignPhoto()">Gắn ảnh</button>' +
+      '<button class="wf-btn sm" data-needs-perm="nodePhoto.pinSelf" onclick="pinSelf()">Ghim ảnh của tôi</button>' +
+      "</div></div>" +
+      (detail ? '<p style="margin:10px 0 0;font-size:12.5px;color:var(--muted)">Chi tiết: ' + WF.esc(m.note || "không có ghi chú") + " · id " + m.id + "</p>" : "");
+    WF.applyRole();
+  }
+
+  function pick(id) {
+    sel = id;
+    draw();
+    var el = WF.qs('.wf-node[data-id="' + id + '"]');
+    if (el) el.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" });
+  }
+
+  function search(v) {
+    var box = WF.qs("#res");
+    var q = v.trim().toLowerCase();
+    if (!q) { box.innerHTML = ""; return; }               /* chưa gõ -> không hiện gì cả */
+    var hit = members.filter(function (m) {
+      return m.fullName.toLowerCase().indexOf(q) >= 0 || (m.birthDate || "").indexOf(q) >= 0;
+    });
+    box.innerHTML =
+      '<div class="wf-results wf-mt">' +
+      (hit.length
+        ? hit.map(function (m) {
+            return '<button onclick="pick(\'' + m.id + '\')"><span>' + WF.esc(m.fullName) +
+              '<br><span class="sub">Đời ' + m.generation + (m.birthDate ? " · " + m.birthDate : "") + "</span></span>" +
+              "<span>→</span></button>";
+          }).join("")
+        : '<div class="wf-empty" style="padding:18px"><div class="big">Không có kết quả</div>Không tìm thấy thành viên nào khớp với từ khoá này.</div>') +
+      "</div>";
+  }
+
+  function markDirty(what) {
+    if (!WF.can("layout.save")) { WF.toast("Bạn không có quyền lưu.", "err"); return; }
+    dirty += 1;
+    WF.qs("#dirtyCount").textContent = dirty;
+    WF.qs("#dirtyBar").hidden = false;
+    if (what) WF.toast(what);
+  }
+
+  function arrange() {
+    dirty = 0;
+    WF.qs("#dirtyBar").hidden = true;
+    draw();
+    WF.toast("Đã xếp lại trên máy bạn. Chưa ai khác thấy — bấm Lưu để ghi cho cả nhóm.");
+  }
+
+  function save() {
+    if (!dirty) { WF.toast("Không có thay đổi nào để lưu."); return; }
+    location.href = "s08-save-conflict.html";
+  }
+
+  function zoom(d) { zoomLevel = Math.min(1.6, Math.max(0.6, +(zoomLevel + d * 0.2).toFixed(2))); draw(); }
+  function toggleGrid() {
+    grid = !grid;
+    WF.qs("#tree").style.backgroundImage = grid ? "" : "none";
+    WF.qs("#gridBtn").textContent = "Lưới: " + (grid ? "bật" : "tắt");
+  }
+  function toggleDetail() {
+    detail = !detail;
+    WF.qs("#detailBtn").textContent = "Chi tiết: " + (detail ? "bật" : "tắt");
+    showInfo();
+  }
+
+  function assignPhoto() {
+    var m = members.filter(function (x) { return x.id === sel; })[0];
+    if (!m) { WF.toast("Chọn một node trước đã.", "err"); return; }
+    WF.qs("#photoWho").innerHTML = "Gắn ảnh cho node <b>" + WF.esc(m.fullName) + "</b>. Ảnh này thuộc về cây, không thuộc về một thành viên nào — ai có quyền SỬA cây đều gán và thay được, kể cả ảnh của người khác tải lên.";
+    WF.qs("#photoGrid").innerHTML = MOCK.photos.map(function (p) {
+      return '<div class="wf-media" onclick="choosePhoto(\'' + p.id + '\')"><div class="ph">' + WF.esc(p.name) +
+        "</div><div class='cap'>" + WF.esc(p.name) + "</div><div class='by'>" + MOCK.userById(p.byUserId) + "</div></div>";
+    }).join("");
+    WF.openDialog("dlgPhoto");
+  }
+  function choosePhoto(pid) {
+    var m = members.filter(function (x) { return x.id === sel; })[0];
+    m.photoId = pid; m.pinnedMemberId = null;
+    WF.closeDialog("dlgPhoto"); draw(); markDirty("Đã gắn ảnh " + pid + " cho " + m.fullName);
+  }
+  function uploadNew() {
+    WF.closeDialog("dlgPhoto");
+    WF.toast("Đang tải lên…", "ok");
+    setTimeout(function () {
+      var m = members.filter(function (x) { return x.id === sel; })[0];
+      m.photoId = "phMoi"; m.pinnedMemberId = null; draw(); markDirty("Đã tải ảnh mới và gắn vào node");
+    }, 900);
+  }
+  function pinSelf() {
+    var m = members.filter(function (x) { return x.id === sel; })[0];
+    if (m.id === "m7" || m.id === "m11") { WF.toast("Ảnh node này đã chụp từ hồ sơ của bạn.", "err"); return; }
+    m.photoId = "ph1"; m.pinnedMemberId = MOCK.me.id;
+    draw(); markDirty("Đã ghim ảnh hồ sơ của bạn vào node " + m.fullName);
+    WF.toast("Đã chụp ảnh hồ sơ của bạn tại thời điểm này. Sau này bạn đổi ảnh hồ sơ thì node này không đổi theo.", "ok");
+  }
+
+  window.wfOnRole = function () {
+    WF.qs("#noSave").hidden = WF.can("layout.save");
+    dirty = 0; WF.qs("#dirtyBar").hidden = true;
+    draw();
+  };
+
+  WF.qs("#tree").addEventListener("click", function (e) {
+    var n = e.target.closest(".wf-node");
+    if (n) { sel = n.dataset.id; draw(); }
+  });
+
+  draw();
+  WF.qs("#gTitle").textContent = MOCK.group.name;
+</script>
+</body>
+</html>

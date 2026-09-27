@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>12 · Chia sẻ bằng link — /group/share</title>
+<link rel="stylesheet" href="assets/wireframe.css">
+<style>
+  .linkbox { display:flex; gap:8px; align-items:center; }
+  .linkbox code { flex:1; background:var(--surface-2); border:1px solid var(--line); border-radius:6px; padding:7px 10px; }
+</style>
+</head>
+<body>
+<header class="wf-bar">
+  <a class="wf-crumb" href="index.html">← Tất cả wireframe</a>
+  <span class="wf-bar-title">12 · Chia sẻ bằng link</span>
+  <span class="wf-bar-route">/group/share</span>
+  <span class="wf-spacer"></span>
+  <span class="wf-role">Vai trò <span data-role-switch></span></span>
+</header>
+
+<main class="wf-main">
+  <div class="wf-head">
+    <h1>Chia sẻ cây bằng link</h1>
+    <p class="sub">Người nhận không cần có tài khoản.</p>
+  </div>
+
+  <!-- chặn: không phải CHỦ NHÓM -->
+  <div class="wf-card wf-narrow" id="gate" hidden style="margin:0 auto">
+    <div class="wf-gate">
+      <div class="code">403</div>
+      <h2>Chỉ CHỦ NHÓM mới tạo được link</h2>
+      <p style="color:var(--ink-2)">Biên tập viên và người chỉ xem không tạo được link chia sẻ. Muốn nhờ ai đó
+      xem cây thì nhờ CHỦ NHÓM tạo.</p>
+      <a class="wf-btn wf-mt" href="s06-tree-canvas.html">Về màn hình cây</a>
+    </div>
+  </div>
+
+  <div id="body">
+    <div class="wf-grid c2">
+      <div class="wf-card">
+        <h2>Tạo link mới</h2>
+        <div class="wf-field">
+          <label>Link hết hạn sau</label>
+          <div class="wf-radio">
+            <label><input type="radio" name="exp" value="7" checked> 7 ngày — gửi cho người thân, xem một lần là xong</label>
+            <label><input type="radio" name="exp" value="30"> 30 ngày</label>
+            <label><input type="radio" name="exp" value="90"> 90 ngày</label>
+          </div>
+        </div>
+        <div class="wf-field">
+          <label>Người nhận sẽ thấy</label>
+          <div class="wf-note wf-mb0">
+            Cây gia đình · ảnh và album được đánh dấu chia sẻ · sự kiện.<br>
+            <b>Không thấy:</b> lịch sử thay đổi, thùng rác, ảnh đã bị ẩn, ảnh riêng tư.
+          </div>
+        </div>
+        <div class="wf-field">
+          <label>Quyền của người nhận</label>
+          <div class="wf-note warn wf-mb0">Chỉ xem. Không thêm, không sửa, không xoá, không sắp xếp bố cục, không lưu.
+          Trang mở bằng link không có nút ghi nào, không phải chỉ ẩn đi là xong.</div>
+        </div>
+        <button class="wf-btn primary" style="width:100%" onclick="create()">Tạo link</button>
+      </div>
+
+      <div class="wf-card">
+        <h2>Link vừa tạo</h2>
+        <div id="fresh" class="wf-stack">
+          <div class="wf-empty" style="padding:24px"><div class="big">Chưa tạo link nào trong phiên này</div>Bấm "Tạo link" bên trái.</div>
+        </div>
+        <div class="wf-note wf-mt wf-mb0" style="color:var(--muted)">Không có nơi nào lưu "lời mời đã gửi cho ai" — người dùng tự gửi bằng bất kỳ ứng dụng nào. Nhóm cũng không có trang quản lý lời mời.</div>
+      </div>
+    </div>
+
+    <h2 class="wf-mt">Các link đã tạo</h2>
+    <div class="wf-table-wrap">
+      <table class="wf-table">
+        <thead><tr><th>Link</th><th>Tạo ngày</th><th>Hết hạn</th><th>Số lần mở</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <div class="wf-note warn wf-mt">
+      <b>Link mời và link chia sẻ là hai thứ khác nhau.</b> Link mời (<span class="mono">/invite?token=</span>)
+      dùng một lần rồi hết, để đưa người ta <b>vào</b> nhóm. Link chia sẻ dùng nhiều lần, để <b>cho người ta
+      xem</b>, và có thể thu hồi bất cứ lúc nào.
+    </div>
+
+    <footer class="wf-foot">
+      <b>Nguồn.</b> Quy trình §9 (chia sẻ không cần tài khoản, thấy gì và không thấy gì) · phạm vi thêm §6 (tạo link, hạn 7/30/90 ngày, thu hồi, số lần mở) · quyết định Q15 (không có trang quản lý lời mời).
+    </footer>
+  </div>
+</main>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/wireframe.js"></script>
+<script>
+  function state() {
+    var ok = WF.getRole() === "owner";
+    WF.qs("#gate").hidden = ok;
+    WF.qs("#body").hidden = !ok;
+  }
+  function expDays() { return (WF.qs('input[name="exp"]:checked') || {}).value || "7"; }
+
+  function render() {
+    WF.qs("#rows").innerHTML = MOCK.shareLinks.map(function (l) {
+      var st = l.revoked ? '<span class="wf-badge danger">đã thu hồi</span>'
+        : l.expired ? '<span class="wf-badge">đã hết hạn</span>'
+        : '<span class="wf-badge ok">đang chạy</span>';
+      return "<tr><td><code>/share/" + l.token + "</code></td><td>" + l.createdAt + "</td><td>" + l.expiresAt + "</td>" +
+        "<td>" + l.opens + "</td><td>" + st + "</td>" +
+        '<td class="actions">' +
+        (l.revoked ? "" : '<button class="wf-btn sm" onclick="copy(\'' + l.token + '\')">Sao chép</button> <a class="wf-btn sm" target="_blank" href="s13-share-readonly.html">Mở thử</a> <button class="wf-btn sm danger" onclick="revoke(\'' + l.id + '\')">Thu hồi</button>') +
+        "</td></tr>";
+    }).join("");
+  }
+  function create() {
+    var d = expDays();
+    var to = "T" + Math.random().toString(36).slice(2, 10);
+    MOCK.shareLinks.unshift({ id: "s" + Date.now(), token: to, createdAt: "2026-09-27", expiresAt: "2026-09-27 + " + d + " ngày", opens: 0, revoked: false });
+    render();
+    WF.qs("#fresh").innerHTML =
+      '<div class="wf-note ok wf-mb0">Đã tạo. Hạn sau <b>' + d + " ngày</b> (tới 2026-10-0" + d.charAt(0) + ").</div>" +
+      '<div class="linkbox"><code>/share/' + to + "</code>" +
+      '<button class="wf-btn" onclick="copy(\'' + to + '\')">Sao chép</button>' +
+      '<a class="wf-btn primary" target="_blank" href="s13-share-readonly.html">Mở thử</a></div>' +
+      '<div style="color:var(--muted);font-size:12.5px">Gửi bằng bất kỳ ứng dụng nào. Hết hạn thì link tự chết, không cần dọn.</div>';
+    WF.toast("Đã tạo link.", "ok");
+  }
+  function copy(t) { WF.toast("Đã sao chép /share/" + t, "ok"); }
+  function revoke(id) {
+    var l = MOCK.shareLinks.filter(function (x) { return x.id === id; })[0];
+    if (confirm("Thu hồi link này? Ai đang giữ link sẽ không mở được nữa.")) { l.revoked = true; render(); WF.toast("Đã thu hồi."); }
+  }
+
+  state(); render();
+  window.wfOnRole = function () { state(); render(); };
+</script>
+</body>
+</html>
