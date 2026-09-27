@@ -38,11 +38,13 @@ Menu *Thùng rác* đã có ở `sidebar-profile.tsx:64-67` nhưng **không có 
 | Route | `/user/trash` — giữ đúng URL hiện tại để không phải sửa menu |
 | API | `GET /family/:groupId/trash`, `POST /family/:groupId/trash/:id/restore` |
 | API đổi ý nghĩa | Xoá thành viên = **soft delete** (`deletedAt`), không phải `DELETE` cứng |
-| Nhóm thùng rác | Theo **group**, không theo user. Một người EDITOR xoá nhầm thì mọi thành viên đều thấy trong thùng rác → có thể khôi phục |
+| Nhóm thùng rác | **Tách theo người.** Mỗi người thấy cái mình xoá. Xem bảng quyền ở `02` §15 |
 | Hiển thị | Tên, ngày sinh, **ai xoá** và **lúc nào** (từ `ActivityLog`), nút *Khôi phục*, nút *Xoá vĩnh viễn* |
 | Tự động | 30 ngày → purge job phía backend. FE hiện *"Sẽ bị xoá vĩnh viễn sau 30 ngày"* |
 
 ⚠️ **Khôi phục phải khôi phục cả quan hệ đã bị xoá theo.** Backend xử lý phần này (snapshot trong `ActivityLog` là để dựng lại được). FE chỉ gọi 1 endpoint, **không** tự dựng quan hệ — tự dựng là chỗ dễ sinh dữ liệu sai nhất.
+
+⚠️ **Thùng rác này và thùng rác media là 2 thứ khác nhau, dùng chung 1 menu.** Thành viên trong cây (soft-delete `FamilyMember`) là dữ liệu cây → quyền `edit`. Media (ảnh, album) là dữ liệu media → quyền theo **chủ sở hữu** (Q17). Xoá 1 ảnh trong album không liên quan gì tới việc xoá 1 người khỏi cây, và người EDITOR xoá nhầm người thì vẫn khôi phục được — nhưng **không** khôi phục được ảnh của người khác nếu không phải chủ ảnh. Menu *Thùng rác* phải có **2 tab**, không trộn 2 loại vào 1 bảng.
 
 ⚠️ **Đổi ý nghĩa của `DELETE` cần nói rõ trong UI.** Hôm nay xoá là mất vĩnh viễn, ngày mai là vào thùng rác. Người dùng cũ quen cách cũ sẽ bấm xoá rồi đóng dialog. Thêm dòng *"Có thể khôi phục trong 30 ngày"* ngay trong dialog xác nhận.
 
@@ -63,23 +65,39 @@ Hiện tại **không có** endpoint tìm kiếm, nên frontend **phải tự l�
 
 ---
 
-### §4 — Ảnh thành viên
+### §4 — Gán ảnh cho node (Q14)
 
 `FamilyMember.avatarUrl` **có cột** nhưng **không endpoint nào ghi vào**. Đây là thứ người dùng chạm vào đầu tiên — một cây toàn ảnh trắng thì không có giá trị gì.
 
+⚠️ **Bản nháp trước gọi mục này là "Ảnh thành viên" và đó là cách nhầm.** Theo Q14, ảnh node **không phải ảnh riêng của thành viên trong cây** — nó là **ảnh hồ sơ cá nhân** của người đó. Người trong cây có thể không có tài khoản (ông nội, bà ngoại đã mất tài khoản) nhưng vẫn có ảnh trên cây. Ngược lại, tài khoản có thể có ảnh hồ sơ mà chưa từng vào cây nào.
+
+Hệ quả thiết kế — **2 đường, 1 bảng, quyền khác nhau:**
+
+| Đường | Ai làm | Ảnh lấy từ đâu | Cấp quyền | Lưu ở |
+|---|---|---|---|---|
+| **Tự động — pin** | Bất kỳ ai, cho chính mình | **Avatar hồ sơ của chính người pin**, chụp tại thời điểm pin | Không cần — là việc của chính mình | `node.pinnedMemberId` + `node.photoId` |
+| **Gán tay** | OWNER / EDITOR | Bất kỳ media nào trong nhóm, hoặc upload mới | `edit` | `node.photoId` |
+
 | Mục | Nội dung |
 |---|---|
-| API | `POST /family/:groupId/members/:memberId/photo` (backend `03` §3) |
+| API (đường tay) | `POST /family/:groupId/members/:memberId/photo` (backend `03` §3) |
+| API (đường pin) | Mở rộng `PATCH /family/:groupId/members/:memberId/pin` — nhận thêm `photoId` (`02` §6) |
 | Thư viện | Thêm lại `next-cloudinary` đã xoá ở `FE-B7`, dùng `CldUploadWidget` cho chọn ảnh |
 | Xử lý | Upload lên Cloudinary `FOLDER_FAMILY`; **xoá media cũ** khi thay; nhấn xoá → xoá cả trên Cloudinary |
-| UI | Trong `family-member-form.tsx`; hiển thị ở `family-member-node.tsx` (React Flow) |
+| UI | Nút pin trong `family-member-form.tsx` (đã có) + nút gán tay ở `panel-editor.tsx`; hiển thị ở `family-member-node.tsx` (React Flow) |
 | Tương tác với `§3` | `getLayoutedElements` cần biết ảnh có tồn tại không để chừa chỗ — ảnh tải về **sau** khi cây đã layout sẽ nhảy layout |
 
 ⚠️ **`next-cloudinary` phải thêm lại ở stage này**, không giữ từ `FE-B7`. Giữ một dependency không ai import chỉ để "sẵn sàng" là giữ code chết có chủ đích.
 
+⚠️ **Phải chụp ảnh lúc pin, không đọc động khi render.** Nếu render node mà đọc `avatarUrl` của tài khoản `pinnedMemberId` trỏ tới, thì người A đổi ảnh hồ sơ sẽ tự đổi ảnh node trong cây của người B — phá vỡ đúng quy tắc *"không ai sửa được ảnh của người khác"*. Phải snapshot `photoId` vào node, ghi 1 lần lúc pin, không bao giờ đồng bộ theo sau đó. Chi tiết ở `02` §6.
+
+⚠️ **Backend phải chặn pin chéo.** Người dùng A gửi payload `pinnedMemberId: <tài khoản B>` để lấy ảnh hồ sơ của B ⇒ backend phải so với user hiện tại và từ chối. UI gửi `pinnedMemberId` của chính mình không phải là đủ.
+
 ⚠️ Upload phải **debounce + huỷ request cũ** — người dùng đổi ảnh nhanh sẽ tạo nhiều media cũ trên Cloudinary nếu không huỷ.
 
 ⚠️ Backend cần chốt có xoá media cũ ngay trong request hay để job dọn dẹp. FE không được giả định media cũ đã bị xoá cho tới khi API trả xác nhận.
+
+⚠️ **Đường tay không được nằm trong luật media.** Gán ảnh người khác lên node là thao tác trên **cây**, quyền `edit` — không phải thao tác trên media của họ. Nếu áp luật media (`createdById`) vào đường này thì EDITOR sẽ không gán được ảnh cho bất kỳ ai, mâu thuẫn với bảng phân quyền ở `02` §15.
 
 ---
 
@@ -175,8 +193,28 @@ Không tồn tại (`grep shareLink|visibility|@Public` → 0). Cho phép gửi 
 | Tính năng | CRUD album, upload nhiều ảnh, xoá ảnh (xoá cả trên Cloudinary), gắn ảnh vào **thành viên** |
 | Dùng lại | Bộ table kit từ `admin/_components` (`FE-B10`) + `FOLDER_ALBUM` |
 | Dọn dẹp | Logic `cleanupOrphanedMediaAction` chuyển từ blog-media sang đây (backend `01` `BE-B1`) |
+| **Chủ sở hữu** | `Album.createdById` = người tạo album. Xem bảng quyền bên dưới |
 
-⚠️ Album **không** phải nơi lưu ảnh thành viên. Ảnh thành viên là `avatarUrl` 1 ảnh (`§4`); album là bộ sưu tập. Trộn 2 khái niệm sẽ làm tìm kiếm và xoá trở nên mơ hồ.
+⚠️ Album **không** phải nơi lưu ảnh thành viên. Ảnh node là `avatarUrl` 1 ảnh chụp từ hồ sơ (`§4`); album là bộ sưu tập. Trộn 2 khái niệm sẽ làm tìm kiếm và xoá trở nên mơ hồ.
+
+#### Quyền theo chủ sở hữu (Q17)
+
+Áp đúng bảng trục 2 ở `02` §15 — **không** theo vai trò:
+
+| Hành động | Chủ album | Khác phần EDITOR | Khác phần VIEWER | group OWNER |
+|---|---|---|---|---|
+| Xem album đang hiện | ✅ | ✅ | ✅ | ✅ |
+| Tạo album / thêm ảnh | ✅ | ✅ | ✅ | ✅ |
+| Sửa tên / mô tả album | ✅ | ❌ | ❌ | ✅ |
+| Xoá album | ✅ | ❌ | ❌ | ✅ |
+| Ẩn ảnh trong album của người khác | ✅ | ❌ | ❌ | ✅ |
+| Xem ảnh **đã ẩn** trong album của người khác | ❌ | ❌ | ❌ | ✅ |
+
+⚠️ **Không có album "của nhà" không ai sở hữu.** Album luôn có 1 người tạo, kể cả album OWNER tạo. Câu hỏi *"xoá album này có xoá ảnh của mọi người không"* phải trả lời được — nên khi xoá album, **ảnh không còn nằm trong album nào thì mới xoá media**, còn lại thì chỉ gỡ khỏi album. Nói cách khác: xoá album ≠ xoá ảnh.
+
+⚠️ **Trạng thái *"đã ẩn" phải hiện ra trong UI, không chỉ "mất".** Nếu ảnh biến mất không có dấu hiệu, người dùng sẽ tưởng app lỗi và báo. Hiện 1 nhãn *"Bạn đã ẩn ảnh này"* + nút *Mở ẩn*, cạnh nút *Xoá*.
+
+⚠️ **`hiddenById` chỉ giữ 1 người** (người ẩn) — xem `02` §15 hệ quả #1. FE không được gửi danh sách.
 
 ---
 
@@ -214,34 +252,28 @@ Không tồn tại (`grep shareLink|visibility|@Public` → 0). Cho phép gửi 
 
 ---
 
-### §11 — Băng chuyền bố cục cá nhân
+### §11 — Băng chuyền bố cục cá nhân — ⏸ **xoá khỏi phạm vi**
 
-UI cho `02` §7 (Q8/Q9). Không có nó thì tầng cá nhân là ẩn ý — người dùng sửa bố cục rồi tưởng đã lưu lên cây chung.
+Bản nháp trước dựng băng chuyền này để cảnh báo *"bạn đang xem bố cục riêng"*. Sau khi chốt **Q8** (bố cục 1 tầng, chỉ trên server) thì **không còn tầng cá nhân** → không còn gì để cảnh báo.
 
-| Mục | Nội dung |
+| | |
 |---|---|
-| Vị trí | Cố định, cạnh nút *Lưu* |
-| Nội dung | *"Bạn đang xem bố cục riêng — chưa lưu lên cây chung"* + số thành viên đã kéo |
-| Nút | *Xem bố cục chung* (xoá lớp phủ, vẽ lại từ `tree` — **0 request**) |
-| Tự xoá | Khi `version` lệch → thông báo *"Cây gia đình vừa được cập nhật, bố cục riêng của bạn đã được đặt lại"* |
+| Mục này | **Không dựng.** Xoá khỏi phạm vi |
+| Ký hiệu § | Giữ nguyên chỗ để không phải đánh lại số thứ tự — `§12`/`§13` phía dưới giữ nguyên tên |
+| Khi nào quay lại | Chỉ khi nào lại có khái niệm "nhiều cây" hoặc "bố cục riêng" — tức là khi **Q16** bị đảo |
 
-✅ **Đã chốt 2026-09-27** (backend `06` R1.4) — băng chuyền chỉ còn **1 nút, 0 request**. *Xem bố cục chung* là thao tác client thuần: bỏ khoá lớp phủ, vẽ lại từ `tree` của server.
+⚠️ **Cùng lý do này bỏ 2 nút *Chỉnh sửa lại* và *Lưu bố cục*** (đã nêu ở bản nháp trước, giữ nguyên kết luận):
 
-⚠️ **Băng chuyền không có nút _ghi_ nào cả.** Xoá 2 nút *Chỉnh sửa lại* và *Lưu bố cục*:
-
-- *Chỉnh sửa lại* — không chỗ nào trong tài liệu định nghĩa nó làm gì, và cả 3 cách hiểu đều dẫn về 1 nút đã có sẵn (bỏ lớp phủ = *Xem bố cục chung*; chuyển chế độ xem→sửa = không tồn tại, cây vốn kéo tự do; ghi lên server = *Sắp xếp*).
+- *Chỉnh sửa lại* — không chỗ nào định nghĩa nó làm gì, cả 3 cách hiểu đều dẫn về 1 nút đã có sẵn.
 - *Lưu bố cục* — là **tập con** của *Lưu*, không có năng lực nào mà *Lưu* không làm được. Tách riêng chỉ tạo ra 2 lần lưu = 2 lần bump `version` vô nghĩa.
 
-Ghi bố cục là việc của 2 nút **ngoài** băng chuyền, cùng gọi **1 endpoint** `POST /changes` với op `LAYOUT_SAVE`, không có endpoint layout riêng:
+Phần **còn giữ** từ mục này — chuyển hết vào `02` §7, không mất:
 
-| Nút | Gửi lên | `version` |
-|---|---|---|
-| *Lưu* (toàn cục) | `[MEMBER_UPDATE ×N, RELATIONSHIP_*, LAYOUT_SAVE]` trong **1 request**; `LAYOUT_SAVE.positions` = bản kéo hiện tại | +1 |
-| *Sắp xếp* | `[LAYOUT_SAVE]` với `positions: []` → server tự tính từ đầu, bỏ qua mọi kéo tay | +1 |
-
-⚠️ **`LAYOUT_SAVE` phải vẽ lại từ `tree` trả về, không dùng lại `positions` đã gửi** — server tidy (auto-arrange) trước khi ghi, nên `tree.positionX/Y` là bản **đã sắp**. Dùng lại bản client gửi là hiển thị sai so với thứ mọi người khác sẽ thấy.
-
-⚠️ **Lớp phủ `localStorage` không phải tài sản — nó là thứ _chưa lưu_.** Bị xoá sau khi lưu là chuyện bình thường, không phải bug: 1 lần bấm *Lưu* = **+1 `version`**, đổi bố cục chung xong là hết việc với lớp phủ đó. Đối lập với nó, **chưa bấm *Lưu* thì thay đổi không tồn tại** — không cứu, không hỏi, không cảnh báo trước. Không cần polling `version` để theo dõi ai vừa sửa.
+| Nội dung | Nay nằm ở |
+|---|---|
+| Bảng *Lưu* / *Sắp xếp* gửi gì, bump `version` bao nhiêu | `02` §7 "Còn lại từ R1.4" |
+| `LAYOUT_SAVE` phải vẽ lại từ `tree` trả về, không dùng lại `positions` gửi lên | `02` §7 |
+| Kéo tay rồi không bấm *Lưu* → mất, không cứu, không hỏi | `02` §7 "Quyết định" |
 
 ---
 
@@ -268,7 +300,7 @@ UI cho `02` §3. Đây là thứ quyết định việc `If-Match` có giá tr�
 | Mục | Nội dung |
 |---|---|
 | API | `GET /family/:groupId/export?format=pdf\|png` — quyền `edit` (xem trước thì chỉ cần `read`) |
-| Nguồn dữ liệu | Bản đã sắp từ `tree` trả về của `/changes` hoặc `GET /family/:groupId` — **không** dùng lớp phủ `localStorage` của người xem |
+| Nguồn dữ liệu | Bản đã sắp từ `tree` trả về của `/changes` hoặc `GET /family/:groupId` |
 | Tham số | `generationRange`, `pageSize` cho cây lớn; người dùng chọn *"3 đời gần nhất"* là mặc định |
 
 ⚠️ **Font tiếng Việt là bẫy thật.** PDF render server-side mà không nhúng font tiếng Việt sẽ ra ô vuông — mất toàn bộ giá trị tính năng mà nhìn vẫn "thành công". Phải có bằng chứng bằng ảnh chụp cây có dấu tiếng Việt trước khi coi là xong.
@@ -281,18 +313,18 @@ UI cho `02` §3. Đây là thứ quyết định việc `If-Match` có giá tr�
 
 | Hạng mục | Tiêu chí |
 |---|---|
-| §1 lịch sử | VIEWER gọi API → 403, không phải trang trắng. Xoá 1 người → thấy **2** dòng |
-| §2 thùng rác | Xoá → vào thùng rác (không mất) → khôi phục → quan hệ về đúng như cũ |
+| §1 lịch sử | VIEWER thấy dòng `ALBUM`/`PHOTO`/`EVENT` nhưng **không** thấy `MEMBER`/`RELATIONSHIP`/`FAMILY`/`GROUP` — không phải trang trắng, cũng không phải xem hết |
+| §2 thùng rác | Xoá → vào thùng rác (không mất) → khôi phục → quan hệ về đúng như cũ. **Mỗi người chỉ thấy thùng rác của mình** |
 | §3 tìm kiếm | Thành viên đã soft-delete **không** xuất hiện trong kết quả |
-| §4 ảnh | Upload 100 lần không rò media cũ trên Cloudinary; đổi ảnh không nhảy layout |
+| §4 ảnh node | Upload 100 lần không rò media cũ trên Cloudinary; đổi ảnh không nhảy layout. **Pin lúc A đổi ảnh hồ sơ ⇒ node trong cây của B không đổi.** A gửi payload pin tới tài khoản B → bị từ chối |
+| §4 quyền | EDITOR gán tay được ảnh người khác lên node; VIEWER không gán được ảnh nào, kể cả của chính mình qua đường tay |
 | §5 import | Export → xoá group → **import `restore`** → cây giống hệt **kể cả id**. Lỗi GEDCOM báo **theo dòng**. Trùng id → 409, **không** ghi đè |
 | §5 restore | Export → xoá group → import bằng `create` → cây đúng nhưng **id đổi hết** → UI phải cảnh báo khác chế độ `restore` |
 | §6 chia sẻ | Link bị thu hồi → mất truy cập ngay. VIEWER-only mọi nút ghi đều vắng mặt |
 | §7 mật khẩu | Email không tồn tại vẫn trả thông báo giống hệt. Đổi mật khẩu → mọi thiết bị bị logout |
+| §8 album | EDITOR **không** xoá được album của người khác nhưng **có** sửa được cây. Ẩn 1 ảnh → hiện nhãn *"Bạn đã ẩn ảnh này"* + nút *Mở ẩn*; **không** biến mất im lặng |
 | §9 sự kiện | Chọn được 1 thành viên; để trống vẫn tạo được sự kiện chung |
-| §11 băng chuyền | Người khác bấm *Sắp xếp* → F5 → lớp phủ tự hết hạn, có thông báo |
-| §11 layout | Bấm *Lưu* (hoặc *Sắp xếp*) → cây vẽ lại **đã sắp** (không phải bản thô vừa kéo); lớp phủ bị xoá; `version +1` đúng 1 |
 | §12 xung đột | 409 **không** retry tự động; *Ghi đè* có cảnh báo rõ; đóng dialog không mất thay đổi |
-| §13 ảnh cây | PDF có dấu tiếng Việt đúng; xuất 5 thế hệ không tràn trang |
+| §13 ảnh cây | PDF có dấu tiếng Việt đúng; xuất 5 thế hệ không tràn trang. **Không có tên chủ ảnh trên giấy** |
 
 > Vòng bảo đảm dữ liệu thật là dòng `restore` của `§5` (backend `04` bước 3.3/3.4). Mọi thứ khác trong `§5` là tiện nghiệp; dòng đó mới là bảo đảm. Phải có e2e test cho nó.

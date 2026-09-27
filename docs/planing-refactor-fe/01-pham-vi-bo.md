@@ -2,9 +2,11 @@
 
 > Nguyên tắc: xoá thật, **không** comment lại "tạm chưa dùng". Mỗi mục dưới đây đều trả lời *"giữ lại thì giữ vì lý do kỹ thuật cụ thể nào"* — không có câu trả lời thì xoá.
 >
-> Thứ tự: **FE-B1 → FE-B2 → FE-B3 → FE-B4 → FE-B5** là tiền đề của nhau (xoá blog làm nhẹ admin plane; xoá admin plane làm nhẹ auth; xoá auth layer làm nhẹ enum). Phần còn lại độc lập, làm song song được.
+> Thứ tự: **FE-B1 → FE-B2 → FE-B3 → FE-B5** là tiền đề của nhau (xoá blog làm nhẹ admin plane; xoá admin plane làm nhẹ auth; xoá auth layer làm nhẹ enum). Phần còn lại độc lập, làm song song được.
 >
-> **Ký hiệu:** mục của file này ghi **`FE-B1`…`FE-B10`**; mục của bộ backend ghi **`BE-B1`…`BE-B10`**. Hai danh sách **không cùng nghĩa** và lệch nhau từ mục thứ 5 trở đi (`FE-B5` = `resetPassword` giả, còn `BE-B5` = `pinnedMemberId`). Khi tra chéo, **luôn viết kèm tiền tố** — ký hiệu `B3` trần là không xác định. Bảng ánh xạ 2 chiều ở `05` §I1–I5 ↔ F1–F6.
+> ⚠️ **`FE-B4` không còn là một mục xoá** — `pinnedMemberId` được giữ lại và đổi nghĩa thành cơ chế gắn node ↔ tài khoản ↔ ảnh (Q14). Xem tại chỗ.
+>
+> **Ký hiệu:** mục của file này ghi **`FE-B1`…`FE-B11`**; mục của bộ backend ghi **`BE-B1`…`BE-B10`**. Hai danh sách **không cùng nghĩa** và lệch nhau từ mục thứ 5 trở đi (`FE-B5` = `resetPassword` giả, còn `BE-B5` = `pinnedMemberId`). Khi tra chéo, **luôn viết kèm tiền tố** — ký hiệu `B3` trần là không xác định. Bảng ánh xạ 2 chiều ở `05` §I1–I7 ↔ F1–F7.
 
 ---
 
@@ -69,18 +71,32 @@ Lý do giống backend: `isLeader` là **cờ boolean vô hiệu hoá toàn bộ
 
 ---
 
-## FE-B4 — `pinnedMemberId` (theo `BE-B5` backend)
+## FE-B4 — `pinnedMemberId` — **KHÔNG XOÁ, đổi nghĩa**
 
-| Xoá | Vị trí |
-|---|---|
-| `pinnedMemberId: string \| null` | `group-family.dto.ts:31` |
-| Đọc từ server | `group-content.tsx:98`, `:424-433` (đẩy vào local state), `:435-438` (`computeLabels`), `:449` (`isPinned`), `:530` (truyền xuống form) |
-| Checkbox *Đây là tôi* | `family-member-form.tsx:44,53,91,98,108` + UI `:378-398` |
-| `handlePin` | `family-member-form.tsx:93-125` |
-| `pinMemberAction` | `group-family.actions.ts:207-227` — caller duy nhất |
-| `apiClient.groupFamily.pinMember` | `api-client.lib.ts:97-100` |
+> ⚠️ **Đảo lại quyết định cũ.** Khảo sát ban đầu xếp `pinnedMemberId` vào danh sách xoá vì "đây là trạng thái UI, không phải dữ liệu gia đình". Sai. Sau khi chốt **Q14**, `pinnedMemberId` là **cơ chế gắn node cây ↔ tài khoản ↔ ảnh hồ sơ** — xoá nó là mất tính năng.
 
-Lý do: đây là **trạng thái UI**, không phải dữ liệu gia đình. Một người dùng duy nhất ghim bản thân vào cây — mỗi lần đổi thiết bị là phải đăng nhập lại. Chuyển sang `localStorage` (xem `02` §7, cùng cơ chế với tầng bố cục cá nhân).
+| Giữ / sửa | Vị trí | Thay đổi |
+|---|---|---|
+| **Giữ** `pinnedMemberId: string \| null` | `group-family.dto.ts:31` | Không xoá |
+| **Giữ** đọc từ server | `group-content.tsx:98`, `:424-433`, `:435-438`, `:449`, `:530` | Không xoá |
+| **Giữ** checkbox *Đây là tôi* | `family-member-form.tsx:44,53,91,98,108` + UI `:378-398` | Đổi nhãn: từ *"đánh dấu tôi"* sang *"gắn ảnh của tôi vào node này"* |
+| **Sửa** `handlePin` | `family-member-form.tsx:93-125` | Thêm bước chụp ảnh hồ sơ tại thời điểm pin |
+| **Giữ** `pinMemberAction` | `group-family.actions.ts:207-227` | Không xoá |
+| **Giữ** `apiClient.groupFamily.pinMember` | `api-client.lib.ts:97-100` | Thêm `photoId` vào payload, xem `02` §6 |
+
+### Vì sao giữ
+
+Theo Q14, ảnh đại diện của node là **ảnh hồ sơ cá nhân** của người pin:
+
+```
+người dùng pin node X  →  server chụp avatar của họ  →  ghi vào node X
+```
+
+Nhờ vậy **không ai có quyền sửa ảnh của người khác**: mỗi người chỉ gán được ảnh của chính mình, tự động, bằng cách pin. Muốn đổi ảnh node nào thì phải là OWNER/EDITOR làm tay (xem `03` §4).
+
+Nếu `pinnedMemberId` bị xoá thì mất đúng cơ chế này, đồng thời app mất khả năng biết node nào là "của tôi" — tức mất toàn bộ ngữ nghĩa cá nhân của tính năng pin.
+
+⚠️ **Ảnh phải chụp lúc pin, không đọc động.** Nếu chỉ lưu `pinnedMemberId` rồi đọc avatar lúc render, thì đổi ảnh hồ sơ sẽ tự đổi ảnh node — tức một người sửa ảnh hồ sơ của mình đã sửa ảnh ở cây của người khác. Phải snapshot `photoId` vào node lúc pin. Chi tiết ở `02` §6 và `03` §4.
 
 ---
 
@@ -114,7 +130,7 @@ Grep trên 183 file `.ts`/`.tsx` trong `src` — **0 import** ở cả 7 cái:
 | `pg` | Package PostgreSQL trong frontend |
 | `sharp` | Xử lý ảnh server-side |
 | `bcrypt` | Băm mật khẩu — việc của backend |
-| `next-cloudinary` | 0 import **hiện tại**. Xoá bây giờ, thêm lại ở `03` §4 khi làm ảnh thành viên — giữ nó chỉ để "sẵn sàng" là giữ 1 dependency không ai dùng |
+| `next-cloudinary` | 0 import **hiện tại**. Xoá bây giờ, thêm lại ở `03` §4 khi làm tính năng gán ảnh cho node — giữ nó chỉ để "sẵn sàng" là giữ 1 dependency không ai dùng |
 
 `knip` đã có sẵn trong devDependencies → dùng nó làm bằng chứng cho PR này thay vì chỉ grep.
 
@@ -138,7 +154,7 @@ Grep trên 183 file `.ts`/`.tsx` trong `src` — **0 import** ở cả 7 cái:
 2. Xoá route, cho nav trỏ `/` — ít việc hơn nhưng mất trang giới thiệu tính năng, tức là mất thứ dễ dùng nhất để khách mới hiểu app.
 3. Giữ route, trả về `undefined` khi không có slug — **không chọn**, đó chính là hành vi lỗi sẵn có.
 
-⚠️ **`BottomNavBar` không được xoá cùng.** Nó nằm trong `(public)/layout.tsx` và là điều hướng chính trên mobile. Phải dựng lại ở layout gốc mới (`03` Q11) — nếu quên, mobile mất toàn bộ thanh điều hướng.
+⚠️ **`BottomNavBar` không được xoá cùng.** Nó nằm trong `(public)/layout.tsx` và là điều hướng chính trên mobile. Phải dựng lại ở layout gốc mới — xem `04` stage 1. Nếu quên, mobile mất toàn bộ thanh điều hướng.
 
 ---
 
@@ -150,14 +166,24 @@ Trong `sidebar-profile.tsx`, 8 mục menu chỉ có **4** có trang thật:
 |---|---|---|---|
 | Thông tin cá nhân | `/user/profile` | ✅ | giữ |
 | Bảo mật | `/user/secure` | ✅ | giữ |
-| Danh sách nhóm | `/user/groups` | ✅ | giữ |
-| **Lời mời** | `/user/invite-list` | ❌ | **xoá** |
+| Danh sách nhóm | `/user/groups` | ✅ | **xoá** — xem `FE-B11` |
+| **Lời mời** | `/user/invite-list` | ❌ | **xoá** — cố ý không có màn quản lý |
 | **Kho lưu trữ** | `/user/storage` | ❌ | **xoá** |
 | Thùng rác | `/user/trash` | ❌ | giữ mục, **dựng trang** ở `03` §2 |
 | **Hỗ trợ** | `/user/support` | ❌ | **xoá** |
 | **Phản hồi** | `/user/feadback` | ❌ | **xoá** (kèm typo `feadback`) |
 
-⚠️ **Vì sao *Lời mời* bị xoá chứ không dựng**: nó **không dựng được** vì không có API. `apiClient.invite` chỉ có `createInvite` + `getInviteInfo` — không có endpoint liệt kê lời mời đã gửi. Dựng trang đòi hỏi thêm `GET /api/v1/invite/mine` ở backend, tức là thêm việc cho cả 2 bên để giữ một mục menu phụ. Với app cá nhân, luồng chính là *tạo link mời rồi gửi qua Zalo/email* — không cần quản lý danh sách đã gửi. Nếu sau này cần, thêm cả endpoint lẫn mục menu cùng lúc.
+⚠️ **Vì sao *Lời mời* bị xoá — cố ý, không phải thiếu API.** Luồng đã chốt (Q15, bất biến **F7**):
+
+```
+OWNER bấm "Tạo link mời"  →  link tự hết hạn 7 ngày  →  gửi qua Zalo / email, không cần biết gửi cho ai
+                                                                              ↓
+người ta mở /auth/register?token=...  →  đăng ký  →  vào thẳng cây, vai VIEWER
+```
+
+Không có màn danh sách, không có toggle bật/tắt, không có nút thu hồi, không có `GET /invite/mine`. Với app 1 người 1 cây (Q16), "quản lý lời mời" là công việc không sinh ra giá trị gì: link gửi đi đâu thì kệ, người có link thì vào, hết hạn là hết.
+
+Nếu sau này cần quản lý, phải thêm **cả** endpoint **và** mục menu cùng lúc — không thêm mục menu trước rồi để trang trắng (vi phạm F6).
 
 Xoá xong, nhóm `support` trong `sidebar-profile.tsx:70-84` rỗng hoàn toàn → xoá luôn group khỏi `data`.
 
@@ -185,6 +211,26 @@ Sau `FE-B8`: xoá `/tutorials`, `/faq`, và 4 entry `/api/*`. `isPublicRoute` c�
 
 ---
 
+## FE-B11 — Danh sách nhóm + `/user/groups` (theo Q16)
+
+Khảo sát ban đầu giữ mục *Danh sách nhóm* vì nó **có trang thật**. Sai về mặt mô hình: sau khi chốt **Q16** (1 tài khoản = 1 cây) thì trang đó không có nội dung để hiển thị.
+
+| Xoá | Vị trí / lý do |
+|---|---|
+| Page `/user/groups` | Không bao giờ có hơn 1 dòng |
+| Mục *Danh sách nhóm* trong `sidebar-profile.tsx` | Menu tới trang luôn rỗng |
+| Nhánh "≥2 group → `/user/groups`" ở redirector `/` | Không tồn tại trạng thái ≥2 group |
+| Nhánh "thiếu `groupId` → chọn gia đình" ở `group-content-wrapper.tsx:48` | `groupId` luôn có; thiếu là lỗi, không phải lựa chọn |
+| Nút *Rời khỏi nhóm* + `leaveGroup` action + `apiClient.groupFamily.leaveGroup` | Xem bên dưới |
+
+⚠️ **Vì sao xoá luôn *Rời khỏi nhóm* chứ không giữ**: rời nhóm tạo ra một trạng thái ngõ cụt mà hệ thống không cho phép giải quyết — 0 group, mà Q16 lại cấm tạo group thứ 2 và cấm có cây riêng nếu đã vào bằng link. Người dùng bấm xong thì mất cây mà không lấy lại được.
+
+Nếu muốn rời, nghĩa là **xoá tài khoản** (đã có trong hồ sơ bảo mật). Giữ `leaveGroup` phía API là để lại một đường lách bất biến **I6** — đường đi vòng FE để tạo group thứ 2.
+
+⚠️ **D8 phía backend giữ nguyên** (OWNER rời → tự chuyển quyền) nhưng chỉ kích hoạt qua **xoá tài khoản**, không phải tính năng người dùng chạm tới. Xem `be/03` §2.
+
+---
+
 ## Danh sách kiểm tra sau khi xoá
 
 ```bash
@@ -198,8 +244,11 @@ pnpm exec knip          # bằng chứng dependency chết
 Rồi grep thủ công, tất cả phải trả về **0** kết quả trong `src/`:
 
 ```bash
-grep -rn "blog\|editorjs\|USER_ROLE\|isLeader\|pinnedMemberId\|roleRights\|/admin\|x-user-role" src/
+grep -rn "blog\|editorjs\|USER_ROLE\|isLeader\|roleRights\|/admin\|x-user-role" src/
 grep -rn "/tutorials\|/faq\|invite-list\|feadback" src/
+grep -rn "user/groups\|leaveGroup" src/          # Q16 — không còn khái niệm nhiều nhóm
 ```
 
-Và: chạy `pnpm dev`, vào `/admin`, `/features?part=x`, `/tutorials`, `/faq`, `/user/invite-list` — tất cả phải redirect hợp lý, không 404 trắng.
+⚠️ `pinnedMemberId` **không** nằm trong danh sách grep này — nó được giữ lại (`FE-B4`).
+
+Và: chạy `pnpm dev`, vào `/admin`, `/features?part=x`, `/tutorials`, `/faq`, `/user/invite-list`, `/user/groups` — tất cả phải redirect hợp lý, không 404 trắng.

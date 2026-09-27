@@ -2,7 +2,7 @@
 
 5 phase. Thứ tự không tùy ý — phase sau **phụ thuộc kết quả** phase trước.
 
-**Mỗi phase đều nghiệm thu theo 5 bất biến ở `05-pham-vi-tiem-do.md`.** Từ phase 2 trở đi áp dụng đủ cả 5; phase 0-1 chỉ áp dụng I1-I3 vì I4 (`version`) và I5 (`ActivityLog`) chưa có nền để đo cho tới khi phase 2 dựng xong.
+**Mỗi phase đều nghiệm thu theo 7 bất biến ở `05-pham-vi-tiem-do.md`.** Từ phase 2 trở đi áp dụng đủ cả 7; phase 0-1 chỉ áp dụng I1-I3 vì I4 (`version`) và I5 (`ActivityLog`) chưa có nền để đo cho tới khi phase 2 dựng xong. I6/I7 **làm được ngay ở phase 1** (bước 1.9, 1.10, 2.14, 2.15): chặn tạo group thứ 2 và thêm cột chủ media đều là vá lỗ hổng, không cần đợi phase 2.
 
 ---
 
@@ -43,13 +43,19 @@ Không thêm tính năng nào. Chỉ làm cho hệ thống không còn ghi đè 
 | 1.6 | Scope mọi `where` của family theo `groupFamilyId`; bỏ upsert theo id client | `02` §1 |
 | 1.7 | Thêm `@nestjs/throttler` (nhóm riêng cho `/auth/*`) + `helmet` | `02` §8 |
 | 1.8 | Cron dọn session hết hạn | `02` §7 |
+| 1.9 | **Migration cột chủ media** — `Photo`/`Album`/`Event` thêm `createdById` / `deletedAt` / `deletedById`, `Photo` thêm `hiddenById` + index. **Backfill `createdById` = group OWNER** rồi mới `NOT NULL` | `03` §11.1 |
+| 1.10 | Bộ lọc ẩn ở **tầng service** cho mọi query đọc media (không phải ở controller) | `03` §11.2 |
 
 **Nghiệm thu — không được bỏ qua:**
 - Test IDOR: user A `EDITOR` group A dùng id family/member của group B → `403`/`404`, **và** không có bản ghi group B nào thay đổi. Chạy ở `test/family.e2e-spec.ts`.
 - Test tham ngũ thành viên (`assertCan` trả đúng kết quả cho 5 tổ hợp role × thành viên/không thành viên).
 - Test rate limit: gọi `login-base` vượt ngưỡng → `429`.
 - `pnpm test` + `pnpm test:e2e` + `pnpm exec tsc --noEmit` + `pnpm lint:src` + `pnpm build` xanh.
-- **Toàn bộ vi phạm I1-I3 trong bảng ở `05-pham-vi-tiem-do.md` đã về 0.** I4/I5 chưa áp dụng ở phase này.
+- **Toàn bộ vi phạm I1-I7 trong bảng ở `05-pham-vi-tiem-do.md` đã về 0.** I4/I5 chưa áp dụng ở phase này.
+
+⚠️ **Migration 1.9 phải chạy trước mọi code đọc media.** Nếu thêm cột nullable rồi điền sau thì có khoảng thời gian media không có chủ ⇒ không ai sở hữu, không ai xoá được. Một migration duy nhất: thêm cột nullable → backfill → đổi `NOT NULL`, trong **cùng** file migration. Chạy `pnpm prisma generate` sau khi sửa schema (AGENTS.md: types sẽ hỏng nếu không).
+
+⚠️ **Backfill bằng group OWNER, không bằng user đầu tiên tìm được.** OWNER là người có quyền tối đa nên vẫn tồn tại chắc chắn; "user đầu tiên" có thể đã xoá tài khoản, để lại media mà không ai quản được nổt.
 
 ⚠️ `pnpm test:e2e` **cần PostgreSQL thật + `.env` đầy đủ** (`test/test-app.ts` boot AppModule thật). Không chạy được thì đừng tính là đã nghiệm thu.
 
@@ -71,13 +77,16 @@ Viết lại đường ghi. Đây là lúc duy nhất breaking change gần như
 | 2.4 | `generation` bỏ khỏi DTO; server BFS tính lại sau mỗi mutation có đổi quan hệ; client gửi giá trị lệch thì 409 | `02` §9 |
 | 2.5 | `POST /family/:groupId/import` — `If-Match` + `Idempotency-Key` + `baseVersion` + `dryRun` + **`mode: 'create' \| 'restore'`** (`restore` giữ nguyên id trong file backup; id trùng mà nội dung khác → 409 `conflicts`, không ghi đè) | `03` §5, `06` R2.5 |
 | 2.6 | Xoá `POST /family/sync-data/:groupId` | `03` §1 |
-| 2.7 | `FamilyMember.deletedAt` + `GET /trash` + restore + job 30 ngày | `03` §11 |
+| 2.7 | `FamilyMember.deletedAt` + `GET /trash` (**2 nguồn tách biệt**: cây theo quyền `edit`, media theo `createdById = :me`) + restore + job 30 ngày | `03` §11 |
 | 2.8 | `ActivityLog`: `TARGET_TYPE`/`ACTION_TYPE` mới, `@@index([familyId, createdAt])`, ghi trong **cùng** `$transaction` với mọi mutation, `GET /family/:groupId/activity` (chỉ OWNER/EDITOR) | `03` §10 |
 | 2.9 | `PATCH /group-family/:groupId/transfer-ownership` + quy tắc nhóm mồ côi khi OWNER rời (D8) | `03` §2 |
-| 2.10 | Upload ảnh thành viên | `03` §3 |
+| 2.10 | **Gán ảnh cho node (D16 — đảo ngược bản cũ).** 2 đường: pin tự chụp ảnh hồ sơ, và tay quyền `edit`. `FamilyMember` có `photoId` **snapshot**; chặn pin chéo | `03` §3 |
 | 2.11 | `Event.familyMemberId` + index | `02` §6, `03` §8 |
 | 2.12 | `GroupNotification.entityType` + `entityId`; bỏ `NOTIFICATION_TYPE` | `02` §6, `02` §9 |
 | 2.13 | `/api/v1` | `02` §8 |
+| 2.14 | **`POST /auth/register` nhận `?token=`** (Q15) — có token → join cây người mời, **không** tạo group; không token → tạo group + cây riêng. Trả `groupId` trong response. Token hết hạn/đã dùng/sai → `409` + câu rõ, **tuyệt đối không fallback sang tạo cây riêng** | `03` §4 |
+| 2.15 | **Chặn tạo group thứ 2** (I6) — `POST /group-family` khi user đã thuộc 1 group → `409`. Xoá `leaveGroup` | `01` B11 |
+| 2.16 | Xoá tài khoản → **chuyển chủ media** cho group OWNER trước khi xoá user (không cascade xoá media) | `03` §11.3 |
 
 **Frontend phải sửa theo (chưa nằm trong phạm vi lần này, ghi ra để không quên):**
 - `src/lib/api/api-client.lib.ts` — bỏ `family.syncFamily`, thêm `family.changes` + CRUD mới
@@ -94,7 +103,13 @@ Viết lại đường ghi. Đây là lúc duy nhất breaking change gần như
 - Test chu trình **có sẵn trong DB** (không tạo qua API): recompute phải trả `generation = 0` + ghi log, **không throw**
 - Test xoá 1 thành viên sinh **2 dòng** `ActivityLog`
 - Test rollback: cố tình làm hỏng một mutation giữa transaction → không được còn dòng `ActivityLog` mồ côi
-- **5 bất biến `05-pham-vi-tiem-do.md` tick đủ 5/5**
+- Test đăng ký 4 nhánh (2.14): có token hợp lệ → vào cây người mời với vai **VIEWER** · không token → có group riêng với vai **OWNER** · token hết hạn → `409` **và không tạo group** · token đã dùng → `409` **và không tạo group**
+- Test I6 (2.15): user đã có group gọi `POST /group-family` → `409`; **và** `leaveGroup` trả 404 (đã xoá)
+- Test chủ media (I7): `EDITOR` A xoá ảnh của B → `403`; B xoá ảnh của chính mình → `200`; A (group OWNER) xoá ảnh của B → `200`; VIEWER C không thấy ảnh B đã ẩn, OWNER thấy
+- Test thùng rác tách: `GET /trash` của A không chứa media B đã xoá; A khôi phục được media của mình, **không** khôi phục được media của B
+- Test `PHOTO_HIDDEN` ghi đúng 1 dòng `ActivityLog` có `photoId` + `byUserId`
+- Test xoá tài khoản (2.16): media của user bị xoá **vẫn còn** và `createdById` trỏ về group OWNER, không mất ảnh nào
+- **7 bất biến `05-pham-vi-tiem-do.md` tick đủ 7/7**
 - `postman.json` cập nhật theo
 
 ---
@@ -126,7 +141,7 @@ Vòng kiểm thật sự: **export JSON → xoá group → import lại → cây
 | 4.4 | Xem lại `ActivityLog` sau khi đã chạy thật: log có ích không, có nên rút gọn bảng action không | `03` §10 |
 | 4.5 | Đồng bộ `postman.json`, `docs/`, `graphs/*.drawio` | `03` §12 |
 
-**Nghiệm thu:** share link thu hồi là mất quyền ngay lập tức · mọi endpoint nhạy cảm có rate limit · tài liệu mô tả đúng những gì đang chạy · 5 bất biến `05-pham-vi-tiem-do.md` vẫn tick đủ 5/5 sau khi thêm share link (share link là bề mặt tấn công mới — phải scope `groupFamilyId` như mọi route khác).
+**Nghiệm thu:** share link thu hồi là mất quyền ngay lập tức · mọi endpoint nhạy cảm có rate limit · tài liệu mô tả đúng những gì đang chạy · **7 bất biến `05-pham-vi-tiem-do.md` vẫn tick đủ 7/7** sau khi thêm share link (share link là bề mặt tấn công mới — phải scope `groupFamilyId` như mọi route khác).
 
 ---
 
@@ -138,10 +153,14 @@ Không release cho người dùng thật trước khi có đủ:
 
 - [ ] Phase 0 + Phase 1 xanh, e2e chạy **trong CI** chứ không phải chỉ local
 - [ ] Test IDOR cross-tenant xanh
-- [ ] **5 bất biến `05-pham-vi-tiem-do.md` tick đủ 5/5** và đã nhúng vào PR template
+- [ ] **7 bất biến `05-pham-vi-tiem-do.md` tick đủ 7/7** và đã nhúng vào PR template
+- [ ] **Không còn endpoint nào để ra group thứ 2** — `POST /group-family` trả `409`, `leaveGroup` đã xoá (I6)
+- [ ] **Không còn media nào không chủ** — `createdById NOT NULL` trên mọi bảng media, migration đã backfill, không có dòng nào null (I7)
+- [ ] Test 4 nhánh đăng ký (2.14) xanh, trong đó **2 nhánh lỗi phải trả `409` chứ không tạo group**
+- [ ] Gán ảnh cho node chạy được — pin tự lấy ảnh hồ sơ, gán tay cần quyền `edit`, **đổi ảnh hồ sơ sau không tự đổi ảnh node** (D16)
 - [ ] Upload ảnh thành viên chạy được
 - [ ] Export JSON + import round-trip xanh (**cả `mode: 'restore'`** — export xong import lại phải ra cây y hệt kể cả id)
 - [ ] Không còn endpoint giả nào (audit lại `auth.controller.ts` toàn bộ)
 - [ ] Clone repo mới → `cp .env.example .env` → boot được không cần sửa gì
 
-Nếu thiếu mục nào trong 6 mục đầu thì vẫn dùng được với người thân, nhưng **không** để người lạ đăng ký.
+Nếu thiếu mục nào trong 8 mục đầu thì vẫn dùng được với người thân, nhưng **không** để người lạ đăng ký.

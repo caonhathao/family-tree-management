@@ -4,13 +4,13 @@
 >
 > Đây là phát hiện quan trọng nhất của toàn bộ khảo sát frontend, và nó **lặp lại y hệt** phát hiện của khảo sát backend: hệ thống không hỏng vì thiếu tính năng, mà hỏng vì **không có bất biến nào được viết ra**. `familySlice` giữ `draft` + `origin` là một thói quen, không phải quy tắc — nên `family-member-form.tsx:136` mới mời sinh `v4()` làm `localId` mà không ai ngăn được.
 >
-> 5 bất biến backend (I1–I5) là phía server. 6 bất biến ở đây là phía client. **Hai bộ phải được kiểm tra cùng nhau** trong mọi PR đụng cả hai.
+> 7 bất biến backend (I1–I7) là phía server. 7 bất biến ở đây là phía client. **Hai bộ phải được kiểm tra cùng nhau** trong mọi PR đụng cả hai.
 >
-> ⚠️ **Ký hiệu `B` đã có tiền tố.** Cột "Sửa ở" ở bảng bên dưới dùng `FE-B*` cho mục của `planing-refactor-fe/01` và `BE-B*` cho mục của `planing-refactor-be/01` — **hai danh sách này không cùng nghĩa** và lệch nhau từ mục thứ 5 trở đi. Bảng ánh xạ 2 chiều ở [dòng 126](#) là nơi duy nhất trong file này dùng `BE-B*`, vì nó nói về việc *backend* xoá cột. Viết `B3` trần là không xác định.
+> ⚠️ **Ký hiệu `B` đã có tiền tố.** Cột "Sửa ở" ở bảng bên dưới dùng `FE-B*` cho mục của `planing-refactor-fe/01` và `BE-B*` cho mục của `planing-refactor-be/01` — **hai danh sách này không cùng nghĩa** và lệch nhau từ mục thứ 5 trở đi. Bảng ánh xạ 2 chiều ở [Ánh xạ 2 chiều](#ánh-xạ-2-chiều-với-bất-biến-backend) là nơi duy nhất trong file này dùng `BE-B*`, vì nó nói về việc *backend* xoá cột. Viết `B3` trần là không xác định.
 
 ---
 
-## 6 bất biến
+## 7 bất biến
 
 | # | Bất biến | Vì sao | Bắt được bug nào đã xảy ra |
 |---|---|---|---|
@@ -18,8 +18,12 @@
 | **F2** | **Không giá trị dẫn xuất nào trong payload** (`generation`, quan hệ chiều ngược) | Server là nguồn sự thật. Client tự tính rồi gửi lên là vừa thừa vừa nguy hiểm — và `version` **không** bắt được, vì client vẫn gửi `version` đúng | `relationship-form.tsx:190-219` dịch cả subtree khi thêm vợ; `:228` chỉ gửi 1 chiều trong khi UI đọc 2 chiều |
 | **F3** | **Mọi URL dựng từ `API_PREFIX` trong `api-client.lib.ts`** | 60+ URL đều bắt đầu bằng `/api`. Đổi `/api` → `/api/v1` là một lần tìm-thay-thế. Một chữ gộp sai **không lộ lúc build**, chỉ lộ runtime 404 trên màn hình người dùng. Không có type nào bắt được | Sau backend bước 2.13: sửa tay chắc chắn sót |
 | **F4** | **Mọi mutation mang `If-Match` và xử lý 409 bằng cách hiện ra, không phải ghi đè** | Hai người cùng sửa mà không có optimistic lock thì lần save sau âm thầm xoá việc trước. Và nếu phản ứng mặc định là "thử lại" thì ta quay lại đúng bug đó | `family.service.ts:62,130` `deleteMany` xoá sạch thứ không có trong payload |
-| **F5** | **Không UI nào đọc field mà kế hoạch backend xoá** (`isLeader`, `pinnedMemberId`, `user.role`, `ADMIN`) | Server xoá cột = response không còn field = `undefined` lọt vào UI và điều kiện so sánh. Thường biểu hiện là *"tính năng tự tắt"* chứ không phải lỗi rõ ràng | `family-info-drawer.tsx:44,171,189,212`; `family-setting-drawer.tsx:50`; `group-family.dto.ts:30-31,50` |
+| **F5** | **Không UI nào đọc field mà kế hoạch backend xoá** (`isLeader`, `user.role`, `ADMIN`) — **riêng `pinnedMemberId` không nằm trong danh sách này**, xem F5b | Server xoá cột = response không còn field = `undefined` lọt vào UI và điều kiện so sánh. Thường biểu hiện là *"tính năng tự tắt"* chứ không phải lỗi rõ ràng | `family-info-drawer.tsx:44,171,189,212`; `family-setting-drawer.tsx:50`; `group-family.dto.ts:30,50` |
+| **F5b** | **`pinnedMemberId` phải đi kèm `photoId` snapshot** — đọc ảnh node bằng cách tra avatar hồ sơ lúc render là **sai** | Ảnh node phải là ảnh **chụp tại thời điểm pin**. Nếu đọc động, một người đổi ảnh hồ sơ của mình sẽ tự đổi ảnh node đó trong cây của **người khác** — tức tự sửa dữ liệu của người khác mà không cần cóm quyền | `handlePin` (`family-member-form.tsx:93-125`) hiện chỉ gửi `pinnedMemberId`, không có `photoId` |
 | **F6** | **Không route hay menu entry nào mà không có trang thật** | Ấn vào rồi thấy trang trắng = app hỏng. Đồng thời mỗi route trong `publicRoutes` mà không có trang là một cái bẫy: quên thêm = redirect `/auth` vô tận | 4 menu không có trang; `/tutorials` + `/faq` không có trang nhưng nav trỏ tới; 4 entry `/api/*` trong `publicRoutes` không có route handler |
+| **F7** | **Mọi tài khoản dẫn tới đúng 1 cây.** Không tồn tại trạng thái *"đã có tài khoản nhưng chưa có cây"*, và không tồn tại lối ra để tạo cây thứ 2 | App là **1 người 1 cây** (Q16). Mọi trạng thái "chưa có cây" và "nhiều cây" đều là **ngõ cụt**: người dùng rơi vào đó thì không tự thoát ra được, và cũng không ai giúp được | `group-content-wrapper.tsx:48` — thiếu `groupId` thì in text lỗi, tức coi như 1 trạng thái hợp lệ; redirector `/` có nhánh *0 group → tạo group* và *≥2 group → `/user/groups`*; `leaveGroup` mở là tự tạo ra ngõ cụt ngay từ UI |
+
+⚠️ **F5 / F5b tách làm 2 vì `pinnedMemberId` đã đảo ngược.** Khảo sát ban đầu xếp nó vào danh sách "field backend sẽ xoá" (`BE-B5`), và khảo sát này theo. Sau khi chốt **Q14** thì `pinnedMemberId` là cơ chế gắn node ↔ tài khoản ↔ ảnh hồ sơ — **phải giữ**. Nhưng giữ nó kéo theo nghĩa vụ mới: phải có `photoId` snapshot, nên tách thành F5b với nội dung hoàn toàn khác. Đừng gộp lại vì cùng một tên field.
 
 ---
 
@@ -27,15 +31,17 @@
 
 ### 1. Nhúng vào mọi PR
 
-Ghép 6 dòng này vào mô tả PR hoặc checklist review:
+Ghép 7 dòng này vào mô tả PR hoặc checklist review:
 
 ```
 - [ ] F1  không có localId/clientRef trong body request
 - [ ] F2  không có generation hay quan hệ chiều ngược trong payload
 - [ ] F3  mọi URL dựng từ API_PREFIX, không viết "/api/..." trực tiếp
 - [ ] F4  mutation mang If-Match; 409 thì hiện ra, không retry, không ghi đè
-- [ ] F5  không đọc field backend đã xoá (isLeader, pinnedMemberId, user.role, ADMIN)
+- [ ] F5  không đọc field backend đã xoá (isLeader, user.role, ADMIN)
+- [ ] F5b pinnedMemberId đi kèm photoId snapshot; không đọc avatar hồ sơ lúc render
 - [ ] F6  mọi route/menu đều có trang thật; route mới đã thêm vào publicRoutes nếu cần
+- [ ] F7  mọi tài khoản dẫn tới 1 cây; không thêm nhánh "chưa có cây" hay "nhiều cây"
 ```
 
 Một dòng không tick → PR chưa xong, không merge.
@@ -48,7 +54,7 @@ Ví dụ hợp lệ về F1: nếu backend **thực sự** trả về `idMap` v�
 
 ### 3. Áp dụng cho mọi stage, không chỉ đợt refactor
 
-6 stage trong `04-thu-tu-thuc-hien.md` đều nghiệm thu theo 6 dòng này. Nhưng ràng buộc có hiệu lực **từ PR đầu tiên** — nghĩa là các đoạn code sẵn có đang vi phạm cũng phải nằm trong danh sách việc.
+7 stage trong `04-thu-tu-thuc-hien.md` đều nghiệm thu theo 7 dòng này. Nhưng ràng buộc có hiệu lực **từ PR đầu tiên** — nghĩa là các đoạn code sẵn có đang vi phạm cũng phải nằm trong danh sách việc.
 
 ---
 
@@ -79,12 +85,13 @@ Ví dụ hợp lệ về F1: nếu backend **thực sự** trả về `idMap` v�
 | F5 | `family-info-drawer.tsx:189-203` — điều kiện `amILeader && !item.isLeader` cho nút *Xóa khỏi nhóm* | `02` §6 |
 | F5 | `family-info-drawer.tsx:212-224` — nút *Đổi vai trò* **không có `onClick`** (chức năng chết) | `02` §6 |
 | F5 | `family-setting-drawer.tsx:50` — `amILeader` | `02` §6 |
-| F5 | `group-family.dto.ts:30-31,50` — `isLeader`, `pinnedMemberId` trong response DTO | `01` `FE-B3`, `FE-B4` |
-| F5 | `group-content.tsx:98,424-433,435-438,449,530` — `pinnedMemberId` từ server | `01` `FE-B4` |
-| F5 | `family-member-form.tsx:44,53,91,98,108,378-398` — `handlePin` + checkbox *Đây là tôi* | `01` `FE-B4` |
+| F5 | `group-family.dto.ts:30,50` — `isLeader` trong response DTO | `01` `FE-B3` |
 | F5 | `proxy.ts:17-28,131-139,149` — `roleRights`, nhánh admin, `x-user-role` | `01` `FE-B2` |
 | F5 | `enums.ts:1-4` — `USER_ROLE { ADMIN, USER }` | `01` `FE-B2` |
 | F5 | `auth.lib.ts` — `getRoleFromToken` chỉ tồn tại cho RBAC admin | `01` `FE-B2` |
+| F5b | `handlePin` (`family-member-form.tsx:93-125`) — chỉ gửi `pinnedMemberId`, **không gửi `photoId`** ⇒ node không có ảnh snapshot | `01` `FE-B4`, `02` §6 |
+| F5b | `group-family.dto.ts:31` — response DTO **không có `photoId`** cho node | `02` §6, `03` §4 |
+| F5b | `group-content.tsx:435-438,530` — truyền `pinnedMemberId` xuống form mà không có ảnh kèm | `02` §6 |
 | F6 | `sidebar-profile.tsx:46-51` — menu *Lời mời* → `/user/invite-list`, không có trang | `01` `FE-B9` |
 | F6 | `sidebar-profile.tsx:57-62` — menu *Kho lưu trữ* → `/user/storage`, không có trang | `01` `FE-B9` |
 | F6 | `sidebar-profile.tsx:71-76` — menu *Hỗ trợ* → `/user/support`, không có trang | `01` `FE-B9` |
@@ -98,18 +105,23 @@ Ví dụ hợp lệ về F1: nếu backend **thực sự** trả về `idMap` v�
 | F6 | `group-content-wrapper.tsx:48` — thiếu `groupId` thì in text lỗi inline thay vì redirect | `02` §10 |
 | F6 | `admin/page.tsx` — stub rỗng | `01` `FE-B2` |
 | F6 | `panel-editor.tsx` — mục *Chi tiết* không có handler | `01` `FE-B7`, `02` §7 |
+| F7 | `group-content-wrapper.tsx:48` — thiếu `groupId` thì in text lỗi inline, coi như 1 trạng thái hợp lệ | `02` §10, `01` `FE-B11` |
+| F7 | Redirector `/` — nhánh *0 group → tạo group* và *≥2 group → `/user/groups`* | `01` `FE-B11`, `02` §10 |
+| F7 | `page.tsx` (root) + `sidebar-profile.tsx` — mục *Danh sách nhóm* → `/user/groups`, trang sẽ luôn có đúng 1 dòng | `01` `FE-B11` |
+| F7 | `apiClient.groupFamily.leaveGroup` + action `leaveGroup` + nút *Rời khỏi nhóm* — lối ra duy nhất để tự tạo ngõ cụt | `01` `FE-B11` |
 
 ---
 
-## Lỗ hổng đã biết: 3 bug mà 6 bất biến này **không** bắt
+## Lỗ hổng đã biết: 3 bug mà 7 bất biến này **không** bắt
 
-Ghi lại để không quên. Nguyên tắc: khi tìm thấy bug không thuộc 6 bất biến này, **thêm một dòng vào bảng trên**, và cân nhắc nâng thành F7, F8…
+Ghi lại để không quên. Nguyên tắc: khi tìm thấy bug không thuộc 7 bất biến này, **thêm một dòng vào bảng trên**, và cân nhắc nâng thành F8, F9…
 
-| Bug | Vì sao 6 bất biến không bắt | Sửa ở |
+| Bug | Vì sao 7 bất biến không bắt | Sửa ở |
 |---|---|---|
 | `lodash.isequal` trên **toàn bộ cây** 3 lần mỗi render (`familyThunk.ts:15`, `panel-editor.tsx:157`, `group-content.tsx:456-474`) | Không phải lỗi tenant, không phải lỗi versioning — đây là **hiệu năng**. `F4` ngăn được mất dữ liệu nhưng không ngăn được render 300 người chậm | `02` §11 |
 | `useRouter()` gọi **bên trong `catch`** của hàm async không phải component (`panel-editor.tsx:74`) | Vi phạm rules-of-hooks. Chỉ sống sót vì nhánh lỗi hiếm khi chạy — không có bất biến nào nói về điều đó | `02` §14 |
 | Nút *Đổi vai trò* render mà không có `onClick` (`family-info-drawer.tsx:212-224`) | Không phải lỗi dữ liệu — là lỗi **UI chết**. `F6` nói về route/menu không có trang, không nói về nút không có handler | `02` §6 |
+| Thêm media **không ai sở hữu** — không có cột nào chỉ ra ai up | `F1`–`F7` đều nói về *payload* và *đường điều hướng*, không nói về **quyền trên dữ liệu đã lưu**. Xoá album của người khác hiện vẫn qua được vì không có bất biến nào cấm | `03` §8, `be/03` §11, bất biến **I7** |
 
 Mục tiêu của bảng này không phải "phát hiện đủ hết lần này", mà là **không lặp lại "tìm ra, viết vào tài liệu, rồi quên"**.
 
@@ -125,17 +137,20 @@ Mục tiêu của bảng này không phải "phát hiện đủ hết lần này
 | F2 (không giá trị dẫn xuất) | **D10** (`generation` server là nguồn sự thật) + **I4** | `version` **không** bắt được lỗi `generation` — vì client vẫn gửi `version` đúng. Đây là lý do F2 là bất biến riêng chứ không gộp vào F4 |
 | F3 (mọi URL từ `API_PREFIX`) | **2.13** (`/api` → `/api/v1`) | Cùng một lần đổi, hai bên phải deploy **cùng nhịp** |
 | F4 (mọi mutation mang `If-Match`) | **I4** (`version++` trong `$transaction`) + **R1** (batch endpoint) | F4 vô nghĩa nếu không có R1: N request lẻ thì lưu không nguyên tử |
-| F5 (không đọc field bị xoá) | **D2** (bỏ admin) · **BE-B3** (bỏ `isLeader`) · **BE-B5** (bỏ `pinnedMemberId`) | Mỗi lần backend xoá cột là một lần F5 có thêm vi phạm |
+| F5 (không đọc field bị xoá) | **D2** (bỏ admin) · **BE-B3** (bỏ `isLeader`) | Mỗi lần backend xoá cột là một lần F5 có thêm vi phạm |
+| F5b (`pinnedMemberId` cần `photoId` snapshot) | **BE-B5** — ⚠️ **đã đảo ngược**: bộ backend **không** xoá `pinnedMemberId` nữa, mà giữ lại làm cơ chế node ↔ tài khoản ↔ ảnh (D16) | Không còn là "tránh đọc field bị xoá" mà là "đọc đúng snapshot" |
 | F6 (route/menu có trang thật) | **D3** (bỏ blog) — `/features` mất nguồn nội dung | Không có bất biến backend nào; đây là thứ FE tự phát hiện |
+| F7 (mọi tài khoản dẫn tới 1 cây) | **I6** (1 tài khoản chỉ thuộc 1 group) + **D14** | Cùng một quy tắc, hai đầu. FE bỏ mọi nhánh "chưa có cây" / "nhiều cây" thì backend phải chặn tạo group thứ 2, nếu không chỉ cần gọi API là tạo ra ngõ cụt |
+| — | **I7** (mọi media có chủ; xoá/ẩn/sửa chỉ chủ hoặc group OWNER) | FE hiện chưa có bất biến tương ứng — xem dòng *Lỗ hổng đã biết*. Bảng quyền 2 trục ở `fe/README.md` là hệ thống, chưa phải bất biến review |
 | — | **I5** (mọi mutation ghi `ActivityLog`) | FE dựa vào để hiển thị lịch sử thay đổi (`03` §1) và thông điệp 409 (`03` §12). Nếu I5 không giữ, 2 màn hình đó hỏng theo |
 
 ---
 
 ## Khi tìm thấy bug mới
 
-1. Kiểm tra 6 bất biến này có bắt được không.
+1. Kiểm tra 7 bất biến này có bắt được không.
 2. **Không bắt được** → thêm vào bảng *Lỗ hổng đã biết* ở trên, ghi rõ vì sao không bắt được.
 3. **Bắt được** → thêm vào bảng *Danh sách vi phạm hiện tại* với đường dẫn + số dòng.
-4. Nếu nó là một **dạng lỗi mới** (không phải chỉ là một chỗ) → cân nhắc nâng thành **F7, F8…** và viết lý do kỹ thuật vào đây, trước khi code.
+4. Nếu nó là một **dạng lỗi mới** (không phải chỉ là một chỗ) → cân nhắc nâng thành **F8, F9…** và viết lý do kỹ thuật vào đây, trước khi code.
 
-Bất biến mới chỉ được thêm khi ta chứng minh được: *đã có bug thật xảy ra vì thiếu quy tắc đó*. Không thêm nguyên tắc "nên làm" — 6 bất biến ở đây đều bắt được một lỗi đã xảy ra.
+Bất biến mới chỉ được thêm khi ta chứng minh được: *đã có bug thật xảy ra vì thiếu quy tắc đó*. Không thêm nguyên tắc "nên làm" — 7 bất biến ở đây đều bắt được một lỗi đã xảy ra.

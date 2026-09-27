@@ -1,6 +1,6 @@
 # 01 — Phạm vi BỎ
 
-9 nhóm (B4 đã bị hủy sau khi chốt quyết định D7 — xem cuối file). Sắp xếp theo mức độ chắc chắn.
+9 nhóm (B4 `MEMBER_ROLE.OWNER` và **B5 `pinnedMemberId` đều đã bị hủy** sau khi chốt D7 / D16 — xem cuối file). Sắp xếp theo mức độ chắc chắn.
 
 ---
 
@@ -64,16 +64,34 @@ Phần `enum MEMBER_ROLE` trong `prisma/schema/group.prisma:1-5` **giữ nguyên
 
 ---
 
-## B5. `pinnedMemberId` (chắc chắn)
+## ~~B5. `pinnedMemberId`~~ — ĐÃ HỦY, đảo thành **giữ**
 
-| Xoá | Vị trí |
-|-----|--------|
-| Cột DB | `GroupMember.pinnedMemberId` — `group.prisma:31` |
-| Endpoint | `PATCH /group-family/:id/pin` — `group-family.controller.ts:177` |
-| Service | `group-family.service.ts:275-304` |
-| Response | `group-family.service.ts:130`, `group-member-response.type.ts` |
+> ⚠️ **Đảo lại quyết định cũ.** Bản nháp ban đầu xếp `pinnedMemberId` vào danh sách xoá với lý do *"trạng thái UI, không phải dữ liệu gia đình"*. Sai. Sau khi chốt **D16** (ảnh node = ảnh hồ sơ), `pinnedMemberId` là **cơ chế gắn node cây ↔ tài khoản ↔ ảnh hồ sơ** — xoá nó là mất tính năng.
 
-Lý do: trạng thái UI, không phải dữ liệu gia đình. Nếu sau này cần thì đưa vào client-side/localStorage, không cột DB.
+| Giữ / sửa | Vị trí |
+|---|---|
+| **Giữ** cột DB | `GroupMember.pinnedMemberId` — `group.prisma:31` |
+| **Giữ** endpoint | `PATCH /group-family/:id/pin` — `group-family.controller.ts:177` |
+| **Sửa** service | `group-family.service.ts:275-304` — nhận `photoId`, **snapshot** vào node |
+| **Sửa** response | `group-family.service.ts:130`, `group-member-response.type.ts` — thêm `photoId` |
+| **Thêm** ràng buộc | Không cho pin **chéo**: `pinnedMemberId` phải là chính tài khoản đang gọi endpoint (xem `03` §3) |
+
+### Vì sao giữ
+
+Theo D16, ảnh đại diện của node là ảnh hồ sơ của chính người pin:
+
+```
+người dùng pin node X  →  server chụp avatar của họ  →  ghi photoId vào node X
+```
+
+Nhờ vậy **không ai có quyền sửa ảnh của người khác** — mỗi người chỉ gán được ảnh của chính mình, tự động, bằng cách pin. Muốn gán ảnh khác thì phải là OWNER/EDITOR làm tay (`03` §3, quyền `edit`).
+
+⚠️ **Ảnh phải snapshot lúc pin, không đọc động lúc render.** Nếu chỉ lưu `pinnedMemberId` rồi tra avatar khi trả response, thì một người đổi ảnh hồ sơ sẽ tự đổi ảnh node đó trong **cây của người khác** — tức sửa dữ liệu người khác mà không cần quyền. Vì vậy phải có cột `photoId` trên node.
+
+### 2 mục còn lại của B5 — giữ nguyên, chỉ đổi lý do
+
+- **Không chuyển sang `localStorage`.** Lý do cũ (*"nếu sau này cần thì đưa vào client-side"*) không còn hiệu lực: đây không còn là lựa chọn cá nhân thuần tuý mà là **liên kết dữ liệu** giữa cây và tài khoản.
+- **Không gộp cột này vào `localId` hay `clientRef`.** Nó là tham chiếu tới một tài khoản **đã tồn tại**, khác hẳn `clientRef` (tham chiếu thứ **chưa** tồn tại) — ranh giới này là bất biến F1 ở phía FE.
 
 ---
 
@@ -123,6 +141,40 @@ Fix bằng cách sửa lại, không xoá `pending_features.md` — nó vẫn c�
 ## B10. `events.service.ts` (chắc chắn)
 
 `src/modules/events/events.service.ts` (module-level) vs `src/modules/events/event.service.ts` (controller-level). Hai file gần như trùng tên, chỉ khác 1 ký tự — rất dễ import nhầm. Gộp lại một tên và bỏ file thừa sau khi xác nhận không còn consumer nào.
+
+---
+
+## B11 — Bề mặt "nhiều nhóm" + quản lý lời mời (theo D14, F7)
+
+Đây là nhóm xoá **mới**, sinh ra từ mô hình sản phẩm 1 người 1 cây — không có trong bản khảo sát ban đầu vì lúc đó chưa chốt D14.
+
+| Xoá | Vị trí / lý do |
+|---|---|
+| Endpoint `leaveGroup` | `group-family.controller.ts` + `group-family.service.ts` — xoá khỏi nhóm tạo ra trạng thái ngõ cụt mà hệ thống cấm (0 group), tức là **đường lách bất biến I6**. Muốn rời thì xoá tài khoản |
+| Endpoint trả **danh sách** group của user | Không có màn hồi đáp ở FE (`FE-B11` xoá `/user/groups`). Giữ endpoint là giữ một bề mặt không ai gọi |
+| `GET /invite/mine` | Không tồn tại và **không được tạo**. Cố ý không có màn quản lý lời mời (F7) — link gửi đi đâu thì kệ, hết hạn 7 ngày là hết |
+| Nhánh "tạo group thứ 2" trong `POST /group-family` | Thay bằng **chặn**: đã có group → `409` (bất biến I6) |
+
+⚠️ **Xoá `leaveGroup` là bắt buộc, không phải dọn dẹp.** Giữ lại thì bất biến I6 chỉ còn đúng ở UI — gọi thẳng API là vượt. Xem `be/05` I6.
+
+### Thay bằng
+
+| Thêm | Vì sao |
+|---|---|
+| `POST /auth/register` nhận `?token=` | Ngã ba đăng ký: có token → join cây người mời (vai `VIEWER`); không token → tạo group + cây riêng (vai `OWNER`). Chi tiết ở `03` §4 |
+| Chặn group thứ 2 trong `POST /group-family` | `409` + câu rõ, **không** tạo group âm thầm |
+| Chuyển media sang OWNER khi xoá tài khoản | Không cascade xoá ảnh của người đã xoá account — `createdById` trỏ tới user không còn tồn tại thì media thành mồ côi. Xem `03` §11 |
+
+---
+
+## Các mục đã bị hủy / đảo ngược sau khi viết
+
+Đọc `01` theo mục, không đọc cả file một lượt rồi làm theo:
+
+| Mục | Viết ban đầu | Chốt sau | Ở đâu |
+|---|---|---|---|
+| **B4** `MEMBER_ROLE.OWNER` | Rút enum còn `EDITOR`/`VIEWER` | **Hủy** — giữ 3 vai (D7) | tại chỗ, dòng ~57 |
+| **B5** `pinnedMemberId` | Xoá cột + endpoint | **Đảo** — giữ, thành cơ chế node ↔ tài khoản ↔ ảnh (D16) | tại chỗ, dòng ~67 |
 
 ---
 

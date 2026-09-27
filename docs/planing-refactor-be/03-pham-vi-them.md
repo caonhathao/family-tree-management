@@ -58,13 +58,42 @@ Vì giữ `OWNER`, phải bù lại chức năng bàn giao mà `isLeader` đang 
 
 Phần còn lại của mục này: `MembershipService.assertCan(userId, groupId, level)` — xem `02-pham-vi-sua.md` §3 và `05-pham-vi-tiem-do.md`.
 
-### 3. Upload ảnh thành viên
+### 3. Gán ảnh cho node (D16 — đảo ngược bản cũ)
+
+> ⚠️ **Bản nháp trước ghi mục này là "Upload ảnh thành viên"** — cấp quyền rỗng, ai cũng đổi được ảnh của bất kỳ ai. Đó là lý do chốt D16: **ảnh node là ảnh hồ sơ của chính người đó**, và mỗi người chỉ gán được ảnh của chính mình.
 
 `FamilyMember.avatarUrl` (`family.prisma:40`) **có cột nhưng không có endpoint nào ghi vào**. Cloudinary chỉ dùng cho avatar user (`user.service.ts:60`) và blog-media (sắp bị xoá).
 
-Thêm `POST /family/:groupId/members/:memberId/photo` → `CloudinaryService.uploadFile()` vào folder `FOLDER_FAMILY`. Xoá media cũ khi thay. `@BypassTransform()` cho response nếu trả stream; nếu trả JSON thì bình thường.
+Thêm 2 đường, **cấp quyền khác nhau**:
+
+| Đường | Ai gọi được | Cơ chế |
+|---|---|---|
+| **Tự động — khi pin** | Chính người đó | `PATCH /group-family/:groupId/pin` (`group-family.controller.ts:177`) đọc `User.avatarUrl` **tại thời điểm pin** và ghi `photoId` vào node. Không cần endpoint upload mới |
+| **Tay — gán ảnh khác** | `OWNER` \| `EDITOR` (**quyền `edit`**) | `POST /family/:groupId/members/:memberId/photo` → `CloudinaryService.uploadFile()` vào `FOLDER_FAMILY`. Xoá media cũ khi thay |
+
+⚠️ **Phải snapshot, không được tra động.** Chỉ lưu `pinnedMemberId` rồi đọc `User.avatarUrl` lúc trả response ⇒ một người đổi ảnh hồ sơ của mình sẽ tự đổi ảnh node đó trong **cây của người khác** — tức sửa dữ liệu người khác mà không cần quyền. Vì vậy cột `photoId` trên node là bắt buộc, không phải tuỳ chọn.
+
+⚠️ **Chặn pin chéo.** `pinnedMemberId` phải là **chính tài khoản đang gọi endpoint**. Không có đường tắt ghi `pinnedMemberId` của người khác — nếu có, thì bỏ được cả ràng buộc "không ai sửa ảnh của người khác", vì chỉ cần pin hộ là xong.
+
+⚠️ **Đường tay KHÔNG theo luật media ở §11.** Quyền của nó là `edit` (quyền cây), không phải quyền theo chủ media. Lý do: thao tác này sửa **dữ liệu cây**, không sở hữu media. Nếu áp luật §11 thì OWNER/EDITOR không gán tay được ảnh cho node — mất đúng tính năng cần thiết.
 
 Đây là tính năng người dùng gia đình dùng đầu tiên — cây mà toàn ảnh trắng thì không có giá trị gì.
+
+### 4. `POST /auth/register` nhận `?token=` — đăng ký là ngã ba (D14, D15)
+
+Hiện tại `POST /auth/register` chỉ tạo user, không đụng group. Nhưng FE sẽ gửi `?token=` khi người ta mở link mời — và nếu backend phớt lờ thì người đó **không vào được cây nào**, hoặc tệ hơn: FE tự tạo cây riêng cho họ.
+
+| Trường hợp | Hành vi bắt buộc |
+|---|---|
+| **Có `?token=` hợp lệ** | Tạo user → **join group của link**, vai **`VIEWER`**, **không** tạo group mới. Response trả `groupId` + `role` |
+| **Không có token** | Tạo user → tạo **1 group + 1 cây rỗng**, vai **`OWNER`**. Response trả `groupId` + `role` |
+| Token **hết hạn** / **đã dùng** / sai | `409` + câu rõ nguyên nhân. **Tuyệt đối không fallback sang tạo cây riêng** |
+
+⚠️ **Dòng cuối là điểm quan trọng nhất của mục này.** Nếu token lỗi mà backend tạo group, người dùng sẽ có **2 cây** mà không hề hay biết — đúng cái trạng thái ngõ cụt mà D14 cấm. Lỗi phải **chặn người dùng lại** để họ hỏi lại người mời.
+
+⚠️ **Cũng phải chặn group thứ 2** ở `POST /group-family`: đã có group → `409`. Nếu không, chỉ cần gọi API là tạo group thứ 2, tức lách bất biến I6. Xem `01` B11.
+
+Cùng mục này — `GET /invite/mine` **không được tạo**: cố ý không có màn quản lý lời mời (F7). Xem `01` B11.
 
 ### 10. ActivityLog — làm thật (nâng lên P0, quyết định D12)
 
@@ -96,12 +125,15 @@ Cần:
 | `OWNERSHIP_TRANSFERRED` | bàn giao OWNER | `{ fromUserId, toUserId }` |
 | `MEMBER_ROLE_CHANGED` | đổi role | `{ from, to }` |
 | `MEMBER_JOINED` / `MEMBER_LEFT` | vào / rời group | `{ userId }` |
-| `FAMILY_LAYOUT_CHANGED` | `LAYOUT_SAVE` — lưu hoặc auto-arrange bố cục | `{ movedCount, arranged: boolean }` (`arranged: true` = server tự sắp từ đầu, tức nút *Sắp xếp*) |
+| `FAMILY_LAYOUT_CHANGED` | `LAYOUT_SAVE` — lưu hoặc auto-arrange bố cục | `{ movedCount, arranged: boolean }` (`arranged: true` = server tự sắp từ đầu, tức nút *Sắp xếp*). ⚠️ **Vẫn bắt buộc bump `version`** — lý do đã đổi, xem `06` R1.4 |
 | `MEMBER_GENERATION_RECOMPUTED` | BFS tính lại `generation` | `{ affectedCount, cycleDetected }` |
+| `PHOTO_HIDDEN` / `PHOTO_UNHIDDEN` | ẩn / mở ẩn ảnh (xem §11) | `{ photoId, byUserId }` |
 
 ⚠️ **`MEMBER_GENERATION_RECOMPUTED` chỉ ghi khi `cycleDetected: true`.** Đây là log *bất thường*, không phải log mỗi lần tính — ghi mỗi lần sẽ spam lịch sử mỗi lần mở cây. Khi phát hiện chu trình: đặt `generation = 0` cho các thành viên trong chu trình, ghi 1 dòng log, và **không** throw (xem D10 — server là nguồn sự thật, nhưng dữ liệu hỏng thì phải vẫn render được kèm cảnh báo).
 
-⚠️ **Xoá một thành viên ghi 2 dòng** (dòng xoá + dòng ảnh hưởng dây chuyền). Một dòng là không đủ để biết mất bao nhiêu. Vì vậy 14 dòng bảng = **15** `ACTION_TYPE`.
+⚠️ **Xoá một thành viên ghi 2 dòng** (dòng xoá + dòng ảnh hưởng dây chuyền). Một dòng là không đủ để biết mất bao nhiêu. Vì vậy 14 dòng bảng = **17** `ACTION_TYPE`.
+
+⚠️ **`PHOTO_HIDDEN` phải ghi, dù người bị ẩn không hề hay biết.** Ẩn là thao tác của riêng một người nhưng khiến ảnh biến mất khỏi tầm nhìn của tất cả. Không có log thì khi bị khiếu nại "ảnh tôi biến mất", không có gì để trả lời. `content` phải có `photoId` **và** `byUserId` (người ẩn) — cột `hiddenById` là hạ tầng, không thay thế được cho log. Xem `06` R2.1.
 
 > **Tuỳ chọn, chưa chốt:** `MEMBER_PHOTO_CHANGED` (đổi ảnh thành viên) — sẽ đưa tổng lên **16**. Frontend nên coi đây là giá trị *có thể* xuất hiện và có nhãn dự phòng, không hard-code danh sách đóng. Xem `06` R2.1.
 
@@ -119,18 +151,56 @@ Cần:
 
 ---
 
-### 11. Trash / soft delete (nâng lên P0 — tiền đề của log, quyết định D12)
+### 11. Trash / soft delete + **chủ sở hữu media** (D15, bất biến I7)
 
 `/user/trash` có trong menu sidebar nhưng không có page. Xoá nhầm thành viên trong cây gia đình rất dễ xảy ra, và hiện **không hoàn tác được**.
 
 Nâng lên P0 vì **lý do kỹ thuật chứ không phải lý do tiện nghi**: `MEMBER_DELETED` cần snapshot để dựng lại (§10), mà `DELETE` cứng đã xoá dòng thì không còn gì để chụp. Soft-delete là tiền đề của audit log, không phải một tính năng đứng riêng.
 
-- `FamilyMember.deletedAt DateTime?` (và `Album`, `Event` nếu đã build)
-- `GET /family/:groupId/trash`, `POST /family/:groupId/trash/:id/restore`
-- Job dọn sau 30 ngày — job này **không** ghi `ActivityLog` (xem §10)
-- Mọi query đọc cây mặc định lọc `deletedAt: null`; đây là bất biến phải ghi vào `05-pham-vi-tiem-do.md`
+#### 11.1 Cột bắt buộc
 
-⚠️ Thêm một điều kiện lọc vào **mọi** `where` là một cơ hội sót. Kiểm thử bắt buộc: thành viên đã xoá mềm không xuất hiện ở `GET /family/:groupId`, ở search, ở cây render, ở export.
+Không thêm cột này thì **không phân biệt được ảnh của ai** — mà đó là gốc rễ của toàn bộ quyền media (D15).
+
+| Bảng | Cột | Bắt buộc | Vì sao |
+|---|---|---|---|
+| `Photo`, `Album`, `Event` | `createdById String` (quan hệ `User`) | ✅ **không null** | Chủ = **người upload**. Không có media nào mà không có chủ |
+| `Photo`, `Album`, `Event` | `deletedAt DateTime?` | ✅ | Mồ côi thời gian → job dọn 30 ngày |
+| `Photo`, `Album`, `Event` | `deletedById String?` | ✅ | Biết **ai** xoá — thùng rác tách theo người, không ai khôi phục hộ được |
+| `Photo` | `hiddenById String?` | ✅ | Ẩn = userId, **không** phải `hiddenAt` trần: phải biết *ai* ẩn để mở lại, và người khác không thấy |
+| `FamilyMember` | `deletedAt DateTime?` | ✅ | Đã chốt từ trước |
+| Tất cả | `@@index([createdById])`, `@@index([deletedAt])` | ✅ | Lọc theo chủ và lọc mồ côi là 2 query nóng nhất |
+
+⚠️ **`createdById` không null ⇒ migration phải backfill.** Xem `04` — backfill bằng **group OWNER** (người có quyền tối đa, còn tồn tại chắc chắn), rồi mới thêm ràng buộc NOT NULL. Không thêm được cột null rồi điền sau cũng được — dữ liệu cũ sẽ có media không chủ.
+
+#### 11.2 Luật quyền media — chủ media, không phải cả nhóm
+
+| Hành động | Chủ media | EDITOR khác | VIEWER khác | group OWNER |
+|---|---|---|---|---|
+| Xem media đang hiện | ✅ | ✅ | ✅ | ✅ |
+| Thêm media | ✅ | ✅ | ✅ | — |
+| Sửa / xoá / ẩn / khôi phục **của mình** | ✅ | — | — | ✅ |
+| Sửa / xoá / ẩn media **của người khác** | ❌ | ❌ | ❌ | ✅ |
+| Xem media **đã ẩn** của người khác | ❌ | ❌ | ❌ | ✅ |
+| Mở ẩn media của người khác | ❌ | ❌ | ❌ | ✅ |
+| Xem thùng rác **của mình** | ✅ | — | — | ✅ |
+| Xem thùng rác của người khác | ❌ | ❌ | ❌ | ✅ |
+
+3 hệ quả kỹ thuật bắt buộc, vi phạm là IDOR:
+
+1. **Bộ lọc phải ở tầng service, không ở controller.** Mọi query đọc media phải: `AND (hiddenById IS NULL OR hiddenById = :me)` — và **nếu là group OWNER thì bỏ hẹn điều kiện này**. Đây là biến thể của bất biến I1: ẩn là một kiểu scope, phải scope theo cả quyền lẫn danh tính. Đặt ở controller thì chỉ cần một endpoint quên gọi là lộ.
+2. **`hiddenById` chỉ 1 người, không phải danh sách.** "Ẩn cho riêng tôi ở nhiều thiết bị" cần bảng riêng — mô hình hiện tại **không cần** nên không làm. Ghi rõ để không ai tự thêm mảng.
+3. **`hiddenById` phải ghi `ActivityLog`** với `PHOTO_HIDDEN`/`PHOTO_UNHIDDEN` — xem §10.
+
+#### 11.3 Endpoint
+
+- `GET /family/:groupId/trash` — **tách 2 nguồn**: cây (`FamilyMember`, quyền `edit`) và media (`createdById = :me`, quyền theo chủ sở hữu). Trả 2 danh sách tách biệt, FE hiện 2 tab.
+- `POST /family/:groupId/trash/:id/restore` — chỉ khôi phục được **thứ mình xoá** (media) hoặc thứ thuộc cây (quyền `edit`).
+- Job dọn sau 30 ngày — job này **không** ghi `ActivityLog` (xem §10).
+- Mọi query đọc cây mặc định lọc `deletedAt: null`; đây là bất biến phải ghi vào `05-pham-vi-tiem-do.md`.
+
+⚠️ **Xoá album ≠ xoá ảnh.** Xoá 1 album chỉ gỡ các `Photo` khỏi album đó; ảnh còn nằm album khác thì **giữ nguyên**. Xoá hẳn `Photo` chỉ khi nó không thuộc album nào nữa. Nếu gộp 2 việc này thì xoá nhầm 1 album sẽ mất ảnh của người khác.
+
+⚠️ **Xoá tài khoản → chuyển chủ, không cascade xoá.** `User` bị xoá thì `createdById` của media họ sẽ trỏ tới user không tồn tại ⇒ media thành mồ côi, không ai sở hữu, không ai xoá được, không ai khôi phục được. Phải `UPDATE` hết về group OWNER trước khi xoá user. Nhánh này chạy cùng D8 (bàn giao quyền).
 
 ---
 

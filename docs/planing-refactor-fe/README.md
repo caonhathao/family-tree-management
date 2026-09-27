@@ -13,6 +13,18 @@ Hai việc song song, không tách rời:
 1. **Cắt sạch dấu vết SaaS** — mọi bề mặt thương mại.
 2. **Viết lại đường ghi dữ liệu** — hiện tại là *full-replace toàn bộ cây*, vừa là nguồn IDOR (`02` backend §1) vừa là nguồn mất dữ liệu (`02` backend §2).
 
+## Mô hình sản phẩm — đọc trước tài liệu nào khác
+
+App này phục vụ **một người / một gia đình**, không phải một tổ chức có nhiều nhóm. Ba hệ quả cụ thể, xuất phát từ đó:
+
+| Hệ quả | Nghĩa là gì |
+|---|---|
+| **1 tài khoản = 1 cây** (Q16) | Không có khái niệm "quản lý danh sách nhóm". Vào bằng link mời là vào **cây của người khác**, không phải tạo cây riêng |
+| **Cây là dữ liệu đặc quyền, media là dữ liệu có chủ** | Xem [bảng phân quyền 2 trục](#phân-quyền--2-trục-không-phải-1) |
+| **Lời mời không cần quản lý** (F7) | Tạo link → gửi đi đâu thì kệ → người ta bấm vào đăng ký là vào. Không có màn danh sách, không có toggle bật/tắt |
+
+⚠️ Hệ quả này khiến một số thứ đang tồn tại trở nên vô nghĩa: trang *Danh sách nhóm*, nút *Rời khỏi nhóm*, `GET /invite/mine`, và toàn bộ tầng bố cục `localStorage`. Chi tiết ở `01` **FE-B11** và `02` §7.
+
 ## Các quyết định đã chốt
 
 | # | Quyết định | Chọn |
@@ -24,12 +36,43 @@ Hai việc song song, không tách rời:
 | **Q5** | Danh tính thành viên | **`localId` → `id`** (server sinh). `clientRef` chỉ tồn tại trong bộ nhớ, không bao giờ vào payload |
 | **Q6** | `generation` | **Server là nguồn sự thật.** Client chỉ tính **tạm để vẽ**, không gửi lên |
 | **Q7** | Quan hệ 2 chiều | Client **đọc 2 chiều** (không đổi, tầng hiển thị cần), **chỉ gửi 1 chiều**. Client tự sinh chiều ngược **để hiển thị**, không gửi |
-| **Q8** | Bố cục (`positionX/Y`) | **2 tầng** — cá nhân `localStorage` (kéo tay, không lên cloud) + chung trên server (chỉ ghi qua nút *Sắp xếp* hoặc *Lưu*, cả hai đều tự arrange). **1 lần bấm = 1 `version`**: lớp phủ `localStorage` là thứ *chưa lưu*, bị xoá sau khi lưu là bình thường; kéo mà không bấm *Lưu* thì mất, không cứu |
-| **Q9** | Ai được ghi | *Lưu*/*Sắp xếp* = `OWNER\|EDITOR` (`canManage` sẵn có ở `group-content.tsx:477`). **VIEWER** chỉ dùng được tầng cá nhân — đó là thứ duy nhất họ làm được |
+| **Q8** | Bố cục (`positionX/Y`) | **1 tầng, trên server.** Kéo thả tay chỉ tồn tại trong RAM của phiên — F5 là mất, không cảnh báo, không lớp phủ. Chỉ bấm *Sắp xếp* hoặc *Lưu* mới ghi xuống, cả hai đều tự arrange trước khi ghi |
+| **Q9** | Ai được ghi | *Lưu*/*Sắp xếp* = `OWNER\|EDITOR` (`canManage` sẵn có ở `group-content.tsx:477`). **VIEWER chỉ xem + pan/zoom, không kéo được** |
 | **Q10** | Menu chết | **Xoá 4 mục** không có trang: *Lời mời*, *Kho lưu trữ*, *Hỗ trợ*, *Phản hồi*. Giữ *Thùng rác* (có trang thật ở `03` §2) |
-| **Q11** | Trang gốc `/` | **Redirector**: 1 group → vào thẳng cây; ≥2 group → `/user/groups`; 0 group → tạo group. Không còn landing marketing |
+| **Q11** | Trang gốc `/` | **Redirector 2 nhánh**: có group → vào thẳng cây; chưa có → màn tạo. Không còn landing marketing, **không còn `/user/groups`** |
 | **Q12** | Quyền batch endpoint | `POST /changes` cần mức **`edit`** (EDITOR+), **không phải `manage`** — siết chặt hơn là EDITOR bấm Lưu rồi nhận 403 |
-| **Q13** | Bất biến FE | **6 bất biến F1–F6** ở [05-pham-vi-tiem-do.md](./05-pham-vi-tiem-do.md), áp dụng **từ PR đầu tiên** |
+| **Q13** | Bất biến FE | **7 bất biến F1–F7** ở [05-pham-vi-tiem-do.md](./05-pham-vi-tiem-do.md), áp dụng **từ PR đầu tiên** |
+| **Q14** | Ảnh node | **Ảnh đại diện là ảnh hồ sơ cá nhân.** Ai pin node ở cây nào → node đó lấy ảnh hồ sơ của họ. OWNER/EDITOR gán tay được ảnh khác. **Chụp ảnh tại thời điểm pin** — đổi ảnh hồ sơ sau không tự đổi node |
+| **Q15** | Đăng ký | **Ngã ba**: có `?token=` → join cây người mời, vào làm **VIEWER**; không có token → tạo group + cây riêng, làm **OWNER** |
+| **Q16** | Số cây / tài khoản | **Tối đa 1.** Vào bằng link ⇒ **không bao giờ** có cây riêng, kể cả sau này. Xoá mục *Danh sách nhóm* + page `/user/groups`; nút *Rời khỏi nhóm* không tồn tại |
+| **Q17** | Chủ sở hữu media | **Ai upload thì đó là media của người đó.** Xem thì ai cũng được; sửa/xoá/ẩn thì **chủ media hoặc group OWNER** |
+
+## Phân quyền — 2 trục, không phải 1
+
+Quyết định quan trọng nhất của đợt này. Trước đây dễ hiểu nhầm là "vai cao hơn = quyền nhiều hơn trên mọi thứ"; thực tế phải tách 2 trục độc lập:
+
+### Trục 1 — Dữ liệu cây: đặc quyền theo vai
+
+| | OWNER | EDITOR | VIEWER |
+|---|---|---|---|
+| Thành viên, quan hệ, tên/kiểu gia đình | ✅ | ✅ | ❌ |
+| Gán ảnh cho node | ✅ | ✅ | ❌ |
+| Bố cục chung (*Sắp xếp* / *Lưu*) | ✅ | ✅ | ❌ |
+| Lịch sử thay đổi (dòng cây) | ✅ | ✅ | ❌ |
+| Import / export / xuất ảnh cây | ✅ | ✅ | ❌ |
+
+### Trục 2 — Media: theo chủ sở hữu, không theo vai
+
+| | Chủ media | Khác phần EDITOR | Khác phần VIEWER | group OWNER |
+|---|---|---|---|---|
+| Xem media đang hiện | ✅ | ✅ | ✅ | ✅ |
+| Thêm media | ✅ | ✅ | ✅ | — |
+| Sửa / xoá / ẩn / khôi phục | ✅ | ❌ | ❌ | ✅ |
+| Xem media **đã ẩn** của người khác | ❌ | ❌ | ❌ | ✅ |
+| Mở ẩn media của người khác | ❌ | ❌ | ❌ | ✅ |
+| Xem thùng rác **của mình** | ✅ | ✅ | ✅ | ✅ |
+
+Lý do tách: **cây là sự thật dùng chung** nên phải đồng thuận của người coi; **media là của người up** nên người up quyết. EDITOR sửa được *mọi thứ trong cây* nhưng không xoá được ảnh của người khác — điều này **có chủ ý**, không phải sơ suất. Chi tiết ở [02-pham-vi-sua.md](./02-pham-vi-sua.md) §15.
 
 ## Kết luận khảo sát
 
@@ -49,7 +92,7 @@ Mức độ hoàn thiện hiện tại:
 
 Giống hệt phát hiện của khảo sát backend: **không có bất biến nào được viết ra**. `familySlice` giữ `draft` + `origin` là một thói quen, không phải quy tắc — nên `family-member-form.tsx:136` mới mời sinh `v4()` làm `localId` mà không ai ngăn được.
 
-Vì vậy ngoài 4 danh sách việc (xoá / sửa / thêm / thứ tự), còn danh sách thứ 5: **6 bất biến F1–F6** ở [05-pham-vi-tiem-do.md](./05-pham-vi-tiem-do.md).
+Vì vậy ngoài 4 danh sách việc (xoá / sửa / thêm / thứ tự), còn danh sách thứ 5: **7 bất biến F1–F7** ở [05-pham-vi-tiem-do.md](./05-pham-vi-tiem-do.md).
 
 ## Yêu cầu gửi backend
 
@@ -64,11 +107,12 @@ Hai mục dưới đây là **tiền đề cứng** cho `04` stage 3. Chi tiết
 
 | Tài liệu | Nội dung |
 |----------|----------|
-| [01-pham-vi-bo.md](./01-pham-vi-bo.md) | 10 nhóm cần xoá — blog, admin plane, `isLeader`, `pinnedMemberId`, 7 dependency chết, marketing shell, 4 menu chết |
-| [02-pham-vi-sua.md](./02-pham-vi-sua.md) | 14 nhóm cần sửa — **§0 là 2 yêu cầu gửi backend**, §1-§3 là viết lại đường ghi dữ liệu |
-| [03-pham-vi-them.md](./03-pham-vi-them.md) | 12 nhóm cần thêm — lịch sử thay đổi, thùng rác, tìm kiếm, ảnh, import/export, chia sẻ |
+| [01-pham-vi-bo.md](./01-pham-vi-bo.md) | **11 nhóm** cần xoá — blog, admin plane, `isLeader`, `resetPassword` giả, 7 dependency chết, marketing shell, 4 menu chết, `publicRoutes`, **mục *Danh sách nhóm*** |
+| [02-pham-vi-sua.md](./02-pham-vi-sua.md) | **15 nhóm** cần sửa — **§0 là 2 yêu cầu gửi backend**, §1-§3 là viết lại đường ghi dữ liệu, **§15 là bảng phân quyền cây-vs-media** |
+| [03-pham-vi-them.md](./03-pham-vi-them.md) | **11 nhóm** cần thêm — lịch sử thay đổi, thùng rác, tìm kiếm, gán ảnh cho node, import/export, chia sẻ |
 | [04-thu-tu-thuc-hien.md](./04-thu-tu-thuc-hien.md) | 6 stage trên 1 nhánh, mỗi stage ghi rõ phụ thuộc backend nào, tiêu chí nghiệm thu |
-| [05-pham-vi-tiem-do.md](./05-pham-vi-tiem-do.md) | **6 bất biến bắt buộc** — dùng làm review gate cho mọi PR, kèm danh sách vi phạm hiện tại |
+| [05-pham-vi-tiem-do.md](./05-pham-vi-tiem-do.md) | **7 bất biến bắt buộc** — dùng làm review gate cho mọi PR, kèm danh sách vi phạm hiện tại |
+| [06-workflow-user.md](./06-workflow-user.md) | **Workflow người dùng** — hệ thống sau khi sửa giúp làm được gì, theo từng hành trình. Không liệt kê tính năng pending |
 
 ## Ghi chú bắt buộc khi đọc
 

@@ -103,30 +103,17 @@ Body:
 
 ### R1.4 — Vì sao `LAYOUT_SAVE` phải bump `version`
 
-Frontend quyết định bố cục 2 tầng (Q8):
+> ⚠️ **Đã chốt lại 2026-09-27: yêu cầu giữ nguyên, lý do đổi hoàn toàn.** Bản cũ của mục này lập luận bằng cơ chế lớp phủ `localStorage` 2 tầng. Q8 nay là **1 tầng, chỉ trên server** → lớp phủ đã bị xoá, lập luận cũ không còn đúng để giữ. Nhưng **kết luận không đổi**, và lý do mới thì mạnh hơn: bất biến I4/I5 nói mọi mutation phải bump `version` + ghi log, **không có ngoại lệ theo loại thao tác**.
 
-| Tầng | Lưu ở đâu | Ghi khi nào |
+| | Lý do cũ (đã hủy) | Lý do mới |
 |---|---|---|
-| Cá nhân | `localStorage` phía client | khi kéo thả tay |
-| Dùng chung | `FamilyMember.positionX/Y` | **chỉ** khi bấm *Sắp xếp* hoặc *Lưu* — cả hai đều tự arrange trước khi ghi |
+| Vì sao phải bump `version` | Để lớp phủ `localStorage` hết hạn đúng lúc người khác publish bố cục | Theo I4: bố cục là **mutation thật** trên dữ liệu dùng chung. Bỏ ngoại lệ cho layout là tạo tiền lệ để các mutation sau cũng xin miễn |
+| Hệ quả nếu bỏ | Lớp phủ không bao giờ hết hạn → A không thấy bố cục của B | 2 request lẻ = 2 transaction ≠ 1 `$transaction`. Bấm *Lưu* phải ghi data **và** bố cục nguyên tử, không thể tách |
+| Action type | `FAMILY_LAYOUT_CHANGED` | Giữ nguyên — cần cho màn hình lịch sử ("Bạn Tuấn vừa sắp xếp lại cây") |
 
-Client ràng lớp phủ `localStorage` theo `version` để nó **tự hết hạn**:
+Nói thẳng: **nếu muốn bỏ `LAYOUT_SAVE` khỏi batch thì phải sửa I4 trước**, chứ không phải sửa riêng một yêu cầu trong file này. Đó là quy tắc của `05` §2 — bất biến sai thì sửa bất biến, không sửa code.
 
-```ts
-localStorage["ff:layout:{groupId}"] = {
-  version: <Family.version lúc kéo>,
-  positions: { ... },
-};
-// load: version khớp → dùng; lệch → xoá lớp phủ, dùng bố cục server
-```
-
-Nếu *Sắp xếp* ghi `position` mà **không bump `version`**, thì lớp phủ của mọi người không bao giờ hết hạn:
-
-> A kéo tay → lưu riêng. B bấm *Sắp xếp* → server đổi bố cục chung. A F5 → lớp phủ của A vẫn khớp version → **A không bao giờ thấy bố cục mới của B**, và bị che vĩnh viễn.
-
-Nên `LAYOUT_SAVE` là một mutation thật, và theo I4/I5 phải bump + ghi log. Action type đề xuất: `FAMILY_LAYOUT_CHANGED` (xem R2.1).
-
-#### Hợp đồng `LAYOUT_SAVE` — ✅ đã chốt 2026-09-27
+#### Hợp đồng `LAYOUT_SAVE` — ✅ đã chốt 2026-09-27 (giữ nguyên, chỉ bỏ phần lớp phủ)
 
 Client **có** gửi tọa độ, nhưng **server tidy trước khi ghi**, và response trả lại bản đã sắp:
 
@@ -136,16 +123,16 @@ Client **có** gửi tọa độ, nhưng **server tidy trước khi ghi**, và r
         tree.positionX/Y  =  BẢN ĐÃ AUTO-ARRANGE
 ```
 
-Client vẽ lại từ `tree` trả về → người dùng thấy **bố cục đã sắp xếp**, không phải bản thô họ vừa kéo. Xoá lớp phủ `localStorage` sau khi lưu là **đúng** — người dùng vừa chủ động publish lên cây chung.
+Client vẽ lại từ `tree` trả về → người dùng thấy **bố cục đã sắp xếp**, không phải bản thô họ vừa kéo.
 
 Hai nút dùng chung 1 endpoint, khác ở payload:
 
 | Nút | Gửi lên | `version` |
 |---|---|---|
-| *Lưu* (toàn cục) | `[MEMBER_UPDATE ×N, RELATIONSHIP_*, LAYOUT_SAVE]` — `LAYOUT_SAVE.positions` = **bản kéo hiện tại** | +1 |
+| *Lưu* (toàn cục) | `[MEMBER_UPDATE ×N, RELATIONSHIP_*, LAYOUT_SAVE]` — `LAYOUT_SAVE.positions` = **bản kéo hiện tại trong RAM phiên** | +1 |
 | *Sắp xếp* | `[LAYOUT_SAVE]` với `positions: []` → server tự tính từ đầu, **bỏ qua** mọi kéo tay | +1 |
 
-❌ **Không có nút thứ 3.** Bản cũ của file này liệt kê thêm *Lưu bố cục* (`fe/03` §11) — đã bỏ 2026-09-27: nó là **tập con** của *Lưu*, không có năng lực nào mà *Lưu* không làm được, và tách riêng chỉ tạo thêm 1 lần bump `version` vô nghĩa. Vì vậy băng chuyền `fe/03` §11 chỉ còn nút *Xem bố cục chung* (0 request) — client thuần, không chạm endpoint.
+❌ **Không có nút thứ 3.** Bản cũ của file này liệt kê thêm *Lưu bố cục* (`fe/03` §11) — đã bỏ 2026-09-27: nó là **tập con** của *Lưu*, không có năng lực nào mà *Lưu* không làm được, và tách riêng chỉ tạo thêm 1 lần bump `version` vô nghĩa. Mục `fe/03` §11 cũng đã xoá khỏi phạm vi.
 
 **Vì sao không tách endpoint riêng cho layout:** nếu có `PATCH /family/:groupId/layout`, bấm *Lưu* (kèm cả bố cục) thành **2 request = 2 transaction = 2 lần bump `version`**. Nếu layout fail sau khi data đã ghi thì cây và bố cục lệch nhau. I4 bắt buộc mọi mutation bump version trong *cùng* một `$transaction` — 2 request không bao giờ nằm trong cùng 1 transaction.
 
@@ -153,14 +140,13 @@ Hai nút dùng chung 1 endpoint, khác ở payload:
 
 - Mỗi lần bấm *Lưu* hoặc *Sắp xếp* → `version +1`, không lần nào bump "nửa" hay bỏ qua.
 - **Chưa lưu = không tồn tại.** Đang kéo mà không bấm *Lưu* → thay đổi mất. Không cứu, không hỏi, không cảnh báo trước, không giữ để lần sau.
-- Lớp phủ `localStorage` **không phải tài sản** — nó là thứ *chưa lưu*. Vì mỗi lần bump làm lớp phủ của *mọi* người lệch `version` nên nó tự xoá; với mô hình 1 OWNER + 1 EDITOR thì đây không phải rủi ro thực tế. Thông báo sau khi mất đã có ở `fe/03` §11.
-- Không cần cảnh báo trước, không cần polling `version`, không cần `layoutKey`/checksum. `version` là con số duy nhất quyết định lớp phủ còn hiệu lực.
+- Không cần cảnh báo trước, không cần polling `version`, không cần `layoutKey`/checksum, không cần version guard phía client. `version` chỉ còn là cơ chế chống ghi đè 2 người cùng sửa.
 
 ---
 
 ## R2 — Bổ sung vào `02`/`03`/`04` backend
 
-### R2.1 — `ACTION_TYPE` — ✅ đã chốt 2026-09-27: **15 giá trị**
+### R2.1 — `ACTION_TYPE` — ✅ đã chốt 2026-09-27, cập nhật cùng ngày: **17 giá trị**
 
 Con số **11** ở các bản trước của file này (và ở `02` §6, `fe/02` §13) là **sai**. Bảng "action phải ghi" trong `03` §10 thực tế liệt kê **13** giá trị phân biệt, và danh sách "8 mục mở rộng" ở `02` §6 là một danh sách **khác hẳn** — nó thiếu `MEMBER_CREATED`/`MEMBER_UPDATED`/`MEMBER_DELETED`/`RELATIONSHIP_*`/`FAMILY_UPDATED`, đồng thời thừa `MEMBER_GENERATION_RECOMPUTED`.
 
@@ -171,11 +157,15 @@ Con số **11** ở các bản trước của file này (và ở `02` §6, `fe/0
 | `FAMILY_LAYOUT_CHANGED` | Bắt buộc cho R1.4. Không có nó thì nút *Sắp xếp* là đường lách duy nhất qua I4/I5 |
 | `MEMBER_GENERATION_RECOMPUTED` | Đã được yêu cầu ở `02` §6 nhưng **thiếu** trong bảng `03` §10. Ghi khi BFS gặp chu trình: `generation = 0` + cảnh báo, không throw (D10) |
 
-`MEMBER_PHOTO_CHANGED` (tuỳ chọn) — cho phép "anh Tuấn vừa đổi ảnh" trong lịch sử. **Chưa chốt**: nếu thấy thừa thì bỏ; nếu giữ thì tổng là **16**. Frontend nên coi đây là giá trị có thể xuất hiện và có nhãn dự phòng, không hard-code danh sách đóng.
+`MEMBER_PHOTO_CHANGED` (tuỳ chọn) — cho phép "anh Tuấn vừa đổi ảnh" trong lịch sử. **Chưa chốt**: nếu thấy thừa thì bỏ; nếu giữ thì tổng là **18**. Frontend nên coi đây là giá trị có thể xuất hiện và có nhãn dự phòng, không hard-code danh sách đóng.
 
 13 giá trị gốc trong `03` §10: `MEMBER_CREATED`, `MEMBER_UPDATED`, `MEMBER_DELETED` (ghi **2 dòng** log nhưng là 1 enum value), `MEMBER_RESTORED`, `RELATIONSHIP_CREATED`, `RELATIONSHIP_DELETED`, `FAMILY_UPDATED`, `FAMILY_DELETED`, `FAMILY_IMPORTED`, `OWNERSHIP_TRANSFERRED`, `MEMBER_ROLE_CHANGED`, `MEMBER_JOINED`, `MEMBER_LEFT`.
 
-Hệ quả bên frontend: bảng ánh xạ nhãn phải phủ **15 × 7 `TARGET_TYPE` = 105 chỗ**, không phải "11 × 7 = 18 chỗ" như `fe/02` §13 ghi. Thiếu nhãn sẽ hiện `MEMBER_CREATED_RAW` ra UI — đúng thứ `fe/02` §13 đã cảnh báo.
+Hệ quả bên frontend: bảng ánh xạ nhãn phải phủ **17 × 7 `TARGET_TYPE` = 119 chỗ**, không phải "11 × 7 = 18 chỗ" như `fe/02` §13 ghi. Thiếu nhãn sẽ hiện `MEMBER_CREATED_RAW` ra UI — đúng thứ `fe/02` §13 đã cảnh báo.
+
+⚠️ **`PHOTO_HIDDEN` / `PHOTO_UNHIDDEN` là 2 giá trị bắt buộc, không phải tuỳ chọn** (thêm 2026-09-27, bất biến I7 + D15). Lý do không phải "cho lịch sử đầy đủ" mà là vì **người bị ẩn không hề hay biết mình bị ẩn**: ảnh biến mất khỏi tầm nhìn của họ mà không có dấu hiệu gì. Không có log thì khi bị khiếu nại "ảnh tôi mất tiếng", hệ thống không có gì để trả lời. `content` phải có `photoId` **và** `byUserId` — cột `hiddenById` trên `Photo` là hạ tầng lọc, không thay thế được cho log.
+
+⚠️ Vì 2 action này có `targetType = PHOTO`, chúng **tự động** được lọc đúng theo quyền: VIEWER thấy dòng `PHOTO` nhưng thấy dòng cây thì không. Xem D12 — cùng một bảng log, lọc theo vai, không tách 2 bảng.
 
 ### R2.2 — `GET /family/:groupId/activity` phân trang bằng **cursor** — ✅ đã xác nhận 2026-09-27
 
@@ -259,14 +249,16 @@ Bảng này trước đây là "Cần backend trả lời". Tất cả đã có 
 |---|---|---|---|---|
 | 1 | Có đồng ý thêm `/changes` không? | **Có** — là **đường ghi chính** (batch-first) | ✅ stage 3 | R1 + D6 `README` |
 | 2 | Đưa vào bước 2.2 hay tách thành 2.2b? | **Tách thành bước 2.2b.** Bước 2.2 giữ là CRUD lẻ, nay là API cấp thấp | ✅ stage 3 | `04` bảng phase 2 |
-| 3 | `LAYOUT_SAVE` có bump `version` + ghi log không? | **Có** — cả hai, theo I4/I5 | ✅ stage 3 | R1.4 |
-| 4 | Có thêm `FAMILY_LAYOUT_CHANGED` vào `ACTION_TYPE` không? | **Có.** Tổng `ACTION_TYPE` = **15** | ✅ stage 4 | R2.1 |
+| 3 | `LAYOUT_SAVE` có bump `version` + ghi log không? | **Có** — cả hai, theo I4/I5. Lý do đã đổi 2026-09-27 (Q8 còn 1 tầng), kết luận giữ nguyên | ✅ stage 3 | R1.4 |
+| 4 | Có thêm `FAMILY_LAYOUT_CHANGED` vào `ACTION_TYPE` không? | **Có.** Tổng `ACTION_TYPE` = **17** (thêm `PHOTO_HIDDEN`/`PHOTO_UNHIDDEN`) | ✅ stage 4 | R2.1 |
 | 5 | `/activity` dùng cursor `createdAt + id` — xác nhận | **Xác nhận**, bắt buộc. `200 → { items, nextCursor }` | ✅ stage 4 | R2.2 |
 | 6 | R2.3 (`Event.familyMemberId`) | **Không đủ cho khách mời.** Giữ 1 cột cho `fe/03` §9, cắt §10, **không** thêm bảng | ✅ stage 4 | R2.3 |
 | 6 | R2.4 (`transfer-ownership`) | `memberId` bắt buộc · thừa kế `EDITOR` → fallback `VIEWER` · OWNER cũ còn `EDITOR` | ✅ stage 4 | R2.4 |
 | 6 | R2.5 (`/import`) | **Cùng shape** với `/changes`, thêm `report`. 2 chế độ `create` / `restore` | ✅ stage 4, 5 | R2.5 |
+| 7 | Đăng ký có `?token=` vào cây người mời không? | **Có** — Q15. Có token → join, **không** tạo group · không token → tạo group + cây riêng. Token lỗi → `409`, **không fallback** | ✅ stage 1, 2 | `03` §4, D15 |
+| 8 | Media có chủ không, chủ là ai? | **Có** — D15/I7. Chủ = **người upload** (`createdById`). Sửa/xoá/ẩn/thùng rác → chủ hoặc group OWNER | ✅ stage 2 | `03` §11 |
 
-**Còn chưa chốt:** `MEMBER_PHOTO_CHANGED` (tuỳ chọn, sẽ đưa `ACTION_TYPE` lên 16 — xem R2.1). Không chặn stage nào.
+**Còn chưa chốt:** `MEMBER_PHOTO_CHANGED` (tuỳ chọn, sẽ đưa `ACTION_TYPE` lên 18 — xem R2.1). Không chặn stage nào.
 
 ---
 
@@ -278,4 +270,5 @@ Ba mục sau **không** phải yêu cầu, chỉ là ghi chú để tránh hiể
 |---|---|
 | `GET /api/v1/invite/mine` | **Đã bỏ yêu cầu.** Menu *Lời mời* không có trang, và không dựng được vì không có endpoint liệt kê lời mời đã gửi. `03` bước 5.1 chỉ cần import/export |
 | Vị trí node (`positionX/Y`) | Không cần endpoint riêng. Lưu qua `LAYOUT_SAVE` trong R1 |
-| `USER_ROLE.ADMIN`, `isLeader`, `pinnedMemberId`, `GET /users`, blog | Frontend xoá theo `01` bộ khảo sát FE. Không cần thêm gì phía backend — các mục này **đã** có trong `01`/`03` backend |
+| `USER_ROLE.ADMIN`, `isLeader`, `GET /users`, blog | Frontend xoá theo `01` bộ khảo sát FE. Không cần thêm gì phía backend — các mục này **đã** có trong `01`/`03` backend |
+| `pinnedMemberId` | ⚠️ **Xoá khỏi danh sách này** — đã đảo ngược theo D16. Backend **giữ** `pinnedMemberId` làm cơ chế gắn node ↔ tài khoản ↔ ảnh hồ sơ; thay vào đó cần thêm cột `FamilyMember.photoId` (snapshot lúc pin) + `POST /family/:groupId/members/:memberId/photo` quyền `edit`. Xem `03` §3 |

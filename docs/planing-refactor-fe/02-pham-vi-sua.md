@@ -55,7 +55,7 @@ Yêu cầu bắt buộc kèm theo:
 | R1.1 | **Mức quyền `edit` (EDITOR+), không phải `manage`** | Theo Q12. Siết thành OWNER-only là EDITOR bấm *Lưu* rồi nhận 403. `canManage` ở `group-content.tsx:477` đã là `OWNER \|\| EDITOR` |
 | R1.2 | **Một `$transaction` duy nhất**: áp dụng hết operations → `version++` đúng 1 lần → ghi hết `ActivityLog` | I4 + I5 |
 | R1.3 | **`RELATIONSHIP_CREATE` nhận `fromRef`/`toRef` là ref phía client**, không phải `id` | Thành viên mới tạo trong cùng batch chưa có `id` thật. Server cần bảng map trong `$transaction` để resolve; phải **từ chối** ref không resolve được |
-| R1.4 | **`LAYOUT_SAVE` bump `version` và ghi `ActivityLog`** với action type mới `FAMILY_LAYOUT_CHANGED` | Nút *Sắp xếp* là một mutation. Nếu nó bump `version` mà không ghi log thì log sai; nếu không bump thì lớp phủ `localStorage` của người khác không bao giờ hết hạn (xem `§7`) |
+| R1.4 | **`LAYOUT_SAVE` bump `version` và ghi `ActivityLog`** với action type mới `FAMILY_LAYOUT_CHANGED` | Theo bất biến **I4** + **I5**: mọi mutation phải bump `version` trong cùng `$transaction` và ghi log. Nút *Sắp xếp* là một mutation, không có ngoại lệ (xem `§7`) |
 | R1.5 | **`idMap` trả về đủ** cho cả `MEMBER_CREATE` lẫn `RELATIONSHIP_CREATE` | Client re-key thành viên mới sau khi lưu |
 | R1.6 | **`baseUpdatedAt` trên `MEMBER_UPDATE`** để phát hiện sửa chồng cùng 1 người | `version` chỉ bắt được xung đột cả cây; `updatedAt` bắt được xung đột 1 dòng |
 | R1.7 | Trả `409` **kèm trạng thái server hiện tại** trong body | Không có dữ liệu để merge thì UI chỉ còn lựa chọn bỏ thay đổi của mình — tệ hơn nhiều so với hiện tại |
@@ -299,78 +299,71 @@ Sau `FE-B3`, hai drawer phải đổi nguồn sự thật. `canManage` ở `grou
 
 Hiện `group-family.service.ts:199` **không phân biệt vai trò** — cả EDITOR lẫn VIEWER đều xoá được nhóm. `family-setting-drawer.tsx:145` chỉ ẩn nút, nghĩa là bất kỳ ai cũng gọi được endpoint. Đây là ví dụ điển hình của bất biến **I2** phía backend: UI che nút không phải authz.
 
+### `pinnedMemberId` → gán ảnh cho node (Q14, đảo ngược `FE-B4`)
+
+Bản nháp trước chuyển `pinnedMemberId` sang `localStorage` cùng cơ chế lớp phủ bố cục. **Sai theo cả hai đầu:**
+
+| | Bản nháp cũ | Sau |
+|---|---|---|
+| Nơi lưu | `localStorage["ff:pin:{groupId}"]` | **Node trên server**, snapshot lúc pin |
+| Vì sao | "ghim bản thân là lựa chọn cá nhân, không ai quan tâm" | Pin **gắn ảnh hồ sơ của tôi vào node** → là dữ liệu dùng chung |
+| Kết quả nếu giữ cũ | Không ai tìm được node "của mình" sau khi đổi thiết bị, và **không ai gán được ảnh vào cây người khác** | Mỗi người tự gán ảnh mình; OWNER/EDITOR gán tay được ảnh khác |
+
+**Luồng sau `§6` (nối vào pin hiện có):**
+
+```ts
+// family-member-form.tsx — handlePin (đã có, :93-125)
+const res = await pinMemberAction({ groupId, memberId, pinned: true });
+// → payload thêm photoId = avatar hiện tại của tôi
+// → server ghi { pinnedMemberId, photoId } vào node, chụp tại thời điểm này
+```
+
+⚠️ **Phải chụp ảnh lúc pin, không đọc động khi render.** Nếu node chỉ lưu `pinnedMemberId` rồi render thì đọc `avatarUrl` của tài khoản đó mỗi lần vẽ → người A đổi ảnh hồ sơ của mình sẽ **tự đổi ảnh node trong cây của người B**. Đó là đường lách quyền *"không ai sửa được ảnh của người khác"*. → phải có cột `photoId` trên node, ghi 1 lần lúc pin, không bao giờ cập nhật theo.
+
+⚠️ **Chủ pin chỉ gán được ảnh của chính mình.** Backend phải so `pinnedMemberId === me` thì mới cho đường này. Đường gán tay ảnh người khác là endpoint khác, cấp quyền `edit` — xem `03` §4 và `be/03` §3.
+
 ---
 
-## §7 — Bố cục: 2 tầng (Q8, Q9)
+## §7 — Bố cục: 1 tầng, chỉ trên server (Q8, Q9)
 
 ### Quyết định
 
-| Tầng | Ai thấy | Lưu ở đâu | Ghi khi nào |
-|---|---|---|---|
-| **Cá nhân** | chỉ bạn | `localStorage` | ngay khi kéo thả tay |
-| **Dùng chung** | mọi thành viên | `FamilyMember.positionX/Y` | **chỉ** khi bấm *Sắp xếp* hoặc *Lưu* — cả hai đều tự arrange trước khi ghi |
+**Không còn tầng bố cục cá nhân.** Toàn bộ `localStorage["ff:layout:*"]`, version guard, và thông báo hết hạn bị xoá.
 
-Kéo thả tay **không bao giờ** gửi lên server. Bấm *Lưu* sẽ ghi đè bố cục cá nhân bằng bản auto-arrange → cây chung luôn chỉnh chu.
-
-⚠️ **Mô hình lưu: 1 lần bấm = 1 `version`, không có ngoại lệ.** *Lưu* và *Sắp xếp* đều là mutation thật, mỗi cái bump `version` đúng 1 lần. Hệ quả bất biến — **lớp phủ `localStorage` không phải tài sản, nó là thứ _chưa lưu_**:
-
-| Tình huống | Kết quả |
+| Tính năng | Hành vi |
 |---|---|
-| Bấm *Lưu* | `version +1`, bố cục chung được ghi, lớp phủ **xoá** — bình thường, không phải bug |
-| Kéo rồi đóng tab / không bấm *Lưu* | **Mất.** Không cứu, không hỏi, không cảnh báo trước |
-| Người khác vừa lưu, mình đang kéo | `If-Match` cũ → `409` → hộp thoại `03` §12. Không tự merge, không giữ lớp phủ để sau |
+| Kéo thả tay | Chỉ tồn tại trong **RAM của phiên**. Không ghi `localStorage`, không ghi server |
+| F5 / đóng tab | **Mất bố cục tay.** Không hỏi, không cảnh báo, không khôi phục |
+| Bấm *Sắp xếp* | OWNER/EDITOR: tự arrange từ đầu, ghi `positionX/Y` qua `LAYOUT_SAVE` |
+| Bấm *Lưu* | OWNER/EDITOR: ghi thay đổi dữ liệu **+** tự arrange + `LAYOUT_SAVE`, tất cả trong 1 lần bấm |
 
-Không cần `layoutKey`, không cần checksum — `version` là con số duy nhất quyết định lớp phủ còn hiệu lực hay không.
-
-### Cạm bẫy bắt buộc xử lý: lớp phủ che mất thay đổi của người khác
-
-Nếu lưu `ff:layout:{groupId}` chỉ với map position thì:
-
-> A (EDITOR) kéo tay → lưu riêng. B bấm *Sắp xếp* → server đổi bố cục chung. A F5 → lớp phủ của A vẫn còn → **A không bao giờ thấy bố cục mới của B**, và bị che vĩnh viễn.
-
-Sửa bằng cách **ràng lớp phủ theo `version`**:
-
-```ts
-localStorage["ff:layout:{groupId}"] = {
-  version: <Family.version lúc kéo>,     // number
-  positions: Record<memberId, { x: number; y: number }>,
-};
-```
-
-Khi load:
-
-```ts
-const stored = readLocalLayout(groupId);
-const layout = stored?.version === origin.version ? stored.positions : null;
-// lệch version → xoá lớp phủ, dùng bố cục server, hiện thông báo
-//                "Cây gia đình vừa được cập nhật, bố cục riêng của bạn đã được đặt lại"
-```
-
-Nhờ vậy lớp phủ **tự hết hạn đúng lúc cần**, và mọi thay đổi từ người khác đều lọt qua.
-
-⚠️ **Đây là lý do R1.4 bắt buộc `LAYOUT_SAVE` bump `version`.** Nếu *Sắp xếp* ghi position mà không bump `version`, thì lớp phủ của mọi người không bao giờ hết hạn → đúng cái bug trên quay lại, chỉ khác hình thức.
+⚠️ **Đây là hệ quả trực tiếp của Q16.** Khi app là 1 người 1 cây, "bố cục riêng của bạn" không còn lý do tồn tại: không có nhóm khác để bố cục riêng nào chồng lên. Giữ tầng phủ sẽ tạo ra đúng cái bài toán *"lớp phủ của A che vĩnh viễn bố cục mới của B"* mà bản nháp trước phải thêm cả cơ chế version guard để tránh.
 
 ### Hành vi theo vai trò (Q9)
 
 | | VIEWER | EDITOR / OWNER |
 |---|---|---|
-| Kéo thả tay | ✅ (tầng cá nhân) | ✅ |
+| Xem cây, pan, zoom | ✅ | ✅ |
+| Kéo thả tay | ❌ **ẩn** | ✅ (chỉ trong phiên) |
 | Nút *Sắp xếp* | ❌ ẩn | ✅ tự arrange + `LAYOUT_SAVE` |
 | Nút *Lưu* | ❌ ẩn | ✅ ghi thay đổi + tự arrange + `LAYOUT_SAVE` |
-| Băng chuyền *bố cục riêng* | ✅ | ✅ |
 
-**Tầng cá nhân là thứ duy nhất VIEWER làm được.** Trước khi tách bố cục ra server, VIEWER không sửa được gì cả. Giờ họ tự sắp xếp được cây mà không cần ai cho phép — đây là tính năng thật, nên phải cho bật kể cả khi `canManage === false`.
+⚠️ **VIEWER mất hẳn khả năng kéo.** Bản nháp trước cho VIEWER kéo tay và gọi đó là "thứ duy nhất họ làm được" — điều đó chỉ đúng khi còn tầng cá nhân. Không còn tầng đó thì kéo tay chỉ là sắp xếp vô nghĩa trên máy mình rồi mất, nên **không cho**. VIEWER chỉ xem và di chuyển tầm nhìn.
 
-### UI cần có
+⚠️ **Không còn băng chuyền "bố cục riêng"** — mục `03` §11 bị xoá khỏi phạm vi. Không còn gì để cảnh báo.
 
-- Băng chuyền: *"Bạn đang xem bố cục riêng — chưa lưu lên cây chung"* + **1 nút duy nhất** *Xem bố cục chung* (xoá lớp phủ, vẽ lại từ `tree`, **0 request**). Không có nút ghi trong băng chuyền — xem `03` §11.
-- Bật/tắt *Cho phép kéo thả* ở `panel-editor.tsx` (menu *Hiển thị*) giữ nguyên, nhưng **không** gọi API.
-- Hiện tại `onNodeDragStop` (`group-content.tsx:406-416`) ghi `positionX/Y` **vào bản ghi member** → đổi thành ghi vào state bố cục riêng, debounce ~300ms.
-- Menu *Chi tiết* ở `panel-editor.tsx` không có handler → xoá (đã chết từ lâu).
+⚠️ **`onNodeDragStop` (`group-content.tsx:406-416`)** hiện ghi `positionX/Y` **vào bản ghi member**. Đổi thành ghi vào state phiên (`useState` trong provider, không qua store, không qua `localStorage`). **Không debounce** — không ghi server nên không cần, và thêm debounce chỉ tạo cảm giác lag.
 
-### Cùng cơ chế: `pinnedMemberId`
+### Còn lại từ R1.4
 
-Theo `FE-B4`, chuyển sang `localStorage` luôn, dùng chung cơ chế lớp phủ (`ff:pin:{groupId}`). Không cần `version` ở đây vì ghim là **lựa chọn cá nhân thuần tuý** — không ai khác quan tâm bạn ghim ai. Nhưng vẫn cần xoá khi đổi `groupId` để tránh rò giữa các cây.
+`LAYOUT_SAVE` **vẫn là operation bắt buộc** trong batch endpoint, và **vẫn phải bump `version` + ghi `ActivityLog`** — nhưng lý do đã đổi hoàn toàn:
+
+| | Lý do cũ (bản nháp trước) | Lý do mới |
+|---|---|---|
+| Vì sao `LAYOUT_SAVE` phải bump `version` | Để lớp phủ `localStorage` hết hạn đúng lúc | Theo bất biến **I4** + **I5**: mọi mutation phải bump `version` trong cùng `$transaction` và ghi log. Bố cục là mutation thật, không có ngoại lệ |
+| Action type | `FAMILY_LAYOUT_CHANGED` | Giữ nguyên — cần cho màn hình lịch sử ("Bạn Tuấn vừa sắp xếp lại cây") |
+
+Nếu bỏ `LAYOUT_SAVE` khỏi batch và ghi position bằng N request lẻ thì mỗi lần bấm *Lưu* lại phá vỡ I4/I5 y hệt trường hợp CRUD lẻ. Xem `be/06` R1.4.
 
 ---
 
@@ -408,17 +401,26 @@ Sau `FE-B2` còn lại 2. Gộp thành `<ShellSidebarLayout sidebar={...} title=
 
 ## §10 — `/` và `/group` không có `groupId` phải redirect, không in text lỗi
 
-**`/`** (`(public)/page.tsx`): sau `FE-B8` thành landing marketing không còn ý nghĩa. Theo Q11:
+**`/`** (`(public)/page.tsx`): sau `FE-B8` thành landing marketing không còn ý nghĩa. Theo Q11 + Q16, chỉ còn **2 nhánh**:
 
 ```
-0 group  → màn hình tạo group / lời mời
+0 group  → màn tạo group (kèm lựa chọn tạo link mời)
 1 group  → redirect thẳng /group?groupId=...
-≥2 group → redirect /user/groups
 ```
+
+⚠️ **Không còn nhánh `≥2 group`** — vi phạm Q16. Và cũng không cần hỏi "bạn muốn vào cây nào" vì luôn có đúng 1.
 
 **`/group?groupId=`** (`group-content-wrapper.tsx:48`): hiện render thẳng text *"Vui lòng chọn một gia đình."* hoặc *"Lỗi: …"* inline. Một màn hình trắng có câu text lỗi là ngõ cụt. Phải `redirect()` thay vì render text.
 
-⚠️ Phải phân biệt **3 trường hợp**: không có `groupId` (→ chọn group) · `groupId` sai (→ 404 có nút quay lại) · lỗi mạng/backend (→ lỗi + nút thử lại). Gộp cả 3 thành "Lỗi" là mất thông tin.
+⚠️ Phân biệt **3 trường hợp** — nhưng **bỏ nhánh "thiếu `groupId` → chọn gia đình"**, vì không còn khái niệm chọn:
+
+| Tình huống | Xử lý |
+|---|---|
+| Thiếu `groupId` | `redirect('/')` — về redirector, nơi duy nhất biết tình trạng group của tôi |
+| `groupId` sai / không thuộc nhóm tôi | 404 + nút quay lại |
+| Lỗi mạng / backend | Thông báo lỗi + nút thử lại |
+
+Gộp cả 3 thành "Lỗi" là mất thông tin — nhưng giữ nhánh "thiếu `groupId` → chọn gia đình" cũng là ngõ cụt, vì màn đó bị xoá ở `01` **FE-B11**.
 
 ⚠️ `group/page.tsx` là `"use server"` — `redirect()` dùng được, nhưng `redirect()` **ném exception**, nên phải gọi ngoài `try/catch` (nuốt mất nó sẽ render trang sai).
 
@@ -476,19 +478,80 @@ Cẩn thận: khác với `USER_ROLE`/`BLOG_MEDIA_TYPE` (xoá hẳn ở `01`), 3
 
 ---
 
-## Bảng kiểm tra §1–§14
+## §15 — Phân quyền: 2 trục độc lập, không phải 1 thang
+
+Quyết định lớn nhất của đợt này, và là chỗ dễ làm sai nhất khi code.
+
+### Sai lầm mặc định
+
+Mọi hệ thống RBAC đều dễ khiến người ta nghĩ *"vai cao hơn = quyền nhiều hơn trên mọi thứ"*. Ở đây **sai**, vì dữ liệu thuộc 2 loại khác nhau về bản chất:
+
+- **Dữ liệu cây** (thành viên, quan hệ, tên, bố cục) là **sự thật dùng chung**. Sửa sai nó làm sai thông tin của cả nhà. → phải cần người chịu trách nhiệm, tức OWNER/EDITOR.
+- **Media** (ảnh, album) là **sự thật của người up**. Người up quyết định cái đó có ở nhà hay không, sửa thành gì. → vai trò không liên quan, chỉ quan trọng **ai là chủ**.
+
+Hệ quả trực tiếp, và có chủ ý: **EDITOR sửa được mọi thứ trong cây nhưng không xoá được ảnh của người khác.**
+
+### Trục 1 — Dữ liệu cây: đặc quyền theo vai
+
+| | OWNER | EDITOR | VIEWER |
+|---|---|---|---|
+| Thành viên (thêm / sửa / xoá) | ✅ | ✅ | ❌ |
+| Quan hệ (thêm / sửa / xoá) | ✅ | ✅ | ❌ |
+| Tên / kiểu gia đình | ✅ | ✅ | ❌ |
+| Gán ảnh cho node (tay, của người khác) | ✅ | ✅ | ❌ |
+| Bố cục chung — *Sắp xếp* / *Lưu* | ✅ | ✅ | ❌ |
+| Lịch sử thay đổi — dòng `MEMBER`/`RELATIONSHIP`/`FAMILY`/`GROUP` | ✅ | ✅ | ❌ |
+| Import / export / xuất ảnh cây | ✅ | ✅ | ❌ |
+| Đổi vai trò người khác | ✅ | ❌ | ❌ |
+| Bàn giao quyền sở hữu | ✅ | ❌ | ❌ |
+
+### Trục 2 — Media: theo chủ sở hữu, không theo vai
+
+| | Chủ media | Khác phần EDITOR | Khác phần VIEWER | group OWNER (không phải chủ) |
+|---|---|---|---|---|
+| Xem media đang hiện | ✅ | ✅ | ✅ | ✅ |
+| Thêm media | ✅ | ✅ | ✅ | ✅ |
+| Sửa / xoá / ẩn / khôi phục media | ✅ | ❌ | ❌ | ✅ |
+| Xem media **đã ẩn** của người khác | ❌ | ❌ | ❌ | ✅ |
+| Mở ẩn media của người khác | ❌ | ❌ | ❌ | ✅ |
+| Xem thùng rác **của mình** | ✅ | ✅ | ✅ | ✅ |
+| Xem thùng rác của người khác | ❌ | ❌ | ❌ | ✅ |
+
+⚠️ **`thùng rác` không dùng chung.** Mỗi người thấy cái của mình. Không có "toàn bộ thùng rác của nhà" trừ khi bạn là group OWNER — và ngay cả OWNER cũng thấy 2 tab: *của tôi* + *của người khác*, không trộn vào nhau.
+
+⚠️ **Ẩn là riêng tư, trừ OWNER.** `hiddenById` chỉ giữ **1 người** (người ẩn), không phải danh sách. Nghĩa là: người B ẩn ảnh của C thì **OWNER vẫn thấy** — vì OWNER đã có quyền chủ động thay đổi trạng thái bất kỳ media nào. Đây là hệ quả có chủ ý, không phải sơ suất.
+
+⚠️ **Ảnh hồ sơ (avatar) KHÔNG đi theo luật media.** Chủ avatar là chính người đó (Q14), và việc gán avatar lên node là việc của cây, quyền `edit`. Trộn 2 luật này sẽ ra nghịch lý: tôi không xoá được ảnh tôi up nhưng lại không sửa được ảnh hồ sơ của tôi.
+
+### 3 hệ quả kỹ thuật bắt buộc
+
+| # | Hệ quả | Vì sao |
+|---|---|---|
+| 1 | `hiddenById` là **userId đơn**, không phải mảng/danh sách. "Ẩn riêng cho tôi ở 3 thiết bị" cần bảng riêng — mô hình này không cần nên **không làm** | Giữ đúng 1 giá trị ⇒ filter được bằng index, không cần join |
+| 2 | Bộ lọc phải nằm ở **tầng service**, không ở controller | `WHERE deletedAt IS NULL AND (hiddenById = me OR tôi là group OWNER)` — nếu để ở controller thì mỗi endpoint phải nhớ lặp, và lỡ 1 chỗ là lộ media đã ẩn. Đây là biến thể của bất biến **I1** |
+| 3 | Ẩn / mở ẩn phải ghi `ActivityLog` với `PHOTO_HIDDEN` / `PHOTO_UNHIDDEN` | Người bị ẩn **không hề hay biết** mình bị ẩn. Không có log thì không có cách trả lời khiếu nại *"sao ảnh tôi biến mất"*. Xem `be/06` R2.1 |
+
+⚠️ **Nếu chỉ muốn làm đúng một việc trong `§15` thì làm #2.** Bộ lọc sai tầng là lỗi rò dữ liệu, không phải lỗi UX.
+
+---
+
+## Bảng kiểm tra §1–§15
 
 ```bash
 pnpm typecheck && pnpm lint && pnpm test
 grep -rn "localId" src/                       # phải còn ≤ 1 chỗ: tên ref nội bộ, không có trong payload
 grep -rn "syncFamily\|SyncFamilyDtoSchema\|SyncFamilyAction" src/    # 0
 grep -rn "'/api/" src/                       # 0 — phải qua API_PREFIX
-grep -rn "isLeader\|pinnedMemberId\|USER_ROLE" src/                 # 0
+grep -rn "isLeader\|USER_ROLE" src/           # 0
+grep -rn "ff:layout\|ff:pin" src/             # 0 — Q8 xoá hết tầng localStorage (§7)
 grep -rn "generation" src/                    # chỉ còn trong derive.ts, không trong DTO
 ```
+
+⚠️ **`pinnedMemberId` KHÔNG nằm trong danh sách grep này** — nó được giữ lại (`FE-B4` + `§6`).
 
 Test bắt buộc của `§1`–`§3`:
 - `buildTree` — thành viên tạo/sửa/xoá hiển thị đúng
 - `buildOperations` — **không bao giờ** có `clientRef` trong `MEMBER_UPDATE.id` (F1), **không bao giờ** có `generation` hay quan hệ chiều ngược (F2)
 - 409 → UI vào `status: "conflict"`, **không** retry tự động, `origin` được cập nhật
-- lớp phủ bố cục: `version` khớp → dùng; lệch → xoá + thông báo
+- bố cục 1 tầng: kéo tay rồi F5 → về đúng bố cục server, **không** có bất kỳ dữ liệu `localStorage` nào được đọc lại
+- VIEWER: không thấy nút *Lưu* / *Sắp xếp*, không kéo được node
