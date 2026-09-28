@@ -21,7 +21,7 @@ npx serve wireframes
 | File | Màn hình | Route thật | Căn cứ |
 |---|---|---|---|
 | `index.html` | Danh mục + bảng phân quyền | — | — |
-| `s01-landing-redirect.html` | Trang chủ, rẽ 2 nhánh | `/` | `02-pham-vi-sua.md` §10 · `01-pham-vi-bo.md` FE-B8 |
+| `s01-landing.html` | Trang chủ — landing giới thiệu, không tự chuyển hướng | `/` | `02-pham-vi-sua.md` §10 · `01-pham-vi-bo.md` FE-B8 |
 | `s02-register-invite-fork.html` | Tham gia nhóm qua link mời, 4 nhánh token | `/invite?token=` | `06-workflow-user.md` §2.1 · `04-thu-tu-thuc-hien.md` Stage 2 |
 | `s03-login.html` | Đăng nhập (giữ `?token=`) | `/auth` | `06-workflow-user.md` §2.2 |
 | `s04-forgot-reset.html` | Quên / đặt lại mật khẩu | `/auth`, `/user/secure` | `03-pham-vi-them.md` §7 · `01-pham-vi-bo.md` FE-B5 |
@@ -108,7 +108,7 @@ nội dung.
 Các điểm dưới đây là quyết định sản phẩm, không phải chi tiết trang trí. Đừng làm mất
 chúng khi sửa:
 
-- **s01** chỉ rẽ 2 nhánh, không bao giờ hiện lỗi inline.
+- **s01** là landing cho **mọi người**, bất kể đã đăng nhập hay chưa — không tự chuyển hướng, không bao giờ hiện lỗi inline. Header và nút CTA chỉ đưa về màn xác thực (`s03-login.html` mô phỏng `/auth`); câu hỏi "có link mời hay tạo cây riêng" nằm trong luồng đăng ký (s02 / s03 / s05), không nằm ở trang chủ.
 - **s02** token hết hạn / đã dùng **không** được mở đường thoát "tự tạo cây của tôi".
 - **s03** giữ nguyên `?token=` của link mời khi qua bước đăng nhập.
 - **s04** thông báo trung tính, không tiết lộ email có tồn tại không; phần cảnh báo
@@ -148,6 +148,11 @@ chúng khi sửa:
 
 Các giá trị đã kiểm chứng bằng trình duyệt: header cao **48px**, sidebar rộng
 **256px**, node rộng **150px** — khớp với app.
+
+Một ngoại lệ: các lớp `.landing-*` (trang chủ `s01`) **không tồn tại trong app
+hiện tại** — đó là bề mặt đề xuất mới cho `(public)/page.tsx`, dựng tạm chỉ bằng
+token có sẵn. Nếu được duyệt thì phải viết lại bằng Tailwind như phần còn lại của
+app, không copy nguyên CSS.
 
 Nếu bạn đổi style trong `assets/ui.css`, nghĩa là bạn đang đề xuất đổi style của app.
 

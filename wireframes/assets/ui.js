@@ -335,30 +335,46 @@
 
     function center(p) { return { x: p.x + W / 2, y: p.y + H / 2 }; }
 
-    function path(from, to) {
-      var x1 = from.x, y1 = from.y, x2 = to.x, y2 = to.y, mid = (x1 + x2) / 2;
-      return "M " + x1 + " " + y1 + " C " + mid + " " + y1 + ", " + mid + " " + y2 + ", " + x2 + " " + y2;
+    /* Edge kiểu react-flow "smoothstep": đường gấp khúc vuông góc bo nhẹ,
+       nối từ mép node cha (đáy) xuống mép node con (đỉnh), như app thật. */
+    function orthoPath(x1, y1, x2, y2) {
+      var r = 6, s = x1 <= x2 ? 1 : -1, dx = Math.abs(x2 - x1), my = (y1 + y2) / 2;
+      r = Math.min(r, Math.abs(my - y1), Math.abs(my - y2), dx / 2);
+      var ax = x1 + s * r, bx = x2 - s * r;
+      return (
+        "M " + x1 + " " + y1 +
+        " L " + x1 + " " + (my - r) +
+        " Q " + x1 + " " + my + " " + ax + " " + my +
+        " L " + bx + " " + my +
+        " Q " + x2 + " " + my + " " + x2 + " " + (my + r) +
+        " L " + x2 + " " + y2
+      );
+    }
+    function childPath(top, bottom) {
+      var sx = center(top).x, ex = center(bottom).x;
+      var sy = top.y + H, ey = bottom.y;
+      return sx === ex
+        ? "M " + sx + " " + sy + " L " + ex + " " + ey
+        : orthoPath(sx, sy, ex, ey);
     }
     function spousePath(a, b) {
-      var y = a.y, x1 = a.x, x2 = b.x, dy = 26 * (x1 <= x2 ? 1 : -1);
-      return "M " + x1 + " " + y + " C " + x1 + " " + (y + dy) + ", " + x2 + " " + (y + dy) + ", " + x2 + " " + y;
+      // Vợ chồng cùng hàng: đường thẳng ngang nối mép phải -> mép trái
+      var y = a.y + H / 2;
+      return "M " + (a.x + W) + " " + y + " L " + b.x + " " + y;
     }
 
     var edges = relations.map(function (r) {
       var a = positions[r.fromMemberId], b = positions[r.toMemberId];
       if (!a || !b) return "";
       if (r.type === "SPOUSE") {
-        return '<path class="flow-edge" data-kind="spouse" d="' + spousePath(center(a), center(b)) + '"/>';
+        return '<path class="flow-edge" data-kind="spouse" d="' + spousePath(a, b) + '"/>';
       }
       var top = r.type === "PARENT" ? a : b;
       var bottom = r.type === "PARENT" ? b : a;
-      var c1 = center(top), c2 = center(bottom);
-      c1.y = top.y + H / 2;
-      c2.y = bottom.y - H / 2;
-      return '<path class="flow-edge" d="' + path(c1, c2) + '"/>';
+      return '<path class="flow-edge" d="' + childPath(top, bottom) + '"/>';
     }).join("");
 
-    var showHandles = opts.showHandles !== false && opts.draggable !== false;
+    var showHandles = opts.showHandles === true || (opts.showHandles !== false && opts.draggable !== false);
     var nodes = members.map(function (m) {
       var p = positions[m.id] || { x: 0, y: 0 };
       var photo = m.photoId && opts.photoUrl ? opts.photoUrl(m.photoId) : null;
