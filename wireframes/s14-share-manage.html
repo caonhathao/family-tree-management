@@ -10,7 +10,7 @@
     <div class="shell">
       <aside class="sidebar" id="sidebar" data-narrow="false">
         <div class="sidebar-header">
-          <a class="sidebar-menu-button" data-size="lg" href="s16-profile-hub.html">
+          <a class="sidebar-menu-button" data-size="lg" href="s17-profile.html">
             <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
             <span class="text-sm font-bold hide-narrow">Xin chào</span>
             <span class="ico hide-narrow" style="margin-left: auto">›</span>
@@ -19,10 +19,10 @@
         <div class="sidebar-content">
           <div class="sidebar-group">
             <div class="sidebar-group-label">Cây</div>
-            <a class="sidebar-menu-button" href="s06-tree-canvas.html"><span class="ico">⌥</span><span class="hide-narrow">Cây gia phả</span></a>
-            <a class="sidebar-menu-button" data-active="true" href="s12-share-manage.html"><span class="ico">◈</span><span class="hide-narrow">Chia sẻ</span></a>
-            <a class="sidebar-menu-button" href="s11-albums.html"><span class="ico">▣</span><span class="hide-narrow">Ảnh</span></a>
-            <a class="sidebar-menu-button" href="s15-events.html"><span class="ico">◷</span><span class="hide-narrow">Sự kiện</span></a>
+            <a class="sidebar-menu-button" href="s07-tree.html"><span class="ico">⌥</span><span class="hide-narrow">Cây gia phả</span></a>
+            <a class="sidebar-menu-button" data-active="true" href="s14-share-manage.html"><span class="ico">◈</span><span class="hide-narrow">Chia sẻ</span></a>
+            <a class="sidebar-menu-button" href="s12-albums.html"><span class="ico">▣</span><span class="hide-narrow">Ảnh</span></a>
+            <a class="sidebar-menu-button" href="s13-events.html"><span class="ico">◷</span><span class="hide-narrow">Sự kiện</span></a>
           </div>
         </div>
       </aside>
@@ -32,7 +32,7 @@
           <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
           <div class="sep-v"></div>
           <h2>Chia sẻ</h2>
-          <div class="ml-auto"><a class="btn" data-variant="outline" data-size="sm" href="s06-tree-canvas.html">← Về cây</a></div>
+          <div class="ml-auto"><a class="btn" data-variant="outline" data-size="sm" href="s07-tree.html">← Về cây</a></div>
         </header>
 
         <main class="app-main">
@@ -42,7 +42,7 @@
               <div class="font-semibold">Chỉ Chủ nhóm mới tạo được link chia sẻ</div>
               <div class="muted text-sm">Bạn đang là <span data-role-label></span>. Biên tập viên không đổi được quyền chia sẻ của nhóm.</div>
             </div>
-            <a class="btn" data-variant="outline" data-size="sm" href="s06-tree-canvas.html">Về cây</a>
+            <a class="btn" data-variant="outline" data-size="sm" href="s07-tree.html">Về cây</a>
           </div>
 
           <div id="real" class="page">
@@ -80,7 +80,7 @@
                 <div class="codebox" id="new-url"></div>
                 <div class="flex gap-2">
                   <button class="btn" data-variant="outline" data-size="sm" id="copy">Sao chép</button>
-                  <a class="btn" data-variant="outline" data-size="sm" href="s13-share-readonly.html" id="try">Mở thử</a>
+                  <a class="btn" data-variant="outline" data-size="sm" href="s15-share-readonly.html" id="try">Mở thử</a>
                 </div>
                 <div class="mini-list">
                   <div class="mini-row"><span class="muted">Người xem thấy</span><span>cây · ảnh công khai trong album · sự kiện</span></div>
@@ -154,7 +154,7 @@
             var st = stateOf(l);
             var act = st === "active"
               ? '<button class="btn" data-variant="outline" data-size="sm" data-copy="' + esc(l.token) + '">Sao chép</button>' +
-                '<a class="btn" data-variant="ghost" data-size="sm" href="s13-share-readonly.html">Mở thử</a>' +
+                '<a class="btn" data-variant="ghost" data-size="sm" href="s15-share-readonly.html">Mở thử</a>' +
                 '<button class="btn" data-variant="ghost" data-size="sm" data-revoke="' + esc(l.id) + '">Thu hồi</button>'
               : st === "expired"
                 ? '<span class="muted text-sm" style="text-align:right">Đã quá hạn, không ai mở được nữa</span>'

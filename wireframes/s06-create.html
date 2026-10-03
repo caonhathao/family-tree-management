@@ -10,7 +10,6 @@
     <div class="auth-shell">
       <div class="auth-bar">
         <a class="btn" data-variant="outline" href="index.html">‹ Quay lại</a>
-        <button class="btn" data-variant="outline" data-size="icon" id="info" aria-label="Thông tin">i</button>
       </div>
 
       <div class="auth-center">
@@ -58,7 +57,7 @@
                   </div>
 
                   <button class="btn w-full" id="create">Tạo nhóm và vào cây</button>
-                  <a class="btn" data-variant="link" data-size="sm" href="s06-tree-canvas.html" id="skip">Bỏ qua, vào cây trống</a>
+                  <a class="btn" data-variant="link" data-size="sm" href="s07-tree.html" id="skip">Bỏ qua, vào cây trống</a>
                 </div>
               </div>
             </div>
@@ -66,40 +65,6 @@
         </div>
       </div>
     </div>
-
-    <div class="overlay hidden" id="conflict-overlay">
-      <div class="dialog" id="conflict" data-wide>
-        <div class="dialog-header">
-          <h3 class="dialog-title">Bạn đã có một cây rồi</h3>
-          <p class="dialog-description">Một tài khoản chỉ quản lý được một cây gia phả.</p>
-        </div>
-        <div class="dialog-body flex flex-col gap-4">
-          <div class="banner" data-tone="warn">
-            <span class="ico">⚠</span>
-            <span>Tài khoản <strong>ha.nguyen@example.com</strong> đang có cây “Nhà họ Nguyễn – Trần”. Muốn tạo cây mới thì phải xoá cây cũ trước.</span>
-          </div>
-          <div class="flex flex-col gap-2">
-            <button class="btn" data-variant="outline" data-close-dialog="conflict" class="text-left">Vào cây hiện có của tôi</button>
-            <a class="btn" data-variant="link" data-size="sm" href="s16-profile-hub.html">Xoá cây cũ rồi tạo cây mới</a>
-          </div>
-        </div>
-        <div class="dialog-footer">
-          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="conflict">Đóng</button>
-        </div>
-      </div>
-    </div>
-
-    <details class="note">
-      <summary>Ghi chú thiết kế</summary>
-      <div class="note-body">
-        <ul>
-          <li>Đây là nhánh “không có token” của cùng một đường dẫn <code>/invite</code> với nhánh mời — xem <a href="s02-register-invite-fork.html">màn đăng ký</a>.</li>
-          <li>Không có nút “xoá cây hiện tại” ở đây. Xoá là việc của màn tài khoản, và nó kéo theo chuyển ảnh sang chủ nhóm — xem <a href="s16-profile-hub.html">màn hồ sơ</a>.</li>
-          <li>Link mời chỉ dùng một lần, hạn 7 ngày. Không có màn “quản lý lời mời” và không có API xem danh sách lời mời.</li>
-          <li>Gửi link ở đâu cũng được — copy rồi dán vào Zalo, Messenger, tin nhắn. Không cần gửi qua hệ thống.</li>
-        </ul>
-      </div>
-    </details>
 
     <script src="assets/mock-data.js"></script>
     <script src="assets/ui.js"></script>
@@ -127,10 +92,6 @@
         qs("#create").addEventListener("click", function () {
           WF.toast("Đã tạo nhóm", "Bạn là chủ nhóm. Mời người khác từ màn cây.", "success");
         });
-        qs("#info").addEventListener("click", function () {
-          WF.toast("Một tài khoản = một cây", "Bấm nút tạo khi đã có cây để xem thông báo 409.", "default");
-        });
-        window.demoConflict = function () { WF.openDialog("conflict"); };
       })();
     </script>
   </body>

@@ -153,7 +153,7 @@
                   <label class="checkbox-row"><span class="checkbox" data-checked="false"></span> Hiện ngày sinh / ngày mất trên node</label>
                   <label class="checkbox-row"><span class="checkbox" data-checked="true"></span> Tự xếp lại khi thêm thành viên</label>
                   <div class="sep-h"></div>
-                  <a class="text-sm" href="s09-activity.html" style="color: var(--primary)">Xem lịch sử thay đổi</a>
+                  <a class="text-sm" href="s10-activity.html" style="color: var(--primary)">Xem lịch sử thay đổi</a>
                 </div>
               </div>
             </div>
@@ -313,14 +313,14 @@
           markDirty();
           WF.toast("Đã sắp xếp", "Chỉ mình bạn thấy. Bấm Lưu để cả nhóm thấy.", "success");
         });
-        qs("#mi-save").addEventListener("click", function () { location.href = "s08-save-conflict.html"; });
-        qs("#mi-member").addEventListener("click", function () { location.href = "s07-member-form.html"; });
+        qs("#mi-save").addEventListener("click", function () { location.href = "s09-save-conflict.html"; });
+        qs("#mi-member").addEventListener("click", function () { location.href = "s08-member-form.html"; });
         qs("#mi-relation").addEventListener("click", function () {
           WF.toast("Thêm quan hệ", "Kéo từ chấm dưới của node cha tới node con để tạo quan hệ.", "default");
         });
-        qs("#mi-history").addEventListener("click", function () { location.href = "s09-activity.html"; });
-        qs("#mi-import").addEventListener("click", function () { location.href = "s14-import-export.html"; });
-        qs("#mi-share").addEventListener("click", function () { location.href = "s12-share-manage.html"; });
+        qs("#mi-history").addEventListener("click", function () { location.href = "s10-activity.html"; });
+        qs("#mi-import").addEventListener("click", function () { location.href = "s16-import-export.html"; });
+        qs("#mi-share").addEventListener("click", function () { location.href = "s14-share-manage.html"; });
         qs("#mi-delete").addEventListener("click", function () { WF.openDialog("dlg-del"); });
 
         /* ---- gắn ảnh cho node đang chọn ---- */

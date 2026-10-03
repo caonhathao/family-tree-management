@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tham gia nhóm — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <a class="btn" data-variant="outline" href="index.html">‹ Quay lại</a>
+        <div class="ml-auto flex items-center gap-3">
+          <span class="text-sm muted" id="token-label"></span>
+        </div>
+      </div>
+
+      <div class="auth-center">
+        <div class="auth-card" data-mode="signup">
+          <div class="auth-panes" data-mode="signup">
+            <div class="auth-pane-form">
+              <div class="flex items-center gap-3" style="margin: 1rem 0">
+                <span class="icon-box">
+                  <span class="sidebar-avatar" data-color="--primary">N</span>
+                </span>
+                <div>
+                  <div class="font-semibold">Nguyễn Thanh Hà mời bạn vào nhóm</div>
+                  <div class="text-sm muted">Nhà họ Nguyễn – Trần</div>
+                </div>
+              </div>
+
+              <div class="mini-list" style="margin-bottom: 1rem">
+                <div class="mini-row">
+                  <span class="muted">Vai trò khi vào</span>
+                  <span class="flex items-center gap-2">
+                    <span class="badge" data-tone="primary">Người xem</span>
+                    <span class="text-xs muted">không sửa được cây</span>
+                  </span>
+                </div>
+                <div class="mini-row">
+                  <span class="muted">Link hết hạn</span>
+                  <span id="exp">27/09/2026</span>
+                </div>
+              </div>
+
+              <div class="card" data-variant="flat">
+                <div class="card-header">
+                  <h3 class="card-title">Đăng ký tài khoản</h3>
+                  <p class="card-description">Tạo tài khoản để vào nhóm này</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="field-group">
+                    <label class="field-label" for="name">Họ và tên</label>
+                    <input class="input" id="name" placeholder="Nguyễn Văn A" value="Nguyễn Minh Châu" />
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="email">Email</label>
+                    <input class="input" id="email" placeholder="Email của bạn" value="chau.nguyen@example.com" />
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="pw">Mật khẩu</label>
+                    <input class="input" id="pw" type="password" value="12345678" />
+                  </div>
+                  <button class="btn w-full" id="reg">Vào nhóm</button>
+                  <p class="text-center text-sm muted">
+                    Đã có tài khoản?
+                    <a class="btn" data-variant="link" data-size="sm" href="s03-login.html?token=inv_9c41f2">Đăng nhập</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="auth-pane-greet" data-mode="signup">
+              <h2>Chào bạn!</h2>
+              <p class="text-center mt-2">Bắt đầu hành trình mới cùng chúng tôi</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs;
+        qs("#token-label").textContent = "?token=" + MOCK.invite.token;
+        qs("#reg").addEventListener("click", function () {
+          WF.toast("Đã vào nhóm", "Bạn là Người xem trong nhóm “" + MOCK.group.name + "”.", "success");
+        });
+      })();
+    </script>
+  </body>
+</html>

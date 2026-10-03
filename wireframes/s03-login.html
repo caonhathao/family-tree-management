@@ -58,7 +58,7 @@
 
                     <p class="text-center text-sm muted">
                       Không có tài khoản?
-                      <a class="btn" data-variant="link" data-size="sm" id="to-signup" href="s02-register-invite-fork.html">Đăng kí ngay</a>
+                      <a class="btn" data-variant="link" data-size="sm" id="to-signup" href="s02-register.html">Đăng kí ngay</a>
                     </p>
                   </div>
                 </div>
@@ -96,7 +96,7 @@
 
         if (token) {
           qs("#token-note").classList.remove("hidden");
-          qs("#to-signup").setAttribute("href", "s02-register-invite-fork.html?token=" + encodeURIComponent(token));
+          qs("#to-signup").setAttribute("href", "s02-register.html?token=" + encodeURIComponent(token));
         }
 
         qs("#show").addEventListener("click", function () {
