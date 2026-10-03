@@ -148,6 +148,9 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
 
 - Màn chính của nhóm; nút điều khiển theo `data-needs-perm` + `WF.can`.
   *(Căn cứ: `02-pham-vi-sua.md` §1–§5, §9, §12 · `04-thu-tu-thuc-hien.md` Stage 3)*
+- **Tìm người là popup** — nút kính lúp ⌕ cạnh nút menu soạn thảo trong panel;
+  mở hộp thoại tìm (gõ tên/năm sinh, bấm kết quả → nhảy tới node và đóng).
+  Không còn ô tìm inline trong menu panel. Mọi vai trò đều tìm được.
 
 ### `s08-member-form.html` — Thêm / sửa thành viên
 

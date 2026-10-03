@@ -58,20 +58,14 @@
               </div>
             </div>
 
-            <!-- PanelEditor: giữ nguyên hình dạng của panel-editor.tsx, chỉ thêm nhóm Tìm. -->
+            <!-- PanelEditor: giữ nguyên hình dạng của panel-editor.tsx; tìm người qua popup (nút kính lúp). -->
             <div class="panel-editor" id="panel">
               <div class="panel-body">
                 <div class="panel-grip" id="grip" aria-label="Kéo di chuyển">⋮</div>
+                <button class="panel-trigger" id="search-btn" aria-label="Tìm người" data-open-dialog="dlg-search">⌕</button>
                 <button class="panel-trigger" id="panel-btn" aria-label="Menu soạn thảo">▤</button>
               </div>
               <div class="panel-menu dropdown-content" data-side="right" id="panel-menu" hidden>
-                <div class="dropdown-label">Tìm người</div>
-                <div class="px-2 pb-2">
-                  <input class="input" id="q" placeholder="Tên hoặc năm sinh" autocomplete="off" />
-                </div>
-                <div id="results" class="hidden"></div>
-                <div class="dropdown-separator"></div>
-
                 <div class="dropdown-label">Chung</div>
                 <button class="dropdown-item" data-needs-perm="member.add" data-hide-when="deny" id="mi-member">
                   <span class="ico">＋</span> Thêm thành viên
@@ -176,6 +170,22 @@
       </div>
     </div>
 
+    <!-- Tìm người trong cây -->
+    <div class="overlay hidden" id="dlg-search-overlay"></div>
+    <div class="dialog hidden" id="dlg-search">
+      <div class="dialog-header">
+        <div class="dialog-title">Tìm người trong cây</div>
+        <div class="dialog-description">Gõ tên hoặc năm sinh để nhảy tới thành viên</div>
+      </div>
+      <div class="dialog-body" style="display:flex;flex-direction:column;gap:.75rem;min-height:12rem">
+        <input class="input" id="q2" placeholder="Tên hoặc năm sinh" autocomplete="off" />
+        <div id="results2" class="hidden"></div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn" data-variant="outline" data-close-dialog="dlg-search">Đóng</button>
+      </div>
+    </div>
+
     <!-- Xoá toàn bộ cây -->
     <div class="overlay hidden" id="dlg-deloverlay"></div>
     <div class="dialog hidden" id="dlg-del">
@@ -263,29 +273,34 @@
           document.addEventListener("pointerup", function () { on = false; });
         })();
 
-        /* ---- tìm người: lọc trong bộ nhớ, phân biệt "chưa gõ" với "không có" ---- */
-        var q = qs("#q"), results = qs("#results");
-        q.addEventListener("input", function () {
-          var v = q.value.trim().toLowerCase();
-          if (!v) { results.classList.add("hidden"); return; }
+        /* ---- tìm người (popup): lọc trong bộ nhớ, phân biệt "chưa gõ" với "không có" ---- */
+        var q2 = qs("#q2"), results2 = qs("#results2");
+        qs("#search-btn").addEventListener("click", function () {
+          q2.value = "";
+          results2.classList.add("hidden");
+          setTimeout(function () { q2.focus(); }, 0);
+        });
+        q2.addEventListener("input", function () {
+          var v = q2.value.trim().toLowerCase();
+          if (!v) { results2.classList.add("hidden"); return; }
           var hit = members.filter(function (m) {
             return m.fullName.toLowerCase().indexOf(v) !== -1 || (m.birthDate || "").indexOf(v) === 0;
           });
-          results.classList.remove("hidden");
+          results2.classList.remove("hidden");
           if (!hit.length) {
-            results.innerHTML = '<div class="px-2 py-3 text-sm muted text-center">Không có kết quả</div>';
+            results2.innerHTML = '<div class="px-2 py-3 text-sm muted text-center">Không có kết quả</div>';
             return;
           }
-          results.innerHTML = hit.map(function (m) {
+          results2.innerHTML = hit.map(function (m) {
             return '<button class="dropdown-item" data-go="' + m.id + '">' +
               '<span class="flex items-center gap-2 min-w-0"><span class="node-avatar" style="width:20px;height:20px;font-size:10px;margin:0">' +
               WF.esc(WF.initialOf(m.fullName)) + "</span>" + WF.esc(m.fullName) + "</span>" +
               '<span class="text-xs muted">đời ' + (m.generation + 1) + "</span></button>";
           }).join("");
-          qsa("[data-go]", results).forEach(function (b) {
+          qsa("[data-go]", results2).forEach(function (b) {
             b.addEventListener("click", function () {
               focusNode(b.getAttribute("data-go"));
-              results.classList.add("hidden");
+              WF.closeDialog("dlg-search");
             });
           });
         });
