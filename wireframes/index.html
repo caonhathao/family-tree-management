@@ -9,91 +9,60 @@
   <body>
     <div class="auth-shell">
       <div class="auth-bar">
-        <span class="text-sm font-semibold sm:text-base lg:text-lg">Danh sách màn hình</span>
+        <span class="text-sm font-semibold sm:text-base lg:text-lg">Wireframe — 4 luồng theo vai trò</span>
         <div class="ml-auto flex items-center gap-2">
-          <a class="btn" data-variant="outline" data-size="sm" href="s07-tree.html">Mở màn cây</a>
+          <a class="btn" data-variant="outline" data-size="sm" href="s07-tree.html?role=owner">Mở màn cây</a>
         </div>
       </div>
 
       <div class="auth-center" style="padding: 1.5rem 1rem">
         <div class="page">
           <div class="page-head">
-            <h1 class="page-title">Wireframe các màn hình sau khi sửa lại</h1>
+            <h1 class="page-title">Wireframe sau khi sửa lại — tổ chức theo luồng vai trò</h1>
             <p class="page-desc">
-              Bám theo hệ màu và cấu trúc hiện có của ứng dụng, không phải bản dựng từ đầu.
-              Mỗi màn chạy được bằng cách bấm nút, đổi vai trò ở góc dưới phải để xem ai bị ẩn nút, ai thấy màn 403.
+              Bốn luồng, mỗi luồng test riêng được bằng cách bấm link. Mỗi link mở màn với vai trò đặt sẵn qua
+              <code>?role=</code> — vẫn đổi vai trò tay được ở góc dưới phải để xem ai bị ẩn nút, ai thấy chặng 403.
+              Quyết định sản phẩm đã chuyển sang <code>PLAN.md</code>; màn hình chỉ còn layout thật.
             </p>
           </div>
 
           <div class="two-even" style="align-items: start">
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">Vào nhóm</h3>
-                <p class="card-description">Có tài khoản, có link mời, hoặc vừa mới nghe về Gia phả</p>
+                <h3 class="card-title">Khách</h3>
+                <p class="card-description">Vào Gia phả: đăng nhập, đăng ký, quên mật khẩu, vào nhóm qua link mời</p>
+                <p class="text-xs muted">Vai trò được tự đặt theo flow; vẫn đổi tay được ở góc dưới phải.</p>
               </div>
-              <div class="card-content flex flex-col gap-2" id="g1"></div>
+              <div class="card-content flex flex-col gap-2" id="g-khach"></div>
             </div>
 
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">Cây gia phả</h3>
-                <p class="card-description">Màn chính, dùng hằng ngày</p>
+                <h3 class="card-title">Chủ nhóm</h3>
+                <p class="card-description">Tạo cây, sửa cây, thêm thành viên, chia sẻ, nhập xuất, hồ sơ</p>
+                <p class="text-xs muted">Vai trò được tự đặt theo flow; vẫn đổi tay được ở góc dưới phải.</p>
               </div>
-              <div class="card-content flex flex-col gap-2" id="g2"></div>
+              <div class="card-content flex flex-col gap-2" id="g-owner"></div>
             </div>
 
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">Ảnh, sự kiện, chia sẻ</h3>
-                <p class="card-description">Dữ liệu phụ theo cây</p>
+                <h3 class="card-title">Biên tập</h3>
+                <p class="card-description">Sửa cây, thêm thành viên, ảnh, sự kiện, lịch sử, nhập xuất</p>
+                <p class="text-xs muted">Vai trò được tự đặt theo flow; vẫn đổi tay được ở góc dưới phải.</p>
               </div>
-              <div class="card-content flex flex-col gap-2" id="g3"></div>
+              <div class="card-content flex flex-col gap-2" id="g-editor"></div>
             </div>
 
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">Tài khoản và dữ liệu</h3>
-                <p class="card-description">Thùng rác, nhập xuất, hồ sơ</p>
+                <h3 class="card-title">Người xem</h3>
+                <p class="card-description">Cây chỉ đọc, xem qua link mời, ảnh của mình</p>
+                <p class="text-xs muted">Vai trò được tự đặt theo flow; vẫn đổi tay được ở góc dưới phải.</p>
               </div>
-              <div class="card-content flex flex-col gap-2" id="g4"></div>
+              <div class="card-content flex flex-col gap-2" id="g-viewer"></div>
             </div>
           </div>
-
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Quyền — hai trục độc lập</h3>
-              <p class="card-description">Đổi vai trò ở góc dưới phải để thấy bảng này bớt hay thêm dòng</p>
-            </div>
-            <div class="card-content" style="padding: 0">
-              <div class="table-wrap">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>Việc</th>
-                      <th style="width: 8rem">Chủ nhóm</th>
-                      <th style="width: 8rem">Biên tập viên</th>
-                      <th style="width: 8rem">Người xem</th>
-                      <th style="width: 8rem">Khách</th>
-                    </tr>
-                  </thead>
-                  <tbody id="perm"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <details class="note">
-            <summary>Ghi chú thiết kế</summary>
-            <div class="note-body">
-              <ul>
-                <li>Hai trục: việc trong <strong>cây</strong> tính theo vai trò nhóm, việc với <strong>ảnh</strong> tính theo người đã tải lên. Sửa được cây không có nghĩa xoá được ảnh của người khác.</li>
-                <li>Ẩn ảnh là “người khác không thấy”, không phải “xoá”. Người ẩn và Chủ nhóm vẫn thấy kèm nút Hiện lại.</li>
-                <li>Thùng rác cũng chia hai: thùng rác cây theo vai trò, thùng rác ảnh theo người đã xoá.</li>
-                <li>Mỗi tài khoản chỉ có một cây, nên không có màn danh sách nhóm và không có nút rời nhóm.</li>
-                <li>Ảnh thẻ của thành viên nằm ở cây, không nằm trong album. Gắn ảnh vào node chỉ giữ một mã ảnh, không tạo bản sao.</li>
-              </ul>
-            </div>
-          </details>
         </div>
       </div>
     </div>
@@ -105,78 +74,66 @@
         var qs = WF.qs, esc = WF.esc;
 
         var GROUPS = {
-          g1: [
-            ["s01-landing.html", "Trang chủ", "Landing giới thiệu cho mọi người, không tự chuyển hướng"],
-            ["s02-register.html", "Đăng ký từ link mời", "Bốn nhánh: còn hạn, hết hạn, đã dùng, không có token"],
-            ["s03-login.html", "Đăng nhập", "Giữ nguyên token mời xuyên suốt"],
-            ["s04-forgot-reset.html", "Quên / đặt lại mật khẩu", "Thông báo trung tính, cảnh báo mất phiên đăng nhập"],
-            ["s06-create.html", "Tạo cây mới", "Nhánh không có token của cùng đường dẫn /invite"]
-          ],
-          g2: [
-            ["s07-tree.html", "Cây gia phả", "Màn chính: tìm, thêm, kéo thả, gắn ảnh, một nút Lưu"],
-            ["s08-member-form.html", "Thêm / sửa thành viên", "Ghim ảnh hồ sơ của mình vào node"],
-            ["s09-save-conflict.html", "Mâu thuẫn khi lưu", "Xem khác biệt, giữ của mình, hoặc ghi đè có xác nhận"]
-          ],
-          g3: [
-            ["s10-activity.html", "Lịch sử thay đổi", "Lọc theo hành động, đối tượng, khoảng ngày"],
-            ["s12-albums.html", "Ảnh", "Quyền theo người tạo album, ảnh ẩn vẫn hiện nhãn"],
-            ["s13-events.html", "Sự kiện", "Gắn với một thành viên, hoặc để là sự kiện chung"],
-            ["s14-share-manage.html", "Tạo link chia sẻ", "Chỉ Chủ nhóm, hạn 7 / 30 / 90 ngày, thu hồi được"],
-            ["s15-share-readonly.html", "Xem cây qua link", "Không có một nút ghi nào"]
-          ],
-          g4: [
-            ["s11-trash.html", "Thùng rác", "Tách thùng rác cây và thùng rác ảnh"],
-            ["s16-import-export.html", "Nhập / Xuất", "Xem trước trước khi ghi, bốn kiểu tệp"],
-            ["s17-profile.html", "Thông tin cá nhân", "Đổi vai trò, chuyển quyền sở hữu, xoá tài khoản"]
-          ]
+          "g-khach": {
+            role: "anon",
+            rows: [
+              ["s01-landing.html", "Trang chủ", "Landing giới thiệu, không tự chuyển hướng"],
+              ["s03-login.html", "Đăng nhập", "Giữ nguyên token mời xuyên suốt từ luồng Vào nhóm"],
+              ["s02-register.html", "Đăng ký tài khoản", "Không có token mời — tạo tài khoản riêng"],
+              ["s04-forgot.html", "Quên mật khẩu", "Gửi link đặt lại"],
+              ["s04-forgot-sent.html", "Đã gửi link", "Thông báo trung tính, không lộ email đã đăng ký"],
+              ["s04-forgot-reset.html", "Đặt mật khẩu mới", "Cảnh báo mất phiên đăng nhập mọi thiết bị"],
+              ["s05-join.html", "Vào nhóm qua link mời", "Link còn hạn — đăng ký để vào nhóm người mời"],
+              ["s05-join-expired.html", "Link mời hết hạn", "Trạng thái dừng"],
+              ["s05-join-used.html", "Link mời đã dùng", "Trạng thái dừng"]
+            ]
+          },
+          "g-owner": {
+            role: "owner",
+            rows: [
+              ["s06-create.html", "Tạo cây mới", "Bạn sẽ là chủ nhóm, vào thẳng màn cây"],
+              ["s06-create-conflict.html", "Đã có cây (409)", "Chặng mâu thuẫn khi tài khoản đã có cây"],
+              ["s07-tree.html", "Cây gia phả", "Màn chính: tìm, thêm, kéo thả, gắn ảnh, một nút Lưu"],
+              ["s08-member-form.html", "Thêm / sửa thành viên", "Ghim ảnh hồ sơ của mình vào node"],
+              ["s14-share-manage.html", "Link chia sẻ", "Chỉ Chủ nhóm, hạn 7 / 30 / 90 ngày, thu hồi được"],
+              ["s16-import-export.html", "Nhập / Xuất", "Xem trước trước khi ghi, bốn kiểu tệp"],
+              ["s11-trash.html", "Thùng rác", "Tách thùng rác cây và thùng rác ảnh"],
+              ["s10-activity.html", "Lịch sử thay đổi", "Lọc theo hành động, đối tượng, khoảng ngày"],
+              ["s17-profile.html", "Thông tin cá nhân", "Đổi vai trò, chuyển quyền sở hữu, xoá tài khoản"]
+            ]
+          },
+          "g-editor": {
+            role: "editor",
+            rows: [
+              ["s07-tree.html", "Cây gia phả", "Màn chính — sửa được cây"],
+              ["s08-member-form.html", "Thêm / sửa thành viên", "Ghim ảnh hồ sơ của mình vào node"],
+              ["s09-save-conflict.html", "Mâu thuẫn khi lưu", "Xem khác biệt, giữ của mình, hoặc ghi đè có xác nhận"],
+              ["s12-albums.html", "Ảnh", "Quyền theo người tạo album, ảnh ẩn vẫn hiện nhãn"],
+              ["s13-events.html", "Sự kiện", "Gắn với một thành viên, hoặc để là sự kiện chung"],
+              ["s10-activity.html", "Lịch sử thay đổi", "Lọc theo hành động, đối tượng, khoảng ngày"],
+              ["s16-import-export.html", "Nhập / Xuất", "Xem trước trước khi ghi, bốn kiểu tệp"]
+            ]
+          },
+          "g-viewer": {
+            role: "viewer",
+            rows: [
+              ["s05-join.html", "Vào nhóm qua link mời", "Đăng ký tài khoản để vào — nhận vai Người xem"],
+              ["s07-tree.html", "Cây gia phả", "Chỉ đọc — không có nút sửa"],
+              ["s15-share-readonly.html", "Xem cây qua link", "Chia sẻ mã không cần tài khoản, không có một nút ghi nào"],
+              ["s12-albums.html", "Ảnh của mình", "Quyền theo người tải lên — ẩn ảnh là người khác không thấy"]
+            ]
+          }
         };
 
         Object.keys(GROUPS).forEach(function (g) {
-          qs("#" + g).innerHTML = GROUPS[g].map(function (r) {
-            return '<a class="mini-row" href="' + r[0] + '"><span class="flex-1">' +
-              '<span class="font-semibold">' + esc(r[1]) + "</span>" +
+          var grp = GROUPS[g];
+          qs("#" + g).innerHTML = grp.rows.map(function (r) {
+            return '<a class="mini-row" href="' + r[0] + "?role=" + grp.role + '">' +
+              '<span class="flex-1"><span class="font-semibold">' + esc(r[1]) + "</span>" +
               '<div class="text-xs muted">' + esc(r[2]) + "</div></span>" +
               '<span class="ico muted">›</span></a>';
           }).join("");
         });
-
-        var ROWS = [
-          ["tree.view", "Xem cây"],
-          ["tree.edit", "Sửa cây, thành viên, quan hệ"],
-          ["tree.rename", "Đổi tên nhóm"],
-          ["tree.delete", "Xoá toàn bộ cây"],
-          ["layout.drag", "Kéo thả node trên màn hình"],
-          ["layout.auto", "Sắp xếp sơ đồ"],
-          ["layout.save", "Lưu cho cả nhóm"],
-          ["nodePhoto.pinSelf", "Ghim ảnh hồ sơ của chính mình"],
-          ["nodePhoto.assign", "Gắn ảnh bất kỳ cho người khác"],
-          ["history.viewAll", "Xem toàn bộ lịch sử thay đổi"],
-          ["history.viewMedia", "Xem lịch sử album, ảnh, sự kiện"],
-          ["media.upload", "Tải ảnh lên"],
-          ["media.editOwn", "Sửa / xoá ảnh của mình"],
-          ["trash.tree", "Khôi phục thành viên, quan hệ"],
-          ["trash.media", "Khôi phục ảnh của mình"],
-          ["album.editOwn", "Sửa album của mình"],
-          ["role.change", "Đổi vai trò người khác"],
-          ["role.transfer", "Chuyển quyền sở hữu"],
-          ["invite.create", "Tạo link mời"],
-          ["share.manage", "Tạo / thu hồi link chia sẻ"],
-          ["import.export", "Nhập và xuất cây"]
-        ];
-
-        function cell(key) {
-          if (WF.can(key)) return '<td style="text-align:center">✓</td>';
-          return '<td style="text-align:center" class="muted">—</td>';
-        }
-
-        function renderPerm() {
-          qs("#perm").innerHTML = ROWS.map(function (r) {
-            return '<tr><td class="font-semibold">' + esc(r[1]) + "</td>" +
-              cell(r[0]) + cell(r[0]) + cell(r[0]) + cell(r[0]) + "</tr>";
-          }).join("");
-        }
-        window.wfOnRole = renderPerm;
-        renderPerm();
       })();
     </script>
   </body>

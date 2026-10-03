@@ -52,10 +52,17 @@
   var ROLE_LABEL = { owner: "CHỦ NHÓM", editor: "BIÊN TẬP VIÊN", viewer: "NGƯỜI XEM", guest: "KHÁCH", anon: "CHƯA ĐĂNG NHẬP" };
   var ROLES = ["owner", "editor", "viewer", "guest", "anon"];
 
+  /* Vai mặc định đến từ ?role= trên URL (index gắn theo flow). Seed này không
+     cần localStorage — vẫn chạy khi mở thẳng file:// mà trình duyệt chặn storage. */
+  var forcedRole = ROLES.indexOf(new URLSearchParams(location.search).get("role")) !== -1
+    ? new URLSearchParams(location.search).get("role")
+    : null;
+
   function getRole() {
-    try { return localStorage.getItem("wf:role") || "owner"; } catch (e) { return "owner"; }
+    try { return forcedRole || localStorage.getItem("wf:role") || "owner"; } catch (e) { return "owner"; }
   }
   function setRole(r) {
+    forcedRole = null; /* user tự đổi bằng pill trên trang này */
     try { localStorage.setItem("wf:role", r); } catch (e) { /* file:// vẫn chạy */ }
     applyRole();
     if (typeof window.wfOnRole === "function") { try { window.wfOnRole(r); } catch (e) { void e; } }
@@ -519,6 +526,9 @@
 
   /* ---------- boot --------------------------------------------------------- */
   function boot() {
+    /* Index gắn ?role=… theo flow; forcedRole đã đọc xong ở đầu module,
+       không phụ thuộc localStorage nên chạy được dưới file://. Vẫn đổi tay
+       được bằng pill — setRole sẽ bỏ forcedRole cho trang này. */
     mountRolePill();
     autoWireDialogs();
     wireToggles();
