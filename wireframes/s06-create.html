@@ -39,23 +39,6 @@
                     <p class="field-desc">Sau này chủ nhóm vẫn đổi được trong Tuỳ chọn gia đình.</p>
                   </div>
 
-                  <div class="field-group">
-                    <span class="field-label">Link mời sẽ trỏ tới</span>
-                    <div class="codebox">
-                      <div id="preview" class="font-semibold">/invite/inv_9c41f2</div>
-                      <div class="text-xs muted mt-1">
-                        Người nhận mở link này sẽ đăng ký vào <strong>nhóm của bạn</strong> với quyền Người xem, không tự tạo cây riêng.
-                      </div>
-                    </div>
-                    <div class="flex gap-2 mt-2">
-                      <label class="check-row">
-                        <span class="checkbox" data-checked="true" id="exp"></span>
-                        <span class="text-sm">Cho hạn 7 ngày</span>
-                      </label>
-                    </div>
-                    <p class="field-desc" id="exp-note">Sau 7 ngày link hết hiệu lực và không dùng lại được. Muốn mời thêm thì tạo link mới.</p>
-                  </div>
-
                   <button class="btn w-full" id="create">Tạo nhóm và vào cây</button>
                   <a class="btn" data-variant="link" data-size="sm" href="s07-tree.html" id="skip">Bỏ qua, vào cây trống</a>
                 </div>
@@ -71,24 +54,6 @@
     <script>
       (function () {
         var qs = WF.qs;
-        function preview() {
-          var g = qs("#gname").value.trim() || "Nhóm mới";
-          var t = qs("#tname").value.trim() || g;
-          qs("#preview").textContent = "/invite/inv_9c41f2 → " + g + " · " + t;
-        }
-        qs("#gname").addEventListener("input", preview);
-        qs("#tname").addEventListener("input", preview);
-        preview();
-
-        qs("#exp").addEventListener("click", function () {
-          var c = qs("#exp");
-          var on = c.getAttribute("data-checked") === "true";
-          c.setAttribute("data-checked", on ? "false" : "true");
-          qs("#exp-note").textContent = on
-            ? "Link không hết hạn. Ai có link cũng vào được nhóm cho tới khi bạn đổi link."
-            : "Sau 7 ngày link hết hiệu lực và không dùng lại được. Muốn mời thêm thì tạo link mới.";
-        });
-
         qs("#create").addEventListener("click", function () {
           WF.toast("Đã tạo nhóm", "Bạn là chủ nhóm. Mời người khác từ màn cây.", "success");
         });

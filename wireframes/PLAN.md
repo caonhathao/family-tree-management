@@ -124,6 +124,8 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
   409 `s06-create-conflict.html`, không cho tạo cây thứ hai.
 - Không có nút "xoá cây hiện tại" ở đây. Xoá là việc của màn tài khoản (`s17-profile`),
   và nó kéo theo chuyển ảnh sang chủ nhóm.
+- Form tạo cây **không hiện khối "Link mời sẽ trỏ tới"** (preview/toggle hạn). Quản lý link mời
+  (kèm "Cho hạn 7 ngày") nằm ở Tuỳ chọn gia đình `s17-profile.html` - card "Mời người mới".
 - Link mời dùng chung cho nhiều người, hạn 7 ngày. Gửi link ở đâu cũng được — copy dán Zalo,
   Messenger; không cần gửi qua hệ thống.
 
