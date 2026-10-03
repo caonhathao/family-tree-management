@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Đã gửi link — Quên mật khẩu</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <a class="btn" data-variant="outline" href="s04-forgot.html">‹ Quay lại</a>
+      </div>
+
+      <div class="auth-center">
+        <div class="auth-card" data-mode="signup">
+          <div class="auth-panes" data-mode="signup">
+            <div class="auth-pane-form">
+              <div class="card" data-variant="flat">
+                <div class="card-header">
+                  <h3 class="card-title">Đã gửi link</h3>
+                  <p class="card-description">Kiểm tra hộp thư của bạn</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="banner">
+                    <span class="ico">✉</span>
+                    <span>Nếu email này đã đăng ký, bạn sẽ nhận được link đặt lại mật khẩu trong vài phút. Câu trả lời này giống nhau dù email có tồn tại hay không.</span>
+                  </div>
+                  <div class="codebox">
+                    <div class="muted text-xs">Email vừa dùng</div>
+                    <div class="font-semibold" id="sent-to">ha.nguyen@example.com</div>
+                  </div>
+                  <div class="flex gap-2">
+                    <a class="btn" data-variant="outline" data-size="sm" href="s04-forgot.html">Gửi lại</a>
+                    <a class="btn" data-variant="link" data-size="sm" href="s03-login.html">Về đăng nhập</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="auth-pane-greet" data-mode="signup">
+              <h2>Chào bạn!</h2>
+              <p class="text-center mt-2">Lấy lại quyền truy cập cây của bạn</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+  </body>
+</html>

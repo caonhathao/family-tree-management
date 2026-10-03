@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chia sẻ — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <a class="sidebar-menu-button" data-size="lg" href="s17-profile.html">
+            <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </a>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Cây</div>
+            <a class="sidebar-menu-button" href="s07-tree.html"><span class="ico">⌥</span><span class="hide-narrow">Cây gia phả</span></a>
+            <a class="sidebar-menu-button" data-active="true" href="s14-share-manage.html"><span class="ico">◈</span><span class="hide-narrow">Chia sẻ</span></a>
+            <a class="sidebar-menu-button" href="s12-albums.html"><span class="ico">▣</span><span class="hide-narrow">Ảnh</span></a>
+            <a class="sidebar-menu-button" href="s13-events.html"><span class="ico">◷</span><span class="hide-narrow">Sự kiện</span></a>
+          </div>
+        </div>
+      </aside>
+
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Chia sẻ</h2>
+          <div class="ml-auto"><a class="btn" data-variant="outline" data-size="sm" href="s07-tree.html">← Về cây</a></div>
+        </header>
+
+        <main class="app-main">
+          <div class="gate hidden" id="gate">
+            <div class="gate-icon">⊘</div>
+            <div>
+              <div class="font-semibold">Chỉ Chủ nhóm mới tạo được link chia sẻ</div>
+              <div class="muted text-sm">Bạn đang là <span data-role-label></span>. Biên tập viên không đổi được quyền chia sẻ của nhóm.</div>
+            </div>
+            <a class="btn" data-variant="outline" data-size="sm" href="s07-tree.html">Về cây</a>
+          </div>
+
+          <div id="real" class="page">
+            <div class="page-head">
+              <h1 class="page-title">Chia sẻ cây với người không có tài khoản</h1>
+              <p class="page-desc">Người mở link xem được cây, ảnh và sự kiện. Không sửa được gì.</p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Tạo link</h3>
+                <p class="card-description">Mỗi link tự hết hạn, thu hồi bất cứ lúc nào</p>
+              </div>
+              <div class="card-content flex flex-col gap-4">
+                <div class="field-group">
+                  <span class="field-label">Số ngày có hiệu lực</span>
+                  <div class="flex flex-wrap gap-4">
+                    <label class="check-row"><span class="radio" data-checked="true" data-days="7"></span><span class="text-sm">7 ngày</span></label>
+                    <label class="check-row"><span class="radio" data-checked="false" data-days="30"></span><span class="text-sm">30 ngày</span></label>
+                    <label class="check-row"><span class="radio" data-checked="false" data-days="90"></span><span class="text-sm">90 ngày</span></label>
+                  </div>
+                </div>
+                <div class="flex gap-2" id="create-wrap">
+                  <button class="btn" id="create">Tạo link</button>
+                </div>
+                <div class="hidden flex items-center gap-2" id="after-create"></div>
+              </div>
+            </div>
+
+            <div class="card hidden" id="new-link-card">
+              <div class="card-header">
+                <h3 class="card-title">Link vừa tạo</h3>
+                <p class="card-description">Gửi ở đâu cũng được, ai có link đều xem được</p>
+              </div>
+              <div class="card-content flex flex-col gap-3">
+                <div class="codebox" id="new-url"></div>
+                <div class="flex gap-2">
+                  <button class="btn" data-variant="outline" data-size="sm" id="copy">Sao chép</button>
+                  <a class="btn" data-variant="outline" data-size="sm" href="s15-share-readonly.html" id="try">Mở thử</a>
+                </div>
+                <div class="mini-list">
+                  <div class="mini-row"><span class="muted">Người xem thấy</span><span>cây · ảnh công khai trong album · sự kiện</span></div>
+                  <div class="mini-row"><span class="muted">Người xem không thấy</span><span>ảnh đã ẩn · thùng rác · lịch sử thay đổi</span></div>
+                  <div class="mini-row"><span class="muted">Người xem không làm được</span><span>thêm · sửa · xoá · lưu · kéo thả</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="padding: 0; gap: 0; overflow: hidden">
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Link</th>
+                      <th style="width: 8rem">Trạng thái</th>
+                      <th style="width: 7rem">Số lần mở</th>
+                      <th style="width: 8rem">Hết hạn</th>
+                      <th style="width: 17rem"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="rows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
+        var days = 7; /* khớp với radio đang tick */
+
+        /* Mock không lưu trạng thái: thu hồi thì revoked = true, còn lại suy ra từ hạn. */
+        function stateOf(l) {
+          if (l.revoked) return "revoked";
+          return dueOf(l).getTime() < Date.now() ? "expired" : "active";
+        }
+        function dueOf(l) {
+          return new Date(new Date(l.createdAt).getTime() + Number(l.expiresInDays) * 86400000);
+        }
+
+        function badge(st) {
+          if (st === "active") return '<span class="badge" data-tone="ok">đang chạy</span>';
+          if (st === "expired") return '<span class="badge" data-tone="muted">đã hết hạn</span>';
+          return '<span class="badge" data-tone="danger">đã thu hồi</span>';
+        }
+
+        function render() {
+          var allowed = WF.can("share.manage");
+          qs("#real").classList.toggle("hidden", !allowed);
+          qs("#gate").classList.toggle("hidden", allowed);
+          if (!allowed) return;
+          qs("#rows").innerHTML = MOCK.shareLinks.map(function (l) {
+            var st = stateOf(l);
+            var act = st === "active"
+              ? '<button class="btn" data-variant="outline" data-size="sm" data-copy="' + esc(l.token) + '">Sao chép</button>' +
+                '<a class="btn" data-variant="ghost" data-size="sm" href="s15-share-readonly.html">Mở thử</a>' +
+                '<button class="btn" data-variant="ghost" data-size="sm" data-revoke="' + esc(l.id) + '">Thu hồi</button>'
+              : st === "expired"
+                ? '<span class="muted text-sm" style="text-align:right">Đã quá hạn, không ai mở được nữa</span>'
+                : '<span class="muted text-sm" style="text-align:right">Người giữ link cũ cũng không mở được</span>';
+            return "<tr>" +
+              '<td class="font-semibold truncate" style="max-width:16rem">/share/' + esc(l.token) +
+                '<div class="text-xs muted font-semibold">Tạo ' + WF.formatDate(l.createdAt) + " · hạn " + esc(l.expiresInDays) + " ngày</div></td>" +
+              "<td>" + badge(st) + "</td>" +
+              '<td class="muted">' + l.opens + "</td>" +
+              '<td class="muted">' + WF.formatDate(dueOf(l)) + "</td>" +
+              '<td class="flex gap-2" style="justify-content:flex-end">' + act + "</td></tr>";
+          }).join("");
+
+          Array.prototype.forEach.call(document.querySelectorAll("[data-revoke]"), function (b) {
+            b.addEventListener("click", function () {
+              var l = MOCK.shareLinks.filter(function (x) { return x.id === b.getAttribute("data-revoke"); })[0];
+              l.revoked = true;
+              render();
+              WF.toast("Đã thu hồi link", "Ai giữ link cũ cũng không mở được nữa.", "success");
+            });
+          });
+          Array.prototype.forEach.call(document.querySelectorAll("[data-copy]"), function (b) {
+            b.addEventListener("click", function () {
+              WF.toast("Đã sao chép", "/share/" + b.getAttribute("data-copy"), "success");
+            });
+          });
+        }
+
+        Array.prototype.forEach.call(document.querySelectorAll("[data-days]"), function (r) {
+          r.addEventListener("click", function () {
+            Array.prototype.forEach.call(document.querySelectorAll("[data-days]"), function (o) {
+              o.setAttribute("data-checked", "false");
+            });
+            r.setAttribute("data-checked", "true");
+            days = r.getAttribute("data-days");
+          });
+        });
+
+        qs("#create").addEventListener("click", function () {
+          var token = "sh_" + Math.random().toString(36).slice(2, 8);
+          MOCK.shareLinks.unshift({
+            id: "s" + Date.now().toString(36),
+            token: token,
+            expiresInDays: Number(days),
+            opens: 0,
+            revoked: false,
+            createdAt: new Date().toISOString()
+          });
+          qs("#new-link-card").classList.remove("hidden");
+          qs("#new-url").textContent = "/share/" + token;
+          var after = qs("#after-create");
+          after.innerHTML = '<span class="text-sm muted">Link còn hiệu lực</span>' +
+            '<button class="btn" data-variant="outline" data-size="sm" data-copy="' + token + '">Sao chép</button>' +
+            '<a class="btn" data-variant="ghost" data-size="sm" href="s15-share-readonly.html">Mở thử</a>';
+          after.classList.remove("hidden");
+          qs("#create-wrap").classList.add("hidden");
+          Array.prototype.forEach.call(after.querySelectorAll("[data-copy]"), function (b) {
+            b.addEventListener("click", function () {
+              WF.toast("Đã sao chép", "/share/" + token, "success");
+            }, { once: true });
+          });
+          render();
+          WF.toast("Đã tạo link", "Có hiệu lực " + days + " ngày.", "success");
+        });
+        qs("#copy").addEventListener("click", function () {
+          WF.toast("Đã sao chép", qs("#new-url").textContent, "success");
+        });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+        window.wfOnRole = render;
+        render();
+      })();
+    </script>
+  </body>
+</html>

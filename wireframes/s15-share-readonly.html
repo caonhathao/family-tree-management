@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Xem cây — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <span class="text-sm font-semibold sm:text-base lg:text-lg">Nhà họ Nguyễn – Trần</span>
+        <div class="ml-auto flex items-center gap-2">
+          <span class="badge" data-tone="amber">xem chỉ đọc</span>
+          <a class="btn" data-variant="outline" data-size="sm" href="s01-landing.html">Đăng nhập</a>
+        </div>
+      </div>
+
+      <div class="banner" style="margin: 0 1rem">
+        <span class="ico">◑</span>
+        <span>
+          Bạn đang xem bản chia sẻ, không phải cây của bạn. Ở đây <strong>không có</strong> nút thêm, sửa, xoá,
+          lưu hay kéo thả — không phải vì ẩn đi, mà vì nhánh mã này không sinh ra chúng.
+        </span>
+      </div>
+
+      <div class="auth-center" style="padding: 1rem">
+        <div class="card" style="padding: 0; gap: 0; overflow: hidden">
+          <div class="flow-wrap" id="stage" style="height: 60vh; border: 0; border-radius: 0">
+            <div class="flow-dots"></div>
+            <div class="flow-viewport" data-zoom="1">
+              <div class="flow-canvas" id="canvas"></div>
+              <div class="flow-svg" id="svg"></div>
+            </div>
+            <div class="flow-controls">
+              <button class="btn" data-variant="outline" data-size="icon-sm" data-zoom-step="-1" aria-label="Thu nhỏ">−</button>
+              <button class="btn" data-variant="outline" data-size="icon-sm" data-zoom-step="1" aria-label="Phóng to">+</button>
+              <button class="btn" data-variant="outline" data-size="icon-sm" data-fit aria-label="Vừa khung">⛶</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="two-col" style="margin-top: 1rem; align-items: start">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Ảnh được chia sẻ</h3>
+              <p class="card-description">Ảnh công khai trong album</p>
+            </div>
+            <div class="card-content"><div class="media-grid" id="photos"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Sự kiện</h3>
+              <p class="card-description">Chỉ xem, không đăng ký dự</p>
+            </div>
+            <div class="card-content flex flex-col gap-2" id="events"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <a class="bottom-nav-item" data-active="true" href="s15-share-readonly.html">Cây</a>
+      <a class="bottom-nav-item" href="s12-albums.html">Ảnh</a>
+      <a class="bottom-nav-item" href="s13-events.html">Sự kiện</a>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
+
+        WF.renderTree("#stage", { draggable: false, showHandles: false });
+
+        var photos = MOCK.photos.filter(function (p) { return p.shared && !p.hiddenById; });
+        qs("#photos").innerHTML = photos.map(function (p) {
+          return '<div class="media" style="cursor:default"><span class="thumb" style="background:' + p.tint + '"></span>' +
+            '<div class="media-info"><div class="text-xs font-semibold truncate">' + esc(p.fileName) + "</div></div></div>";
+        }).join("");
+
+        qs("#events").innerHTML = MOCK.events.map(function (e) {
+          var m = e.familyMemberId ? MOCK.memberById(e.familyMemberId) : null;
+          return '<div class="mini-row"><span class="flex-1"><span class="font-semibold">' + esc(e.title) + "</span>" +
+            '<div class="text-xs muted">' + WF.formatDate(e.date) + (m ? " · " + esc(m.fullName) : " · sự kiện chung") + "</div></span></div>";
+        }).join("");
+
+        Array.prototype.forEach.call(document.querySelectorAll("[data-zoom-step]"), function (b) {
+          b.addEventListener("click", function () {
+            WF.zoomBy("#stage", Number(b.getAttribute("data-zoom-step")) * 0.2);
+          });
+        });
+        qs("[data-fit]").addEventListener("click", function () { WF.fitView("#stage"); });
+        WF.setRole("guest");
+      })();
+    </script>
+  </body>
+</html>

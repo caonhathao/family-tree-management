@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quên mật khẩu</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <a class="btn" data-variant="outline" href="s03-login.html">‹ Quay lại</a>
+      </div>
+
+      <div class="auth-center">
+        <div class="auth-card" data-mode="signup">
+          <div class="auth-panes" data-mode="signup">
+            <div class="auth-pane-form">
+              <div class="card" data-variant="flat">
+                <div class="card-header">
+                  <h3 class="card-title">Quên mật khẩu</h3>
+                  <p class="card-description">Nhập email, ta sẽ gửi link đặt lại mật khẩu</p>
+                </div>
+                <div class="card-content flex flex-col gap-6">
+                  <div class="field-group">
+                    <label class="field-label" for="email">Email</label>
+                    <input class="input" id="email" placeholder="Email của bạn" value="ha.nguyen@example.com" />
+                    <p class="field-desc">Không nhớ email? Liên hệ chủ nhóm để được giúp.</p>
+                  </div>
+                  <a class="btn w-full" href="s04-forgot-sent.html" id="send">Gửi link đặt lại mật khẩu</a>
+                  <a class="btn" data-variant="link" data-size="sm" href="s03-login.html">Về đăng nhập</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="auth-pane-greet" data-mode="signup">
+              <h2>Chào bạn!</h2>
+              <p class="text-center mt-2">Lấy lại quyền truy cập cây của bạn</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+  </body>
+</html>

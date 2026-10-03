@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Đăng ký tài khoản</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <a class="btn" data-variant="outline" href="index.html">‹ Quay lại</a>
+      </div>
+
+      <div class="auth-center">
+        <div class="auth-card" data-mode="signup">
+          <div class="auth-panes" data-mode="signup">
+            <div class="auth-pane-form">
+              <div class="card" data-variant="flat">
+                <div class="card-header">
+                  <h3 class="card-title">Tạo tài khoản mới</h3>
+                  <p class="card-description">Bắt đầu với một tài khoản Gia phả</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="banner hidden" id="join-note">
+                    <span class="ico">◉</span>
+                    <span>Sau khi tạo tài khoản, bạn sẽ vào thẳng nhóm <strong>“Nhà họ Nguyễn – Trần”</strong> với quyền Người xem.</span>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="name">Họ và tên</label>
+                    <input class="input" id="name" placeholder="Nguyễn Văn A" value="Nguyễn Minh Châu" />
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="email">Email</label>
+                    <input class="input" id="email" placeholder="Email của bạn" value="chau.nguyen@example.com" />
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="pw">Mật khẩu</label>
+                    <input class="input" id="pw" type="password" value="12345678" />
+                  </div>
+                  <button class="btn w-full" id="reg">Tạo tài khoản</button>
+                  <a class="btn" data-variant="link" data-size="sm" href="s07-tree.html" id="go-tree" style="display:none">Vào cây gia phả của nhóm</a>
+                  <p class="text-center text-sm muted">
+                    Đã có tài khoản?
+                    <a class="btn" data-variant="link" data-size="sm" href="s03-login.html">Đăng nhập</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="auth-pane-greet" data-mode="signup">
+              <h2>Chào bạn!</h2>
+              <p class="text-center mt-2">Tạo tài khoản để dựng cây gia phả của riêng bạn</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs;
+        var token = new URLSearchParams(location.search).get("token");
+        if (token) {
+          qs("#join-note").classList.remove("hidden");
+          qs("#reg").textContent = "Tạo tài khoản và tham gia";
+        }
+        qs("#reg").addEventListener("click", function () {
+          if (token) {
+            WF.toast("Đã vào nhóm", "Bạn là Người xem trong nhóm “Nhà họ Nguyễn – Trần”.", "success");
+            qs("#go-tree").style.display = "";
+          } else {
+            WF.toast("Đã tạo tài khoản", "Tiếp theo, tạo cây gia phả của riêng bạn.", "success");
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -39,7 +39,7 @@ App này phục vụ **một người / một gia đình**, không phải một 
 | **Q8** | Bố cục (`positionX/Y`) | **1 tầng, trên server.** Kéo thả tay chỉ tồn tại trong RAM của phiên — F5 là mất, không cảnh báo, không lớp phủ. Chỉ bấm *Sắp xếp* hoặc *Lưu* mới ghi xuống, cả hai đều tự arrange trước khi ghi |
 | **Q9** | Ai được ghi | *Lưu*/*Sắp xếp* = `OWNER\|EDITOR` (`canManage` sẵn có ở `group-content.tsx:477`). **VIEWER chỉ xem + pan/zoom, không kéo được** |
 | **Q10** | Menu chết | **Xoá 4 mục** không có trang: *Lời mời*, *Kho lưu trữ*, *Hỗ trợ*, *Phản hồi*. Giữ *Thùng rác* (có trang thật ở `03` §2) |
-| **Q11** | Trang gốc `/` | **Redirector 2 nhánh**: có group → vào thẳng cây; chưa có → màn tạo. Không còn landing marketing, **không còn `/user/groups`** |
+| **Q11** | Trang gốc `/` | **Landing giới thiệu sản phẩm**: hiện cho mọi người, không tự chuyển hướng. Nút *Đăng nhập / Đăng ký* đưa về `/auth`; đã đăng nhập thì vào thẳng cây, chưa có group thì tạo. **Không còn `/user/groups`** |
 | **Q12** | Quyền batch endpoint | `POST /changes` cần mức **`edit`** (EDITOR+), **không phải `manage`** — siết chặt hơn là EDITOR bấm Lưu rồi nhận 403 |
 | **Q13** | Bất biến FE | **7 bất biến F1–F7** ở [05-pham-vi-tiem-do.md](./05-pham-vi-tiem-do.md), áp dụng **từ PR đầu tiên** |
 | **Q14** | Ảnh node | **Ảnh đại diện là ảnh hồ sơ cá nhân.** Ai pin node ở cây nào → node đó lấy ảnh hồ sơ của họ. OWNER/EDITOR gán tay được ảnh khác. **Chụp ảnh tại thời điểm pin** — đổi ảnh hồ sơ sau không tự đổi node |

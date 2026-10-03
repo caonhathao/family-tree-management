@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lịch sử thay đổi — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <button class="sidebar-menu-button" data-size="lg" id="hello">
+            <span class="sidebar-avatar-wrap">
+              <span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span>
+            </span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </button>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Danh sách</div>
+            <button class="sidebar-menu-button" data-size="lg">
+              <span class="sidebar-avatar-wrap">
+                <span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span>
+              </span>
+              <span class="truncate hide-narrow">Nhà họ Nguyễn – Trần</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Lịch sử thay đổi</h2>
+          <div class="ml-auto flex items-center gap-2">
+            <a class="btn" data-variant="outline" data-size="sm" href="s07-tree.html">← Về cây</a>
+          </div>
+        </header>
+
+        <main class="app-main">
+          <!-- 403: chỉ người có tài khoản mới vào được màn này -->
+          <div class="gate hidden" id="gate">
+            <div class="gate-icon">⊘</div>
+            <div>
+              <div class="font-semibold">Bạn không có quyền xem lịch sử</div>
+              <div class="muted text-sm">Lịch sử thay đổi chỉ dành cho thành viên của nhóm.</div>
+            </div>
+            <a class="btn" data-variant="outline" data-size="sm" href="index.html">Về trang chủ</a>
+          </div>
+
+          <div id="real">
+            <div class="page">
+              <div class="page-head">
+                <h1 class="page-title">Lịch sử thay đổi</h1>
+                <p class="page-desc">Nhà họ Nguyễn – Trần · 22 thay đổi gần nhất</p>
+              </div>
+
+              <div class="card" style="gap: 12px">
+                <div class="flex flex-col gap-3">
+                  <div class="field">
+                    <label class="field-label" for="f-action">Hành động</label>
+                    <select class="select" id="f-action"><option value="">Tất cả</option></select>
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="f-target">Đối tượng</label>
+                    <select class="select" id="f-target"><option value="">Tất cả</option></select>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <div class="field flex-1">
+                      <label class="field-label" for="f-from">Từ ngày</label>
+                      <input class="input" type="date" id="f-from" value="2026-09-01" />
+                    </div>
+                    <div class="field flex-1">
+                      <label class="field-label" for="f-to">Đến ngày</label>
+                      <input class="input" type="date" id="f-to" value="2026-09-27" />
+                    </div>
+                  </div>
+                  <div class="flex gap-2">
+                    <button class="btn" data-variant="default" data-size="sm" id="apply">Lọc</button>
+                    <button class="btn" data-variant="ghost" data-size="sm" id="reset">Xoá lọc</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="scope-note" class="banner hidden">
+                <span class="ico">◑</span>
+                <span>Bạn đang xem với tư cách <span data-role-label></span> nên chỉ thấy thay đổi về album, ảnh và sự kiện.</span>
+              </div>
+
+              <div class="card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th style="width: 9.5rem">Thời điểm</th>
+                        <th>Người thực hiện</th>
+                        <th>Việc</th>
+                        <th style="width: 9rem">Đối tượng</th>
+                      </tr>
+                    </thead>
+                    <tbody id="rows"></tbody>
+                  </table>
+                </div>
+                <div class="flex items-center justify-between" style="padding: 12px">
+                  <span class="text-sm muted" id="count"></span>
+                  <button class="btn" data-variant="outline" data-size="sm" id="more">Xem thêm</button>
+                </div>
+              </div>
+
+              
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, qsa = WF.qsa, esc = WF.esc;
+        var shown = 10;
+        var current = MOCK.activity.slice();
+
+        WF.qs("#f-action").innerHTML = '<option value="">Tất cả</option>' +
+          MOCK.ACTIONS.map(function (a) { return '<option value="' + a + '">' + esc(MOCK.ACTION_LABEL[a]) + "</option>"; }).join("");
+        WF.qs("#f-target").innerHTML = '<option value="">Tất cả</option>' +
+          MOCK.TARGET_TYPES.map(function (t) { return '<option value="' + t + '">' + esc(MOCK.TARGET_LABEL[t]) + "</option>"; }).join("");
+
+        function visible() {
+          var role = WF.getRole();
+          var base = MOCK.activity;
+          if (role === "viewer") {
+            base = base.filter(function (a) { return MOCK.VIEWER_ACTIONS.indexOf(a.action) !== -1; });
+          }
+          var fa = qs("#f-action").value, ft = qs("#f-target").value;
+          var from = qs("#f-from").value, to = qs("#f-to").value;
+          return base.filter(function (a) {
+            var d = a.at.slice(0, 10);
+            if (fa && a.action !== fa) return false;
+            if (ft && a.targetType !== ft) return false;
+            if (from && d < from) return false;
+            if (to && d > to) return false;
+            return true;
+          });
+        }
+
+        function describe(a) {
+          var parts = [esc(MOCK.ACTION_LABEL[a.action])];
+          if (a.diff) {
+            Object.keys(a.diff).forEach(function (k) {
+              parts.push(esc(k) + ': <span class="diff-old">' + esc(a.diff[k].from) + '</span> <span class="diff-new">' + esc(a.diff[k].to) + "</span>");
+            });
+          } else if (a.cascade) {
+            parts.push('<span class="muted">' + esc(a.summary) + "</span>");
+          } else if (a.snapshot) {
+            parts.push(esc(a.snapshot.fullName) + ' <span class="badge" data-tone="muted">ảnh chụp dữ liệu tại lúc xoá</span>');
+          } else {
+            parts.push(esc(a.summary));
+          }
+          if (a.photoId) parts.push('<span class="badge" data-tone="muted">' + esc(a.photoId) + "</span>");
+          return parts.join(" ");
+        }
+
+        function render() {
+          var role = WF.getRole();
+          qs("#real").classList.toggle("hidden", role === "guest" || role === "anon");
+          qs("#gate").classList.toggle("hidden", !(role === "guest" || role === "anon"));
+          if (qs("#real").classList.contains("hidden")) return;
+
+          qs("#scope-note").classList.toggle("hidden", role !== "viewer");
+          current = visible();
+          var slice = current.slice(0, shown);
+          if (!slice.length) {
+            qs("#rows").innerHTML = '<tr><td colspan="4"><div class="empty">Không có thay đổi nào khớp bộ lọc</div></td></tr>';
+          } else {
+            qs("#rows").innerHTML = slice.map(function (a) {
+              var u = MOCK.userById(a.byUserId);
+              var t = new Date(a.at);
+              return "<tr" + (a.cascade ? ' data-cascade="true"' : "") + ">" +
+                "<td class=\"muted whitespace-nowrap\">" + t.getDate().toString().padStart(2, "0") + "/" +
+                (t.getMonth() + 1) + "/" + t.getFullYear() + " " + t.getHours().toString().padStart(2, "0") + ":" +
+                t.getMinutes().toString().padStart(2, "0") + "</td>" +
+                "<td class=\"whitespace-nowrap\">" + esc(u.fullName) + "</td>" +
+                "<td>" + (a.cascade ? "↳ " : "") + describe(a) + "</td>" +
+                "<td><span class=\"badge\" data-tone=\"primary\">" + esc(MOCK.TARGET_LABEL[a.targetType]) + "</span></td></tr>";
+            }).join("");
+          }
+          qs("#count").textContent = "Hiện " + slice.length + " / " + current.length + " thay đổi";
+          qs("#more").classList.toggle("hidden", slice.length >= current.length);
+        }
+
+        function apply() { shown = 10; render(); }
+        qs("#apply").addEventListener("click", apply);
+        qs("#reset").addEventListener("click", function () {
+          qs("#f-action").value = ""; qs("#f-target").value = "";
+          qs("#f-from").value = "2026-09-01"; qs("#f-to").value = "2026-09-27";
+          apply();
+        });
+        qs("#more").addEventListener("click", function () { shown += 10; render(); });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+        qs("#hello").addEventListener("click", function () { location.href = "index.html"; });
+        window.wfOnRole = render;
+        render();
+      })();
+    </script>
+  </body>
+</html>

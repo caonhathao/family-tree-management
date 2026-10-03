@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mâu thuẫn khi lưu — Quản lý gia phả</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <a class="sidebar-menu-button" data-size="lg" href="s07-tree.html">
+            <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </a>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Danh sách</div>
+            <a class="sidebar-menu-button" data-active="true" data-size="lg" href="s07-tree.html">
+              <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+              <span class="truncate hide-narrow">Nhà họ Nguyễn – Trần</span>
+            </a>
+          </div>
+        </div>
+      </aside>
+
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Quản lý gia phả</h2>
+          <div class="ml-auto flex items-center gap-2">
+            <span class="badge" data-tone="muted" id="ver">bản 42</span>
+            <a class="btn" data-variant="outline" data-size="sm" href="index.html">Danh sách màn</a>
+          </div>
+        </header>
+
+        <main class="app-main">
+          <div class="page">
+            <div class="page-head">
+              <h1 class="page-title">Lưu thay đổi</h1>
+              <p class="page-desc">
+                Bấm “Thử lưu” để mở hộp thoại xử lý mâu thuẫn. Hộp thoại không chọn sẵn lựa chọn nào.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <button class="btn" data-size="sm" id="attempt" data-needs-perm="layout.save">Thử lưu</button>
+            </div>
+
+            <div class="banner" data-tone="warn" id="conflict-bar">
+              <span class="ico">⚠</span>
+              <span id="conflict-text">
+                Có người đã lưu trước bạn: <strong>Trần Thị Mai</strong> đổi tên <strong>Trần Thị Mai</strong> →
+                <strong>Trần Thị Mai Bích</strong>, <strong>Lê Thị Lan</strong> thêm ngày mất.
+                Bạn còn <strong>3 thay đổi</strong> chưa lưu.
+              </span>
+              <button class="btn" data-variant="outline" data-size="sm" style="margin-left: auto" id="reopen">Xử lý</button>
+            </div>
+
+            <div class="two-col">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Thay đổi của bạn</h3>
+                  <p class="card-description">Chưa ghi lên máy chủ</p>
+                </div>
+                <div class="card-content flex flex-col gap-2" id="mine"></div>
+              </div>
+
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Thay đổi của người khác</h3>
+                  <p class="card-description">Đọc từ lịch sử thay đổi</p>
+                </div>
+                <div class="card-content flex flex-col gap-2" id="theirs"></div>
+              </div>
+            </div>
+
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="conflict-overlay">
+      <div class="dialog" data-wide>
+        <div class="dialog-header">
+          <h3 class="dialog-title">Có người đã lưu trước bạn</h3>
+          <p class="dialog-description">Máy chủ ở bản 43, bạn đang sửa từ bản 42.</p>
+        </div>
+        <div class="dialog-body flex flex-col gap-5">
+          <ol class="steps">
+            <li class="step">
+              <span class="step-num">1</span>
+              <div>
+                <div class="font-semibold">Xem họ đã đổi gì</div>
+                <div class="text-sm muted">2 thay đổi trong 4 phút trước, từ bảng lịch sử thay đổi.</div>
+              </div>
+            </li>
+            <li class="step">
+              <span class="step-num">2</span>
+              <div>
+                <div class="font-semibold">Còn 3 thay đổi của bạn chưa lưu</div>
+                <div class="text-sm muted">Thêm 1 thành viên, sửa 1 ngày sinh, kéo 1 node.</div>
+              </div>
+            </li>
+            <li class="step">
+              <span class="step-num">3</span>
+              <div>
+                <div class="font-semibold">Chọn cách xử lý</div>
+                <div class="text-sm muted">Không có lựa chọn nào được chọn sẵn.</div>
+              </div>
+            </li>
+          </ol>
+          <div class="banner" data-tone="warn">
+            <span class="ico">⚠</span>
+            <span>Ghi đè sẽ xoá 2 thay đổi của họ. Giữ của mình sẽ xoá 2 thay đổi của họ. Cách nào cũng có mất mát.</span>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="conflict">Huỷ</button>
+          <div class="flex flex-wrap gap-2" style="margin-left: auto">
+            <button class="btn" data-variant="outline" data-size="sm" id="diff">Xem khác biệt</button>
+            <button class="btn" data-variant="outline" data-size="sm" id="keep-mine">Giữ của mình</button>
+            <button class="btn" data-variant="destructive" data-size="sm" id="overwrite">Ghi đè</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="diff-overlay">
+      <div class="dialog" data-wide>
+        <div class="dialog-header">
+          <h3 class="dialog-title">Khác biệt từng dòng</h3>
+          <p class="dialog-description">Chọn phiên bản muốn giữ cho từng dòng</p>
+        </div>
+        <div class="dialog-body" style="padding: 0">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Đối tượng</th>
+                  <th>Máy chủ 43</th>
+                  <th>Máy bạn 42</th>
+                  <th>Giữ máy chủ</th>
+                  <th>Giữ máy bạn</th>
+                </tr>
+              </thead>
+              <tbody id="diff-rows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <span class="text-sm muted">Dòng nào cũng phải chọn, không có lựa chọn mặc định.</span>
+          <div class="flex flex-wrap gap-2" style="margin-left: auto">
+            <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="diff">Quay lại</button>
+            <button class="btn" data-size="sm" id="apply-diff" disabled>Áp dụng lựa chọn</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="overwrite-overlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3 class="dialog-title">Ghi đè thay đổi của họ?</h3>
+          <p class="dialog-description">Thao tác này không hoàn tác được.</p>
+        </div>
+        <div class="dialog-body flex flex-col gap-3">
+          <div class="banner" data-tone="danger">
+            <span class="ico">⊘</span>
+            <span>Bạn sẽ mất đúng 3 thứ:</span>
+          </div>
+          <ul class="flex flex-col gap-2" style="padding-left: 1.25rem">
+            <li>Đổi tên <strong>Trần Thị Mai → Trần Thị Mai Bích</strong> của Trần Thị Mai</li>
+            <li>Ngày mất mới của <strong>Lê Thị Lan</strong></li>
+            <li>Ảnh mới gắn cho <strong>Nguyễn Minh Khôi</strong></li>
+          </ul>
+          <label class="check-row">
+            <span class="checkbox" data-checked="false" id="ack-over"></span>
+            <span class="text-sm">Tôi hiểu 3 thay đổi trên sẽ biến mất</span>
+          </label>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="overwrite">Quay lại</button>
+          <button class="btn" data-variant="destructive" data-size="sm" id="do-overwrite" disabled>Ghi đè</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
+
+        var MINE = [
+          { what: "Thêm thành viên", detail: "Nguyễn Minh Châu · đời 4" },
+          { what: "Sửa ngày sinh", detail: "Nguyễn Minh Anh · 12/04/1971 → 12/04/1972" },
+          { what: "Kéo node", detail: "Trần Ngọc Mai · chỉ trên máy này" }
+        ];
+        var THEIRS = [
+          { who: "Trần Thị Mai", what: "Đổi tên", detail: "Trần Thị Mai → Trần Thị Mai Bích" },
+          { who: "Lê Thị Lan", what: "Thêm ngày mất", detail: "ngày mất 08/03/2026" },
+          { who: "Nguyễn Minh Khôi", what: "Gắn ảnh", detail: "ph2 → ph5" }
+        ];
+        var DIFF = [
+          { obj: "Trần Thị Mai", mine: "Trần Thị Mai", theirs: "Trần Thị Mai Bích" },
+          { obj: "Lê Thị Lan · ngày mất", mine: "(trống)", theirs: "08/03/2026" },
+          { obj: "Nguyễn Minh Khôi · ảnh", mine: "ph2", theirs: "ph5" },
+          { obj: "Nguyễn Minh Châu", mine: "thêm mới", theirs: "(không có)" },
+          { obj: "Nguyễn Minh Anh · ngày sinh", mine: "12/04/1972", theirs: "12/04/1971" }
+        ];
+
+        function rows(el, list, withWho) {
+          qs(el).innerHTML = list.map(function (r) {
+            return '<div class="mini-row"><span class="flex-1"><span class="font-semibold">' +
+              (withWho ? esc(r.who) + " · " : "") + esc(r.what) + '</span>' +
+              '<div class="text-xs muted">' + esc(r.detail) + "</div></span></div>";
+          }).join("");
+        }
+        rows("#mine", MINE, false);
+        rows("#theirs", THEIRS, true);
+
+        qs("#attempt").addEventListener("click", function () {
+          if (qs("#conflict-bar").classList.contains("hidden")) {
+            WF.toast("Lưu thành công", "Bản 42 → 43. Mọi thay đổi đã ghi trong một lần.", "success");
+            return;
+          }
+          WF.openDialog("conflict");
+        });
+        qs("#reopen").addEventListener("click", function () { WF.openDialog("conflict"); });
+        qs("#keep-mine").addEventListener("click", function () {
+          WF.closeDialog("conflict");
+          WF.toast("Đang ghi đè 3 thay đổi của họ", "Bạn sẽ thấy xác nhận lần nữa.", "default");
+          WF.openDialog("overwrite");
+        });
+        qs("#overwrite").addEventListener("click", function () {
+          WF.closeDialog("conflict");
+          WF.openDialog("overwrite");
+        });
+        qs("#ack-over").addEventListener("click", function () {
+          var c = qs("#ack-over");
+          c.setAttribute("data-checked", c.getAttribute("data-checked") === "true" ? "false" : "true");
+          qs("#do-overwrite").disabled = c.getAttribute("data-checked") !== "true";
+        });
+        qs("#do-overwrite").addEventListener("click", function () {
+          WF.closeDialog("overwrite");
+          qs("#conflict-bar").classList.add("hidden");
+          qs("#ver").textContent = "bản 44";
+          WF.toast("Đã ghi đè", "3 thay đổi của Trần Thị Mai đã mất.", "destructive");
+        });
+
+        qs("#diff").addEventListener("click", function () {
+          WF.closeDialog("conflict");
+          qs("#diff-rows").innerHTML = DIFF.map(function (d, i) {
+            return "<tr>" +
+              '<td class="font-semibold">' + esc(d.obj) + "</td>" +
+              '<td><span class="diff-old">' + esc(d.theirs) + "</span></td>" +
+              '<td><span class="diff-new">' + esc(d.mine) + "</span></td>" +
+              '<td><span class="radio" data-checked="false" data-pick="' + i + '" data-side="theirs"></span></td>' +
+              '<td><span class="radio" data-checked="false" data-pick="' + i + '" data-side="mine"></span></td>' +
+              "</tr>";
+          }).join("");
+          WF.openDialog("diff");
+        });
+
+        Array.prototype.forEach.call(document.querySelectorAll("#diff-rows .radio"), function (r) {
+          r.addEventListener("click", function () {
+            var i = r.getAttribute("data-pick");
+            Array.prototype.forEach.call(document.querySelectorAll('#diff-rows .radio[data-pick="' + i + '"]'), function (o) {
+              o.setAttribute("data-checked", "false");
+            });
+            r.setAttribute("data-checked", "true");
+            var any = !!qs('#diff-rows .radio[data-checked="true"]');
+            qs("#apply-diff").disabled = !any;
+          });
+        });
+
+        qs("#apply-diff").addEventListener("click", function () {
+          WF.closeDialog("diff");
+          WF.toast("Đã áp dụng lựa chọn từng dòng", "Còn 1 dòng chưa chọn nên chưa ghi.", "default");
+        });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+      })();
+    </script>
+  </body>
+</html>

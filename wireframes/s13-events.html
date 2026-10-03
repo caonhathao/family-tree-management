@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sự kiện — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <a class="sidebar-menu-button" data-size="lg" href="s17-profile.html">
+            <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </a>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Cây</div>
+            <a class="sidebar-menu-button" href="s07-tree.html"><span class="ico">⌥</span><span class="hide-narrow">Cây gia phả</span></a>
+            <a class="sidebar-menu-button" href="s12-albums.html"><span class="ico">▣</span><span class="hide-narrow">Ảnh</span></a>
+            <a class="sidebar-menu-button" data-active="true" href="s13-events.html"><span class="ico">◷</span><span class="hide-narrow">Sự kiện</span></a>
+            <a class="sidebar-menu-button" href="s10-activity.html"><span class="ico">≡</span><span class="hide-narrow">Lịch sử thay đổi</span></a>
+          </div>
+        </div>
+      </aside>
+
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Sự kiện</h2>
+          <div class="ml-auto">
+            <button class="btn" data-size="sm" data-needs-perm="event.edit" id="new">Thêm sự kiện</button>
+          </div>
+        </header>
+
+        <main class="app-main">
+          <div class="page">
+            <div class="page-head">
+              <h1 class="page-title">Sự kiện</h1>
+              <p class="page-desc">Sinh nhật, cưới, giỗ… gắn với thành viên hoặc để chung cho cả nhà.</p>
+            </div>
+
+            <div class="tabs-list" data-tabs="ev" role="tablist">
+              <button class="tabs-trigger" data-key="soon" data-state="active" role="tab">Sắp tới</button>
+              <button class="tabs-trigger" data-key="all" data-state="inactive" role="tab">Tất cả</button>
+              <button class="tabs-trigger" data-key="add" data-state="inactive" role="tab">Thêm</button>
+            </div>
+
+            <div class="tabs-panel flex flex-col gap-3" data-tabs="ev" data-key="soon" data-state="active" role="tabpanel">
+              <div id="soon"></div>
+            </div>
+
+            <div class="tabs-panel flex flex-col gap-3 hidden" data-tabs="ev" data-key="all" data-state="inactive" role="tabpanel">
+              <div class="card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th style="width: 8rem">Ngày</th>
+                        <th>Sự kiện</th>
+                        <th style="width: 12rem">Gắn với</th>
+                        <th style="width: 10rem">Người tạo</th>
+                        <th style="width: 11rem"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="all"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="tabs-panel hidden" data-tabs="ev" data-key="add" data-state="inactive" role="tabpanel">
+              <div class="card" style="max-width: 40rem">
+                <div class="card-header">
+                  <h3 class="card-title">Thêm sự kiện</h3>
+                  <p class="card-description">Gắn với một thành viên, hoặc để là sự kiện chung</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="field-group">
+                    <label class="field-label" for="etitle">Tiêu đề</label>
+                    <input class="input" id="etitle" value="Giỗ ông nội" />
+                  </div>
+                  <div class="two-even">
+                    <div class="field-group">
+                      <label class="field-label" for="edate">Ngày</label>
+                      <input class="input" id="edate" type="date" value="2026-10-08" />
+                    </div>
+                    <div class="field-group">
+                      <label class="field-label" for="etype">Loại</label>
+                      <select class="select" id="etype">
+                        <option>Giỗ</option>
+                        <option>Sinh nhật</option>
+                        <option selected>Cưới</option>
+                        <option>Khác</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="emember">Gắn với thành viên</label>
+                    <select class="select" id="emember"></select>
+                    <p class="field-desc" id="ehint"></p>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="enote">Ghi chú</label>
+                    <textarea class="textarea" id="enote" rows="2"></textarea>
+                    <p class="field-desc">Không ghi danh sách khách mời vào đây. Danh sách khách là một bảng riêng, chưa làm trong đợt này.</p>
+                  </div>
+                  <div class="banner" data-tone="warn">
+                    <span class="ico">⚠</span>
+                    <span>Ngày gắn với thành viên phải khớp ngày sinh hoặc ngày mất, nếu không sẽ không hiện trên cây.</span>
+                  </div>
+                  <button class="btn" id="save">Thêm sự kiện</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
+        var canEdit = function () { return WF.can("event.edit"); };
+
+        WF.wireTabs("[data-tabs=ev]", function (key) {
+          if (key === "add") return;
+          render(key);
+        });
+
+        var sel = qs("#emember");
+        if (!sel.dataset.filled) {
+          var o = document.createElement("option");
+          o.value = ""; o.textContent = "— Sự kiện chung của cả nhà —";
+          sel.appendChild(o);
+          MOCK.members.forEach(function (m) {
+            var x = document.createElement("option");
+            x.value = m.id;
+            x.textContent = m.fullName + " · đời " + (m.generation + 1);
+            sel.appendChild(x);
+          });
+          sel.dataset.filled = "1";
+        }
+
+        function hint() {
+          var v = sel.value;
+          qs("#ehint").textContent = v
+            ? "Sự kiện này sẽ hiện trên node " + MOCK.memberById(v).fullName + "."
+            : "Sự kiện chung: hiện trong danh sách, không gắn lên node nào.";
+        }
+        sel.addEventListener("change", hint);
+        hint();
+
+        function row(e) {
+          var m = e.familyMemberId ? MOCK.memberById(e.familyMemberId) : null;
+          var u = MOCK.userById(e.createdById);
+          var ed = canEdit();
+          return "<tr>" +
+            '<td class="muted whitespace-nowrap">' + WF.formatDate(e.date) + "</td>" +
+            '<td><span class="font-semibold">' + esc(e.title) + "</span>" +
+            '<div class="text-xs muted">' + esc(e.type) + (e.note ? " · " + esc(e.note) : "") + "</div></td>" +
+            "<td>" + (m
+              ? esc(m.fullName) + ' <span class="badge" data-tone="primary">đời ' + (m.generation + 1) + "</span>"
+              : '<span class="muted">Sự kiện chung</span>') + "</td>" +
+            '<td class="muted">' + esc(u.fullName) + "</td>" +
+            '<td class="flex gap-2" style="justify-content:flex-end">' +
+            (ed
+              ? '<button class="btn" data-variant="outline" data-size="sm">Sửa</button>' +
+                '<button class="btn" data-variant="ghost" data-size="sm">Xoá</button>'
+              : '<span class="badge" data-tone="muted">chỉ xem</span>') +
+            "</td></tr>";
+        }
+
+        function render(key) {
+          var list = MOCK.events.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+          if (key === "soon") {
+            list = list.filter(function (e) { return e.date >= "2026-09-27"; });
+            qs("#soon").innerHTML = list.length
+              ? list.map(function (e) {
+                  var m = e.familyMemberId ? MOCK.memberById(e.familyMemberId) : null;
+                  return '<div class="mini-row"><span class="flex-1"><span class="font-semibold">' + esc(e.title) + "</span>" +
+                    '<div class="text-xs muted">' + WF.formatDate(e.date) +
+                    (m ? " · " + esc(m.fullName) : " · sự kiện chung") + "</div></span></div>";
+                }).join("")
+              : '<div class="empty">Không có sự kiện sắp tới</div>';
+          } else {
+            qs("#all").innerHTML = list.length
+              ? list.map(row).join("")
+              : '<tr><td colspan="5"><div class="empty">Chưa có sự kiện nào</div></td></tr>';
+          }
+        }
+
+        qs("#new").addEventListener("click", function () { WF.tabs("ev", "add"); });
+        qs("#save").addEventListener("click", function () {
+          MOCK.events.push({
+            id: "e" + (MOCK.events.length + 1),
+            title: qs("#etitle").value || "Sự kiện mới",
+            date: qs("#edate").value,
+            type: qs("#etype").value,
+            note: qs("#enote").value,
+            familyMemberId: sel.value || null,
+            createdById: WF.myId() || "u1"
+          });
+          WF.tabs("ev", "all");
+          render("all");
+          WF.toast("Đã thêm sự kiện", "Chỉ người tạo và Chủ nhóm sửa được.", "success");
+        });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+        window.wfOnRole = function () { render("soon"); render("all"); };
+        render("soon"); render("all");
+      })();
+    </script>
+  </body>
+</html>

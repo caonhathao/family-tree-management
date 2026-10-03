@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nhập / Xuất — Quản lý gia phả</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <a class="sidebar-menu-button" data-size="lg" href="s17-profile.html">
+            <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </a>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Danh sách</div>
+            <a class="sidebar-menu-button" data-active="true" data-size="lg" href="s07-tree.html">
+              <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+              <span class="truncate hide-narrow">Nhà họ Nguyễn – Trần</span>
+            </a>
+          </div>
+        </div>
+      </aside>
+
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Nhập / Xuất</h2>
+          <div class="ml-auto"><span class="badge" data-tone="muted">bản 43</span></div>
+        </header>
+
+        <main class="app-main">
+          <div class="gate hidden" id="gate">
+            <div class="gate-icon">⊘</div>
+            <div>
+              <div class="font-semibold">Bạn không có quyền nhập hoặc xuất</div>
+              <div class="muted text-sm">Nhập và xuất dành cho Chủ nhóm và Biên tập viên. Bạn đang là <span data-role-label></span>.</div>
+            </div>
+            <a class="btn" data-variant="outline" data-size="sm" href="s07-tree.html">Về cây</a>
+          </div>
+
+          <div id="real" class="page">
+            <div class="page-head">
+              <h1 class="page-title">Nhập / Xuất</h1>
+              <p class="page-desc">Bản sao lưu để khôi phục khi cần. Nhập là đường ghi dữ liệu hàng loạt, không thay thế nút Lưu.</p>
+            </div>
+
+            <div class="tabs-list" data-tabs="ie" role="tablist">
+              <button class="tabs-trigger" data-key="export-json" data-state="active" role="tab">Xuất JSON</button>
+              <button class="tabs-trigger" data-key="restore" data-state="inactive" role="tab">Khôi phục</button>
+              <button class="tabs-trigger" data-key="gedcom" data-state="inactive" role="tab">Nhập GEDCOM</button>
+              <button class="tabs-trigger" data-key="image" data-state="inactive" role="tab">Xuất ảnh</button>
+            </div>
+
+            <!-- Xuất JSON -->
+            <div class="tabs-panel flex flex-col gap-4" data-tabs="ie" data-key="export-json" data-state="active" role="tabpanel">
+              <div class="card" style="max-width: 44rem">
+                <div class="card-header">
+                  <h3 class="card-title">Xuất cây ra tệp</h3>
+                  <p class="card-description">Tệp JSON, mở lại được để khôi phục nguyên trạng</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="field-group">
+                    <span class="field-label">Phạm vi</span>
+                    <div class="flex flex-col gap-2">
+                      <label class="check-row"><span class="checkbox" data-checked="true" id="all"></span><span class="text-sm">Toàn bộ cây — 12 thành viên, 19 quan hệ</span></label>
+                      <label class="check-row"><span class="checkbox" data-checked="true" id="logs"></span><span class="text-sm">Kèm lịch sử thay đổi — 22 dòng</span></label>
+                      <label class="check-row"><span class="checkbox" data-checked="false" id="layout"></span><span class="text-sm">Kèm bố cục cây</span></label>
+                      <label class="check-row"><span class="checkbox" data-checked="false" id="img"></span><span class="text-sm">Kèm tệp ảnh — khoảng 24 MB</span></label>
+                    </div>
+                  </div>
+                  <div class="mini-list">
+                    <div class="mini-row"><span class="muted">Ước tính</span><span class="font-semibold" id="size">184 KB</span></div>
+                    <div class="mini-row"><span class="muted">Định dạng</span><span>.json · 1 bản ghi mỗi thành viên và quan hệ</span></div>
+                  </div>
+                  <button class="btn" id="do-export">Tải tệp xuống</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Khôi phục -->
+            <div class="tabs-panel hidden flex flex-col gap-4" data-tabs="ie" data-key="restore" data-state="inactive" role="tabpanel">
+              <div class="banner">
+                <span class="ico">◈</span>
+                <span>Khôi phục giữ nguyên mã cũ, nên ảnh, quan hệ, lịch sử và bố cục đều trở lại đúng chỗ. Đây là vòng an toàn dữ liệu bắt buộc.</span>
+              </div>
+
+              <div class="card" style="max-width: 44rem">
+                <div class="card-header">
+                  <h3 class="card-title">Khôi phục từ tệp JSON</h3>
+                  <p class="card-description">Xem trước trước khi ghi bất cứ thứ gì</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="field-group">
+                    <label class="field-label" for="file">Tệp JSON</label>
+                    <input class="input" type="file" id="file" />
+                  </div>
+                  <div class="banner" data-tone="danger hidden" id="rs-conflict">
+                    <span class="ico">⚠</span>
+                    <span>1 mã bị trùng: <strong>m6</strong> đã tồn tại nhưng nội dung khác. Hệ thống <strong>không ghi đè</strong> và cũng không tự gộp.</span>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="rs-mode">Cách xử lý mã trùng</label>
+                    <select class="select" id="rs-mode">
+                      <option selected>Dừng lại và báo tôi</option>
+                      <option>Giữ bản đang có, bỏ bản trong tệp</option>
+                      <option>Giữ bản trong tệp, ghi đè bản đang có</option>
+                    </select>
+                    <p class="field-desc">Không có lựa chọn nào được chọn trước sẵn cả.</p>
+                  </div>
+                  <button class="btn" data-variant="outline" id="preview-rs" disabled>Xem trước</button>
+                </div>
+              </div>
+
+              <div class="card hidden" id="rs-diff-card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead>
+                      <tr><th>Loại</th><th>Thêm</th><th>Sửa</th><th>Bỏ qua</th></tr>
+                    </thead>
+                    <tbody id="rs-rows"></tbody>
+                  </table>
+                </div>
+                <div class="flex items-center justify-between" style="padding: 12px">
+                  <span class="text-sm muted">Xem trước chưa ghi gì lên máy chủ.</span>
+                  <button class="btn" id="commit-rs" disabled>Ghi vào cây</button>
+                </div>
+              </div>
+
+              <div class="card hidden" id="rs-prog-card">
+                <div class="card-header"><h3 class="card-title">Đang ghi</h3></div>
+                <div class="card-content flex flex-col gap-3">
+                  <div class="progress"><div data-bar style="width: 0%"></div></div>
+                  <div class="flex flex-col gap-1" id="rs-steps"></div>
+                </div>
+              </div>
+
+              <div class="card hidden" id="rs-map-card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="card-header" style="padding: 1rem 1rem 0.5rem">
+                  <h3 class="card-title">Bản đồ mã sau khi ghi</h3>
+                  <p class="card-description">Khôi phục giữ nguyên mã cũ nên cột “Mã mới” trùng cột “Mã cũ”</p>
+                </div>
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead><tr><th>Loại</th><th>Mã cũ</th><th>Mã mới</th></tr></thead>
+                    <tbody id="rs-map"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- GEDCOM -->
+            <div class="tabs-panel hidden flex flex-col gap-4" data-tabs="ie" data-key="gedcom" data-state="inactive" role="tabpanel">
+              <div class="banner" data-tone="warn">
+                <span class="ico">⚠</span>
+                <span>Không có bước loại trùng. Người tên giống nhau sẽ thành hai người riêng, và mọi tham chiếu cũ đều đứt.</span>
+              </div>
+              <div class="card" style="max-width: 44rem">
+                <div class="card-header">
+                  <h3 class="card-title">Nhập từ tệp GEDCOM</h3>
+                  <p class="card-description">.ged hoặc .gedcom · chỉ nhập được cây, không nhập được ảnh và sự kiện</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="field-group">
+                    <label class="field-label" for="gfile">Tệp GEDCOM</label>
+                    <input class="input" type="file" id="gfile" />
+                  </div>
+                  <button class="btn" data-variant="outline" id="preview-gd" disabled>Xem trước</button>
+                </div>
+              </div>
+
+              <div class="card hidden" id="gd-diff-card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead><tr><th>Loại</th><th>Thêm</th><th>Sửa</th><th>Bỏ qua</th></tr></thead>
+                    <tbody id="gd-rows"></tbody>
+                  </table>
+                </div>
+                <div class="flex items-center justify-between" style="padding: 12px">
+                  <span class="text-sm muted">Tệp có 3 người cùng tên Nguyễn Văn Cường — cả 3 đều được giữ.</span>
+                  <button class="btn" id="commit-gd" disabled>Nhập vào cây</button>
+                </div>
+              </div>
+
+              <div class="card hidden" id="gd-prog-card">
+                <div class="card-header"><h3 class="card-title">Đang nhập</h3></div>
+                <div class="card-content flex flex-col gap-3">
+                  <div class="progress"><div data-bar style="width: 0%"></div></div>
+                  <div class="flex flex-col gap-1" id="gd-steps"></div>
+                </div>
+              </div>
+
+              <div class="card hidden" id="gd-map-card" style="padding: 0; gap: 0; overflow: hidden">
+                <div class="card-header" style="padding: 1rem 1rem 0.5rem">
+                  <h3 class="card-title">Bản đồ mã sau khi nhập</h3>
+                  <p class="card-description">Mã mới sinh ra, mọi tham chiếu cũ không dùng lại được</p>
+                </div>
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead><tr><th>Loại</th><th>Mã cũ</th><th>Mã mới</th></tr></thead>
+                    <tbody id="gd-map"></tbody>
+                  </table>
+                </div>
+                <div style="padding: 12px" class="text-sm muted">
+                  Sau khi nhập GEDCOM, cây sẽ <strong>không có</strong> ảnh, album, sự kiện, lịch sử thay đổi và bố cục cũ.
+                </div>
+              </div>
+            </div>
+
+            <!-- Xuất ảnh -->
+            <div class="tabs-panel hidden flex flex-col gap-4" data-tabs="ie" data-key="image" data-state="inactive" role="tabpanel">
+              <div class="card" style="max-width: 44rem">
+                <div class="card-header">
+                  <h3 class="card-title">Xuất cây thành ảnh để in</h3>
+                  <p class="card-description">PDF hoặc PNG</p>
+                </div>
+                <div class="card-content flex flex-col gap-4">
+                  <div class="field-group">
+                    <span class="field-label">Định dạng</span>
+                    <div class="flex gap-4">
+                      <label class="check-row"><span class="radio" data-checked="true" data-fmt="pdf"></span><span class="text-sm">PDF</span></label>
+                      <label class="check-row"><span class="radio" data-checked="false" data-fmt="png"></span><span class="text-sm">PNG</span></label>
+                    </div>
+                  </div>
+                  <div class="two-even">
+                    <div class="field-group">
+                      <label class="field-label" for="gen">Số đời</label>
+                      <select class="select" id="gen">
+                        <option>3 đời gần nhất</option>
+                        <option>Toàn bộ cây</option>
+                        <option>2 đời gần nhất</option>
+                      </select>
+                    </div>
+                    <div class="field-group">
+                      <label class="field-label" for="paper">Khổ giấy</label>
+                      <select class="select" id="paper">
+                        <option>A4 ngang</option>
+                        <option>A3 ngang</option>
+                        <option>A4 dọc</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="banner">
+                    <span class="ico">◉</span>
+                    <span>Không có tên người tải ảnh lên trên bản in. Bản in dành cho dán lên tường, không phải bản kiểm kê.</span>
+                  </div>
+                  <div class="banner" data-tone="warn">
+                    <span class="ico">⚠</span>
+                    <span>Chữ tiếng Việt trong PDF phía máy chủ hay bị thay bằng ô vuông mà không báo lỗi. Nên dựng hình ở trình duyệt rồi xuất PNG.</span>
+                  </div>
+                  <div class="flex gap-2">
+                    <button class="btn" id="do-image">Tải ảnh cây</button>
+                    <button class="btn" data-variant="outline" id="preview-image" data-needs-perm="tree.view">Xem thử</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+        </main>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
+
+        WF.wireTabs("[data-tabs=ie]");
+
+        function wireChecks(ids, cb) {
+          ids.forEach(function (id) {
+            qs("#" + id).addEventListener("click", function () {
+              var c = qs("#" + id);
+              c.setAttribute("data-checked", c.getAttribute("data-checked") === "true" ? "false" : "true");
+              if (cb) cb();
+            });
+          });
+        }
+        function size() {
+          var s = 148;
+          if (qs("#logs").getAttribute("data-checked") === "true") s += 36;
+          if (qs("#layout").getAttribute("data-checked") === "true") s += 12;
+          if (qs("#img").getAttribute("data-checked") === "true") s = 24576;
+          qs("#size").textContent = s > 1024 ? (s / 1024).toFixed(0) + " MB" : s + " KB";
+        }
+        wireChecks(["all", "logs", "layout", "img"], size);
+        size();
+
+        qs("#do-export").addEventListener("click", function () {
+          WF.toast("Đang dựng tệp", "Tệp JSON tải xuống ngay sau khi dựng xong.", "default");
+        });
+
+        qs("#file").addEventListener("change", function () {
+          qs("#rs-conflict").classList.add("hidden");
+          qs("#preview-rs").disabled = false;
+        });
+        qs("#rs-mode").addEventListener("change", function () {
+          qs("#commit-rs").disabled = qs("#rs-mode").selectedIndex === 0;
+        });
+
+        qs("#preview-rs").addEventListener("click", function () {
+          qs("#rs-diff-card").classList.remove("hidden");
+          qs("#rs-rows").innerHTML = [
+            ["Thành viên", 1, 1, 0],
+            ["Quan hệ", 3, 0, 0],
+            ["Ảnh", 6, 0, 0],
+            ["Album", 2, 0, 0],
+            ["Sự kiện", 3, 0, 0],
+            ["Lịch sử", 22, 0, 0]
+          ].map(function (r) {
+            return "<tr><td class=\"font-semibold\">" + r[0] + "</td><td>" + r[1] +
+              "</td><td>" + r[2] + '</td><td class="diff-old">' + r[3] + "</td></tr>";
+          }).join("");
+        });
+
+        qs("#commit-rs").addEventListener("click", function () {
+          qs("#rs-prog-card").classList.remove("hidden");
+          WF.runProgress("#rs-prog-card", {
+            steps: ["Kiểm tra bản hiện tại", "Chạy thử không ghi", "Ghi thành viên", "Ghi quan hệ", "Ghi ảnh và album", "Ghi sự kiện và lịch sử"],
+            onDone: function () {
+              qs("#rs-map-card").classList.remove("hidden");
+              qs("#rs-map").innerHTML = [
+                ["Thành viên", "m6", "m6"],
+                ["Thành viên", "m13", "m13"],
+                ["Quan hệ", "r20", "r20"],
+                ["Ảnh", "ph7", "ph7"]
+              ].map(function (r) {
+                return '<tr><td class="font-semibold">' + r[0] + "</td><td>" + r[1] +
+                  '</td><td><span class="badge" data-tone="ok">' + r[2] + " (giữ nguyên)</span></td></tr>";
+              }).join("");
+              WF.toast("Đã khôi phục", "Bản 43 → 44. Tất cả mã giữ nguyên.", "success");
+            }
+          });
+        });
+
+        qs("#gfile").addEventListener("change", function () { qs("#preview-gd").disabled = false; });
+        qs("#preview-gd").addEventListener("click", function () {
+          qs("#gd-diff-card").classList.remove("hidden");
+          qs("#gd-rows").innerHTML = [
+            ["Thành viên", 11, 0, 0],
+            ["Quan hệ", 0, 0, 18],
+            ["Sự kiện", 0, 0, 4]
+          ].map(function (r) {
+            return '<tr><td class="font-semibold">' + r[0] + "</td><td>" + r[1] +
+              "</td><td>" + r[2] + '</td><td class="diff-old">' + r[3] + "</td></tr>";
+          }).join("");
+        });
+        qs("#commit-gd").addEventListener("click", function () {
+          qs("#gd-prog-card").classList.remove("hidden");
+          WF.runProgress("#gd-prog-card", {
+            steps: ["Đọc tệp", "Kiểm tra bản hiện tại", "Ghi thành viên", "Ghi quan hệ"],
+            onDone: function () {
+              qs("#gd-map-card").classList.remove("hidden");
+              qs("#gd-map").innerHTML = [
+                ["Thành viên", "I1", "n1"],
+                ["Thành viên", "I2", "n2"],
+                ["Thành viên", "I3", "n3"]
+              ].map(function (r) {
+                return '<tr><td class="font-semibold">' + r[0] + "</td><td>" + r[1] +
+                  '</td><td><span class="badge" data-tone="amber">' + r[2] + " (mới)</span></td></tr>";
+              }).join("");
+              WF.toast("Đã nhập", "Bản 43 → 44. Ảnh, album, sự kiện, lịch sử không có trong GEDCOM.", "default");
+            }
+          });
+        });
+
+        Array.prototype.forEach.call(document.querySelectorAll("[data-fmt]"), function (r) {
+          r.addEventListener("click", function () {
+            Array.prototype.forEach.call(document.querySelectorAll("[data-fmt]"), function (o) {
+              o.setAttribute("data-checked", "false");
+            });
+            r.setAttribute("data-checked", "true");
+          });
+        });
+        qs("#do-image").addEventListener("click", function () {
+          WF.toast("Đang dựng ảnh", "PDF chữ tiếng Việt có thể lỗi — nên dùng PNG.", "default");
+        });
+        qs("#preview-image").addEventListener("click", function () {
+          WF.toast("Xem thử", "Không tăng bản, không ghi lịch sử.", "default");
+        });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+        window.wfOnRole = function () {
+          var allowed = WF.can("import.export");
+          qs("#real").classList.toggle("hidden", !allowed);
+          qs("#gate").classList.toggle("hidden", allowed);
+        };
+        var ok = WF.can("import.export");
+        qs("#real").classList.toggle("hidden", !ok);
+        qs("#gate").classList.toggle("hidden", ok);
+      })();
+    </script>
+  </body>
+</html>

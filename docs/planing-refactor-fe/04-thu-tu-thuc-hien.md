@@ -46,7 +46,7 @@ Thứ tự trong PR (giữ mỗi bước build được):
 | Bước | Việc |
 |---|---|
 | 1.1 | `FE-B1` — blog, blog-media, `store/blog`, 6 package `@editorjs/*`, `BLOG_MEDIA_TYPE` |
-| 1.2 | `FE-B8` — xoá `app/(public)/`, dựng `/` redirector (Q11), dựng lại `BottomNavBar` ở layout mới, chuyển `/features` thành trang tĩnh |
+| 1.2 | `FE-B8` — xoá `app/(public)/`, dựng `/` landing (Q11), dựng lại `BottomNavBar` ở layout mới, chuyển `/features` thành trang tĩnh |
 | 1.3 | `FE-B2` — xoá `app/admin/**`, `roleRights`, nhánh admin trong `proxy.ts`, `getRoleFromToken`, `USER_ROLE`, `getUserListAction` |
 | 1.4 | `FE-B10` — dọn `publicRoutes` |
 | 1.5 | `FE-B5`, `FE-B6` — `resetPassword` giả, `changeLeader` chết |
@@ -56,7 +56,7 @@ Thứ tự trong PR (giữ mỗi bước build được):
 | 1.9 | `FE-B10` (nửa còn lại) — chuyển bộ table kit `admin/_components` → `components/table/` |
 | 1.10 | `§8` chỉ phần `API_PREFIX` — **dùng giá trị `/api`**, chuyển `/api/v1` để ở stage 3 |
 | 1.11 | `§9` — gộp 3 layout thành `<ShellSidebarLayout>` |
-| 1.12 | `§10` — `/` và `/group` redirect thay vì in text lỗi; redirector chỉ còn **2 nhánh** (0 group / 1 group) |
+| 1.12 | `§10` — `/` là landing (Q11) không tự chuyển hướng; `/group` redirect thay vì in text lỗi, thiếu `groupId` → `/auth` (nơi rẽ 2 nhánh: 0 group / 1 group) |
 
 ⚠️ **FE-B2 phải chờ backend phase 0 xong mới deploy** (cột "cần backend" ở bảng tổng quan ghi ⚠️). Lý do: xoá `x-user-role` trong khi backend vẫn trả `role` thì không chết, nhưng **giữ** nó thì RBAC admin đã xoá mà `roleRights` thì chưa → cần làm cùng lúc với nhánh. Nếu tuyệt đối phải deploy sớm hơn thì giữ nguyên 3 dòng `x-user-role` và xoá sau, **đánh dấu TODO kèm link issue** — đừng xoá một nửa.
 

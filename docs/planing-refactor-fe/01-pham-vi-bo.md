@@ -195,7 +195,7 @@ Xoá xong, nhóm `support` trong `sidebar-profile.tsx:70-84` rỗng hoàn toàn 
 
 | Entry | Thực tế |
 |---|---|
-| `/` | ✅ có (nhưng `FE-B8` xoá → thay bằng redirector ở Q11) |
+| `/` | ✅ có (nhưng `FE-B8` xoá → thay bằng landing Q11) |
 | `/features` | ✅ có |
 | `/tutorials` | ❌ **không có trang** — nav vẫn trỏ tới |
 | `/auth` | ✅ có |

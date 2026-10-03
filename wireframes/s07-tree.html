@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cây gia đình — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <button class="sidebar-menu-button" data-size="lg" id="hello">
+            <span class="sidebar-avatar-wrap">
+              <span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span>
+            </span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </button>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Danh sách</div>
+            <button class="sidebar-menu-button" data-active="true" data-size="lg">
+              <span class="sidebar-avatar-wrap">
+                <span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span>
+              </span>
+              <span class="truncate hide-narrow">Nhà họ Nguyễn – Trần</span>
+              <span class="dot-event hide-narrow" style="background: #ef4444; border-radius: 999px; width: 8px; height: 8px"></span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Quản lý gia phả</h2>
+          <div class="ml-auto flex items-center gap-3">
+            <span class="badge" data-tone="muted">phiên bản 42</span>
+            <a class="text-sm" href="index.html" style="color: var(--primary); text-decoration: underline; text-underline-offset: 4px">Danh sách màn</a>
+          </div>
+        </header>
+
+        <main class="app-main" data-bleed="true">
+          <div class="relative" id="stage" style="height: calc(100vh - 3.5rem)">
+            <div class="flow-wrap" id="flow">
+              <div class="flow-dots" id="dots"></div>
+              <div class="flow-viewport" id="viewport">
+                <svg class="flow-svg" id="svg"></svg>
+                <div class="flow-canvas" id="canvas"></div>
+              </div>
+              <div class="flow-controls">
+                <button id="zoom-in" aria-label="Phóng to">+</button>
+                <button id="zoom-out" aria-label="Thu nhỏ">−</button>
+                <button id="zoom-fit" aria-label="Vừa khung">⤢</button>
+              </div>
+            </div>
+
+            <!-- PanelEditor: giữ nguyên hình dạng của panel-editor.tsx; tìm người qua popup (nút kính lúp). -->
+            <div class="panel-editor" id="panel">
+              <div class="panel-body">
+                <div class="panel-grip" id="grip" aria-label="Kéo di chuyển">⋮</div>
+                <button class="panel-trigger" id="search-btn" aria-label="Tìm người" data-open-dialog="dlg-search">⌕</button>
+                <button class="panel-trigger" id="panel-btn" aria-label="Menu soạn thảo">▤</button>
+              </div>
+              <div class="panel-menu dropdown-content" data-side="right" id="panel-menu" hidden>
+                <div class="dropdown-label">Chung</div>
+                <button class="dropdown-item" data-needs-perm="member.add" data-hide-when="deny" id="mi-member">
+                  <span class="ico">＋</span> Thêm thành viên
+                </button>
+                <button class="dropdown-item" data-needs-perm="relation.add" data-hide-when="deny" id="mi-relation">
+                  <span class="ico">⚭</span> Thêm quan hệ
+                </button>
+                <button class="dropdown-item" data-needs-perm="nodePhoto.assign" data-hide-when="deny" id="mi-assign">
+                  <span class="ico">▣</span> Gắn ảnh cho node đang chọn
+                </button>
+                <div class="dropdown-separator"></div>
+
+                <div class="dropdown-label">Hiển thị</div>
+                <button class="dropdown-item" data-needs-perm="layout.auto" data-hide-when="deny" id="mi-arrange">
+                  <span class="ico">⇅</span> Sắp xếp sơ đồ
+                </button>
+                <button class="dropdown-item" id="mi-grid">
+                  <span class="checkbox" data-checked="true" id="cb-grid"></span> Lưới
+                </button>
+                <button class="dropdown-item" data-needs-perm="layout.drag" data-hide-when="deny" id="mi-drag">
+                  <span class="checkbox" data-checked="true" id="cb-drag"></span> Cho phép kéo thả
+                </button>
+                <button class="dropdown-item" id="mi-detail">
+                  <span class="checkbox" data-checked="true" id="cb-detail"></span> Chi tiết
+                </button>
+                <div class="dropdown-separator"></div>
+
+                <div class="dropdown-label">Hành động</div>
+                <button class="dropdown-item" data-needs-perm="tree.edit" data-hide-when="deny" id="mi-create">
+                  <span class="ico">◫</span> Tạo sơ đồ
+                </button>
+                <button class="dropdown-item" data-needs-perm="layout.save" data-hide-when="deny" id="mi-save" disabled>
+                  <span class="ico">⭳</span> Lưu
+                </button>
+                <button class="dropdown-item" data-needs-perm="history.viewAll" data-hide-when="deny" id="mi-history">
+                  <span class="ico">☰</span> Lịch sử thay đổi
+                </button>
+                <button class="dropdown-item" data-needs-perm="import.export" data-hide-when="deny" id="mi-import">
+                  <span class="ico">↕</span> Nhập / Xuất
+                </button>
+                <button class="dropdown-item" data-needs-perm="share.manage" data-hide-when="deny" id="mi-share">
+                  <span class="ico">⇱</span> Chia sẻ
+                </button>
+                <button class="dropdown-item" data-needs-perm="tree.delete" data-hide-when="deny" id="mi-delete">
+                  <span class="ico">⌫</span> Xóa toàn bộ
+                </button>
+              </div>
+            </div>
+
+            <!-- Cột cố định góc trên phải, giữ nguyên như group-content.tsx -->
+            <div class="corner-stack">
+              <div class="drawer" id="dw-cal">
+                <div class="drawer-head">
+                  <span>Tháng 9 · 2026</span>
+                  <button class="btn" data-variant="ghost" data-size="icon-xs" data-toggle="#dw-cal-body" aria-label="Thu gọn">▾</button>
+                </div>
+                <div class="drawer-body" id="dw-cal-body">
+                  <div class="calendar-grid" id="cal"></div>
+                </div>
+              </div>
+              <div class="drawer" data-collapsed="true" id="dw-info">
+                <div class="drawer-head">
+                  <span>Thông tin gia đình</span>
+                  <button class="btn" data-variant="ghost" data-size="icon-xs" data-toggle="#dw-info" aria-label="Mở">▾</button>
+                </div>
+                <div class="drawer-body">
+                  <div class="flex justify-between text-sm"><span class="muted">Tên</span><span id="g-name"></span></div>
+                  <div class="flex justify-between text-sm"><span class="muted">Thành viên</span><span id="g-count"></span></div>
+                  <div class="flex justify-between text-sm"><span class="muted">Quan hệ</span><span id="g-rel"></span></div>
+                  <div class="flex justify-between text-sm"><span class="muted">Phiên bản</span><span>42</span></div>
+                </div>
+              </div>
+              <div class="drawer" data-collapsed="true" id="dw-set">
+                <div class="drawer-head">
+                  <span>Tuỳ chọn gia đình</span>
+                  <button class="btn" data-variant="ghost" data-size="icon-xs" data-toggle="#dw-set" aria-label="Mở">▾</button>
+                </div>
+                <div class="drawer-body">
+                  <label class="checkbox-row"><span class="checkbox" data-checked="false"></span> Hiện ngày sinh / ngày mất trên node</label>
+                  <label class="checkbox-row"><span class="checkbox" data-checked="true"></span> Tự xếp lại khi thêm thành viên</label>
+                  <div class="sep-h"></div>
+                  <a class="text-sm" href="s10-activity.html" style="color: var(--primary)">Xem lịch sử thay đổi</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Gánh ảnh cho node: chọn ảnh trong nhóm hoặc tải ảnh mới -->
+    <div class="overlay hidden" id="dlg-assign-overlay"></div>
+    <div class="dialog hidden" id="dlg-assign">
+      <div class="dialog-header">
+        <div class="dialog-title">Gắn ảnh cho <span id="as-name"></span></div>
+        <div class="dialog-description">Ảnh gốc nằm trong album của nhóm. Gỡ ảnh cũ sẽ xoá luôn tệp trên Cloudinary.</div>
+      </div>
+      <div class="media-grid" id="as-grid"></div>
+      <div class="dialog-footer">
+        <button class="btn" data-variant="outline" data-close-dialog="dlg-assign">Huỷ</button>
+        <button class="btn" data-variant="default" id="as-upload">Tải ảnh mới lên</button>
+      </div>
+    </div>
+
+    <!-- Tìm người trong cây -->
+    <div class="overlay hidden" id="dlg-search-overlay"></div>
+    <div class="dialog hidden" id="dlg-search">
+      <div class="dialog-header">
+        <div class="dialog-title">Tìm người trong cây</div>
+        <div class="dialog-description">Gõ tên hoặc năm sinh để nhảy tới thành viên</div>
+      </div>
+      <div class="dialog-body" style="display:flex;flex-direction:column;gap:.75rem;min-height:12rem">
+        <input class="input" id="q2" placeholder="Tên hoặc năm sinh" autocomplete="off" />
+        <div id="results2" class="hidden"></div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn" data-variant="outline" data-close-dialog="dlg-search">Đóng</button>
+      </div>
+    </div>
+
+    <!-- Xoá toàn bộ cây -->
+    <div class="overlay hidden" id="dlg-deloverlay"></div>
+    <div class="dialog hidden" id="dlg-del">
+      <div class="dialog-header">
+        <div class="dialog-title">Xoá toàn bộ sơ đồ?</div>
+        <div class="dialog-description">Có thể khôi phục trong 30 ngày. Album và ảnh không nằm trong sơ đồ này sẽ giữ nguyên.</div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn" data-variant="outline" data-close-dialog="dlg-del">Huỷ</button>
+        <button class="btn" data-variant="destructive" id="del-ok">Xoá</button>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, qsa = WF.qsa;
+        var members = MOCK.members.map(function (m) { return Object.assign({}, m); });
+        var dirty = false;
+        var selected = null;
+        var showDetail = true;
+        var draggable = true;
+
+        WF.qs("#g-name").textContent = MOCK.group.name;
+        WF.qs("#g-count").textContent = members.length + " người";
+        WF.qs("#g-rel").textContent = MOCK.relations.length + " quan hệ";
+
+        function markDirty() {
+          dirty = true;
+          WF.qs("#mi-save").disabled = false;
+        }
+        window.wfOnNodeMoved = markDirty;
+
+        function draw() {
+          WF.renderTree("#flow", {
+            members: members,
+            relations: MOCK.relations,
+            draggable: draggable,
+            selectedId: selected,
+            onSelect: function (id) { selected = id; draw(); }
+          });
+          if (!showDetail) qsa(".node-meta", qs("#canvas")).forEach(function (n) { n.classList.add("hidden"); });
+        }
+
+        function focusNode(id) {
+          selected = id;
+          draw();
+          var node = qs('.node[data-id="' + id + '"]');
+          if (!node) return;
+          var wrap = qs("#flow");
+          var t = /scale\(([\d.]+)\)\s*translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(qs("#viewport").style.transform) || [0, 1, 0, 0];
+          var s = parseFloat(t[1]);
+          var x = parseFloat(node.style.left) + WF.LAYOUT.NODE_WIDTH / 2;
+          var y = parseFloat(node.style.top) + WF.LAYOUT.NODE_HEIGHT / 2;
+          qs("#viewport").style.transform =
+            "scale(" + s + ") translate(" + (wrap.clientWidth / s / 2 - x) + "px," + (wrap.clientHeight / s / 2 - y) + "px)";
+        }
+
+        /* ---- panel: mở/đóng, kéo di chuyển ---- */
+        var menu = qs("#panel-menu");
+        var panel = qs("#panel");
+        function toggleMenu(force) {
+          var open = force === undefined ? menu.hasAttribute("hidden") : force;
+          if (open) menu.removeAttribute("hidden"); else menu.setAttribute("hidden", "");
+          qs("#panel-btn").setAttribute("data-open", open ? "true" : "false");
+        }
+        qs("#panel-btn").addEventListener("click", function (e) { e.stopPropagation(); toggleMenu(); });
+        document.addEventListener("click", function (e) {
+          if (!menu.hasAttribute("hidden") && !panel.contains(e.target)) toggleMenu(false);
+        });
+        (function () {
+          var grip = qs("#grip"), sx = 0, sy = 0, ox = 0, oy = 0, on = false;
+          grip.addEventListener("pointerdown", function (e) {
+            on = true; sx = e.clientX; sy = e.clientY;
+            ox = parseFloat(getComputedStyle(panel).left || 20);
+            oy = parseFloat(getComputedStyle(panel).top || 20);
+            e.preventDefault();
+          });
+          document.addEventListener("pointermove", function (e) {
+            if (!on) return;
+            panel.style.left = Math.max(0, ox + e.clientX - sx) + "px";
+            panel.style.top = Math.max(0, oy + e.clientY - sy) + "px";
+          });
+          document.addEventListener("pointerup", function () { on = false; });
+        })();
+
+        /* ---- tìm người (popup): lọc trong bộ nhớ, phân biệt "chưa gõ" với "không có" ---- */
+        var q2 = qs("#q2"), results2 = qs("#results2");
+        qs("#search-btn").addEventListener("click", function () {
+          q2.value = "";
+          results2.classList.add("hidden");
+          setTimeout(function () { q2.focus(); }, 0);
+        });
+        q2.addEventListener("input", function () {
+          var v = q2.value.trim().toLowerCase();
+          if (!v) { results2.classList.add("hidden"); return; }
+          var hit = members.filter(function (m) {
+            return m.fullName.toLowerCase().indexOf(v) !== -1 || (m.birthDate || "").indexOf(v) === 0;
+          });
+          results2.classList.remove("hidden");
+          if (!hit.length) {
+            results2.innerHTML = '<div class="px-2 py-3 text-sm muted text-center">Không có kết quả</div>';
+            return;
+          }
+          results2.innerHTML = hit.map(function (m) {
+            return '<button class="dropdown-item" data-go="' + m.id + '">' +
+              '<span class="flex items-center gap-2 min-w-0"><span class="node-avatar" style="width:20px;height:20px;font-size:10px;margin:0">' +
+              WF.esc(WF.initialOf(m.fullName)) + "</span>" + WF.esc(m.fullName) + "</span>" +
+              '<span class="text-xs muted">đời ' + (m.generation + 1) + "</span></button>";
+          }).join("");
+          qsa("[data-go]", results2).forEach(function (b) {
+            b.addEventListener("click", function () {
+              focusNode(b.getAttribute("data-go"));
+              WF.closeDialog("dlg-search");
+            });
+          });
+        });
+
+        /* ---- các mục menu ---- */
+        qs("#mi-grid").addEventListener("click", function () {
+          var on = qs("#cb-grid").getAttribute("data-checked") !== "true";
+          qs("#cb-grid").setAttribute("data-checked", on ? "true" : "false");
+          qs("#dots").setAttribute("data-off", on ? "false" : "true");
+        });
+        qs("#mi-drag").addEventListener("click", function () {
+          var on = qs("#cb-drag").getAttribute("data-checked") !== "true";
+          qs("#cb-drag").setAttribute("data-checked", on ? "true" : "false");
+          draggable = WF.can("layout.drag") && on;
+          draw();
+        });
+        qs("#mi-detail").addEventListener("click", function () {
+          showDetail = qs("#cb-detail").getAttribute("data-checked") !== "true";
+          qs("#cb-detail").setAttribute("data-checked", showDetail ? "true" : "false");
+          draw();
+        });
+        qs("#mi-arrange").addEventListener("click", function () {
+          draw();
+          WF.fitView("#flow");
+          markDirty();
+          WF.toast("Đã sắp xếp", "Chỉ mình bạn thấy. Bấm Lưu để cả nhóm thấy.", "success");
+        });
+        qs("#mi-save").addEventListener("click", function () { location.href = "s09-save-conflict.html"; });
+        qs("#mi-member").addEventListener("click", function () { location.href = "s08-member-form.html"; });
+        qs("#mi-relation").addEventListener("click", function () {
+          WF.toast("Thêm quan hệ", "Kéo từ chấm dưới của node cha tới node con để tạo quan hệ.", "default");
+        });
+        qs("#mi-history").addEventListener("click", function () { location.href = "s10-activity.html"; });
+        qs("#mi-import").addEventListener("click", function () { location.href = "s16-import-export.html"; });
+        qs("#mi-share").addEventListener("click", function () { location.href = "s14-share-manage.html"; });
+        qs("#mi-delete").addEventListener("click", function () { WF.openDialog("dlg-del"); });
+
+        /* ---- gắn ảnh cho node đang chọn ---- */
+        qs("#mi-assign").addEventListener("click", function () {
+          if (!selected) { WF.toast("Chưa chọn node", "Bấm vào một thẻ trước khi gắn ảnh.", "warning"); return; }
+          var m = MOCK.memberById(selected);
+          qs("#as-name").textContent = m ? m.fullName : "";
+          var shared = MOCK.photos.filter(function (p) { return p.shared; });
+          qs("#as-grid").innerHTML = shared.map(function (p) {
+            return '<button class="mini-row" data-pick="' + p.id + '" style="flex-direction:column;align-items:flex-start">' +
+              '<span class="thumb" style="width:100%;height:6rem"><span class="ico ico-lg">▣</span></span>' +
+              '<span class="text-xs truncate" style="max-width:100%">' + WF.esc(p.name) + "</span></button>";
+          }).join("");
+          qsa("[data-pick]").forEach(function (b) {
+            b.addEventListener("click", function () {
+              var target = members.filter(function (x) { return x.id === selected; })[0];
+              if (target) { target.photoId = b.getAttribute("data-pick"); markDirty(); draw(); }
+              WF.closeDialog("dlg-assign");
+              WF.toast("Đã gắn ảnh", "Chỉ ghi khi bấm Lưu.", "success");
+            });
+          });
+          WF.openDialog("dlg-assign");
+        });
+        qs("#as-upload").addEventListener("click", function () {
+          WF.closeDialog("dlg-assign");
+          WF.toast("Đang tải lên", "Ảnh sẽ vào thư mục FOLDER_FAMILY của nhóm.", "default");
+        });
+        qs("#del-ok").addEventListener("click", function () {
+          WF.closeDialog("dlg-del");
+          WF.toast("Đã xoá", "Vào Thùng rác, khôi phục được trong 30 ngày.", "success");
+        });
+
+        /* ---- zoom / fit ---- */
+        qs("#zoom-in").addEventListener("click", function () { WF.zoomBy("#flow", 1.2); });
+        qs("#zoom-out").addEventListener("click", function () { WF.zoomBy("#flow", 1 / 1.2); });
+        qs("#zoom-fit").addEventListener("click", function () { WF.fitView("#flow"); });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+        qs("#hello").addEventListener("click", function () { location.href = "index.html"; });
+
+        /* ---- lịch tháng, chỉ hiện ngày có sự kiện ---- */
+        (function () {
+          var head = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+          var eventDays = MOCK.events.filter(function (e) { return e.date.slice(0, 7) === "2026-09"; })
+            .map(function (e) { return Number(e.date.slice(8, 10)); });
+          var cells = head.map(function (h) { return '<div class="text-xs muted text-center" style="padding:2px 0">' + h + "</div>"; }).join("");
+          for (var i = 31; i >= 1; i--) {
+            var n = 32 - i;
+            cells += '<div class="calendar-cell" data-muted="true" data-event="' + (eventDays.indexOf(n) !== -1) + '">' + n + "</div>";
+          }
+          for (var d = 1; d <= 30; d++) {
+            cells += '<div class="calendar-cell" data-today="' + (d === 27) + '" data-event="' + (eventDays.indexOf(d) !== -1) + '">' + d + "</div>";
+          }
+          qs("#cal").innerHTML = cells;
+        })();
+
+        draw();
+        WF.fitView("#flow");
+
+        window.wfOnRole = function (role) {
+          draggable = role === "owner" || role === "editor";
+          qs("#cb-drag").setAttribute("data-checked", draggable ? "true" : "false");
+          dirty = false;
+          qs("#mi-save").disabled = true;
+          draw();
+          WF.fitView("#flow");
+        };
+      })();
+    </script>
+  </body>
+</html>

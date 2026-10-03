@@ -399,14 +399,13 @@ Sau `FE-B2` còn lại 2. Gộp thành `<ShellSidebarLayout sidebar={...} title=
 
 ---
 
-## §10 — `/` và `/group` không có `groupId` phải redirect, không in text lỗi
+## §10 — `/` là landing giới thiệu; `/group` thiếu `groupId` phải redirect, không in text lỗi
 
-**`/`** (`(public)/page.tsx`): sau `FE-B8` thành landing marketing không còn ý nghĩa. Theo Q11 + Q16, chỉ còn **2 nhánh**:
+**`/`** (`(public)/page.tsx`): theo Q11, trang gốc là **landing giới thiệu sản phẩm**, hiển thị cho mọi người — kể cả khi đã đăng nhập — và **không tự chuyển hướng**. Bỏ hẳn mô hình redirector 2 nhánh (200/307): trang chủ không cần biết tình trạng group của tôi.
 
-```
-0 group  → màn tạo group (kèm lựa chọn tạo link mời)
-1 group  → redirect thẳng /group?groupId=...
-```
+- Header + nút CTA trên landing chỉ đưa về `/auth` (màn xác thực).
+- Việc "có group hay chưa" xử lý tại `/auth`: đã đăng nhập → vào thẳng cây; chưa có group → màn tạo group (kèm lựa chọn tạo link mời).
+- Người đã đăng nhập vào cây trực tiếp bằng link `/group?groupId=`, không phải đi qua trang chủ.
 
 ⚠️ **Không còn nhánh `≥2 group`** — vi phạm Q16. Và cũng không cần hỏi "bạn muốn vào cây nào" vì luôn có đúng 1.
 
@@ -416,7 +415,7 @@ Sau `FE-B2` còn lại 2. Gộp thành `<ShellSidebarLayout sidebar={...} title=
 
 | Tình huống | Xử lý |
 |---|---|
-| Thiếu `groupId` | `redirect('/')` — về redirector, nơi duy nhất biết tình trạng group của tôi |
+| Thiếu `groupId` | `redirect('/auth')` — nơi duy nhất biết tình trạng group của tôi (đã đăng nhập → vào cây; chưa có → màn tạo) |
 | `groupId` sai / không thuộc nhóm tôi | 404 + nút quay lại |
 | Lỗi mạng / backend | Thông báo lỗi + nút thử lại |
 

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Đặt mật khẩu mới</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <a class="btn" data-variant="outline" href="s03-login.html">‹ Quay lại</a>
+      </div>
+
+      <div class="auth-center">
+        <div class="auth-card" data-mode="signup">
+          <div class="auth-panes" data-mode="signup">
+            <div class="auth-pane-form">
+              <div class="card" data-variant="flat">
+                <div class="card-header">
+                  <h3 class="card-title">Đặt mật khẩu mới</h3>
+                  <p class="card-description">Chọn mật khẩu mới cho tài khoản</p>
+                </div>
+                <div class="card-content flex flex-col gap-6">
+                  <div class="banner" data-tone="warn">
+                    <span class="ico">⚠</span>
+                    <span>Đổi mật khẩu sẽ khiến bạn bị đăng xuất khỏi <strong>mọi thiết bị</strong>, kể cả những thiết bị đang dùng cây này.</span>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="p1">Mật khẩu mới</label>
+                    <input class="input" id="p1" type="password" value="matkhau123" />
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="p2">Nhập lại mật khẩu mới</label>
+                    <input class="input" id="p2" type="password" value="matkhau123" />
+                  </div>
+                  <label class="check-row">
+                    <span class="checkbox" data-checked="true" id="ack"></span>
+                    <span class="text-sm">Tôi hiểu mình sẽ phải đăng nhập lại ở mọi thiết bị</span>
+                  </label>
+                  <button class="btn w-full" id="do-reset" disabled>Đặt mật khẩu mới</button>
+                  <a class="btn" data-variant="link" data-size="sm" href="s03-login.html" id="after-reset" style="display: none">Đăng nhập với mật khẩu mới</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="auth-pane-greet" data-mode="signup">
+              <h2>Chào bạn!</h2>
+              <p class="text-center mt-2">Lấy lại quyền truy cập cây của bạn</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs;
+        qs("#ack").addEventListener("click", function () {
+          var c = qs("#ack");
+          c.setAttribute("data-checked", c.getAttribute("data-checked") === "true" ? "false" : "true");
+          qs("#do-reset").disabled = c.getAttribute("data-checked") !== "true";
+        });
+        qs("#do-reset").addEventListener("click", function () {
+          qs("#do-reset").disabled = true;
+          qs("#do-reset").textContent = "Đang đặt…";
+          WF.toast("Đã đổi mật khẩu", "Bạn đã bị đăng xuất khỏi mọi thiết bị.", "success");
+          qs("#after-reset").style.display = "";
+        });
+      })();
+    </script>
+  </body>
+</html>

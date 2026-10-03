@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tạo cây gia phả</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <a class="btn" data-variant="outline" href="index.html">‹ Quay lại</a>
+      </div>
+
+      <div class="auth-center">
+        <div class="auth-card" data-mode="signup" style="max-width: 34rem">
+          <div class="auth-panes" data-mode="signup">
+            <div class="auth-pane-form">
+              <div class="card" data-variant="flat">
+                <div class="card-header">
+                  <h3 class="card-title">Tạo cây gia phả của bạn</h3>
+                  <p class="card-description">Bạn sẽ là chủ nhóm và có quyền sửa mọi thứ trong cây</p>
+                </div>
+                <div class="card-content flex flex-col gap-6">
+                  <div class="banner">
+                    <span class="ico">◉</span>
+                    <span>Bạn vào thẳng màn <strong>Quản lý gia phả</strong>. Thành viên khác chỉ vào được sau khi bạn gửi link mời.</span>
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-label" for="gname">Tên nhóm</label>
+                    <input class="input" id="gname" value="Nhà họ Nguyễn – Trần" />
+                    <p class="field-desc">
+                      Tên này hiện ở đầu thanh bên và trên cây của mọi người. Cây tự lấy tên nhóm — không đặt riêng.
+                    </p>
+                  </div>
+
+                  <button class="btn w-full" id="create">Tạo nhóm và vào cây</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs;
+        qs("#create").addEventListener("click", function () {
+          WF.toast("Đã tạo nhóm", "Bạn là chủ nhóm. Mời người khác từ màn cây.", "success");
+        });
+      })();
+    </script>
+  </body>
+</html>

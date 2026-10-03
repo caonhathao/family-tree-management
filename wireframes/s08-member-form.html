@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thành viên — Quản lý gia phả</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" id="sidebar" data-narrow="false">
+        <div class="sidebar-header">
+          <a class="sidebar-menu-button" data-size="lg" href="s07-tree.html">
+            <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+            <span class="text-sm font-bold hide-narrow">Xin chào</span>
+            <span class="ico hide-narrow" style="margin-left: auto">›</span>
+          </a>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-group">
+            <div class="sidebar-group-label">Danh sách</div>
+            <a class="sidebar-menu-button" data-active="true" data-size="lg" href="s07-tree.html">
+              <span class="sidebar-avatar-wrap"><span class="sidebar-avatar" data-size="lg" data-color="--primary">N</span></span>
+              <span class="truncate hide-narrow">Nhà họ Nguyễn – Trần</span>
+            </a>
+          </div>
+        </div>
+      </aside>
+
+      <div class="sidebar-inset">
+        <header class="app-header">
+          <button class="btn" data-variant="ghost" data-size="icon" id="sb-trigger" aria-label="Bật hoặc tắt thanh bên">☰</button>
+          <div class="sep-v"></div>
+          <h2>Quản lý gia phả</h2>
+          <div class="ml-auto"><span class="badge" data-tone="muted">bản 42</span></div>
+        </header>
+        <main class="app-main" data-bleed>
+          <div class="flow-wrap" style="position: absolute; inset: 0">
+            <div class="flow-dots"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="overlay" id="member-overlay" data-static>
+      <div class="dialog" data-wide>
+        <div class="dialog-header">
+          <h3 class="dialog-title" id="title">Thêm thành viên</h3>
+          <p class="dialog-description">Chưa lưu gì cho tới khi bấm Lưu trên cây</p>
+        </div>
+        <div class="dialog-body flex flex-col gap-5">
+          <div class="tabs-list" data-tabs="m" role="tablist">
+            <button class="tabs-trigger" data-key="new" data-state="active" role="tab">Thêm mới</button>
+            <button class="tabs-trigger" data-key="edit" data-state="inactive" role="tab">Đang sửa</button>
+          </div>
+
+          <div class="tabs-panel flex flex-col gap-5" data-tabs="m" data-key="new" data-state="active" role="tabpanel">
+            <div class="two-even">
+              <div class="field-group">
+                <label class="field-label" for="fname">Họ và tên</label>
+                <input class="input" id="fname" value="Nguyễn Minh Châu" />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="fgender">Giới tính</label>
+                <select class="select" id="fgender">
+                  <option>Nam</option>
+                  <option selected>Nữ</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="two-even">
+              <div class="field-group">
+                <label class="field-label" for="fbirth">Ngày sinh</label>
+                <input class="input" id="fbirth" type="date" value="1998-04-12" />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="fdeath">Ngày mất</label>
+                <input class="input" id="fdeath" type="date" />
+                <p class="field-desc">Để trống nếu người này còn sống.</p>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="fparent">Cha / Mẹ</label>
+              <select class="select" id="fparent">
+                <option value="">— Chọn người —</option>
+              </select>
+              <p class="field-desc">Chọn một người. Quan hệ được gửi một chiều nhưng đọc ra hai chiều, nên con hiển thị dưới cả cha lẫn mẹ.</p>
+            </div>
+
+            <div class="field-group">
+              <span class="field-label">Ảnh trên node</span>
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-3">
+                  <span class="thumb" id="node-photo" data-empty="true" aria-hidden="true"></span>
+                  <div class="flex-1">
+                    <div class="text-sm" id="photo-state">Chưa có ảnh</div>
+                    <div class="text-xs muted" id="photo-id">—</div>
+                  </div>
+                  <button class="btn" data-variant="outline" data-size="sm" id="pick">Gắn ảnh có sẵn</button>
+                </div>
+                <button class="btn" id="pin" data-needs-perm="nodePhoto.pinSelf">
+                  <span class="ico">◉</span>
+                  <span id="pin-label">Gắn ảnh của tôi vào node này</span>
+                </button>
+                <p class="field-desc" id="pin-desc">
+                  Lấy đúng ảnh hồ sơ của bạn tại thời điểm này và chụp lại. Sau này bạn đổi ảnh hồ sơ thì ảnh trên node này không đổi theo.
+                </p>
+              </div>
+            </div>
+
+            <div class="banner" data-tone="warn">
+              <span class="ico">⚠</span>
+              <span>Trong cây đang có hai người tên <strong>Nguyễn Văn Cường</strong>. Có thể trùng tên, hệ thống không tự gộp và cũng không cảnh báo.</span>
+            </div>
+          </div>
+
+          <div class="tabs-panel hidden flex flex-col gap-5" data-tabs="m" data-key="edit" data-state="inactive" role="tabpanel">
+            <div class="flex items-center gap-3">
+              <span class="thumb" style="background: #dfe6dd"></span>
+              <div>
+                <div class="font-semibold" id="ed-name">Nguyễn Thanh Hà</div>
+                <div class="text-sm muted" id="ed-sub">Nữ · sinh 12/04/1975</div>
+              </div>
+              <span class="badge" data-tone="primary" style="margin-left: auto">ảnh đã ghim</span>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="ed-note">Ghi chú</label>
+              <textarea class="textarea" id="ed-note" rows="3">Kỹ sư cầu đường, từng làm ở Hà Nội.</textarea>
+              <p class="field-desc">Ghi chú riêng tư. Không ghi danh sách khách mời hay thông tin của người khác vào đây.</p>
+            </div>
+            <div class="banner" data-tone="danger">
+              <span class="ico">⊘</span>
+              <span>Xoá thành viên là xoá mềm — vào thùng rác và có thể khôi phục trong 30 ngày.</span>
+            </div>
+            <button class="btn" data-variant="destructive" data-needs-perm="member.delete" id="del">Xoá thành viên này</button>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <span class="text-sm muted" id="dirty-hint">Chưa có thay đổi nào được ghi</span>
+          <div class="flex gap-2" style="margin-left: auto">
+            <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="member">Huỷ</button>
+            <button class="btn" data-size="sm" data-needs-perm="tree.edit" id="apply">Thêm vào bản nháp</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="pick-overlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3 class="dialog-title">Gắn ảnh có sẵn</h3>
+          <p class="dialog-description">Chọn một ảnh trong nhóm</p>
+        </div>
+        <div class="dialog-body">
+          <div class="media-grid" id="picker"></div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn" data-variant="ghost" data-size="sm" data-close-dialog="pick">Huỷ</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs, esc = WF.esc;
+        var photo = null;
+
+        WF.wireTabs("[data-tabs=m]", function (key) {
+          qs("#title").textContent = key === "new" ? "Thêm thành viên" : "Sửa thành viên";
+          qs("#apply").textContent = key === "new" ? "Thêm vào bản nháp" : "Cập nhật bản nháp";
+        });
+
+        var sel = qs("#fparent");
+        MOCK.members.filter(function (m) { return m.id !== "m6"; }).forEach(function (m) {
+          var o = document.createElement("option");
+          o.value = m.id;
+          o.textContent = m.fullName + " · đời " + (m.generation + 1);
+          sel.appendChild(o);
+        });
+        sel.value = "m3";
+
+        qs("#picker").innerHTML = MOCK.photos.map(function (p) {
+          return '<button class="thumb" data-ph="' + p.id + '" style="background:' + p.tint + '" title="' + esc(p.fileName) + '"></button>';
+        }).join("");
+
+        qsa_click("#picker .thumb", function (b) {
+          photo = MOCK.photoById(b.getAttribute("data-ph"));
+          setPhoto(photo.id, "chọn từ thư viện nhóm");
+        });
+
+        function setPhoto(id, how) {
+          photo = MOCK.photoById(id);
+          qs("#node-photo").setAttribute("data-empty", "false");
+          qs("#node-photo").style.background = photo.tint;
+          qs("#photo-state").textContent = photo.fileName;
+          qs("#photo-id").textContent = photo.id + " · " + how;
+          if (how.indexOf("hồ sơ") !== -1) qs("#pin").setAttribute("data-checked", "true");
+          WF.closeDialog("pick");
+        }
+
+        qs("#pin").addEventListener("click", function () {
+          var on = qs("#pin").getAttribute("data-checked") === "true";
+          if (on) {
+            qs("#pin").setAttribute("data-checked", "false");
+            qs("#node-photo").setAttribute("data-empty", "true");
+            qs("#node-photo").style.background = "";
+            qs("#photo-state").textContent = "Chưa có ảnh";
+            qs("#photo-id").textContent = "—";
+            qs("#pin-label").textContent = "Gắn ảnh của tôi vào node này";
+            return;
+          }
+          qs("#pin").setAttribute("data-checked", "true");
+          qs("#pin-label").textContent = "Đã ghim · bỏ ghim";
+          setPhoto("ph1", "chụp ảnh hồ sơ lúc ghim");
+        });
+
+        qs("#pick").addEventListener("click", function () { WF.openDialog("pick"); });
+        qs("#apply").addEventListener("click", function () {
+          qs("#dirty-hint").textContent = "Đã thêm vào bản nháp — bấm Lưu trên cây mới ghi";
+          WF.toast("Đã thêm vào bản nháp", "Chưa ghi gì lên máy chủ.", "success");
+        });
+        qs("#del").addEventListener("click", function () {
+          WF.toast("Vào thùng rác", "Khôi phục được trong 30 ngày.", "destructive");
+        });
+        qs("#sb-trigger").addEventListener("click", function () {
+          var sb = qs("#sidebar");
+          sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
+        });
+
+        function qsa_click(sel, fn) {
+          Array.prototype.forEach.call(document.querySelectorAll(sel), function (el) {
+            el.addEventListener("click", function () { fn(el); });
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

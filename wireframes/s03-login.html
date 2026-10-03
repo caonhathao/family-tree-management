@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Đăng nhập — Nhà họ Nguyễn – Trần</title>
+    <link rel="stylesheet" href="assets/ui.css" />
+  </head>
+  <body>
+    <div class="auth-shell">
+      <div class="auth-bar">
+        <a class="btn" data-variant="outline" href="index.html">‹ Quay lại</a>
+      </div>
+
+      <div class="auth-center">
+        <div class="auth-card" data-mode="login">
+          <div class="auth-panes" data-mode="login">
+            <div class="auth-pane-form">
+              <div class="flex flex-col gap-6">
+                <div class="card" data-variant="flat">
+                  <div class="card-header">
+                    <h3 class="card-title">Đăng nhập vào tài khoản</h3>
+                    <p class="card-description">Điền thông tin đăng nhập vào bên dưới để tiếp tục</p>
+                  </div>
+                  <div class="card-content flex flex-col gap-6">
+                    <div id="token-note" class="banner hidden">
+                      <span class="ico">◈</span>
+                      <span>Đăng nhập xong bạn sẽ vào thẳng nhóm của người mời, không tạo cây riêng.</span>
+                    </div>
+
+                    <div class="field-group">
+                      <label class="field-label" for="email">Email</label>
+                      <input class="input" id="email" placeholder="Email của bạn" value="ha.nguyen@example.com" />
+                    </div>
+
+                    <div class="field-group">
+                      <label class="field-label" for="password">Mật khẩu</label>
+                      <div class="pass-row">
+                        <input class="input" id="password" type="password" placeholder="••••••••" value="12345678" />
+                        <button class="btn" data-variant="ghost" data-size="icon" id="show" aria-label="Hiện mật khẩu">◉</button>
+                      </div>
+                    </div>
+
+                    <div class="flex">
+                      <a class="btn ml-auto" data-variant="link" data-size="sm" href="s04-forgot.html">Quên mật khẩu?</a>
+                    </div>
+
+                    <button class="btn w-full" id="submit" data-needs-perm="none">Đăng nhập</button>
+
+                    <div class="flex items-center gap-3">
+                      <div class="sep-h flex-1"></div>
+                      <span class="text-xs muted">hoặc</span>
+                      <div class="sep-h flex-1"></div>
+                    </div>
+
+                    <button class="btn w-full" data-variant="outline" id="google">Google</button>
+
+                    <p class="text-center text-sm muted">
+                      Không có tài khoản?
+                      <a class="btn" data-variant="link" data-size="sm" id="to-signup" href="s02-register.html">Đăng kí ngay</a>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="auth-pane-greet" data-mode="login">
+              <h2>Chào bạn!</h2>
+              <p class="text-center mt-2">Nhập thông tin để tiếp tục</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/mock-data.js"></script>
+    <script src="assets/ui.js"></script>
+    <script>
+      (function () {
+        var qs = WF.qs;
+        var params = new URLSearchParams(location.search);
+        var token = params.get("token");
+
+        if (token) {
+          qs("#token-note").classList.remove("hidden");
+          qs("#to-signup").setAttribute("href", "s02-register.html?token=" + token);
+        }
+
+        qs("#show").addEventListener("click", function () {
+          var p = qs("#password");
+          p.type = p.type === "password" ? "text" : "password";
+        });
+        qs("#submit").addEventListener("click", function () {
+          WF.toast("Đang đăng nhập", token ? "Vào thẳng nhóm của người mời." : "Vào cây gia phả của bạn.", "success");
+        });
+        qs("#google").addEventListener("click", function () {
+          WF.toast("Đăng nhập Google", "Cần cấu hình GOOGLE_CLIENT_ID ở backend.", "default");
+        });
+      })();
+    </script>
+  </body>
+</html>
