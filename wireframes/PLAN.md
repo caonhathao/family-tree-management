@@ -122,6 +122,8 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
   `06-workflow-user.md` §2.2 · `01-pham-vi-bo.md` FE-B11)*
 - Một tài khoản chỉ có **một cây** — khi đã có cây mà vẫn bấm tạo, chặn bằng màn
   409 `s06-create-conflict.html`, không cho tạo cây thứ hai.
+- **Bắt buộc có nhóm trước** — không có đường "bỏ qua, vào cây trống". Muốn vào cây
+  (`s07-tree`) thì phải tạo nhóm xong ở màn này.
 - Không có nút "xoá cây hiện tại" ở đây. Xoá là việc của màn tài khoản (`s17-profile`),
   và nó kéo theo chuyển ảnh sang chủ nhóm.
 - Form tạo cây **không hiện khối "Link mời sẽ trỏ tới"** (preview/toggle hạn). Quản lý link mời
