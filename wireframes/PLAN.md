@@ -130,14 +130,15 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
 
 - Cùng đường dẫn `/invite`, nhánh không token → tạo cây riêng. *(Căn cứ:
   `06-workflow-user.md` §2.2 · `01-pham-vi-bo.md` FE-B11)*
-- Một tài khoản chỉ có **một cây** — khi đã có cây mà vẫn bấm tạo, chặn bằng màn
-  409 `s06-create-conflict.html`, không cho tạo cây thứ hai.
+- Một tài khoản chỉ có **một cây vĩnh viễn** — khi đã có cây mà vẫn bấm tạo, chặn
+  bằng màn 409 `s06-create-conflict.html`, không cho tạo cây thứ hai. Màn conflict
+  chỉ còn **một đường**: "Vào cây hiện có của tôi" → `s07-tree.html`.
 - **Bắt buộc có nhóm trước** — không có đường "bỏ qua, vào cây trống". Muốn vào cây
   (`s07-tree`) thì phải tạo nhóm xong ở màn này.
 - **Tên nhóm = tên cây (chung một gốc)** — form tạo chỉ có một ô tên (Tên nhóm);
   cây tự lấy tên nhóm. Không có bước đặt tên cây riêng.
-- Không có nút "xoá cây hiện tại" ở đây. Xoá là việc của màn tài khoản (`s17-profile`),
-  và nó kéo theo chuyển ảnh sang chủ nhóm.
+- **Không có "xoá cây rồi tạo lại"** — cây vĩnh viễn theo tài khoản. Cây chỉ mất
+  đi khi tài khoản bị xoá (`s17-profile`), và toàn bộ ảnh chuyển sang Chủ nhóm.
 - Form tạo cây **không hiện khối "Link mời sẽ trỏ tới"** (preview/toggle hạn). Quản lý link mời
   (kèm "Cho hạn 7 ngày") nằm ở Tuỳ chọn gia đình `s17-profile.html` - card "Mời người mới".
 - Link mời dùng chung cho nhiều người, hạn 7 ngày. Gửi link ở đâu cũng được — copy dán Zalo,
