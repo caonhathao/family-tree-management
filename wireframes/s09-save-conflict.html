@@ -43,17 +43,15 @@
             <div class="page-head">
               <h1 class="page-title">Lưu thay đổi</h1>
               <p class="page-desc">
-                Bấm “Mô phỏng có người khác vừa sửa” rồi bấm “Thử lưu” để xem hộp thoại xử lý mâu thuẫn.
+                Bấm “Thử lưu” để mở hộp thoại xử lý mâu thuẫn. Hộp thoại không chọn sẵn lựa chọn nào.
               </p>
             </div>
 
             <div class="flex flex-wrap gap-2">
-              <button class="btn" data-variant="outline" data-size="sm" id="simulate">Mô phỏng có người khác vừa sửa</button>
-              <button class="btn" data-variant="outline" data-size="sm" id="make-dirty">Tạo vài thay đổi trong bản nháp</button>
               <button class="btn" data-size="sm" id="attempt" data-needs-perm="layout.save">Thử lưu</button>
             </div>
 
-            <div class="banner hidden" data-tone="warn" id="conflict-bar">
+            <div class="banner" data-tone="warn" id="conflict-bar">
               <span class="ico">⚠</span>
               <span id="conflict-text">
                 Có người đã lưu trước bạn: <strong>Trần Thị Mai</strong> đổi tên <strong>Trần Thị Mai</strong> →
@@ -81,18 +79,6 @@
               </div>
             </div>
 
-            <details class="note">
-              <summary>Ghi chú thiết kế</summary>
-              <div class="note-body">
-                <ul>
-                  <li>Một tài khoản chỉ có một cây, nhưng nhiều người vẫn cùng sửa. Máy chủ trả <code>409</code> khi bản ghi đã bị ai đó ghi đè từ lúc bạn mở trang.</li>
-                  <li><strong>Không tự thử lại, không tự gộp.</strong> Cứ thử lại là mất thay đổi của người vừa sửa; tự gộp là sinh dữ liệu vừa thiếu vừa thừa.</li>
-                  <li>Hộp thoại không có nút nào được chọn sẵn. Người dùng phải tự quyết định.</li>
-                  <li>Đóng hộp thoại không được làm mất trạng thái mâu thuẫn — thanh cảnh báo vẫn còn, và các thay đổi chưa lưu vẫn còn nguyên.</li>
-                  <li>Nếu chưa làm xong hộp thoại này thì chưa được bật <code>If-Match</code> sớm, không thì người dùng sẽ gặp lỗi 409 mà không có đường thoát.</li>
-                </ul>
-              </div>
-            </details>
           </div>
         </main>
       </div>
@@ -238,15 +224,6 @@
         rows("#mine", MINE, false);
         rows("#theirs", THEIRS, true);
 
-        function simulate() {
-          qs("#conflict-bar").classList.remove("hidden");
-          qs("#ver").textContent = "bản 43";
-          WF.toast("Trần Thị Mai vừa lưu", "Máy chủ chuyển từ bản 42 sang bản 43.", "destructive");
-        }
-        qs("#simulate").addEventListener("click", simulate);
-        qs("#make-dirty").addEventListener("click", function () {
-          WF.toast("Bản nháp có thay đổi", "3 mục đang chờ lưu.", "default");
-        });
         qs("#attempt").addEventListener("click", function () {
           if (qs("#conflict-bar").classList.contains("hidden")) {
             WF.toast("Lưu thành công", "Bản 42 → 43. Mọi thay đổi đã ghi trong một lần.", "success");
@@ -310,7 +287,6 @@
           var sb = qs("#sidebar");
           sb.setAttribute("data-narrow", sb.getAttribute("data-narrow") === "true" ? "false" : "true");
         });
-        window.demoConflict = function () { simulate(); WF.openDialog("conflict"); };
       })();
     </script>
   </body>

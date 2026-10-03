@@ -100,7 +100,6 @@
                   <div class="field-group">
                     <label class="field-label" for="file">Tệp JSON</label>
                     <input class="input" type="file" id="file" />
-                    <button class="btn" data-variant="outline" data-size="sm" id="demo-file" style="margin-top: 0.5rem">Dùng tệp mẫu (bản 38)</button>
                   </div>
                   <div class="banner" data-tone="danger hidden" id="rs-conflict">
                     <span class="ico">⚠</span>
@@ -171,7 +170,6 @@
                   <div class="field-group">
                     <label class="field-label" for="gfile">Tệp GEDCOM</label>
                     <input class="input" type="file" id="gfile" />
-                    <button class="btn" data-variant="outline" data-size="sm" id="demo-gfile" style="margin-top: 0.5rem">Dùng tệp mẫu</button>
                   </div>
                   <button class="btn" data-variant="outline" id="preview-gd" disabled>Xem trước</button>
                 </div>
@@ -264,19 +262,6 @@
               </div>
             </div>
 
-            <details class="note">
-              <summary>Ghi chú thiết kế</summary>
-              <div class="note-body">
-                <ul>
-                  <li>Khôi phục và nhập đều có bước <strong>chạy thử trước</strong> rồi mới ghi, và phải ghi trong một lần.</li>
-                  <li>Khôi phục giữ mã cũ. Nhập tạo mã mới và làm đứt mọi tham chiếu cũ — đó là lý do không có chế độ gộp thông minh.</li>
-                  <li>Mã trùng thì dừng lại, không bao giờ tự ghi đè và không bao giờ nói “đã khôi phục một phần”.</li>
-                  <li>Thanh tiến trình phải là tiến trình thật, không phải vòng quay quay vô tận.</li>
-                  <li>Xuất ảnh là thao tác chỉ đọc: không tăng bản, không ghi lịch sử, không cần <code>If-Match</code>.</li>
-                </ul>
-              </div>
-            </details>
-          </div>
         </main>
       </div>
     </div>
@@ -312,11 +297,6 @@
           WF.toast("Đang dựng tệp", "Tệp JSON tải xuống ngay sau khi dựng xong.", "default");
         });
 
-        qs("#demo-file").addEventListener("click", function () {
-          qs("#rs-conflict").classList.remove("hidden");
-          qs("#preview-rs").disabled = false;
-          WF.toast("Đã nạp tệp mẫu", "Bản 38 · 1 mã trùng", "default");
-        });
         qs("#file").addEventListener("change", function () {
           qs("#rs-conflict").classList.add("hidden");
           qs("#preview-rs").disabled = false;
@@ -360,10 +340,6 @@
           });
         });
 
-        qs("#demo-gfile").addEventListener("click", function () {
-          qs("#preview-gd").disabled = false;
-          WF.toast("Đã nạp tệp GEDCOM", "31 dòng dữ liệu, 3 người trùng tên", "default");
-        });
         qs("#gfile").addEventListener("change", function () { qs("#preview-gd").disabled = false; });
         qs("#preview-gd").addEventListener("click", function () {
           qs("#gd-diff-card").classList.remove("hidden");
