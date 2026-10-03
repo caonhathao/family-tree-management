@@ -1,6 +1,6 @@
 # Wireframe — Nhà họ
 
-22 màn hình HTML tĩnh cộng một trang danh mục theo **4 luồng vai trò**, mô phỏng
+23 màn hình HTML tĩnh cộng một trang danh mục theo **4 luồng vai trò**, mô phỏng
 giao diện thật của sản phẩm và được dựng lại trên nền tảng UI đang có:
 **shadcn/ui new-york + Tailwind v4, lấy token từ `project/frontend/src/app/globals.css`**.
 
@@ -26,6 +26,7 @@ Quyết định sản phẩm theo màn nằm ở [`PLAN.md`](PLAN.md). Wireframe
 | `index.html` | Danh mục 4 luồng vai trò (link kèm `?role=`) | — | — |
 | `s01-landing.html` | Trang chủ — landing giới thiệu | `/` | `02-pham-vi-sua.md` §10 · `01-pham-vi-bo.md` FE-B8 |
 | `s02-register.html` | Đăng ký tài khoản (không token) | `/auth` | `06-workflow-user.md` §2.2 · `01-pham-vi-bo.md` FE-B11 |
+| `s02-guide.html` | Hướng dẫn tạo cây — 4 bước | `/` | `02-pham-vi-sua.md` §10 · `01-pham-vi-bo.md` FE-B8 |
 | `s03-login.html` | Đăng nhập (giữ `?token=`) | `/auth` | `06-workflow-user.md` §2.2 |
 | `s04-forgot.html` | Quên mật khẩu — gửi link | `/auth` | `03-pham-vi-them.md` §7 · `01-pham-vi-bo.md` FE-B5 |
 | `s04-forgot-sent.html` | Đã gửi link | `/auth` | `03-pham-vi-them.md` §7 · `01-pham-vi-bo.md` FE-B5 |
@@ -159,7 +160,7 @@ Nếu bạn đổi style trong `assets/ui.css`, nghĩa là bạn đang đề xu�
 wireframes/
   index.html                    danh mục 4 luồng vai trò (link kèm ?role=)
   PLAN.md                       quyết định sản phẩm theo flow × chặng
-  s01 … s05 .html               luồng Khách: landing, register, login, forgot ×3, join ×3
+  s01 … s05 .html               luồng Khách: landing, guide, register, login, forgot ×3, join ×3
   s06-*.html                    luồng Chủ nhóm: tạo cây, 409 đã có cây
   s07 … s14 .html               luồng trong nhóm: cây, thành viên, 409, lịch sử, thùng rác, album, sự kiện, chia sẻ
   s15-share-readonly.html       xem cây bằng link chia sẻ (khách)

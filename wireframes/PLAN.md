@@ -16,6 +16,7 @@ Mỗi chặng là một màn hình riêng — **không gộp** hai chặng vào 
 | **Khách** (chưa đăng nhập) | Trang chủ | `s01-landing.html` |
 | | Đăng nhập | `s03-login.html` |
 | | Đăng ký tài khoản | `s02-register.html` |
+| | Hướng dẫn tạo cây (từ trang chủ) | `s02-guide.html` |
 | | Quên mật khẩu → Đã gửi link → Đặt mật khẩu mới | `s04-forgot.html` → `s04-forgot-sent.html` → `s04-forgot-reset.html` |
 | | Vào nhóm bằng link mời (còn hạn) | `s05-join.html` |
 | | Link mời hết hạn | `s05-join-expired.html` |
@@ -66,10 +67,20 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
 ### `s02-register.html` — Đăng ký tài khoản (không token)
 
 - Đăng ký thuần, tách khỏi luồng mời. Không nhắc tới "mời", "token", invite.
-- Sau khi đăng ký, màn kế tiếp là **tạo cây riêng** (`s06-create.html`) — tài khoản
-  mới chưa có cây.
+- **Không đặt hướng dẫn / lối tắt tạo cây trên màn đăng ký.** Sau khi đăng ký, người
+  dùng tự vào hướng dẫn từ trang chủ (`s01-landing.html` → `s02-guide.html`), và từ đó
+  qua `s06-create.html`. *(Căn cứ: `06-workflow-user.md` §2.1 · `01-pham-vi-bo.md` FE-B11)*
 - Câu "có link mời?" không xuất hiện ở đây; đã đăng nhập thì "Đăng nhập" →
-  `s03-login.html`. *(Căn cứ: `06-workflow-user.md` §2.1 · `01-pham-vi-bo.md` FE-B11)*
+  `s03-login.html`.
+
+### `s02-guide.html` — Hướng dẫn tạo cây
+
+- Guide là **màn riêng**, vào từ trang chủ (`s01-landing.html`), không nằm trên màn
+  đăng nhập / đăng ký. *(Căn cứ: `02-pham-vi-sua.md` §10)*
+- Bốn bước gắn link màn thật: Đăng ký (`s02-register.html`) → Tạo cây
+  (`s06-create.html`) → Thêm thành viên & quan hệ (`s08-member-form.html`) → Mời &
+  chia sẻ (`s14-share-manage.html`).
+- CTA chính "Bắt đầu tạo cây" → `s06-create.html` (tài khoản mới chưa có cây).
 
 ### `s03-login.html` — Đăng nhập
 
