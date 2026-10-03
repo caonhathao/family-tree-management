@@ -1,6 +1,6 @@
 # Wireframe — Nhà họ
 
-23 màn hình HTML tĩnh cộng một trang danh mục theo **4 luồng vai trò**, mô phỏng
+22 màn hình HTML tĩnh cộng một trang danh mục theo **4 luồng vai trò**, mô phỏng
 giao diện thật của sản phẩm và được dựng lại trên nền tảng UI đang có:
 **shadcn/ui new-york + Tailwind v4, lấy token từ `project/frontend/src/app/globals.css`**.
 
@@ -32,8 +32,7 @@ Quyết định sản phẩm theo màn nằm ở [`PLAN.md`](PLAN.md). Wireframe
 | `s04-forgot-sent.html` | Đã gửi link | `/auth` | `03-pham-vi-them.md` §7 · `01-pham-vi-bo.md` FE-B5 |
 | `s04-forgot-reset.html` | Đặt mật khẩu mới | `/user/secure` | `03-pham-vi-them.md` §7 · `01-pham-vi-bo.md` FE-B5 |
 | `s05-join.html` | Vào nhóm bằng link mời (còn hạn) | `/invite?token=` | `06-workflow-user.md` §2.1 · `04-thu-tu-thuc-hien.md` Stage 2 |
-| `s05-join-expired.html` | Link mời hết hạn | `/invite?token=` | `06-workflow-user.md` §2.1 · `04-thu-tu-thuc-hien.md` Stage 2 |
-| `s05-join-used.html` | Link mời đã dùng | `/invite?token=` | `06-workflow-user.md` §2.1 · `04-thu-tu-thuc-hien.md` Stage 2 |
+| `s05-join-expired.html` | Link mời hết hạn / không tồn tại (màn dừng chung) | `/invite?token=` | `06-workflow-user.md` §2.1 · `04-thu-tu-thuc-hien.md` Stage 2 |
 | `s06-create.html` | Tạo cây gia phả (không token) | `/invite` | `06-workflow-user.md` §2.2 · `01-pham-vi-bo.md` FE-B11 |
 | `s06-create-conflict.html` | 409 — tài khoản đã có cây | `/invite` | `06-workflow-user.md` §2.2 · `01-pham-vi-bo.md` FE-B11 |
 | `s07-tree.html` | Cây gia phả — màn chính | `/group` | `02-pham-vi-sua.md` §1–5, §9, §12 · `04-thu-tu-thuc-hien.md` Stage 3 |

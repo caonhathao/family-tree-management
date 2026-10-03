@@ -19,8 +19,7 @@ Mỗi chặng là một màn hình riêng — **không gộp** hai chặng vào 
 | | Hướng dẫn tạo cây (từ trang chủ) | `s02-guide.html` |
 | | Quên mật khẩu → Đã gửi link → Đặt mật khẩu mới | `s04-forgot.html` → `s04-forgot-sent.html` → `s04-forgot-reset.html` |
 | | Vào nhóm bằng link mời (còn hạn) | `s05-join.html` |
-| | Link mời hết hạn | `s05-join-expired.html` |
-| | Link mời đã dùng | `s05-join-used.html` |
+| | Link mời hết hạn / không tồn tại | `s05-join-expired.html` |
 | **Chủ nhóm** (owner) | Tạo cây gia phả | `s06-create.html` |
 | | 409 — tài khoản đã có cây | `s06-create-conflict.html` |
 | | Cây gia phả (màn chính) | `s07-tree.html` |
@@ -104,13 +103,15 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
 - Đổi mật khẩu đăng xuất **mọi thiết bị** — phải nói rõ trước khi bấm.
 - Đổi mật khẩu không đụng tới cây gia phả, không tạo dòng lịch sử nào.
 
-### `s05-join.html` · `s05-join-expired.html` · `s05-join-used.html` — Vào nhóm qua link mời
+### `s05-join.html` · `s05-join-expired.html` — Vào nhóm qua link mời
 
 - Cùng đường dẫn `/invite` với `?token=`, một nhánh vào nhóm người mời. Nhánh
   không-token (tạo cây riêng) hiện là màn riêng `s06-create.html`. *(Căn cứ:
   `06-workflow-user.md` §2.1 · `04-thu-tu-thuc-hien.md` Stage 2)*
-- Link hết hạn và link đã dùng **dừng lại và báo rõ**. Tuyệt đối không lặng lẽ tạo
-  cây riêng cho người bấm nhầm — đó là mất tiền thật và mất luôn ý muốn.
+- Một link mời dùng chung cho **nhiều người** — không có trạng thái "đã dùng".
+  Chỉ có hai trạng thái dừng: **hết hạn** (quá hạn) và **không tồn tại** (bị thu hồi).
+  Cả hai gộp một màn dừng `s05-join-expired.html` — tuyệt đối không lặng lẽ tạo
+  cây riêng cho người bấm nhầm, đó là mất tiền thật và mất luôn ý muốn.
 - Vai trò khi vào là cố định: **Người xem**. Muốn sửa thì chủ nhóm đổi vai trò sau.
 - Không có màn "quản lý lời mời" và không có API xem danh sách lời mời đã gửi.
 - Đăng nhập từ link mời phải giữ nguyên token → `s03-login.html?token=inv_9c41f2`.
@@ -123,7 +124,7 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
   409 `s06-create-conflict.html`, không cho tạo cây thứ hai.
 - Không có nút "xoá cây hiện tại" ở đây. Xoá là việc của màn tài khoản (`s17-profile`),
   và nó kéo theo chuyển ảnh sang chủ nhóm.
-- Link mời chỉ dùng một lần, hạn 7 ngày. Gửi link ở đâu cũng được — copy dán Zalo,
+- Link mời dùng chung cho nhiều người, hạn 7 ngày. Gửi link ở đâu cũng được — copy dán Zalo,
   Messenger; không cần gửi qua hệ thống.
 
 ### `s07-tree.html` — Cây gia phả (màn chính)
@@ -190,7 +191,8 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
 
 ### `s14-share-manage.html` — Quản lý link chia sẻ
 
-- Link chia sẻ **≠ link mời**: mời dùng một lần vào nhóm; chia sẻ xem nhiều lần
+- Link chia sẻ **≠ link mời**: mời để vào nhóm (dùng chung nhiều người); chia sẻ ai có link
+  đều xem được
   không vào nhóm. *(Căn cứ: `03-pham-vi-them.md` §6)*
 - Link chia sẻ xác thực bằng **token URL**, không cookie — cần lớp bảo vệ riêng.
 - Chỉ chủ nhóm tạo/thu hồi; không có nút bật/tắt — muốn chặn thì thu hồi.
