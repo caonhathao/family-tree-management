@@ -87,8 +87,9 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
   khi ở chế độ login. *(Căn cứ: `06-workflow-user.md` §2.2)*
 - `login` và `register` phải nằm trong `publicRoutes` (middleware `proxy.ts`).
 - Khi vào từ link mời, giữ nguyên `?token=` xuyên suốt bước đăng nhập; link
-  "Đăng kí ngay" lúc này trỏ `s05-join.html` (đăng ký từ link mời), không trỏ
-  `s02-register.html`.
+  "Đăng kí ngay" lúc này trỏ `s02-register.html?token=…` (màn đăng ký sẽ hiểu
+  token và cho "Tạo tài khoản và tham gia"), không trỏ `s05-join.html` để tránh
+  vòng lặp xác nhận.
 - Không hiện thông báo "tài khoản không tồn tại" — trả lời giống nhau cho mọi email.
 
 ### `s04-forgot.html` · `s04-forgot-sent.html` · `s04-forgot-reset.html` — Quên mật khẩu
@@ -115,6 +116,15 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
 - Vai trò khi vào là cố định: **Người xem**. Muốn sửa thì chủ nhóm đổi vai trò sau.
 - Không có màn "quản lý lời mời" và không có API xem danh sách lời mời đã gửi.
 - Đăng nhập từ link mời phải giữ nguyên token → `s03-login.html?token=inv_9c41f2`.
+- `s05-join.html` là **màn xác nhận**, không phải form đăng ký: hiện thông tin
+  người mời + nhóm + vai trò (Người xem) + hạn link, hỏi "Bạn có muốn tham gia
+  nhóm này không?", rồi **đúng một nút** "Đăng nhập và tham gia" → sign in mang
+  token, kèm **một dòng notice** "Chưa có tài khoản? Đăng kí và tham gia" →
+  `s02-register.html?token=…`. Trình bày giống màn đăng nhập: một nút chính +
+  một lối tắt đăng ký.
+- `s02-register.html` khi nhận `?token=`: hiện banner "Sau khi tạo tài khoản, bạn
+  sẽ vào thẳng nhóm … với quyền Người xem", nút đổi thành "Tạo tài khoản và tham
+  gia", sau khi tạo hiện link "Vào cây gia phả của nhóm" → `s07-tree.html`.
 
 ### `s06-create.html` · `s06-create-conflict.html` — Tạo cây & 409
 
