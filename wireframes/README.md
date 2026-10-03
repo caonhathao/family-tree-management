@@ -1,53 +1,61 @@
 # Wireframe — Nhà họ
 
-16 màn hình HTML tĩnh cộng một trang danh mục, mô phỏng giao diện thật của sản phẩm và
-được dựng lại trên nền tảng UI đang có: **shadcn/ui new-york + Tailwind v4, lấy token từ
-`project/frontend/src/app/globals.css`**.
+22 màn hình HTML tĩnh cộng một trang danh mục theo **4 luồng vai trò**, mô phỏng
+giao diện thật của sản phẩm và được dựng lại trên nền tảng UI đang có:
+**shadcn/ui new-york + Tailwind v4, lấy token từ `project/frontend/src/app/globals.css`**.
 
-Mở `index.html` để xem danh mục. Không cần build, không cần mạng ngoài ngoài phông.
+100% tĩnh: mở thẳng `file://.../wireframes/index.html` bằng double-click, bấm link để
+qua màn kế tiếp — không cần build, không cần server, không cần mạng ngoài.
 
 ```
-file://.../wireframes/index.html          # hoặc phục vụ qua http
-npx serve wireframes
+file://.../wireframes/index.html          # mở thẳng từ ổ đĩa
+npx serve wireframes                      # hoặc phục vụ qua http
 ```
 
 > Playwright chặn giao thức `file:`. Nếu bạn định chạy test tự động, hãy phục vụ
 > `wireframes/` bằng một static server bất kỳ rồi trỏ vào `http://127.0.0.1:<port>/`.
 
+Quyết định sản phẩm theo màn nằm ở [`PLAN.md`](PLAN.md). Wireframe chỉ minh hoạ layout.
+
 ---
 
-## 1. Màn hình
+## 1. Màn hình theo 4 luồng vai trò
 
 | File | Màn hình | Route thật | Căn cứ |
 |---|---|---|---|
-| `index.html` | Danh mục + bảng phân quyền | — | — |
-| `s01-landing.html` | Trang chủ — landing giới thiệu, không tự chuyển hướng | `/` | `02-pham-vi-sua.md` §10 · `01-pham-vi-bo.md` FE-B8 |
-| `s02-register-invite-fork.html` | Tham gia nhóm qua link mời, 4 nhánh token | `/invite?token=` | `06-workflow-user.md` §2.1 · `04-thu-tu-thuc-hien.md` Stage 2 |
+| `index.html` | Danh mục 4 luồng vai trò (link kèm `?role=`) | — | — |
+| `s01-landing.html` | Trang chủ — landing giới thiệu | `/` | `02-pham-vi-sua.md` §10 · `01-pham-vi-bo.md` FE-B8 |
+| `s02-register.html` | Đăng ký tài khoản (không token) | `/auth` | `06-workflow-user.md` §2.2 · `01-pham-vi-bo.md` FE-B11 |
 | `s03-login.html` | Đăng nhập (giữ `?token=`) | `/auth` | `06-workflow-user.md` §2.2 |
-| `s04-forgot-reset.html` | Quên / đặt lại mật khẩu | `/auth`, `/user/secure` | `03-pham-vi-them.md` §7 · `01-pham-vi-bo.md` FE-B5 |
-| `s05-create-family.html` | Tạo cây gia phả (không có token) | `/invite` | `06-workflow-user.md` §2.2 · `01-pham-vi-bo.md` FE-B11 |
-| `s06-tree-canvas.html` | Cây gia phả — màn hình chính | `/group` | `02-pham-vi-sua.md` §1–§5, §9, §12 · `04-thu-tu-thuc-hien.md` Stage 3 |
-| `s07-member-form.html` | Hộp thoại thêm / sửa thành viên | `/group` | `06-workflow-user.md` §3.1–3.2 |
-| `s08-save-conflict.html` | Mâu thuẫn 409 khi lưu | `/group` | `02-pham-vi-sua.md` §3 · `03-pham-vi-them.md` §12 · `06-workflow-user.md` §6 |
-| `s09-activity.html` | Lịch sử thay đổi | `/group` (tab) | `03-pham-vi-them.md` §1 · `06-workflow-user.md` §7 |
-| `s10-trash.html` | Thùng rác — cây và ảnh | `/group` (tab) | `03-pham-vi-them.md` §2 · `06-workflow-user.md` Trục 2 |
-| `s11-albums.html` | Album ảnh | `/group` (tab) | `03-pham-vi-them.md` §8 · `06-workflow-user.md` §8.2 |
-| `s12-share-manage.html` | Quản lý link chia sẻ | `/group` (tab) | `03-pham-vi-them.md` §6 |
-| `s13-share-readonly.html` | Xem cây bằng link chia sẻ (khách) | `/share/:token` | `03-pham-vi-them.md` §6 |
-| `s14-import-export.html` | Nhập / Xuất | `/group` (tab) | `03-pham-vi-them.md` §5, §13 |
-| `s15-events.html` | Sự kiện | `/group` (tab) | `03-pham-vi-them.md` §9 |
-| `s16-profile-hub.html` | Hồ sơ, người cùng nhóm, mời, xoá tài khoản | `/user/profile`, `/user/groups` | `03-pham-vi-them.md` §11 · `01-pham-vi-bo.md` FE-B6, FE-B11 · `06-workflow-user.md` §5 |
+| `s04-forgot.html` | Quên mật khẩu — gửi link | `/auth` | `03-pham-vi-them.md` §7 · `01-pham-vi-bo.md` FE-B5 |
+| `s04-forgot-sent.html` | Đã gửi link | `/auth` | `03-pham-vi-them.md` §7 · `01-pham-vi-bo.md` FE-B5 |
+| `s04-forgot-reset.html` | Đặt mật khẩu mới | `/user/secure` | `03-pham-vi-them.md` §7 · `01-pham-vi-bo.md` FE-B5 |
+| `s05-join.html` | Vào nhóm bằng link mời (còn hạn) | `/invite?token=` | `06-workflow-user.md` §2.1 · `04-thu-tu-thuc-hien.md` Stage 2 |
+| `s05-join-expired.html` | Link mời hết hạn | `/invite?token=` | `06-workflow-user.md` §2.1 · `04-thu-tu-thuc-hien.md` Stage 2 |
+| `s05-join-used.html` | Link mời đã dùng | `/invite?token=` | `06-workflow-user.md` §2.1 · `04-thu-tu-thuc-hien.md` Stage 2 |
+| `s06-create.html` | Tạo cây gia phả (không token) | `/invite` | `06-workflow-user.md` §2.2 · `01-pham-vi-bo.md` FE-B11 |
+| `s06-create-conflict.html` | 409 — tài khoản đã có cây | `/invite` | `06-workflow-user.md` §2.2 · `01-pham-vi-bo.md` FE-B11 |
+| `s07-tree.html` | Cây gia phả — màn chính | `/group` | `02-pham-vi-sua.md` §1–5, §9, §12 · `04-thu-tu-thuc-hien.md` Stage 3 |
+| `s08-member-form.html` | Hộp thoại thêm / sửa thành viên | `/group` | `06-workflow-user.md` §3.1–3.2 |
+| `s09-save-conflict.html` | Mâu thuẫn 409 khi lưu | `/group` | `02-pham-vi-sua.md` §3 · `03-pham-vi-them.md` §12 · `06-workflow-user.md` §6 |
+| `s10-activity.html` | Lịch sử thay đổi | `/group` (tab) | `03-pham-vi-them.md` §1 · `06-workflow-user.md` §7 |
+| `s11-trash.html` | Thùng rác — cây và ảnh | `/group` (tab) | `03-pham-vi-them.md` §2 · `06-workflow-user.md` Trục 2 |
+| `s12-albums.html` | Album ảnh | `/group` (tab) | `03-pham-vi-them.md` §8 · `06-workflow-user.md` §8.2 |
+| `s13-events.html` | Sự kiện | `/group` (tab) | `03-pham-vi-them.md` §9 |
+| `s14-share-manage.html` | Quản lý link chia sẻ | `/group` (tab) | `03-pham-vi-them.md` §6 |
+| `s15-share-readonly.html` | Xem cây bằng link chia sẻ (khách) | `/share/:token` | `03-pham-vi-them.md` §6 |
+| `s16-import-export.html` | Nhập / Xuất | `/group` (tab) | `03-pham-vi-them.md` §5, §13 |
+| `s17-profile.html` | Hồ sơ, người cùng nhóm, xoá tài khoản | `/user/profile`, `/user/groups` | `03-pham-vi-them.md` §11 · `01-pham-vi-bo.md` FE-B6, FE-B11 · `06-workflow-user.md` §5 |
 
 Cột "Căn cứ" trỏ tới `docs/planing-refactor-fe/`. Màn hình nào làm đúng bản chất
 quyền hạn mà tài liệu đang chốt thì wireframe giữ nguyên bản chất đó, kể cả khi
-giao diện hiện tại chưa làm.
+giao diện hiện tại chưa làm. Quyết định chi tiết theo từng màn → `PLAN.md` §2.
 
 ---
 
 ## 2. Bảng phân quyền (dùng chung)
 
-Bảng này xuất hiện đúng một lần ở `index.html` và đúng một lần ở đây. Không màn hình
-nào lặp lại nó.
+Bảng này dùng chung cho mọi màn hình, không lặp lại trên từng file.
 
 | Việc | Chủ nhóm | Biên tập viên | Người xem | Khách |
 |---|:--:|:--:|:--:|:--:|
@@ -101,33 +109,20 @@ Nút trên màn hình được ẩn/hiện theo `WF.can("khoá-quyền")`, nên 
 ngay phần nào biến mất. Với `anon`, phần cần đăng nhập hiện thẻ nhắc đăng nhập thay vì
 nội dung.
 
+**Điều hướng theo flow:** mọi link trong `index.html` mang `?role=<vai trò>`, ví dụ
+`s07-tree.html?role=owner`. Khi mở màn kèm tham số này, pill được đặt sẵn theo vai trò
+đó (không cần chạm localStorage). Vẫn đổi tay được sau đó. Vai trò hợp lệ:
+`owner` · `editor` · `viewer` · `anon` (luồng Khách dùng `anon`). Nếu trình duyệt chặn
+`localStorage` (ví dụ Firefox mở `file://`), tham số này vẫn hoạt động.
+
 ---
 
-## 4. Những ràng buộc đã cài trong wireframe
+## 4. Quyết định sản phẩm
 
-Các điểm dưới đây là quyết định sản phẩm, không phải chi tiết trang trí. Đừng làm mất
-chúng khi sửa:
-
-- **s01** là landing cho **mọi người**, bất kể đã đăng nhập hay chưa — không tự chuyển hướng, không bao giờ hiện lỗi inline. Header và nút CTA chỉ đưa về màn xác thực (`s03-login.html` mô phỏng `/auth`); câu hỏi "có link mời hay tạo cây riêng" nằm trong luồng đăng ký (s02 / s03 / s05), không nằm ở trang chủ.
-- **s02** token hết hạn / đã dùng **không** được mở đường thoát "tự tạo cây của tôi".
-- **s03** giữ nguyên `?token=` của link mời khi qua bước đăng nhập.
-- **s04** thông báo trung tính, không tiết lộ email có tồn tại không; phần cảnh báo
-  nói rõ **mọi thiết bị** đều bị đăng xuất.
-- **s05** một tài khoản chỉ có một cây — 409 nêu rõ, không cho tạo cây thứ hai.
-- **s07** nút ghim ảnh ghi rõ "Gắn ảnh của tôi vào node này", không phải "đổi ảnh".
-- **s08** 409 có 3 bước, bảng so khác 5 cột, và một hộp thoại cảnh báo **thứ hai**
-  cho thao tác Ghi đè. Không chọn sẵn, không tự thử lại.
-- **s10** ảnh trong thùng rác chia theo người xoá, tự nhận diện bằng `WF.myId()`.
-- **s11** album sửa được khi bạn là người tạo **hoặc** chủ nhóm; ảnh đã ẩn vẫn hiện
-  kèm nhãn và nút Hiện lại.
-- **s12** 403 trừ khi là chủ nhóm; hạn 7/30/90 ngày; có ô sao chép; đếm số lần mở.
-- **s13** khách chỉ đọc: node không kéo được, và có băng cảnh báo rằng **ẩn nút không
-  có nghĩa chặn được ghi**.
-- **s14** khôi phục phải có bước xem trước khác biệt; khi 409, lựa chọn mặc định là
-  **Dừng lại**; có bảng đối chiếu id cũ ↔ id mới; cảnh báo tiếng Việt trong PDF.
-- **s15** gắn sự kiện với một người; **không** có danh sách người tham gia trong ghi chú.
-- **s16** chuyển quyền sở hữu thì người gửi **vẫn ở trong nhóm** với vai Biên tập viên.
-  Không có "rời nhóm" — chỉ có xoá tài khoản.
+Mọi quyết định sản phẩm theo màn (từng nằm trong `<details class="note">` trên từng
+màn hình) đã được dời về **[`PLAN.md`](PLAN.md)** — bảng chặng theo 4 flow ở §1, quyết
+định chi tiết theo màn ở §2, tóm tắt phân quyền ở §3. Wireframe không còn ghi chú nổi
+trên giao diện.
 
 ---
 
@@ -162,8 +157,14 @@ Nếu bạn đổi style trong `assets/ui.css`, nghĩa là bạn đang đề xu�
 
 ```
 wireframes/
-  index.html                    danh mục + bảng phân quyền dùng chung
-  s01 … s16 .html               16 màn hình
+  index.html                    danh mục 4 luồng vai trò (link kèm ?role=)
+  PLAN.md                       quyết định sản phẩm theo flow × chặng
+  s01 … s05 .html               luồng Khách: landing, register, login, forgot ×3, join ×3
+  s06-*.html                    luồng Chủ nhóm: tạo cây, 409 đã có cây
+  s07 … s14 .html               luồng trong nhóm: cây, thành viên, 409, lịch sử, thùng rác, album, sự kiện, chia sẻ
+  s15-share-readonly.html       xem cây bằng link chia sẻ (khách)
+  s16-import-export.html        nhập / xuất
+  s17-profile.html              hồ sơ, xoá tài khoản
   assets/
     ui.css                      design system (token, component, tiện ích)
     ui.js                       WF.* — phân quyền, tab, hộp thoại, toast, vẽ cây
@@ -173,7 +174,7 @@ wireframes/
 `ui.js` không phụ thuộc framework. Nó cung cấp:
 
 - `WF.PERM`, `WF.can()`, `WF.getRole()`, `WF.setRole()`, `WF.myId()` — phân quyền
-- `WF.mountRolePill()` — công cụ đổi vai trò
+- `WF.mountRolePill()` — công cụ đổi vai trò (đọc `?role=` trên URL để đặt sẵn)
 - `WF.tabs()` / `WF.wireTabs()` — tab
 - `WF.openDialog()` / `WF.closeDialog()`, `WF.toast()`, `WF.runProgress()`
 - `WF.renderTree()`, `WF.attachDrag()`, `WF.zoomBy()`, `WF.fitView()` — sơ đồ cây
@@ -184,10 +185,11 @@ wireframes/
 ## 7. Quy ước cho người sửa
 
 - **Mọi chữ hiện ra với người dùng bằng tiếng Việt.**
-- **Mỗi màn hình chỉ có đúng một `<details class="note">`**, đặt ở cuối trang, mặc
-  định đóng. Không chú thích nổi trên giao diện.
-- Mỗi màn hình có **một ghi chú duy nhất** nói phần nào là quyết định sản phẩm và
-  phần nào chỉ là trang trí.
+- **Không còn `<details class="note">` trên màn hình.** Mọi chỉ dẫn và quyết định sản
+  phẩm nằm ở `PLAN.md` — sửa quyết định thì sửa PLAN.md, không viết chú thích nổi trên
+  giao diện.
+- Không có nút giả lập ("Mô phỏng", "Dùng tệp mẫu", "Thử lại", "i" gợi ý dev) trên
+  màn hình. Nút phải làm việc thật hoặc bỏ.
 - Ảnh trong wireframe là khối màu phẳng, không tải từ mạng.
 - Không thêm màu mới ngoài `globals.css`. Nếu cần một màu avatar mà app chưa định
   nghĩa (`--avatar-color-1..6`), đó là phát hiện về app, đừng giấu vào wireframe.
