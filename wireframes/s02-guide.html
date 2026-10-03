@@ -7,69 +7,90 @@
     <link rel="stylesheet" href="assets/ui.css" />
   </head>
   <body>
-    <div class="auth-shell">
-      <div class="auth-bar">
-        <a class="btn" data-variant="outline" href="s01-landing.html">‹ Về trang chủ</a>
-      </div>
-
-      <div class="auth-center">
-        <div class="auth-card" data-mode="signup" style="max-width: 34rem">
-          <div class="auth-panes" data-mode="signup">
-            <div class="auth-pane-form">
-              <div class="card" data-variant="flat">
-                <div class="card-header">
-                  <h3 class="card-title">Bắt đầu với Gia phả</h3>
-                  <p class="card-description">Bốn bước để dựng cây của nhà bạn</p>
-                </div>
-                <div class="card-content flex flex-col gap-4">
-                  <div class="flex items-center gap-3" style="margin: 0.25rem 0">
-                    <span class="icon-box"><span class="sidebar-avatar" data-color="--primary">1</span></span>
-                    <a class="btn" data-variant="link" data-size="sm" href="s02-register.html" style="padding: 0">
-                      <span class="font-semibold">Đăng ký tài khoản</span>
-                      <span class="text-xs muted"> — một tài khoản miễn phí, chưa cần thẻ</span>
-                    </a>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <span class="icon-box"><span class="sidebar-avatar" data-color="--primary">2</span></span>
-                    <a class="btn" data-variant="link" data-size="sm" href="s06-create.html" style="padding: 0">
-                      <span class="font-semibold">Tạo cây gia phả</span>
-                      <span class="text-xs muted"> — đặt tên nhóm, dựng cây của cả nhà</span>
-                    </a>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <span class="icon-box"><span class="sidebar-avatar" data-color="--primary">3</span></span>
-                    <a class="btn" data-variant="link" data-size="sm" href="s08-member-form.html" style="padding: 0">
-                      <span class="font-semibold">Thêm thành viên &amp; quan hệ</span>
-                      <span class="text-xs muted"> — cha mẹ, con cái, vợ chồng…</span>
-                    </a>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <span class="icon-box"><span class="sidebar-avatar" data-color="--primary">4</span></span>
-                    <a class="btn" data-variant="link" data-size="sm" href="s14-share-manage.html" style="padding: 0">
-                      <span class="font-semibold">Mời người thân &amp; chia sẻ</span>
-                      <span class="text-xs muted"> — link mời có hạn, khách xem không sửa</span>
-                    </a>
-                  </div>
-
-                  <div class="flex flex-col gap-2" style="margin-top: 0.75rem">
-                    <a class="btn w-full" href="s06-create.html">Bắt đầu tạo cây</a>
-                    <p class="text-center text-sm muted">
-                      Đã có tài khoản?
-                      <a class="btn" data-variant="link" data-size="sm" href="s03-login.html">Đăng nhập</a>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="auth-pane-greet" data-mode="signup">
-              <h2>Chào bạn!</h2>
-              <p class="text-center mt-2">Cả nhà cùng dựng cây, mỗi thế hệ thêm một nhánh</p>
-            </div>
-          </div>
+    <header class="landing-header">
+      <div class="landing-header-inner">
+        <a class="landing-logo" href="s01-landing.html">Gia phả</a>
+        <div class="flex items-center gap-2">
+          <a class="btn" data-variant="outline" data-size="sm" href="s03-login.html">Đăng nhập</a>
+          <a class="btn" data-variant="default" data-size="sm" href="s02-register.html">Đăng ký</a>
         </div>
       </div>
-    </div>
+    </header>
+
+    <main>
+      <div class="page">
+        <div class="page-head">
+          <h1 class="page-title">Bắt đầu với Gia phả</h1>
+          <p class="page-desc">Bốn bước để dựng cây của nhà bạn — mỗi bước là một màn hình thật trong ứng dụng</p>
+        </div>
+
+        <div class="card" style="max-width: 34rem; margin-inline: auto">
+          <div class="card-header">
+            <h3 class="card-title">Lộ trình 4 bước</h3>
+            <p class="card-description">Bấm vào từng bước để xem trước màn hình tương ứng.</p>
+          </div>
+          <div class="card-content flex flex-col gap-4">
+            <a class="flex items-start gap-3" href="s02-register.html">
+              <span class="thumb">1</span>
+              <span class="min-w-0">
+                <span class="font-semibold" style="display: block">Đăng ký tài khoản</span>
+                <span class="text-xs muted" style="display: block">Một tài khoản miễn phí, chưa cần thẻ</span>
+              </span>
+            </a>
+            <a class="flex items-start gap-3" href="s06-create.html">
+              <span class="thumb">2</span>
+              <span class="min-w-0">
+                <span class="font-semibold" style="display: block">Tạo cây gia phả</span>
+                <span class="text-xs muted" style="display: block">Đặt tên nhóm, dựng cây của cả nhà</span>
+              </span>
+            </a>
+            <a class="flex items-start gap-3" href="s08-member-form.html">
+              <span class="thumb">3</span>
+              <span class="min-w-0">
+                <span class="font-semibold" style="display: block">Thêm thành viên &amp; quan hệ</span>
+                <span class="text-xs muted" style="display: block">Cha mẹ, con cái, vợ chồng…</span>
+              </span>
+            </a>
+            <a class="flex items-start gap-3" href="s14-share-manage.html">
+              <span class="thumb">4</span>
+              <span class="min-w-0">
+                <span class="font-semibold" style="display: block">Mời người thân &amp; chia sẻ</span>
+                <span class="text-xs muted" style="display: block">Link mời có hạn, khách xem không sửa</span>
+              </span>
+            </a>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-center gap-2" style="margin-top: 1.5rem">
+          <a class="btn" data-variant="default" data-size="lg" href="s06-create.html">Bắt đầu tạo cây</a>
+          <p class="text-sm muted">
+            Đã có tài khoản?
+            <a class="btn" data-variant="link" data-size="sm" href="s03-login.html">Đăng nhập ngay</a>
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="landing-footer">
+      <div class="landing-footer-inner">
+        <div class="landing-footer-brand">
+          <span class="font-bold">Gia phả</span>
+          <p>
+            Gìn giữ hồn cốt gia đình, nối dài sợi dây huyết thống.
+            Mỗi gia đình một cây — nhiều thế hệ cùng nhau viết tiếp.
+          </p>
+        </div>
+        <div>
+          <h4>Cùng làm</h4>
+          <ul>
+            <li><a href="s02-register.html">Đăng ký tài khoản</a></li>
+            <li><a href="s06-create.html">Tạo cây gia phả</a></li>
+            <li><a href="s08-member-form.html">Thêm thành viên</a></li>
+            <li><a href="s14-share-manage.html">Chia sẻ cho người thân</a></li>
+          </ul>
+        </div>
+      </div>
+    </footer>
 
     <script src="assets/mock-data.js"></script>
     <script src="assets/ui.js"></script>
