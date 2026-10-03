@@ -65,9 +65,10 @@
                     <label class="check-row"><span class="radio" data-checked="false" data-days="90"></span><span class="text-sm">90 ngày</span></label>
                   </div>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-2" id="create-wrap">
                   <button class="btn" id="create">Tạo link</button>
                 </div>
+                <div class="hidden flex items-center gap-2" id="after-create"></div>
               </div>
             </div>
 
@@ -193,6 +194,17 @@
           });
           qs("#new-link-card").classList.remove("hidden");
           qs("#new-url").textContent = "/share/" + token;
+          var after = qs("#after-create");
+          after.innerHTML = '<span class="text-sm muted">Link còn hiệu lực</span>' +
+            '<button class="btn" data-variant="outline" data-size="sm" data-copy="' + token + '">Sao chép</button>' +
+            '<a class="btn" data-variant="ghost" data-size="sm" href="s15-share-readonly.html">Mở thử</a>';
+          after.classList.remove("hidden");
+          qs("#create-wrap").classList.add("hidden");
+          Array.prototype.forEach.call(after.querySelectorAll("[data-copy]"), function (b) {
+            b.addEventListener("click", function () {
+              WF.toast("Đã sao chép", "/share/" + token, "success");
+            }, { once: true });
+          });
           render();
           WF.toast("Đã tạo link", "Có hiệu lực " + days + " ngày.", "success");
         });

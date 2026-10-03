@@ -217,6 +217,9 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
 - Link chia sẻ xác thực bằng **token URL**, không cookie — cần lớp bảo vệ riêng.
 - Chỉ chủ nhóm tạo/thu hồi; không có nút bật/tắt — muốn chặn thì thu hồi.
 - Hạn 7/30/90 ngày; có ô sao chép; đếm số lần mở.
+- **Đơn giản hóa luồng tạo**: xóa bảng mẫu cũ; sau khi bấm "Tạo link" thay vì chỉ
+  hiện card "Link vừa tạo", sẽ có trạng thái ngay bên dưới ô chọn hạn: "Link còn
+  hiệu lực" + nút "Sao chép" + "Mở thử". Nút Tạo link ẩn đi.
 - Nút "Mở thử" → `s15-share-readonly.html` là điều hướng thật, giữ lại.
 
 ### `s15-share-readonly.html` — Xem cây bằng link chia sẻ
