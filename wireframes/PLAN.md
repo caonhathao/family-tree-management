@@ -124,6 +124,8 @@ Mỗi mục = mọi dòng từng nằm trong ghi chú của màn đó. Giữ đ�
   409 `s06-create-conflict.html`, không cho tạo cây thứ hai.
 - **Bắt buộc có nhóm trước** — không có đường "bỏ qua, vào cây trống". Muốn vào cây
   (`s07-tree`) thì phải tạo nhóm xong ở màn này.
+- **Tên nhóm = tên cây (chung một gốc)** — form tạo chỉ có một ô tên (Tên nhóm);
+  cây tự lấy tên nhóm. Không có bước đặt tên cây riêng.
 - Không có nút "xoá cây hiện tại" ở đây. Xoá là việc của màn tài khoản (`s17-profile`),
   và nó kéo theo chuyển ảnh sang chủ nhóm.
 - Form tạo cây **không hiện khối "Link mời sẽ trỏ tới"** (preview/toggle hạn). Quản lý link mời
