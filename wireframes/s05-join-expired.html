@@ -7,33 +7,18 @@
     <link rel="stylesheet" href="assets/ui.css" />
   </head>
   <body>
-    <div class="auth-shell">
-      <div class="auth-bar">
-        <a class="btn" data-variant="outline" href="index.html">‹ Quay lại</a>
-      </div>
-
-      <div class="auth-center">
-        <div class="auth-card" data-mode="signup">
-          <div class="auth-panes" data-mode="signup">
-            <div class="auth-pane-form">
-              <div class="empty" style="min-height: 24rem">
-                <div class="gate-icon">⧖</div>
-                <div class="font-semibold">Link mời không còn hiệu lực</div>
-                <p class="text-sm muted" style="max-width: 26rem">
-                  Link này đã <strong>hết hạn</strong> hoặc <strong>không tồn tại</strong> (bị thu hồi).
-                  Nhờ chủ nhóm tạo link mới để vào nhóm.
-                </p>
-                <div class="flex gap-2">
-                  <a class="btn" data-variant="outline" data-size="sm" href="s01-landing.html">Về trang chủ</a>
-                </div>
-              </div>
-            </div>
-
-            <div class="auth-pane-greet" data-mode="signup">
-              <h2>Chào bạn!</h2>
-              <p class="text-center mt-2">Bắt đầu hành trình mới cùng chúng tôi</p>
-            </div>
-          </div>
+    <div
+      style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem"
+    >
+      <div class="card" style="max-width: 24rem; width: 100%; text-align: center">
+        <div class="card-content flex flex-col items-center gap-3" style="padding: 2rem 1.5rem">
+          <div class="gate-icon">⧖</div>
+          <div class="font-semibold">Link mời không còn hiệu lực</div>
+          <p class="text-sm muted text-center">
+            Link này đã <strong>hết hạn</strong> hoặc <strong>không tồn tại</strong> (bị thu hồi).
+            Nhờ chủ nhóm tạo link mới để vào nhóm.
+          </p>
+          <a class="btn" data-variant="outline" href="s01-landing.html">Về trang chủ</a>
         </div>
       </div>
     </div>
